@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-11-15T21:59:07.648Z",
+  "updatedAt": "2025-11-15T22:37:42.000Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub - FIXED",
@@ -50,7 +50,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.item.json.data || $input.item.json;\nconst workflows = Array.isArray(data) ? data : [data];\n\nconst formattedWorkflows = workflows.map(wf => {\n  const safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\n  const filename = `${safeName}_${wf.id}.json`;\n  \n  return {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  };\n});\n\nreturn formattedWorkflows.map(wf => ({ json: wf }));"
+        "jsCode": "const data = $input.item.json.data || $input.item.json;\nlet workflows = Array.isArray(data) ? data : [data];\n\n// Filter out any items that don't have an 'id' and 'name' (real workflows)\nworkflows = workflows.filter(wf => wf && wf.id && wf.name);\n\nconsole.log(`Processing ${workflows.length} valid workflows`);\n\nconst formattedWorkflows = workflows.map(wf => {\n  const safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\n  const filename = `${safeName}_${wf.id}.json`;\n  \n  return {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  };\n});\n\nreturn formattedWorkflows.map(wf => ({ json: wf }));"
       },
       "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
       "name": "Format for GitHub",
@@ -108,6 +108,8 @@
         -656,
         112
       ],
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
       "credentials": {
         "httpHeaderAuth": {
           "id": "04C2CxsFzc1VS9wa",
@@ -118,7 +120,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Check if create was successful or if we got 409 (file exists)\nconst response = $input.first().json;\nconst statusCode = response.statusCode;\nconst workflowData = $('Process One at a Time').item.json;\n\nif (statusCode === 201) {\n  // Success - file created\n  console.log(`✅ Created: ${workflowData.name}`);\n  return [{ json: { success: true, action: 'created', workflow: workflowData.name } }];\n} else if (statusCode === 409) {\n  // File exists - need to update\n  console.log(`📝 File exists, will update: ${workflowData.name}`);\n  return [{ json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else if (statusCode === 200) {\n  // Updated successfully\n  console.log(`✅ Updated: ${workflowData.name}`);\n  return [{ json: { success: true, action: 'updated', workflow: workflowData.name } }];\n} else {\n  // Error\n  console.log(`❌ Error for ${workflowData.name}: ${statusCode}`);\n  throw new Error(`Failed to backup ${workflowData.name}: ${statusCode} - ${response.body?.message || 'Unknown error'}`);\n}"
+        "jsCode": "const inputData = $input.first();\nconst response = inputData.json;\nconst workflowData = $('Process One at a Time').item.json;\n\n// Check for error in multiple places\nconst hasError = response.error || response.message?.includes('sha') || response.message?.includes('Invalid');\n\nconsole.log(`Checking ${workflowData.name}:`, { hasError, message: response.message });\n\nif (hasError) {\n  // Any error means file exists and needs update\n  console.log(`📝 Needs update: ${workflowData.name}`);\n  return [{ json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else {\n  // No error = success\n  console.log(`✅ Success: ${workflowData.name}`);\n  return [{ json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name\n  } }];\n}"
       },
       "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
       "name": "Check Result",
@@ -383,7 +385,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b5082454-280e-4544-8982-250672decb9b",
+  "versionId": "ac9e8935-a872-4d05-86b9-6af9c1ee7f92",
   "triggerCount": 0,
   "shared": [
     {
