@@ -1,0 +1,503 @@
+{
+  "updatedAt": "2025-10-27T17:15:41.000Z",
+  "createdAt": "2025-10-06T13:34:22.181Z",
+  "id": "YqpoyQmbszh6dlXA",
+  "name": "ARCHIVED (10/24/25) script generation",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nconsole.log('Received input:', input);\n\n// Just pass everything through, don't filter anything\nreturn {\n  json: input\n};"
+      },
+      "id": "a7efe518-b4aa-4e04-97de-7fdba7e762f4",
+      "name": "Parse & Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BIBXJdxM5hkOal3_Ssze3E3-EdXbBMTWhkPhSujLDQc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Template Library",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "4ac95111-80db-4e46-a0e2-f209b1e889d8",
+      "name": "Fetch Template Specs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        32
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MmkEFg1TuHDH32HZ",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// The merge already filtered to the matching template\nconst template = $input.first().json;\n\nconsole.log('Processing template:', template.Template_ID);\n\nconst processedTemplate = {\n  template_id: template.Template_ID,\n  template_name: template.Template_Name,\n  duration_seconds: parseInt(template.Duration_Seconds),\n  aspect_ratio: template.Aspect_Ratio,\n  num_car_slots: parseInt(template.Num_Car_Slots),\n  platform_primary: template.Platform_Primary,\n  style_theme: template.Style_Theme,\n  avatar_primary: template.Avatar_Primary,\n  voiceover_style: template.Voiceover_Style,\n  status: template.Status,\n  notes: template.Notes,\n  scenes: [\n    { scene: 1, duration: 3, description: \"Hook - attention grabber\" },\n    { scene: 2, duration: Math.floor(parseInt(template.Duration_Seconds) * 0.6), description: `Feature ${template.Num_Car_Slots} cars with specs` },\n    { scene: 3, duration: 3, description: \"CTA with dealership info\" }\n  ],\n  _input: template\n};\n\nconsole.log('Processed template:', processedTemplate.template_name);\n\nreturn {\n  json: processedTemplate\n};"
+      },
+      "id": "5651730b-3d32-46c8-9667-b53b37548b71",
+      "name": "Process Template Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Feed",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "394d485a-db09-4c3a-81a9-a1978e916776",
+      "name": "Fetch Car Inventory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        416
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MmkEFg1TuHDH32HZ",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "bc2d1fc0-f420-4ec7-9c3f-c91ca6a713ef",
+      "name": "Merge Template & Vehicles",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        848,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-sonnet-4-20250514"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{2000}}"
+            },
+            {
+              "name": "system",
+              "value": "={{ $json.system_prompt }}"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [{\"role\": \"user\", \"content\": $json.user_prompt}] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "65017b83-bc66-4d51-aa8e-e2dbcb884570",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        160
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "zeHBwJZlhd7vKOA9",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude Response - CLEAN & SIMPLE\n// Just extract the script and add it to existing data\n\n// Get Claude's response from the content array\nconst claudeResponse = $json.content[0].text;\n\nconsole.log('Raw Claude response:', claudeResponse.substring(0, 200) + '...');\n\n// Strip markdown formatting and clean up JSON\nlet cleanedResponse = claudeResponse\n  .replace(/```json\\n?/g, \"\")      // Remove ```json\n  .replace(/```\\n?/g, \"\")           // Remove closing ```\n  .replace(/,(\\s*[}\\]])/g, '$1')   // Remove trailing commas\n  .trim();\n\nconsole.log('Cleaned response:', cleanedResponse.substring(0, 200) + '...');\n\n// Parse the JSON\nlet parsedScript;\ntry {\n  parsedScript = JSON.parse(cleanedResponse);\n} catch (error) {\n  console.error('Failed to parse Claude response');\n  console.error('Cleaned response was:', cleanedResponse);\n  console.error('Parse error:', error.message);\n  throw new Error(`Claude returned invalid JSON: ${error.message}`);\n}\n\n// Validate that we got all required fields\nif (!parsedScript.hook || !parsedScript.cars || !parsedScript.cta) {\n  console.error('Missing fields in parsed script:', parsedScript);\n  throw new Error('Script missing required fields (hook, cars, or cta)');\n}\n\n// Validate car count matches\nif (parsedScript.cars.length !== $json.vehicles.length) {\n  console.error(`Car count mismatch: Expected ${$json.vehicles.length}, got ${parsedScript.cars.length}`);\n  throw new Error(`Script has ${parsedScript.cars.length} cars but we have ${$json.vehicles.length} vehicles`);\n}\n\nconsole.log('✓ Script parsed successfully');\nconsole.log(`  Hook: ${parsedScript.hook}`);\nconsole.log(`  Cars: ${parsedScript.cars.length}`);\nconsole.log(`  CTA: ${parsedScript.cta}`);\n\n// Add script_section to each vehicle\nconst vehicles = $json.vehicles.map((vehicle, index) => ({\n  ...vehicle,\n  script_section: parsedScript.cars[index]\n}));\n\n// Return everything with script added\nreturn [{\n  json: {\n    ...$json,  // ✅ Keep ALL existing fields (template_id, theme, avatar_id, etc.)\n    \n    // Add the parsed script\n    script: {\n      hook: parsedScript.hook,\n      cars: parsedScript.cars,  // ← Changed from car_descriptions\n      cta: parsedScript.cta,\n      full_script: parsedScript.full_script,\n      notes: parsedScript.notes\n    },\n    \n    // Update vehicles array with script sections\n    vehicles: vehicles\n  }\n}];"
+      },
+      "id": "1b62808b-b9e4-4059-a2f4-e7e2f9f2ecd5",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allInputs = $input.all();\n\nlet requestedVins = [];\nlet allVehicles = [];\nlet originalInput = null;\n\nfor (const item of allInputs) {\n  if (item.json.vins) {\n    requestedVins = item.json.vins;\n    originalInput = item.json;  // ← Save the original input\n  }\n  else if (item.json.vin) {\n    allVehicles.push(item);\n  }\n}\n\nconst matchedVehicles = [];\n\nfor (const item of allVehicles) {\n  const vehicle = item.json;\n  \n  if (vehicle.vin && requestedVins.includes(vehicle.vin)) {\n    matchedVehicles.push({\n      vin: vehicle.vin,\n      year: vehicle.year,\n      make: vehicle.make,\n      model: vehicle.model,\n      price: vehicle.price,\n      mileage: vehicle['mileage.value'] || vehicle.mileage,\n      image_url: vehicle.image_link || vehicle.url,\n      url: vehicle.url,\n      features: extractFeatures(vehicle)\n    });\n  }\n}\n\nfunction extractFeatures(vehicle) {\n  const features = [];\n  if (vehicle.transmission) features.push(vehicle.transmission);\n  if (vehicle.drivetrain) features.push(vehicle.drivetrain);\n  if (vehicle.exterior_color) features.push(vehicle.exterior_color);\n  return features.length > 0 ? features : [\"Clean Title\", \"Great Condition\"];\n}\n\nif (matchedVehicles.length === 0) {\n  throw new Error(`No vehicles found matching VINs: ${requestedVins.join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...originalInput,  // ← KEEP EVERYTHING from original input (including email!)\n    vehicles: matchedVehicles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        352
+      ],
+      "id": "247d9e40-0f31-402e-aed4-d52033eb8b5e",
+      "name": "Fetch car info from vins"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        400,
+        352
+      ],
+      "id": "0f4da1fc-a0d6-47fb-99d3-650c1655b058",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Template_ID",
+              "field2": "template_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        400,
+        112
+      ],
+      "id": "d6248ea8-82b2-4e89-806b-b1e8a949d1cf",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -272,
+        224
+      ],
+      "id": "319b54da-9000-4ffc-8f91-4521d5f372c9",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const vehicles = $json.vehicles ?? $json.cars ?? [];\nconst cars = vehicles.map(v => ({\n  vin: v.vin,\n  title: v.title ?? `${v.year} ${v.make} ${v.model}`.trim(),\n  price: v.price ?? v.list_price ?? null,\n  photo_url: v.photo_url ?? v.image_url ?? v.primary_photo ?? (v.photo_urls?.[0] ?? null)\n}));\n\nreturn [{\n  json: {\n    ...$json,\n    cars\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        640
+      ],
+      "id": "f6ee7928-1c9a-4ca8-858e-212b75741eff",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1744,
+        224
+      ],
+      "id": "ea0ac88c-b255-4e5b-8478-3b8a42e03f80",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get merged data\nconst items = $input.all();\nconsole.log('Merged items count:', items.length);\n\n// Find template and vehicles in merged data\nlet template = null;\nlet vehiclesData = null;\nlet originalInput = null;\n\nfor (const item of items) {\n  if (item.json.template_id) {\n    template = item.json;\n    originalInput = item.json._input;\n  }\n  if (item.json.vehicles) {\n    vehiclesData = item.json;\n  }\n}\n\nif (!template || !vehiclesData) {\n  throw new Error('Missing template or vehicle data');\n}\n\nconst vehicles = vehiclesData.vehicles;\n\nconsole.log('Template:', template.template_name);\nconsole.log('Vehicles:', vehicles.length);\n\nconst systemPrompt = `You are an expert used car advertising copywriter.\n\nYour job is to write compelling, high-energy scripts for TikTok/social media car ads.\n\nCRITICAL TEXT-TO-SPEECH FORMATTING RULES:\n- ALWAYS write out numbers as words (e.g., \"twenty-one thousand nine hundred ninety-five\" not \"$21,995\")\n- Write dollar amounts as words (e.g., \"thirty-four thousand dollars\" not \"$34K\" or \"$34,000\")\n- Write years as words (e.g., \"twenty twenty-four\" not \"2024\")\n- Write mileage as words (e.g., \"twenty-seven thousand miles\" not \"27K miles\")\n- Spell out abbreviations (e.g., \"all-wheel drive\" not \"AWD\")\n\nBRAND NAME PRONUNCIATIONS FOR TEXT-TO-SPEECH:\nReplace brand names with phonetic spellings:\n- Hyundai → \"Hun-day\"\n- Porsche → \"Por-shuh\"\n- Mazda → \"Moz-duh\"\n- Chevrolet → \"Shevra-lay\"\n- Volkswagen → \"Volks-wag-in\"\n- BMW → \"B M W\" (spell out with spaces)\n- GMC → \"G M C\" (spell out with spaces)\n- Mercedes-Benz → \"Mer-say-deez Benz\"\n\nIMPORTANT COMPLIANCE RULES:\n- NEVER promise financing approval\n- NEVER use phrases like \"guaranteed approval\" or \"anyone can get financed\"\n- Use qualified language like \"financing available for qualified buyers\"\n\nSCRIPT STRUCTURE:\n1. HOOK (3-8 seconds): Attention-grabbing opening that ties to the theme\n2. CARS: Present each vehicle separately with price first, then key features (10-15 seconds each)\n3. CTA (5-7 seconds): Include 2 of 3 contact methods (phone, address, website) + dealership name\n\nOUTPUT FORMAT (JSON):\n{\n  \"hook\": \"Opening hook (6-10 seconds)\",\n  \"cars\": [\n    \"First car description (10-15 seconds)\",\n    \"Second car description (10-15 seconds)\",\n    \"Third car description (10-15 seconds)\"\n  ],\n  \"cta\": \"Call to action (8-12 seconds)\",\n  \"full_script\": \"Complete script with all sections concatenated\",\n  \"notes\": \"Brief explanation of creative choices\"\n}\n\nCRITICAL: \n- The \"cars\" array MUST have exactly the same number of entries as vehicles provided\n- Each car gets its own separate string in the array - do NOT combine them\n- Keep each car description to 10-15 seconds of speech\n- Write full_script by concatenating: hook + all cars + cta`;\n\nconst userPrompt = `Generate a script for this car ad:\n\nPLATFORM: ${originalInput.platform}\nTHEME: ${originalInput.theme || 'none'}\n\nVEHICLES TO FEATURE (${vehicles.length} total):\n${vehicles.map((v, i) => `\n${i + 1}. ${v.year} ${v.make} ${v.model}\n   Price: $${v.price.toLocaleString()}\n   Mileage: ${v.mileage.toLocaleString()} miles\n   Features: ${v.features.join(', ')}`).join('\\n')}\n\nDEALERSHIP INFO:\n- Name: Capitol Car Credit\n- Phone: two one seven, eight nine three, eight two three two\n- Address: one twenty-five North Century Boulevard in Rantoul\n- Website: C C Rantoul dot com\n\nREQUIREMENTS:\n1. ALWAYS emphasize: PRICE, SELECTION, FINANCING\n2. MUST include at least 2 of: phone, address, or website in the CTA\n3. ${vehicles.length === 1 ? 'Spend more time on this single vehicle' : 'Keep each vehicle mention concise'}\n4. Hook should relate to the theme: \"${originalInput.theme || 'none'}\"\n\nCRITICAL OUTPUT FORMAT: \n{\n  \"hook\": \"Opening hook text here\",\n  \"cars\": [\n    \"First car description here\",\n    \"Second car description here\"\n    // Exactly ${vehicles.length} entries - one per vehicle\n  ],\n  \"cta\": \"Call to action text here\",\n  \"full_script\": \"hook + cars[0] + cars[1] + ... + cta concatenated\",\n  \"notes\": \"Your creative notes\"\n}\n\nThe \"cars\" array MUST have exactly ${vehicles.length} entries - one for each vehicle above, in order.\nEach car description should be no more than 15 seconds of speech.\nKeep each car description SEPARATE in the array - do NOT combine them into one string.`;\n\nreturn [{\n  json: {\n    // Keep everything from before\n    ...$json,\n    \n    // Add the full context for Claude\n    platform: originalInput.platform ?? $json.platform,\n    template_id: template.template_id ?? $json.template_id,\n    template_name: template.template_name ?? $json.template_name,\n    duration_seconds: template.duration_seconds ?? $json.duration_seconds,\n    theme: originalInput.theme ?? $json.theme,\n    email: originalInput.email ?? $json.email,\n    \n    // Pass vehicles through\n    vehicles: vehicles,\n    \n    // Claude prompts\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    \n    // Metadata\n    metadata: {\n      ...($json.metadata || {}),\n      platform: originalInput.platform ?? $json.platform,\n      template_id: template.template_id ?? $json.template_id,\n      theme: originalInput.theme ?? $json.theme,\n      vehicle_count: vehicles.length\n    }\n  }\n}];"
+      },
+      "id": "14d5d86d-9064-4923-b019-aefc41a4b367",
+      "name": "vi Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// UPDATED \"Build Claude Prompt\" Node Code\n// Improvements: Better price formatting for TTS\n\n// Get merged data\nconst items = $input.all();\nconsole.log('Merged items count:', items.length);\n\n// Find template and vehicles in merged data\nlet template = null;\nlet vehiclesData = null;\nlet originalInput = null;\n\nfor (const item of items) {\n  if (item.json.template_id) {\n    template = item.json;\n    originalInput = item.json._input;\n  }\n  if (item.json.vehicles) {\n    vehiclesData = item.json;\n  }\n}\n\nif (!template || !vehiclesData) {\n  throw new Error('Missing template or vehicle data');\n}\n\nconst vehicles = vehiclesData.vehicles;\n\nconsole.log('Template:', template.template_name);\nconsole.log('Vehicles:', vehicles.length);\n\nconst systemPrompt = `You are an expert TikTok car ad copywriter specializing in FAST, PUNCHY, scroll-stopping scripts.\n\nCRITICAL TEXT-TO-SPEECH FORMATTING:\n- Write numbers as words: \"twenty-one thousand\" not \"$21,000\"\n- Write years as words: \"twenty twenty-four\" not \"2024\"\n- Spell out abbreviations: \"all-wheel drive\" not \"AWD\"\n- DO NOT mention mileage - it's displayed on screen\n\nPRICE FORMATTING FOR NATURAL TTS:\nUnder $20,000:\n  - ALWAYS use \"Just\" before the price\n  - Examples: \"Just fourteen nine nine five\", \"Just seventeen thousand\"\n  \n$20,000 and above:\n  - ALWAYS include the word \"thousand\"\n  - Examples: \"Twenty-one thousand\", \"Fifty-four thousand nine ninety-five\"\n  - NEVER say \"twenty-one nine nine five\" (sounds confusing)\n\nBRAND NAME PRONUNCIATIONS:\n- Hyundai → \"Hun-die\"\n- Porsche → \"Por-shuh\"\n- Chevrolet → \"Shevra-lay\"\n- BMW → \"B M W\" (with spaces)\n- Mercedes-Benz → \"Mer-say-deez Benz\"\n\nCOMPLIANCE RULES:\n- NEVER promise financing approval\n- Use \"financing available for qualified buyers\"\n\nSCRIPT STRUCTURE FOR SCROLL-STOPPING ADS:\n1. HOOK (3-5 seconds): ONE punchy sentence that grabs attention\n2. CARS (4-5 seconds EACH): Price + ONE killer feature per car\n3. CTA (4-5 seconds): Dealership name + ONE contact method\n\nTIMING TARGETS:\n- Single car ad: 15-18 seconds total\n- Two car ad: 20-23 seconds total  \n- Three car ad: 24-27 seconds total\n\nSTYLE GUIDE:\n✅ SHORT sentences (5-8 words max)\n✅ ONE feature per car (the BEST one)\n✅ Fast-paced, energetic\n✅ Price FIRST for each car\n✅ Add \"Just\" before prices under $20K for context\n✅ ALWAYS say \"thousand\" for prices $20K and above\n❌ NO long descriptions\n❌ NO multiple features per car\n❌ NO mentioning mileage (it's on screen)\n\nOUTPUT FORMAT (JSON):\n{\n  \"hook\": \"One punchy sentence (3-5 seconds)\",\n  \"cars\": [\n    \"Price + one killer feature (4-5 seconds each)\"\n  ],\n  \"cta\": \"Dealership + contact (4-5 seconds)\",\n  \"full_script\": \"All sections concatenated\",\n  \"notes\": \"Brief creative notes\"\n}\n\nCRITICAL:\n- \"cars\" array MUST match number of vehicles provided\n- Each car = separate string in array\n- Keep it FAST and PUNCHY - no fluff!`;\n\nconst userPrompt = `Generate a FAST, PUNCHY script for this TikTok car ad:\n\nPLATFORM: ${originalInput.platform}\nTHEME: ${originalInput.theme || 'none'}\n\nVEHICLES (${vehicles.length} total):\n${vehicles.map((v, i) => {\n  // Parse price to determine formatting\n  let priceNum = parseFloat(String(v.price).replace(' USD', '').replace('USD', '').replace(/[^0-9.]/g, ''));\n  let priceFormatted = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n  \n  return `\n${i + 1}. ${v.year} ${v.make} ${v.model}\n   Price: ${priceFormatted} ${priceNum < 20000 ? '(Use: \"Just [price]\")' : '(Use: \"[price] thousand\")'}\n   TOP Features: ${v.features.slice(0, 3).join(', ')}\n   (Pick the BEST one only)`;\n}).join('\\n')}\n\nDEALERSHIP:\nCapitol Car Credit\nPhone: two one seven, eight nine three, eight two three two\nAddress: one twenty-five North Century Boulevard, Ran-tool\nWebsite: C C Ran-tool dot com\n\nREQUIREMENTS:\n1. Hook: ONE sentence related to theme \"${originalInput.theme || 'none'}\"\n2. Each car: Price + ONE best feature (4-5 seconds)\n3. CTA: Use transition phrase + dealership name + ONE contact method\n   - Transition phrases: \"Get it at\", \"Visit us at\", \"Head to\", \"Stop by\"\n   - Example: \"Get it at Capitol Car Credit in Ran-tool!\"\n4. DO NOT mention mileage (it's on screen)\n5. Target length: ${vehicles.length === 1 ? '15-18 seconds' : vehicles.length === 2 ? '20-23 seconds' : '24-27 seconds'}\n\nPRICE EXAMPLES (CRITICAL FOR TTS):\nUnder $20K (add \"Just\"):\n✅ \"Just fourteen nine nine five for this Jeep Compass with all-wheel drive!\"\n✅ \"Just seventeen thousand for this reliable Honda Accord!\"\n✅ \"Just twelve nine ninety-five for this sporty Civic!\"\n\n$20K-$30K (say \"thousand\"):\n✅ \"Twenty-one thousand for this Chrysler Voyager with automatic transmission!\"\n✅ \"Twenty-five thousand nine ninety-five for this stylish Camry!\"\n\n$30K+ (say \"thousand\"):\n✅ \"Fifty-four thousand nine ninety-five for this Genesis with luxurious leather!\"\n✅ \"Thirty-four thousand for this loaded Suburban!\"\n\nBAD (confusing for TTS):\n❌ \"Twenty-one nine nine five for this Chrysler...\" (no context, sounds weird)\n❌ \"Seventeen nine ninety-five\" (under $20K needs \"Just\")\n❌ \"$21,195\" or \"21-thousand-195\" (write it out naturally)\n\nCTA EXAMPLES (with transition phrases):\n✅ \"Get it at Capitol Car Credit in Ran-tool - call two one seven, eight nine three, eight two three two!\"\n✅ \"Visit us at Capitol Car Credit on C C Ran-tool dot com!\"\n✅ \"Head to Capitol Car Credit in Ran-tool today!\"\n✅ \"Stop by one twenty-five North Century Boulevard in Ran-tool!\"\n\nOUTPUT AS JSON:\n{\n  \"hook\": \"ONE punchy sentence here\",\n  \"cars\": [\n    ${vehicles.map((v, i) => `\"${v.year} ${v.make} description (4-5 sec)\"`).join(',\\n    ')}\n  ],\n  \"cta\": \"Call to action here\",\n  \"full_script\": \"hook + all cars + cta\",\n  \"notes\": \"Your notes\"\n}\n\nRemember: FAST, PUNCHY, ONE feature per car, NO mileage, PROPER price formatting!`;\n\nreturn [{\n  json: {\n    // Keep everything from before\n    ...$json,\n    \n    // Add the full context for Claude\n    platform: originalInput.platform ?? $json.platform,\n    template_id: template.template_id ?? $json.template_id,\n    template_name: template.template_name ?? $json.template_name,\n    duration_seconds: template.duration_seconds ?? $json.duration_seconds,\n    theme: originalInput.theme ?? $json.theme,\n    email: originalInput.email ?? $json.email,\n    \n    // Pass vehicles through\n    vehicles: vehicles,\n    \n    // Claude prompts\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    \n    // Metadata\n    metadata: {\n      ...($json.metadata || {}),\n      platform: originalInput.platform ?? $json.platform,\n      template_id: template.template_id ?? $json.template_id,\n      theme: originalInput.theme ?? $json.theme,\n      vehicle_count: vehicles.length\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        592
+      ],
+      "id": "fe9a8855-6d7e-4152-bec3-f0f969abfef6",
+      "name": "v2 Build Claude Prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "// UPDATED Build Claude Prompt Node Code\n// Improvements: Better price formatting for TTS + Demographic-focused feature filtering\n\n// Get merged data\nconst items = $input.all();\nconsole.log('Merged items count:', items.length);\n\n// Find template and vehicles in merged data\nlet template = null;\nlet vehiclesData = null;\nlet originalInput = null;\n\nfor (const item of items) {\n  if (item.json.template_id) {\n    template = item.json;\n    originalInput = item.json._input;\n  }\n  if (item.json.vehicles) {\n    vehiclesData = item.json;\n  }\n}\n\nif (!template || !vehiclesData) {\n  throw new Error('Missing template or vehicle data');\n}\n\nlet vehicles = vehiclesData.vehicles;\n\nconsole.log('Template:', template.template_name);\nconsole.log('Vehicles before processing:', vehicles.length);\n\n// ========================================\n// FEATURE FILTERING & VALUE-ADD\n// ========================================\n\n// Features to filter out (too basic/expected)\nconst boringFeatures = [\n  'automatic', 'automatic transmission',\n  'power windows', 'power locks', 'power window', 'power lock',\n  'a/c', 'air conditioning', 'air conditioner',\n  'cruise control', // basic cruise only\n  'bluetooth', // expected on modern cars\n  'backup camera', 'rear camera', // required by law since 2018\n  'cd player', 'aux input', // outdated\n  'usb', 'usb port' // everyone has this\n];\n\n// Add value-based features\nfunction addValueFeatures(vehicle) {\n  const features = [...(vehicle.features || [])];\n  const mileage = parseInt(vehicle.mileage) || 0;\n  const year = parseInt(vehicle.year) || 2020;\n  const age = 2025 - year;\n  \n  // Low mileage callout (relative to age)\n  const expectedMileage = age * 12000; // Average 12k miles/year\n  if (mileage > 0 && mileage < expectedMileage * 0.6) {\n    features.unshift('Low Mileage'); // Put first!\n    console.log(`✓ ${vehicle.year} ${vehicle.make}: Added LOW MILEAGE (${mileage} vs expected ${expectedMileage})`);\n  }\n  \n  // Reliability for known brands\n  const reliableBrands = ['toyota', 'honda', 'mazda', 'subaru', 'lexus'];\n  if (reliableBrands.includes(vehicle.make.toLowerCase())) {\n    features.push('Reliable Brand');\n    console.log(`✓ ${vehicle.make}: Added RELIABLE BRAND`);\n  }\n  \n  return features;\n}\n\n// Process all vehicles\nvehicles = vehicles.map(vehicle => {\n  let features = addValueFeatures(vehicle);\n  \n  // Filter out boring features\n  const originalCount = features.length;\n  features = features.filter(feature => {\n    const lower = feature.toLowerCase();\n    return !boringFeatures.some(boring => lower.includes(boring));\n  });\n  \n  const removedCount = originalCount - features.length;\n  if (removedCount > 0) {\n    console.log(`✓ ${vehicle.year} ${vehicle.make}: Removed ${removedCount} boring features`);\n  }\n  \n  return {\n    ...vehicle,\n    features: features.length > 0 ? features : ['Great Condition'] // fallback\n  };\n});\n\nconsole.log('Vehicles after feature processing:', vehicles.length);\n\n// Build the full prompt\nconst systemPrompt = `You are an expert TikTok car ad copywriter for Capitol Car Credit, a dealership in Rantoul, Illinois.\n\nTARGET AUDIENCE: First-time buyers, young professionals (18-30), and credit-challenged buyers\n\nPRICE FORMATTING FOR NATURAL TTS:\nUnder $20,000:\n  - ALWAYS use \"Just\" before the price\n  - Examples: \"Just fourteen nine nine five\", \"Just seventeen thousand\"\n  \n$20,000 and above:\n  - ALWAYS include the word \"thousand\"\n  - Examples: \"Twenty-one thousand\", \"Fifty-four thousand nine ninety-five\"\n  - NEVER say \"twenty-one nine nine five\" (sounds confusing)\n\nFEATURE SELECTION PRIORITY (for our demographic):\nTIER 1 - VALUE & AFFORDABILITY (mention these first if available):\n  - Low Mileage: \"Only XX thousand miles\" or \"Just XX thousand miles\"\n  - Great Gas Mileage: \"Great gas mileage\" or \"Save at the pump\"\n  - Reliable Brand: \"Reliable [Toyota/Honda/etc]\"\n\nTIER 2 - PRACTICAL SAFETY & CAPABILITY (second choice):\n  - All-Wheel Drive (AWD) / Four-Wheel Drive (4WD) / 4X4: \"All-wheel drive\" or \"Four-wheel drive\" (great for Illinois winters!)\n  - IMPORTANT: 4X2 = 2WD (NOT a selling point, do not mention)\n  - IMPORTANT: 4X4 = 4WD (YES, mention this as all-wheel drive or four-wheel drive)\n  - Modern Safety: Blind spot monitor, lane assist, collision warning\n  \nTIER 3 - PRACTICAL LIFESTYLE (third choice):\n  - Third row seating (for families)\n  - Apple CarPlay / Android Auto (young buyers love this)\n  - Spacious cargo area\n  \nTIER 4 - COMFORT (bonus only):\n  - Heated seats, sunroof, leather\n\nPick the HIGHEST tier feature available for each vehicle.\n\nBRAND PRONUNCIATIONS (CRITICAL):\n- Hyundai → \"Hunday\" (NEVER \"High-un-die\")\n- Nissan → \"Niece-on\" (NEVER \"Niss-an\")\n- Acura → \"Ack-you-rah\"\n- Chevrolet → \"Shevra-lay\"\n- Mazda → \"Moz-duh\"\n\nLEGAL COMPLIANCE:\n❌ NEVER SAY: \"Guaranteed approval\", \"Anyone can get financed\", \"Bad credit? No problem!\"\n✅ INSTEAD USE: \"Financing available for qualified buyers\", \"Talk to us about financing options\"\n\nDEALERSHIP INFO:\nCapitol Car Credit\n125 North Century Boulevard, Rantoul, Illinois 61866\nPhone: (217) 893-8232\n\nFOR TEXT-TO-SPEECH:\n- Address: \"one twenty-five North Century Boulevard, Ran-tool\"\n- Phone: \"two one seven, eight nine three, eight two three two\"\n\nCALL TO ACTION RULES:\n- Include ONE contact method (phone OR address OR website)\n- Natural transition: \"Get it at\", \"Visit us\", \"Stop by\", \"Call us\"\n- Mention financing when natural (strongly encouraged)\n\nSTYLE:\n- Fast, punchy, scroll-stopping\n- Short sentences (5-8 words max)\n- ONE feature per car (the BEST one)\n- Price FIRST for each car\n- Different features for each car (no repetition!)\n\nOUTPUT FORMAT (JSON ONLY):\n{\n  \"hook\": \"Opening sentence (3-5 seconds)\",\n  \"cars\": [\"Car 1 description\", \"Car 2 description\", ...],\n  \"cta\": \"Call to action (4-5 seconds)\",\n  \"full_script\": \"hook + cars + cta + [pause 1 second]\",\n  \"notes\": \"Brief notes\"\n}`;\n\nconst userPrompt = `Generate a FAST, PUNCHY script for this TikTok car ad:\n\nPLATFORM: ${originalInput.platform}\nTHEME: ${originalInput.theme || 'none'}\n\nVEHICLES (${vehicles.length} total):\n${vehicles.map((v, i) => {\n  let priceNum = parseFloat(String(v.price).replace(' USD', '').replace('USD', '').replace(/[^0-9.]/g, ''));\n  let priceFormatted = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n  \n  return `\n${i + 1}. ${v.year} ${v.make} ${v.model}\n   Price: ${priceFormatted} ${priceNum < 20000 ? '(Use: \"Just [price]\")' : '(Use: \"[price] thousand\")'}\n   TOP Features: ${v.features.slice(0, 3).join(', ')}\n   (Pick the BEST one only)`;\n}).join('\\n')}\n\nREQUIREMENTS:\n1. Hook: ONE sentence related to theme \"${originalInput.theme || 'none'}\"\n2. Each car: Price + ONE best feature (4-5 seconds each)\n3. CTA: Transition + dealership + ONE contact + financing mention\n4. Use DIFFERENT features for each car\n5. END with \"[pause 1 second]\"\n\nOUTPUT AS JSON:\n{\n  \"hook\": \"ONE punchy sentence here\",\n  \"cars\": [\n    ${vehicles.map((v, i) => `\"${v.year} ${v.make} description (4-5 sec)\"`).join(',\\n    ')}\n  ],\n  \"cta\": \"Call to action here\",\n  \"full_script\": \"Complete script with [pause 1 second] at end\",\n  \"notes\": \"Your notes\"\n}`;\n\nreturn [{\n  json: {\n    ...$json,\n    platform: originalInput.platform ?? $json.platform,\n    template_id: template.template_id ?? $json.template_id,\n    template_name: template.template_name ?? $json.template_name,\n    duration_seconds: template.duration_seconds ?? $json.duration_seconds,\n    theme: originalInput.theme ?? $json.theme,\n    email: originalInput.email ?? $json.email,\n    vehicles: vehicles,\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    metadata: {\n      ...($json.metadata || {}),\n      platform: originalInput.platform ?? $json.platform,\n      template_id: template.template_id ?? $json.template_id,\n      theme: originalInput.theme ?? $json.theme,\n      vehicle_count: vehicles.length\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        224
+      ],
+      "id": "0f3d971f-9584-41b0-8841-82273828a373",
+      "name": "Build Claude Prompt"
+    }
+  ],
+  "connections": {
+    "Parse & Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Fetch Template Specs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Car Inventory",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch Template Specs": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Car Inventory": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Process Template Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Template & Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Template & Vehicles": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        []
+      ]
+    },
+    "Fetch car info from vins": {
+      "main": [
+        [
+          {
+            "node": "Merge Template & Vehicles",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Fetch car info from vins",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Process Template Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        []
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "vi Build Claude Prompt": {
+      "main": [
+        []
+      ]
+    },
+    "v2 Build Claude Prompt": {
+      "main": [
+        []
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "e598dac3-60cb-4974-8963-39ab1af97416",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-06T13:34:22.185Z",
+      "createdAt": "2025-10-06T13:34:22.185Z",
+      "role": "workflow:owner",
+      "workflowId": "YqpoyQmbszh6dlXA",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-10-25T13:07:25.750Z",
+      "createdAt": "2025-10-25T13:07:25.750Z",
+      "id": "9Q3iOPtGOC35RWTa",
+      "name": "ARCHIVED"
+    }
+  ]
+}
