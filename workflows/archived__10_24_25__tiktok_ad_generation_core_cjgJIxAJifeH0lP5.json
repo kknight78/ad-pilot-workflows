@@ -1,0 +1,650 @@
+{
+  "updatedAt": "2025-10-27T17:15:33.000Z",
+  "createdAt": "2025-09-22T14:03:48.851Z",
+  "id": "cjgJIxAJifeH0lP5",
+  "name": "ARCHIVED (10/24/25) TikTok Ad Generation Core",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -352,
+        -80
+      ],
+      "id": "4426e2f1-f896-4d12-8cf1-d27a14dfca9d",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "\n  {\n    \"platform\": \"TikTok\",\n    \"theme\": \"Taco tuesday\",\n    \"email\": \"kelly@kellyrae.net\",\n    \"avatar_id\": \"229bfc03d4d24d5ab7a5c71ce4b10d4b\",\n    \"template_id\": \"TEMP_001\",\n    \"template_name\": \"3-Car-Showcase-Vertical\",\n    \"duration_seconds\": 35,\n    \"aspect_ratio\": \"9:16\",\n    \"vehicles\": [\n      {\n        \"vin\": \"5NMMCDTC2RH002982\",\n        \"year\": \"2024\",\n        \"make\": \"Genesis\",\n        \"model\": \"GV70\",\n        \"price\": \"54995 USD\",\n        \"mileage\": \"18372\",\n        \"photo_url\": \"https://imageserver.promaxinventory.com/9199/image/e1d57e33df6986f728ce14929f3ab5e2.jpg\",\n        \"features\": [\n          \"Automatic\",\n          \"AWD\",\n          \"SILVER\"\n        ],\n        \"start_time\": 9,\n        \"end_time\": 15,\n        \"text_overlay\": \"2024 Genesis GV70 - $54,995\"\n      },\n      {\n        \"vin\": \"2GNAXMEV7J6308097\",\n        \"year\": \"2018\",\n        \"make\": \"Chevrolet\",\n        \"model\": \"Equinox\",\n        \"price\": \"14995 USD\",\n        \"mileage\": \"84154\",\n        \"photo_url\": \"https://imageserver.promaxinventory.com/9199/image/13fb610e013bf518d19240ac09ee42f6.jpg\",\n        \"features\": [\n          \"Automatic\",\n          \"FWD\",\n          \"WHITE\"\n        ],\n        \"start_time\": 16,\n        \"end_time\": 22,\n        \"text_overlay\": \"2018 Chevrolet Equinox - $14,995\"\n      },\n      {\n        \"vin\": \"5N1AT2MVXJC829070\",\n        \"year\": \"2018\",\n        \"make\": \"Nissan\",\n        \"model\": \"Rogue\",\n        \"price\": \"14995 USD\",\n        \"mileage\": \"79095\",\n        \"photo_url\": \"https://imageserver.promaxinventory.com/9199/image/bbbd92132680f7b2fe12b37cb79da63c.jpg\",\n        \"features\": [\n          \"Automatic\",\n          \"AWD\",\n          \"BLUE\"\n        ],\n        \"start_time\": 23,\n        \"end_time\": 29,\n        \"text_overlay\": \"2018 Nissan Rogue AWD - $14,995\"\n      }\n    ],\n    \"script\": {\n      \"hook\": \"Taco Tuesday just got even better at Capitol Car Credit!\",\n      \"body\": \"While you're enjoying those tacos, feast your eyes on these incredible deals! First up, this stunning twenty twenty-four Genesis G V Seventy with only eighteen thousand three hundred seventy-two miles for just fifty-four thousand nine hundred ninety-five dollars! Next, this reliable twenty eighteen Shevra-lay Equinox with eighty-four thousand miles priced at only fourteen thousand nine hundred ninety-five dollars! And finally, this versatile twenty eighteen Nissan Rogue with all-wheel drive and seventy-nine thousand miles for just fourteen thousand nine hundred ninety-five dollars! With our unbeatable prices, huge selection, and financing available for qualified buyers, Capitol Car Credit has the perfect ride waiting for you!\",\n      \"cta\": \"Visit us at one twenty-five North Century Boulevard in Rantoul or call two one seven eight nine three eight two three two today!\",\n      \"full_script\": \"Taco Tuesday just got even better at Capitol Car Credit! While you're enjoying those tacos, feast your eyes on these incredible deals! First up, this stunning twenty twenty-four Genesis G V Seventy with only eighteen thousand three hundred seventy-two miles for just fifty-four thousand nine hundred ninety-five dollars! Next, this reliable twenty eighteen Shevra-lay Equinox with eighty-four thousand miles priced at only fourteen thousand nine hundred ninety-five dollars! And finally, this versatile twenty eighteen Nissan Rogue with all-wheel drive and seventy-nine thousand miles for just fourteen thousand nine hundred ninety-five dollars! With our unbeatable prices, huge selection, and financing available for qualified buyers, Capitol Car Credit has the perfect ride waiting for you! Visit us at one twenty-five North Century Boulevard in Rantoul or call two one seven eight nine three eight two three two today!\",\n      \"estimated_duration\": 35\n    },\n    \"media\": {\n      \"music_url\": null,\n      \"background_video_url\": null,\n      \"background_image_url\": null,\n      \"theme_overlay_url\": null,\n      \"logo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/v1759260627/logo_small_334x179.jpg\"\n    },\n    \"creatomate_config\": {\n      \"car_timings\": [\n        {\n          \"vin\": \"5NMMCDTC2RH002982\",\n          \"start_time\": 9,\n          \"end_time\": 15,\n          \"text_overlay\": \"2024 Genesis GV70 - $54,995\"\n        },\n        {\n          \"vin\": \"2GNAXMEV7J6308097\",\n          \"start_time\": 16,\n          \"end_time\": 22,\n          \"text_overlay\": \"2018 Chevrolet Equinox - $14,995\"\n        },\n        {\n          \"vin\": \"5N1AT2MVXJC829070\",\n          \"start_time\": 23,\n          \"end_time\": 29,\n          \"text_overlay\": \"2018 Nissan Rogue AWD - $14,995\"\n        }\n      ],\n      \"duration\": 35\n    },\n    \"outputs\": {\n      \"avatar_video_url\": \"https://files2.heygen.ai/aws_pacific/avatar_tmp/9d1d4cfe12b842308662754fabe57f18/28bea2f1d99d4aeeb250924372aa741b.mp4?Expires=1761049667&Signature=jGhHhikNbdTVvVRz0shRGTKRupfAvvB-8Qlr2LlA985otJlPVJrQi5c4oHpRis~vcnJ6t2hIxnqnt4bFn9jiyHtz088UkwXopbXBALKlLPO6-iDeqiAeFVd76JJ7Y5jOYzOkwY97HgmLu-IpLT9htsQP4Ltpnycp0ZBwGrYiVJpbkqrzszA5FlV4R4wLfRel0McBW-olzh9nfv~9oZM17UouQxlJSAr~RlmUkVgUOLTFBE-gHc1GRLxK3XIRWXmsfQ1AAkN7EURJwBhFxg1aBCQXDHeE4n14nffMBArfFWd1BAtTOf7RVpPSGczWtFrJ6o-EyDORQ1IYYcdCM2QcrQ__&Key-Pair-Id=K38HBHX5LX3X2H\",\n      \"creatomate_video_url\": null,\n      \"final_video_url\": null,\n      \"audio_url\": \"https://res.cloudinary.com/dtpqxuwby/video/upload/v1760444294/hri2lkvjhedtw2qcu4sp.mp3\",\n      \"audio_cloudinary_id\": \"hri2lkvjhedtw2qcu4sp\",\n      \"avatar_duration\": 53.6816\n    },\n    \"_claude_notes\": \"Hook emphasizes the Taco Tuesday theme with enthusiasm (0-4 seconds). Each vehicle gets 6 seconds of screen time as mentioned in script, starting with the premium Genesis, then the two value-priced vehicles. Final 6 seconds focus on dealership contact info. Script emphasizes PRICE first for each vehicle, then highlights the dealership's selection and financing options. Used phonetic 'Shevra-lay' for Chevrolet and 'G V Seventy' for GV70 to ensure proper text-to-speech pronunciation.\",\n    \"\": \"\",\n    \"audio_url\": \"https://res.cloudinary.com/dtpqxuwby/video/upload/v1760444294/hri2lkvjhedtw2qcu4sp.mp3\",\n    \"audio_cloudinary_id\": \"hri2lkvjhedtw2qcu4sp\",\n    \"video_url\": \"https://files2.heygen.ai/aws_pacific/avatar_tmp/9d1d4cfe12b842308662754fabe57f18/28bea2f1d99d4aeeb250924372aa741b.mp4?Expires=1761049667&Signature=jGhHhikNbdTVvVRz0shRGTKRupfAvvB-8Qlr2LlA985otJlPVJrQi5c4oHpRis~vcnJ6t2hIxnqnt4bFn9jiyHtz088UkwXopbXBALKlLPO6-iDeqiAeFVd76JJ7Y5jOYzOkwY97HgmLu-IpLT9htsQP4Ltpnycp0ZBwGrYiVJpbkqrzszA5FlV4R4wLfRel0McBW-olzh9nfv~9oZM17UouQxlJSAr~RlmUkVgUOLTFBE-gHc1GRLxK3XIRWXmsfQ1AAkN7EURJwBhFxg1aBCQXDHeE4n14nffMBArfFWd1BAtTOf7RVpPSGczWtFrJ6o-EyDORQ1IYYcdCM2QcrQ__&Key-Pair-Id=K38HBHX5LX3X2H\",\n    \"heygen_video_url\": \"https://files2.heygen.ai/aws_pacific/avatar_tmp/9d1d4cfe12b842308662754fabe57f18/28bea2f1d99d4aeeb250924372aa741b.mp4?Expires=1761049667&Signature=jGhHhikNbdTVvVRz0shRGTKRupfAvvB-8Qlr2LlA985otJlPVJrQi5c4oHpRis~vcnJ6t2hIxnqnt4bFn9jiyHtz088UkwXopbXBALKlLPO6-iDeqiAeFVd76JJ7Y5jOYzOkwY97HgmLu-IpLT9htsQP4Ltpnycp0ZBwGrYiVJpbkqrzszA5FlV4R4wLfRel0McBW-olzh9nfv~9oZM17UouQxlJSAr~RlmUkVgUOLTFBE-gHc1GRLxK3XIRWXmsfQ1AAkN7EURJwBhFxg1aBCQXDHeE4n14nffMBArfFWd1BAtTOf7RVpPSGczWtFrJ6o-EyDORQ1IYYcdCM2QcrQ__&Key-Pair-Id=K38HBHX5LX3X2H\",\n    \"duration\": 53.6816,\n    \"video_duration\": 53.6816\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        -80
+      ],
+      "id": "a28aca36-0e47-440f-9cd1-ed74a7896e7e",
+      "name": "Testing stubs",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the videoConfig\nconst config = $json;\nconst vehicles = config.vehicles || [];\n\nif (vehicles.length === 0) {\n  throw new Error('No vehicles in videoConfig');\n}\n\nconsole.log(`Processing ${vehicles.length} vehicles`);\n\nconst cachedVehicles = [];\nconst needsProcessing = [];\n\nfor (const vehicle of vehicles) {\n  const vin = vehicle.vin;\n  \n  if (!vin) {\n    console.log('Vehicle missing VIN, using original');\n    cachedVehicles.push(vehicle);\n    continue;\n  }\n  \n  // Check if bg-removed image exists\n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`✓ VIN ${vin}: Found in cache`);\n      vehicle.photo_url = bgRemovedUrl; // ← Update the photo_url directly!\n      cachedVehicles.push(vehicle);\n      continue;\n    }\n  } catch (error) {\n    // Not in cache\n  }\n  \n  console.log(`→ VIN ${vin}: Needs processing`);\n  needsProcessing.push(vehicle);\n}\n\nconsole.log(`Summary: ${cachedVehicles.length} cached, ${needsProcessing.length} need processing`);\n\n// Return single item with arrays\nreturn [{\n  json: {\n    ...config,\n    vehicles: vehicles, // ← Now has updated URLs for cached vehicles\n    vehiclesToProcess: needsProcessing,\n    cachedVehicles: cachedVehicles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        -80
+      ],
+      "id": "55068f35-81ec-4001-b905-88373504f8fe",
+      "name": "Process All Vehicles"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.remove.bg/v1.0/removebg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "72rkEtm8QRzFpqEmjL42o89z"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"image_url\": \"{{ $json.photo_url || $json.image_url }}\",\n  \"size\": \"auto\",\n  \"format\": \"png\",\n  \"crop\": true,\n  \"crop_margin\": \"10%\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        -224
+      ],
+      "id": "e2fff6be-8e52-41be-ab0e-cb1ab13f2434",
+      "name": "removebg"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.vin }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1216,
+        -224
+      ],
+      "id": "09268698-abf4-48c5-987c-754f65ea7734",
+      "name": "upload to cloudinary"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items coming into aggregate\nconst allItems = $input.all();\n\n// Get base config from Process All Vehicles\nconst baseConfig = $('Process All Vehicles').first().json;\nconst cachedVehicles = baseConfig.cachedVehicles || [];\nconst originalVehicles = baseConfig.vehicles || [];\n\nconsole.log(`Aggregate: Processing ${allItems.length} items`);\n\n// Process items from removebg/cloudinary flow\nconst processedVehicles = allItems\n  .filter(item => item.json.vin && item.json.secure_url)\n  .map(item => {\n    console.log(`✓ Processing ${item.json.vin} with Cloudinary URL`);\n    return {\n      ...item.json,  // ← Keep everything from original\n      photo_url: item.json.secure_url  // Just override photo_url\n    };\n  });\n\n// Create lookup maps by VIN\nconst processedByVin = {};\nprocessedVehicles.forEach(v => {\n  processedByVin[v.vin] = v;\n});\n\nconst cachedByVin = {};\ncachedVehicles.forEach(v => {\n  cachedByVin[v.vin] = v;\n});\n\n// Rebuild vehicles array in ORIGINAL order\nconst finalVehicles = originalVehicles.map(originalVehicle => {\n  const vin = originalVehicle.vin;\n  \n  // Use processed or cached version if available, otherwise original\n  return processedByVin[vin] || cachedByVin[vin] || originalVehicle;\n});\n\nconsole.log(`✓ Total: ${finalVehicles.length} vehicles in correct order`);\n\n// Clean config\nconst { vehiclesToProcess, cachedVehicles: _, ...cleanConfig } = baseConfig;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    vehicles: finalVehicles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -208
+      ],
+      "id": "3e5416f9-f90d-4338-8fa7-42f1b6f821c7",
+      "name": "aggregate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "78c8847d-ded2-428b-b6d2-8b59e006a8aa",
+              "leftValue": "={{ $json.vehiclesToProcess.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        -80
+      ],
+      "id": "1c8e6dbb-4a8b-468a-9363-1e72f17dab69",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const vehiclesToProcess = $json.vehiclesToProcess || [];\n\nreturn vehiclesToProcess.map(vehicle => ({\n  json: vehicle\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        -160
+      ],
+      "id": "a064c88e-3bb2-427e-bfd4-3dc46738d1d7",
+      "name": "send only vehicles to process"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Get the VIN from your JSON data\nconst vin = $json.vin;\n\n// Rename the binary file if it exists\nif ($binary.data) {\n  $binary.data.fileName = `${vin}.png`;\n}\n\n// Return everything - preserve ALL your JSON data\nreturn {\n  json: $json,  // This keeps ALL your fields intact\n  binary: $binary\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        -224
+      ],
+      "id": "ce6d9270-9794-4233-85e1-0469ccab7580",
+      "name": "rename binary"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst config = $('aggregate after merge').first().json;\n\nconst videoUrl = response.url;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,\n    outputs: {\n      ...(config.outputs || {}),\n      final_video_url: videoUrl,\n      creatomate_render_id: response.id\n    },\n    ok: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3232,
+        -208
+      ],
+      "id": "6846ee27-9793-4476-aee4-75c37512b318",
+      "name": "Extract video url"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.creatomate }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        -80
+      ],
+      "id": "7ed50609-223d-410c-bd04-d4be77707870",
+      "name": "Start Creatomate Render"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3232,
+        16
+      ],
+      "id": "150c1d62-7534-4857-b163-5b7816a700cf",
+      "name": "Wait for Render",
+      "webhookId": "4550ce70-b8ae-4563-bb71-e805cf1b0528"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.creatomate.com/v1/renders/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2784,
+        -80
+      ],
+      "id": "84834826-7cea-46de-a62f-d1c3419754a3",
+      "name": "Check Creatomate Status"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template_id }}",
+                    "rightValue": "TEMP_001",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "2d4d2e14-2180-4c16-a0b7-6d0967ef9e9c"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TEMP_001"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8d22ed5a-dbb7-4694-b7c7-b08c95f7e6d2",
+                    "leftValue": "={{ $json.template_id }}",
+                    "rightValue": "TEMP_002",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TEMP_002"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        2112,
+        -80
+      ],
+      "id": "91ec5f3c-096e-4ba5-b0e1-5657549045c0",
+      "name": "Switch on template"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build TEMP_001 JSON - FINAL VERSION\n// Supports 1-5 cars, optional theme animation, proper chroma_key naming\n\nconst config = $json;\n\nconst avatarUrl = $input.first().json.outputs.avatar_video_url || config.avatar_video_url;\nconst avatarDuration = $input.first().json.outputs.avatar_duration || config.duration || 12;\nconst vehicles = $input.first().json.vehicles || config.vehicles || [];\nconst musicUrl = config.media?.music_url || \"https://res.cloudinary.com/dtpqxuwby/video/upload/v1760406868/uWu_Victory_-_Rod_Kim_dxpl7z.mp3\";\nconst chromakeyColor = config.chromakey_color || \"#89be5a\";\nconst chromakeySensitivity = config.chromakey_sensitivity || 22;\n\n// Theme animation (optional)\nconst hasTheme = config.theme && config.theme.trim() !== '' && config.theme !== 'none';\nconst includeAnimation = $input.first().json._input.body.include_animation || false;\nconst themeAnimationUrl = config.theme_animation_url || null;\n\nif (!avatarUrl) throw new Error('Missing avatar video URL');\nif (vehicles.length === 0) throw new Error('No vehicles in config');\nif (vehicles.length > 5) throw new Error('Maximum 5 vehicles allowed');\n\nconsole.log(`Building Creatomate TEMP_001 for ${vehicles.length} vehicles`);\nconsole.log(`Has theme: ${hasTheme}`);\nconsole.log(`Include animation: ${includeAnimation}`);\nconsole.log(`Animation URL: ${themeAnimationUrl}`);\nconsole.log(`Avatar duration: ${avatarDuration}s`);\n\n// Animation only shows if ALL conditions met\nconst showAnimation = false;\n  //hasTheme && includeAnimation && themeAnimationUrl !== null;\nconst TIME_OFFSET = showAnimation ? 2.25 : 0;\n\nconsole.log(`Show animation: ${showAnimation}`);\nconsole.log(`Time offset: ${TIME_OFFSET}s`);\n\n// Get hook duration from audio sections\nconst hookSection = config._section_timings?.find(t => t.section_name === 'hook');\nconst hookDuration = hookSection ? hookSection.duration : 5;\n\n// Contact-Info-intro spans hook + any animation time\nconst contactInfoIntroDuration = hookDuration;\n\nconsole.log(`Hook duration: ${hookDuration}s`);\nconsole.log(`Contact-Info-intro duration: ${contactInfoIntroDuration}s`);\n\n// Calculate contact info outro timing\nconst lastCar = vehicles[vehicles.length - 1];\nconst lastCarEndTime = lastCar.end_time || (lastCar.start_time + 7);\nconst contactOutroStart = lastCarEndTime + TIME_OFFSET;\n\nconsole.log(`Contact outro starts at: ${contactOutroStart}s`);\n\n// Build base modifications\nconst modifications = {\n  \"background-music.source\": musicUrl,\n  \"Avatar-video.source\": avatarUrl,\n  \"Avatar-video.time\": TIME_OFFSET,  // Start at 0 or 2.25s\n  \"Avatar-video.chroma_key_color\": chromakeyColor,  // underscore!\n  \"Avatar-video.chroma_key_sensitivity\": chromakeySensitivity,  // underscore!\n  \"Contact-Info-intro.time\": TIME_OFFSET,\n  \"Contact-Info-intro.duration\": contactInfoIntroDuration,\n  \"Contact-Info-outro.time\": contactOutroStart,\n  \"duration\": avatarDuration + TIME_OFFSET,\n  \n  // Theme animation - only visible if user wants it\n  \"theme-animation.visible\": showAnimation,\n  \"theme-animation.source\": themeAnimationUrl || \"\",\n  //\"theme-text.visible\": showAnimation,\n  //\"theme-text.text\": config.theme || \"\"\n};\n\nconsole.log(`Theme animation visible: ${showAnimation}`);\n\n// Add car modifications\nvehicles.forEach((vehicle, index) => {\n  const carNum = index + 1;\n  const duration = (vehicle.end_time || 0) - (vehicle.start_time || 0);\n  \n  let priceText = vehicle.price;\n  if (typeof priceText === 'string' && priceText.includes('USD')) {\n    priceText = priceText.replace(' USD', '').replace('USD', '');\n    const priceNum = parseFloat(priceText);\n    if (!isNaN(priceNum)) {\n      priceText = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n    }\n  } else if (typeof priceText === 'number') {\n    priceText = '$' + priceText.toLocaleString('en-US', {maximumFractionDigits: 0});\n  }\n  \n  // Format mileage with comma\n  const mileageText = Number(vehicle.mileage || 0).toLocaleString('en-US') + ' mi';\n  \n  const title = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;\n  \n  modifications[`Car${carNum}.time`] = vehicle.start_time + TIME_OFFSET;\n  modifications[`Car${carNum}.duration`] = duration;\n  modifications[`car-${carNum}.source`] = vehicle.photo_url;\n  modifications[`car-${carNum}-price.text`] = priceText;\n  modifications[`car-${carNum}-title.text`] = title;\n  modifications[`car-${carNum}-mileage.text`] = mileageText;\n  \n  console.log(`Car ${carNum}: ${title} at ${vehicle.start_time + TIME_OFFSET}s for ${duration}s`);\n});\n\n// Hide unused car slots (template now supports 5 cars!)\nconst maxCars = 5;\nfor (let i = vehicles.length + 1; i <= maxCars; i++) {\n  console.log(`Hiding unused car slot ${i}`);\n  modifications[`Car${i}.visible`] = false;\n}\n\nconst creatomateJson = {\n  \"template_id\": \"fa1c8b96-9d5d-4c93-9260-a2eb959220c5\",\n  \"modifications\": modifications\n};\n\nconsole.log('✅ Final Creatomate JSON:', JSON.stringify(creatomateJson, null, 2));\n\nreturn [{\n  json: {\n    ...config,\n    creatomate: creatomateJson\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2336,
+        -176
+      ],
+      "id": "dae51f83-03c3-4c58-8fbe-a3f39b577b0d",
+      "name": "Build TEMP_001 JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\n\nconst avatarUrl = config.outputs?.avatar_video_url || config.avatar_video_url;\nconst avatarDuration = config.outputs?.avatar_duration || config.duration || 53.6816;\nconst vehicles = config.vehicles || [];\nconst musicUrl = config.media?.music_url || \"https://res.cloudinary.com/dtpqxuwby/video/upload/v1760406868/uWu_Victory_-_Rod_Kim_dxpl7z.mp3\";\nconst chromakeyColor = config.chromakey_color || \"#00b140\";\nconst chromakeySensitivity = config.chromakey_sensitivity || 22;\n\n// Theme animation\nconst themeAnimationUrl = $input.first().json.theme_animation_url;\nconst themeText = $input.first().json.theme || \"Amazing Deals!\";\n\nif (!avatarUrl) throw new Error('Missing avatar video URL');\nif (vehicles.length === 0) throw new Error('No vehicles in config');\n\nconsole.log(`Building Creatomate TEMP_002 for ${vehicles.length} vehicles`);\nconsole.log(`Avatar duration: ${avatarDuration}s`);\nconsole.log(`Theme animation:`, themeAnimationUrl ? 'Present' : 'None');\nconsole.log(`Theme text:`, themeText);\n\n// Time offset for theme hook\nconst TIME_OFFSET = 2.25;\n\n// Calculate contact info outro timing (with offset)\nconst lastCar = vehicles[vehicles.length - 1];\nconst lastCarEndTime = lastCar.end_time || (lastCar.start_time + 7);\nconst contactOutroStart = lastCarEndTime + 2 + TIME_OFFSET;\n\n// Build base modifications\nconst modifications = {\n  \"background-music.source\": musicUrl,\n  \"Avatar-video.source\": avatarUrl,\n  \"Avatar-video.time\": TIME_OFFSET, // Start avatar at 2.25s\n  \"Avatar-video.chroma_key_color\": chromakeyColor,\n  \"Avatar-video.chroma_key_sensitivity\": chromakeySensitivity,\n  \"Contact-Info-outro.time\": contactOutroStart,\n  \"duration\": avatarDuration + TIME_OFFSET, // Total duration includes hook\n  \n  // Theme animation fields\n  \"theme-animation.source\": themeAnimationUrl,\n  \"theme-text.text\": themeText\n};\n\n// Add car modifications (with offset)\nvehicles.forEach((vehicle, index) => {\n  const carNum = index + 1;\n  const duration = (vehicle.end_time || 0) - (vehicle.start_time || 0);\n  \n  let priceText = vehicle.price;\n  if (typeof priceText === 'string' && priceText.includes('USD')) {\n    priceText = priceText.replace(' USD', '').replace('USD', '');\n    const priceNum = parseFloat(priceText);\n    if (!isNaN(priceNum)) {\n      priceText = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n    }\n  } else if (typeof priceText === 'number') {\n    priceText = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n  }\n  \n  const title = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;\n  const mileage = vehicle.mileage.toLocaleString('en-US');\n  \n  modifications[`Car${carNum}.time`] = vehicle.start_time + TIME_OFFSET; // Add offset\n  modifications[`Car${carNum}.duration`] = duration;\n  modifications[`car-${carNum}.source`] = vehicle.photo_url;\n  modifications[`car-${carNum}-price.text`] = priceText;\n  modifications[`car-${carNum}-title.text`] = title;\n  modifications[`car-${carNum}-mileage.text`] = mileage;\n});\n\nconst creatomateJson = {\n  \"template_id\": \"fa1c8b96-9d5d-4c93-9260-a2eb959220c5\",\n  \"modifications\": modifications\n};\n\nconsole.log('Final Creatomate JSON (TEMP_002):', JSON.stringify(creatomateJson, null, 2));\n\nreturn [{\n  json: {\n    ...config,\n    creatomate: creatomateJson\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2336,
+        16
+      ],
+      "id": "40ebf396-cafc-4da4-90d2-fceded333f43",
+      "name": "Build TEMP_002 JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0d1a7bf-ac65-4401-bf77-dc691de54791",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3008,
+        -160
+      ],
+      "id": "1b917143-ac72-4401-9c87-f8d999f3b4b1",
+      "name": "Succeeded?"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        -80
+      ],
+      "id": "685a168c-2239-4f2d-84a4-af957d64b341",
+      "name": "aggregate after merge"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Testing stubs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testing stubs": {
+      "main": [
+        [
+          {
+            "node": "Process All Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process All Vehicles": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "removebg": {
+      "main": [
+        [
+          {
+            "node": "rename binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload to cloudinary": {
+      "main": [
+        [
+          {
+            "node": "aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aggregate": {
+      "main": [
+        [
+          {
+            "node": "aggregate after merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "send only vehicles to process",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "aggregate after merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send only vehicles to process": {
+      "main": [
+        [
+          {
+            "node": "removebg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "rename binary": {
+      "main": [
+        [
+          {
+            "node": "upload to cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Creatomate Render": {
+      "main": [
+        [
+          {
+            "node": "Check Creatomate Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Render": {
+      "main": [
+        [
+          {
+            "node": "Check Creatomate Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Creatomate Status": {
+      "main": [
+        [
+          {
+            "node": "Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch on template": {
+      "main": [
+        [
+          {
+            "node": "Build TEMP_001 JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build TEMP_002 JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build TEMP_001 JSON": {
+      "main": [
+        [
+          {
+            "node": "Start Creatomate Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build TEMP_002 JSON": {
+      "main": [
+        [
+          {
+            "node": "Start Creatomate Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract video url": {
+      "main": [
+        []
+      ]
+    },
+    "Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Extract video url",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aggregate after merge": {
+      "main": [
+        [
+          {
+            "node": "Switch on template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "dca7567d-5917-42ef-a014-805169348bfd",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-09-22T14:03:48.853Z",
+      "createdAt": "2025-09-22T14:03:48.853Z",
+      "role": "workflow:owner",
+      "workflowId": "cjgJIxAJifeH0lP5",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-10-25T13:07:25.750Z",
+      "createdAt": "2025-10-25T13:07:25.750Z",
+      "id": "9Q3iOPtGOC35RWTa",
+      "name": "ARCHIVED"
+    }
+  ]
+}
