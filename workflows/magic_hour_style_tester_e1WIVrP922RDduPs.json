@@ -1,0 +1,309 @@
+{
+  "updatedAt": "2025-10-25T13:11:45.000Z",
+  "createdAt": "2025-10-19T23:58:33.356Z",
+  "id": "e1WIVrP922RDduPs",
+  "name": "Magic Hour Style Tester",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "magic-hour-test",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b64a6390-902d-4561-87ad-0eb3df52b463",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -112
+      ],
+      "webhookId": "magic-hour-test"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the prompt from webhook\nconst prompt = $input.first().json.body.prompt || '';\nconst style = $input.first().json.body.style || 'default';\n\nif (!prompt) {\n  throw new Error('Please provide a prompt');\n}\n\nconsole.log('Testing style:', style);\nconsole.log('Prompt:', prompt);\n\nreturn [{\n  json: {\n    prompt: prompt,\n    style: style,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "d9f2123c-be72-47d5-bd05-27ca79606a05",
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.magichour.ai/v1/ai-gif-generator",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"style\": {\n    \"prompt\": \"{{ $json.prompt }}\"\n  },\n  \"name\": \"test\",\n  \"output_format\": \"mp4\"\n}\n",
+        "options": {}
+      },
+      "id": "a0b73012-c91d-4257-af7a-5b771362ca79",
+      "name": "Call Magic Hour",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        -112
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JqCEqmwxTMJ5cZ8Z",
+          "name": "Magic Hour API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the video URL from Magic Hour response\nconst response = $json;\n\nconsole.log('Magic Hour response:', JSON.stringify(response, null, 2));\n\nlet videoUrl = null;\nlet status = 'unknown';\n\n// Check different possible response structures\nif (response.video_url) {\n  videoUrl = response.video_url;\n  status = 'completed';\n} else if (response.url) {\n  videoUrl = response.url;\n  status = 'completed';\n} else if (response.id) {\n  // Got a job ID, need to poll\n  status = 'processing';\n}\n\nreturn [{\n  json: {\n    style: $input.first().json.style,\n    prompt: $input.first().json.prompt,\n    status: status,\n    video_url: videoUrl,\n    raw_response: response,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "4f3300c1-47e6-4a7c-b255-8de8b672020e",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "\n  {\n    \"headers\": {\n      \"host\": \"kelly-ads.app.n8n.cloud\",\n      \"user-agent\": \"Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\",\n      \"content-length\": \"287\",\n      \"accept\": \"*/*\",\n      \"accept-encoding\": \"gzip, br\",\n      \"accept-language\": \"en-US,en-GB;q=0.9,en;q=0.8\",\n      \"cdn-loop\": \"cloudflare; loops=1; subreqs=2\",\n      \"cf-connecting-ip\": \"2a06:98c0:3600::103\",\n      \"cf-ew-via\": \"14\",\n      \"cf-ipcountry\": \"US\",\n      \"cf-ray\": \"991443e96126b46b-ORD\",\n      \"cf-visitor\": \"{\\\"scheme\\\":\\\"https\\\"}\",\n      \"cf-worker\": \"n8n.cloud\",\n      \"content-type\": \"application/json\",\n      \"priority\": \"u=1, i\",\n      \"x-forwarded-for\": \"2a06:98c0:3600::103, 172.70.179.59\",\n      \"x-forwarded-host\": \"kelly-ads.app.n8n.cloud\",\n      \"x-forwarded-port\": \"443\",\n      \"x-forwarded-proto\": \"https\",\n      \"x-forwarded-server\": \"traefik-prod-users-gwc-88-6587794787-25jh4\",\n      \"x-is-trusted\": \"yes\",\n      \"x-proxy-service\": \"CloudflareWorkersCORS\",\n      \"x-real-ip\": \"2a06:98c0:3600::103\"\n    },\n    \"params\": {},\n    \"query\": {},\n    \"body\": {\n      \"style\": \"popart\",\n      \"prompt\": \"Bold pop art illustration of a golden retriever, comic book style, ben-day dots pattern, bright primary colors (red, yellow, blue), thick black outlines, retro 1960s advertisement style, Roy Lichtenstein inspired, 'WOOF!' text burst, vintage comic aesthetic\"\n    },\n    \"webhookUrl\": \"https://kelly-ads.app.n8n.cloud/webhook/magic-hour-test\",\n    \"executionMode\": \"production\"\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -112
+      ],
+      "id": "dde19109-d1b1-421a-9059-fd6918e9a444",
+      "name": "stubs",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://api.magichour.ai/v1/image-projects/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        -112
+      ],
+      "id": "42065c72-7166-4374-b6d4-ba0088b13d42",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JqCEqmwxTMJ5cZ8Z",
+          "name": "Magic Hour API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b254b41f-3c31-4afb-90a3-c0f1ecb18a65",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "complete",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -176
+      ],
+      "id": "1321fe12-70a8-422f-b210-ffff604203cc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        -16
+      ],
+      "id": "d9aad1f6-093f-44f0-88e9-da48696995d9",
+      "name": "Wait",
+      "webhookId": "996773fc-62bd-463b-8bc8-9b42edf2caba"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1552,
+        -224
+      ],
+      "id": "db939c1d-d789-481d-b02a-aa5b8a618ecf",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "stubs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Magic Hour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Magic Hour": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "stubs": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "f805707b-4295-48d6-88c1-4a2a1deedd2e",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-19T23:58:33.358Z",
+      "createdAt": "2025-10-19T23:58:33.358Z",
+      "role": "workflow:owner",
+      "workflowId": "e1WIVrP922RDduPs",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-10-25T13:09:41.651Z",
+      "createdAt": "2025-10-25T13:09:41.651Z",
+      "id": "9eKfZuV575vaiKME",
+      "name": "NOT IN USE"
+    }
+  ]
+}
