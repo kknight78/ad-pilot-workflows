@@ -1,0 +1,398 @@
+{
+  "updatedAt": "2025-11-15T21:59:07.648Z",
+  "createdAt": "2025-11-15T21:59:07.648Z",
+  "id": "0wBrseUjWD9GZWh8",
+  "name": "Backup n8n Workflows to GitHub - FIXED",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "699bce1e-bba0-4099-9243-5dfae52faca1",
+      "name": "Daily Backup at 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1536,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://kelly-ads.app.n8n.cloud/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "39ec583e-87f1-4f3c-8d15-d257e505bd16",
+      "name": "Get All Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1328,
+        112
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LCCBNzyoX2dEJyEA",
+          "name": "N8N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json.data || $input.item.json;\nconst workflows = Array.isArray(data) ? data : [data];\n\nconst formattedWorkflows = workflows.map(wf => {\n  const safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\n  const filename = `${safeName}_${wf.id}.json`;\n  \n  return {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  };\n});\n\nreturn formattedWorkflows.map(wf => ({ json: wf }));"
+      },
+      "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
+      "name": "Format for GitHub",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6d8f58ad-7bbc-46f0-b098-4398961b9b4c",
+      "name": "Process One at a Time",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -880,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ 'Backup: ' + $json.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.contentBase64 }}\",\n  \"branch\": \"main\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "90fdb52a-0db0-4d5d-8dbb-40a6c84f58dc",
+      "name": "Try Create File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        112
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "04C2CxsFzc1VS9wa",
+          "name": "Github Token"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if create was successful or if we got 409 (file exists)\nconst response = $input.first().json;\nconst statusCode = response.statusCode;\nconst workflowData = $('Process One at a Time').item.json;\n\nif (statusCode === 201) {\n  // Success - file created\n  console.log(`✅ Created: ${workflowData.name}`);\n  return [{ json: { success: true, action: 'created', workflow: workflowData.name } }];\n} else if (statusCode === 409) {\n  // File exists - need to update\n  console.log(`📝 File exists, will update: ${workflowData.name}`);\n  return [{ json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else if (statusCode === 200) {\n  // Updated successfully\n  console.log(`✅ Updated: ${workflowData.name}`);\n  return [{ json: { success: true, action: 'updated', workflow: workflowData.name } }];\n} else {\n  // Error\n  console.log(`❌ Error for ${workflowData.name}: ${statusCode}`);\n  throw new Error(`Failed to backup ${workflowData.name}: ${statusCode} - ${response.body?.message || 'Unknown error'}`);\n}"
+      },
+      "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
+      "name": "Check Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needs_update }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "3754192f-5991-4263-b83b-a48202bd5a87",
+      "name": "Needs Update?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0764e992-7444-40cc-832e-4cdb916e5952",
+      "name": "Get Current SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "04C2CxsFzc1VS9wa",
+          "name": "Github Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $('Needs Update?').item.json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ 'Update: ' + $('Needs Update?').item.json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $('Needs Update?').item.json.workflow.contentBase64 }}\",\n  \"sha\": \"{{ $json.sha }}\",\n  \"branch\": \"main\"\n}",
+        "options": {}
+      },
+      "id": "94041267-12ca-455e-9a09-e5f529953d08",
+      "name": "Update File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "04C2CxsFzc1VS9wa",
+          "name": "Github Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflow = $('Needs Update?').item.json.workflow;\nconsole.log(`✅ Updated: ${workflow.name}`);\nreturn [{ json: { success: true, action: 'updated', workflow: workflow.name } }];"
+      },
+      "id": "886687ce-7bc4-405b-a3bc-0d5dabb18b41",
+      "name": "Log Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "77c1c47b-72db-48a6-b7c3-5315e6366f61",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        208
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Backup at 2 AM": {
+      "main": [
+        [
+          {
+            "node": "Get All Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Format for GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for GitHub": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process One at a Time": {
+      "main": [
+        [
+          {
+            "node": "Try Create File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Try Create File": {
+      "main": [
+        [
+          {
+            "node": "Check Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Result": {
+      "main": [
+        [
+          {
+            "node": "Needs Update?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Update?": {
+      "main": [
+        [
+          {
+            "node": "Get Current SHA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Current SHA": {
+      "main": [
+        [
+          {
+            "node": "Update File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update File": {
+      "main": [
+        [
+          {
+            "node": "Log Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Update": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b5082454-280e-4544-8982-250672decb9b",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-15T21:59:07.654Z",
+      "createdAt": "2025-11-15T21:59:07.654Z",
+      "role": "workflow:owner",
+      "workflowId": "0wBrseUjWD9GZWh8",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": []
+}
