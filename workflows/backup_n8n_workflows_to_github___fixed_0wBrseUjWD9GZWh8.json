@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-11-15T22:37:42.000Z",
+  "updatedAt": "2025-11-15T22:47:29.000Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub - FIXED",
@@ -172,7 +172,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
+        208,
         0
       ],
       "credentials": {
@@ -207,7 +207,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        224,
+        432,
         0
       ],
       "credentials": {
@@ -226,7 +226,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
+        656,
         0
       ]
     },
@@ -237,9 +237,21 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
       "position": [
-        448,
+        656,
         208
       ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        16
+      ],
+      "id": "fcf3d34b-26d3-4041-a359-fc150fae36f5",
+      "name": "Wait",
+      "webhookId": "b83fc6ef-5128-499f-bc89-03cd9a6d573d"
     }
   ],
   "connections": {
@@ -320,7 +332,7 @@
       "main": [
         [
           {
-            "node": "Get Current SHA",
+            "node": "Wait",
             "type": "main",
             "index": 0
           }
@@ -377,6 +389,17 @@
           }
         ]
       ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Current SHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -385,7 +408,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "ac9e8935-a872-4d05-86b9-6af9c1ee7f92",
+  "versionId": "9d514f93-5620-4d53-b7a3-1f037ee2b4c5",
   "triggerCount": 0,
   "shared": [
     {
