@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-11-15T22:47:29.000Z",
+  "updatedAt": "2025-11-17T13:48:06.000Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub - FIXED",
@@ -252,6 +252,89 @@
       "id": "fcf3d34b-26d3-4041-a359-fc150fae36f5",
       "name": "Wait",
       "webhookId": "b83fc6ef-5128-499f-bc89-03cd9a6d573d"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all the execution results\nconst allItems = $input.all();\n\nlet successes = 0;\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  if (item.json.success) {\n    successes++;\n  } else if (item.json.error || item.json.needs_update === undefined) {\n    failures++;\n    failedWorkflows.push(item.json.workflow?.name || item.json.workflow || 'Unknown');\n  }\n});\n\nconsole.log(`✅ Successes: ${successes}, ❌ Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    successes: successes,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        208
+      ],
+      "id": "5d9bea72-51b4-4ee0-9267-a6c57301477a",
+      "name": "Aggregate Results"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b2928d61-9cef-4c3a-9b03-c01a26891370",
+              "leftValue": "={{ $json.hasFailures }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        208
+      ],
+      "id": "7940083a-972c-4589-becf-7da2615885d9",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        304
+      ],
+      "id": "ec514100-f164-46dd-866d-424a59b5f24c",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "fromEmail": "kelly@ad-pilot.ai",
+        "toEmail": "kelly@ad-pilot.ai",
+        "subject": "⚠️ n8n GitHub Backup Failed",
+        "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nSuccessful: \" + $json.successes + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1280,
+        112
+      ],
+      "id": "c9c6bb97-4443-4b0a-bef8-b404f342acb8",
+      "name": "Send email",
+      "webhookId": "97015b61-1940-4d68-8f6c-a0e246b9abb4",
+      "credentials": {
+        "smtp": {
+          "id": "5HPC3NyTgaxCbH6e",
+          "name": "SMTP account"
+        }
+      }
     }
   ],
   "connections": {
@@ -383,7 +466,7 @@
       "main": [
         [
           {
-            "node": "Process One at a Time",
+            "node": "Aggregate Results",
             "type": "main",
             "index": 0
           }
@@ -400,15 +483,46 @@
           }
         ]
       ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1"
   },
   "staticData": null,
-  "meta": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
   "pinData": {},
-  "versionId": "9d514f93-5620-4d53-b7a3-1f037ee2b4c5",
+  "versionId": "0a3a4a19-b58d-41d2-a136-befdfecde761",
   "triggerCount": 0,
   "shared": [
     {
