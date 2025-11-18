@@ -1,0 +1,231 @@
+{
+  "updatedAt": "2025-11-17T23:35:59.000Z",
+  "createdAt": "2025-11-17T20:39:17.302Z",
+  "id": "F2uYbqpA91Yr9KSg",
+  "name": "Post to Facebook - Approve & Publish",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "approve-and-post",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "029b109a-4197-4aee-8350-aa0ce7716656",
+      "name": "Webhook",
+      "webhookId": "2259f50d-5ce2-4fcf-9755-95bd0b1ebc45"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.query.video_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        64,
+        0
+      ],
+      "id": "bf9a8511-5b43-4e99-8a84-7d8dc8f62bbe",
+      "name": "Download video from Creatomate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v24.0/801034506751166/videos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAAIlMjbhUBMBP3WFR1PghZC4Rta7OggYfI0Jge0tZACo6C7Sz0ABG7tUpMNZAUcbf5jujEXoaPZBIigCqMMIYcDcKATh6HZCZABAOHxlNm86VvsBX9cH4ixZCKqivFCWWZCiijLgoLtB6yaLgxmmenW86lAzMBnmvPjwsZCD4bm8VqwrMA3CxVDg24sFZC2nYGdx7KJs896eAQovQrhJjXuED4apBeoZBeXYBIiY7ZBfzzPnSIiffGH9LkROJPg4LgZDZD"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file_url",
+              "value": "={{ $json.cloudinary_url }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.caption }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        736,
+        0
+      ],
+      "id": "20820905-5fba-4a6b-b1ad-f6295e7a0ab0",
+      "name": "Post to FB CCC page"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a4c974a2-2685-467e-9031-089b697172fc",
+              "name": "cloudinary_url",
+              "value": "={{ $json.secure_url }}",
+              "type": "string"
+            },
+            {
+              "id": "61b57939-fdef-44f5-8cf5-686ab12b6475",
+              "name": "caption",
+              "value": "={{ $('Webhook').item.json.query.caption }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        0
+      ],
+      "id": "237dfe01-9d4d-4da8-bf45-c4f357b114d6",
+      "name": "Get secure url"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/video/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "public_id",
+              "value": "=facebook_{{ $now.format('yyyy-MM-dd') }}_test"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        288,
+        0
+      ],
+      "id": "495c198d-fce3-4f88-ba64-6e4e37c76050",
+      "name": "Upload to Cloudinary"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "✅ Success! Your video has been posted to Facebook!\n\nView it here: https://www.facebook.com/profile.php?id=100064054352818\n\nYou can close this tab now.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        944,
+        0
+      ],
+      "id": "76f35bb4-cd36-4130-841f-312f0a43e7b4",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Download video from Creatomate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download video from Creatomate": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Get secure url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get secure url": {
+      "main": [
+        []
+      ]
+    },
+    "Post to FB CCC page": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "ec18216f-ae04-4bab-b736-c7bed80a4de1",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-11-17T20:39:17.305Z",
+      "createdAt": "2025-11-17T20:39:17.305Z",
+      "role": "workflow:owner",
+      "workflowId": "F2uYbqpA91Yr9KSg",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": []
+}
