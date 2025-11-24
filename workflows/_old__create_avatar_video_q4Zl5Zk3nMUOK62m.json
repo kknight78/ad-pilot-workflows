@@ -1,0 +1,1057 @@
+{
+  "updatedAt": "2025-11-23T18:54:31.000Z",
+  "createdAt": "2025-10-20T22:01:06.178Z",
+  "id": "q4Zl5Zk3nMUOK62m",
+  "name": "(OLD) Create avatar video",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.heygen.com/v1/video_status.get",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_id",
+              "value": "={{$node[\"Create avatar video\"].json.data?.video_id || $node[\"Create avatar video\"].json.video_id}}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        1568
+      ],
+      "id": "59d57e12-2869-4b1b-9b47-e2ef7fb28a47",
+      "name": "Check status",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7e530ea0-2545-43a0-a589-1b816442e116",
+              "leftValue": "={{$json.data?.status}}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        1552
+      ],
+      "id": "10951510-89ba-4dfe-b384-6cae9615ef3a",
+      "name": "Is complete?"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1088,
+        1712
+      ],
+      "id": "b98787f4-73c6-4546-97d8-fca086b196ca",
+      "name": "Wait",
+      "webhookId": "23584160-bf62-4e01-9168-1e72a4e1a8d3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.videobgremover.com/v1/jobs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"video_url\": \"{{ $node['Upload to Cloudinary'].item.json[0].secure_url }}\n  \n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1264,
+        576
+      ],
+      "id": "7ba1d200-d8be-4c42-954c-7bfa68a22b02",
+      "name": "VBR - Create job",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LQZygyOyKZ5tikRW",
+          "name": "VideoBGRemover"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.videobgremover.com/v1/jobs/{{$node[\"VBR - Create job\"].json.id}}/start",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"background\": {\n    \"type\": \"transparent\",\n    \"transparent_format\": \"stacked_video\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1040,
+        576
+      ],
+      "id": "127173d7-97ee-480d-8fc2-8054454eb07a",
+      "name": "VBR - Start job",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LQZygyOyKZ5tikRW",
+          "name": "VideoBGRemover"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://api.videobgremover.com/v1/jobs/{{ $json.id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -816,
+        576
+      ],
+      "id": "c8eda217-9b73-4a92-8ba4-0da6778a6630",
+      "name": "VBR - Check job",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LQZygyOyKZ5tikRW",
+          "name": "VideoBGRemover"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cf83b0e8-3358-4922-be97-f3b573e02b6e",
+              "leftValue": "={{$json.status}}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -592,
+        496
+      ],
+      "id": "81c7ccd6-6b66-4552-b0ae-73e0ee6947a4",
+      "name": "VBR - Is done?",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -368,
+        576
+      ],
+      "id": "15a82659-66ef-4353-a803-a56b54adf733",
+      "name": "Wait - back to check job",
+      "webhookId": "3c46b3af-5b8b-4d5b-a3c4-215974899179",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/video/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "=data:audio/mpeg;base64,{{ $json.data[0].audio_base64 || $json.data[0].outputs.audio_base64 }}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "resource_type",
+              "value": "auto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        1648
+      ],
+      "id": "86e7f433-8bab-41d5-86fa-6ca9cddbd28c",
+      "name": "Upload audio to Cloudinary",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"Shad ad draft\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id || $json.body.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{ $json.audio_url }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1250 }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        1568
+      ],
+      "id": "66d77d6b-6352-4f3a-89f7-1bef5dbc9232",
+      "name": "Create avatar video",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        1360
+      ],
+      "id": "b7578533-059b-4ee5-98d5-bc736150cdb0",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This node runs after Cloudinary upload with the avatar video\nconst videoUrl = $json.data.video_url;\nconst duration = Number($json.data.duration);\n\n// Get the original videoConfig that was passed in\nconst updatedConfig = $('Add audio to config').first().json;\n\nreturn [{\n  json: {\n    ...updatedConfig,  // Keep the entire videoConfig\n    \n    // Update the outputs section\n    outputs: {\n      ...updatedConfig.outputs,\n      avatar_video_url: videoUrl,\n      avatar_duration: duration\n    },\n    \n    // Also add these at root level for backward compatibility\n    video_url: videoUrl,\n    heygen_video_url: videoUrl,\n    duration: duration,\n    video_duration: duration\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        1536
+      ],
+      "id": "7727b59a-08cf-4ce5-8cae-91fa73a340a9",
+      "name": "Add video data to config"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the Cloudinary upload response\nconst audioUrl = $json.secure_url;\nconst audioId = $json.public_id;\n\nconst configWithTimings = $('Aggregate Templates').first()?.json.data[0];\n\n// remove huge audio blob before passing config\nconfigWithTimings.audio_base64 = undefined;\n\nif (!configWithTimings) {\n  throw new Error('Could not find config from either Prepare TEMP_003 or Concatenate Audio Files');\n}\n\nreturn [{\n  json: {\n    ...configWithTimings,\n    // Update the outputs section\n    outputs: {\n      ...configWithTimings.outputs,\n      audio_url: audioUrl,\n      audio_cloudinary_id: audioId,\n      audio_base64: undefined,  // Remove the heavy base64 data\n    },\n    \n    // Also add these at root level for backward compatibility\n    audio_url: audioUrl,\n    audio_cloudinary_id: audioId,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        1568
+      ],
+      "id": "e2f1e2b3-0d06-40e3-8632-0e68f979259f",
+      "name": "Add audio to config"
+    },
+    {
+      "parameters": {
+        "jsCode": "const triggerData = $json;\nconst config = {\n  ...triggerData.body,\n  ...triggerData\n};\nconst script = config.script;\nconst vehicles = config.vehicles;\nconst templateId = config.template_id;\n\n// TEMP_003: Educational videos - single section with full script\nif (templateId === 'TEMP_003') {\n  const fullScriptText = script.full_script;\n  \n  console.log('TEMP_003: Creating single audio section');\n  \n  return [{\n    json: {\n      name: 'full_script',\n      text: fullScriptText,\n      index: 0,\n      voice_id: config.voice_id\n    }\n  }];\n}\n\n// TEMP_001 & TEMP_002: Multi-section audio for vehicle features\nif (!script.hook || !script.segments || !script.cta) {\n  throw new Error('Script missing required sections');\n}\n\n// Build minimal sections array - ONLY what ElevenLabs needs\nconst sections = [\n  { \n    name: 'hook',\n    text: script.hook,\n    index: 0\n  },\n  ...script.segments.map((segmentText, index) => ({\n    name: (vehicles && vehicles[index]?.vin) || \"feature_\"+index,\n    text: segmentText,\n    index: index + 1\n  })),\n  { \n    name: 'cta',\n    text: script.cta,\n    index: script.segments.length + 1\n  }\n];\n\nconsole.log('Sections:', sections.map(s => s.name).join(', '));\n\n// Return JUST the section data - clean and simple\nreturn sections.map(section => ({\n  json: {\n    ...config,\n    name: section.name,\n    text: section.text,\n    index: section.index,\n    voice_id: config.voice_id\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1184
+      ],
+      "id": "4385325e-dbc9-4247-af93-51a2b841da45",
+      "name": "Prepare Sections"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        1184
+      ],
+      "id": "400de794-3abe-4f44-879f-cd1802549b80",
+      "name": "Split in Batches"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.text}}\",\n  \"model_id\": \"eleven_v3\",\n  \"voice_settings\": {\n    \"stability\": 0.5,\n    \"similarity_boost\": 0.75,\n    \"style\": 0,\n    \"use_speaker_boost\": true\n  },\n  \"output_format\": \"mp3_44100_128\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        1232
+      ],
+      "id": "52dd07f5-3636-4be1-ae06-e583b44b02b1",
+      "name": "Generate Section Audio",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "rF8Db64Xo3IjoeOL",
+          "name": "ElevenLabs API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst audioSections = config._audio_sections;\n\nif (!audioSections || audioSections.length === 0) {\n  throw new Error('No audio sections to concatenate!');\n}\n\nconsole.log(`Concatenating ${audioSections.length} audio sections...`);\n\n// Convert all base64 audio to buffers\nconst audioBuffers = audioSections.map(section => {\n  if (!section.audio_base64) {\n    throw new Error(`Section ${section.section_name} missing audio_base64!`);\n  }\n  return Buffer.from(section.audio_base64, 'base64');\n});\n\nconsole.log('Audio buffers created:', audioBuffers.map((buf, i) => \n  `${audioSections[i].section_name}: ${(buf.length / 1024).toFixed(2)}KB`\n).join(', '));\n\n// Simple concatenation: MP3 files can be concatenated by joining the data\n// This works because MP3 frames are self-contained\nconst concatenatedBuffer = Buffer.concat(audioBuffers);\n\n// Convert back to base64\nconst concatenatedBase64 = concatenatedBuffer.toString('base64');\n\nconst totalSize = concatenatedBuffer.length;\nconsole.log(`✅ Concatenated audio size: ${(totalSize / 1024).toFixed(2)} KB`);\n\n// Remove huge individual base64 chunks\nconst cleanedAudioSections = (config._audio_sections || []).map(section => ({\n  section_name: section.section_name,\n  section_index: section.section_index,\n  section_text: section.section_text,\n  // audio_base64 intentionally omitted\n}));\n\nreturn [{\n  json: {\n    ...config,\n    // Replace with cleaned version (no base64)\n    _audio_sections: cleanedAudioSections,\n    outputs: {\n      ...(config.outputs || {}),\n      audio_base64: concatenatedBase64\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        1776
+      ],
+      "id": "bc48dee2-6b1d-46a2-9eb5-def150e0d273",
+      "name": "Concatenate Audio Files"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        64,
+        1344
+      ],
+      "id": "9e070df5-6d1c-4eff-93cb-f13c88aed9fa",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $json;\nconst binaryItems = inputData.items || [];\nconst audioSections = [];\n\nif (binaryItems.length === 1) {\n\n  const audioBase64 = binaryItems[0]?.audio_base64;\n  \n  return [{\n    json: {\n      _audio_sections: [], // Empty - not needed\n      audio_base64: audioBase64, // Pass through for Cloudinary!\n    }\n  }];\n}\n\n// TEMP_001 & TEMP_002: Extract durations for car timing synchronization\n\nfor (let i = 0; i < binaryItems.length; i++) {\n  const item = binaryItems[i];\n  \n  const name = item.name;\n  const text = item.text;\n  const index = item.index;\n  const audioBase64 = item.audio_base64; // Already provided by Combine!\n  \n  if (!audioBase64) {\n    console.warn(`No audio_base64 for ${name}`);\n    continue;\n  }\n  \n  // Parse file size from the file_size field\n  const fileSizeStr = item.file_size;\n  let fileSizeBytes;\n  \n  if (fileSizeStr && fileSizeStr.includes('kB')) {\n    const kb = parseFloat(fileSizeStr.replace(' kB', ''));\n    fileSizeBytes = Math.round(kb * 1024);\n  } else if (fileSizeStr && fileSizeStr.includes('MB')) {\n    const mb = parseFloat(fileSizeStr.replace(' MB', ''));\n    fileSizeBytes = Math.round(mb * 1024 * 1024);\n  } else {\n    // Calculate from base64 length as fallback\n    fileSizeBytes = Math.round((audioBase64.length * 3) / 4);\n  }\n  \n  const BITRATE_KBPS = 128;\n  const durationSeconds = (fileSizeBytes * 8) / (BITRATE_KBPS * 1000);\n  const roundedDuration = Math.round(durationSeconds * 100) / 100;\n  \n  console.log(`Section \"${name}\": ${fileSizeBytes} bytes = ${roundedDuration}s`);\n  \n  audioSections.push({\n    section_name: name,\n    section_index: index,\n    section_text: text,\n    audio_base64: audioBase64,\n    duration_seconds: roundedDuration,\n    file_size_bytes: fileSizeBytes\n  });\n}\n\naudioSections.sort((a, b) => a.section_index - b.section_index);\nconsole.log('Extracted durations for', audioSections.length, 'sections');\n\nreturn [{\n  json: {\n    _audio_sections: audioSections\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        1088
+      ],
+      "id": "da2f5534-ca6b-4c83-b087-1e81d37fce9d",
+      "name": "Extract All Durations"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\n\n// TEMP_003: Only one audio file, no combining needed - just pass through\nif (allItems.length === 1) {\n  const item = allItems[0];\n  let binaryBuffer = null;\n  \n  try {\n    binaryBuffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n    console.log(`✅ Single audio file (${item.json.name}): ${binaryBuffer.length} bytes`);\n  } catch (error) {\n    console.warn('❌ Failed to get buffer:', error.message);\n  }\n  \n  const audioBase64 = binaryBuffer ? binaryBuffer.toString('base64') : null;\n  \n  return [{\n    json: {\n      items: [{\n        name: item.json.name,\n        text: item.json.text,\n        index: item.json.index,\n        audio_base64: audioBase64,\n        file_size: item.binary?.data?.fileSize\n      }]\n    }\n  }];\n}\n\n// TEMP_001 & TEMP_002: Multiple audio files - combine them\nconsole.log('Combining', allItems.length, 'binary items');\nconst binaryItems = [];\n\nfor (let i = 0; i < allItems.length; i++) {\n  const item = allItems[i];\n  \n  // Get the actual binary buffer while we still have access\n  let binaryBuffer = null;\n  \n  try {\n    binaryBuffer = await this.helpers.getBinaryDataBuffer(i, 'data');\n    console.log(`✅ Got buffer ${i} (${item.json.name}): ${binaryBuffer.length} bytes`);\n  } catch (error) {\n    console.warn(`❌ Failed buffer ${i}:`, error.message);\n  }\n  \n  // Convert to base64 NOW while we have the buffer\n  const audioBase64 = binaryBuffer ? binaryBuffer.toString('base64') : null;\n  \n  binaryItems.push({\n    name: item.json.name,\n    text: item.json.text,\n    index: item.json.index,\n    audio_base64: audioBase64,\n    file_size: item.binary?.data?.fileSize\n  });\n}\n\nreturn [{\n  json: {\n    items: binaryItems\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        1088
+      ],
+      "id": "53f3cb48-b7ce-4ed3-a4f5-b07ec57ebbf0",
+      "name": "Combine Binary Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Single error - format it for the email\nconst error = $input.first().json;\nconst nodeName = error.node?.name || 'Unknown node';\n\n// Handle different error formats from different APIs\nlet errorMsg = 'Unknown error';\n\n// HeyGen error format: { \"error\": { \"code\": \"...\", \"message\": \"...\", \"detail\": \"...\" } }\nif (error.error?.code && error.error?.message) {\n  errorMsg = `[${error.error.code}] ${error.error.message}`;\n  if (error.error.detail) {\n    errorMsg += ` - ${error.error.detail}`;\n  }\n}\n// Cloudinary error format: { \"error\": { \"message\": \"...\" } }\nelse if (error.error?.message) {\n  errorMsg = error.error.message;\n}\n// ElevenLabs error format: { \"error\": { \"code\": \"...\", \"message\": \"...\" } }\n// (Same structure as HeyGen but without detail field - handled by first condition)\n// Generic message fallback\nelse if (error.message) {\n  errorMsg = error.message;\n}\n\nreturn [{\n  json: {\n    nodeName: nodeName,\n    errorMessage: errorMsg,\n    timestamp: new Date().toISOString(),\n    rawError: JSON.stringify(error, null, 2) // Include full error for debugging\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        1664
+      ],
+      "id": "827d3395-0381-4786-93c7-4df41c9bfbdf",
+      "name": "Format Create Avatar Video Errors"
+    },
+    {
+      "parameters": {
+        "fromEmail": "errors@ad-pilot.ai",
+        "toEmail": "kelly@ad-pilot.ai",
+        "subject": "=🚨 Avatar Generation Failed - {{ $json.nodeName }}",
+        "html": "={{ \"⚠️ Create Avatar Video Workflow Error\\n\\n\" +\n\"Failed Node: \" + $json.nodeName + \"\\n\" +\n\"Error: \" + $json.errorMessage + \"\\n\\n\" +\n\"Time: \" + $json.timestamp + \"\\n\\n\" +\n\"Check n8n: https://kelly-ads.app.n8n.cloud/\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        1664
+      ],
+      "id": "dffd68eb-72cd-48fa-83d8-67f367a143a7",
+      "name": "Send email",
+      "webhookId": "003f87fc-1671-4876-a1f1-878aeeb14d27",
+      "credentials": {
+        "smtp": {
+          "id": "5HPC3NyTgaxCbH6e",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorMessage": "Avatar video errored out."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        800,
+        1664
+      ],
+      "id": "e7e72bae-e059-4ce3-b625-fc16c3f81511",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst audioSections = $input.first().json._audio_sections;\n\nif (!audioSections || audioSections.length === 0) {\n  throw new Error('No audio sections found!');\n}\n\nconsole.log('Calculating timings for', audioSections.length, 'sections');\n\n// Calculate cumulative timings\nlet currentTime = 0;\nconst timings = [];\n\nfor (const section of audioSections) {\n  const startTime = currentTime;\n  const endTime = currentTime + section.duration_seconds;\n  \n  timings.push({\n    section_name: section.section_name,\n    start_time: Math.round(startTime),\n    end_time: Math.round(endTime),\n    duration: Math.round(section.duration_seconds)\n  });\n  \n  currentTime = endTime;\n  \n  console.log(`${section.section_name}: ${Math.round(startTime)}s - ${Math.round(endTime)}s`);\n}\n\n// Extract car timings specifically (sections with VINs)\nconst carTimings = timings.filter(t => \n  t.section_name !== 'hook' && t.section_name !== 'cta'\n);\n\nconsole.log('Car sections found:', carTimings.length);\n\n// Update vehicles with accurate timings (only for Templates 1 & 2)\nconst updatedVehicles = config.vehicles ? config.vehicles.map((vehicle, index) => {\n  const carTiming = carTimings[index];\n  \n  if (!carTiming) {\n    console.warn(`No timing found for vehicle ${index + 1} (${vehicle.vin})`);\n    return vehicle;\n  }\n  \n  console.log(`Vehicle ${vehicle.vin}: ${carTiming.start_time}s - ${carTiming.end_time}s`);\n  \n  return {\n    ...vehicle,\n    start_time: carTiming.start_time,\n    end_time: carTiming.end_time\n  };\n}) : []; // Empty array for Template 3\n\nconst totalDuration = Math.round(currentTime);\n\nconsole.log(`✅ Total audio duration: ${totalDuration}s`);\nconsole.log(`✅ Updated ${updatedVehicles.length} vehicles with timings`);\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: updatedVehicles,\n    _audio_sections: audioSections,\n    _section_timings: timings,\n    outputs: {\n      ...(config.outputs || {}),\n      audio_duration: totalDuration\n    }\n  }\n}];\n\n// ... existing code ...\n\nconst fileSizeBytes = binaryData.length;\nconst BITRATE_KBPS = 128;\nconst durationSeconds = (fileSizeBytes * 8) / (BITRATE_KBPS * 1000);\nconst roundedDuration = Math.round(durationSeconds * 100) / 100;\n\nconsole.log(`File size: ${fileSizeBytes} bytes`);\nconsole.log(`Calculated duration: ${durationSeconds}s`);\nconsole.log(`Rounded duration: ${roundedDuration}s`);\n\nif (roundedDuration === 0 || !roundedDuration) {\n  console.warn('⚠️ Duration is 0 or null! File might be too small.');\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        1776
+      ],
+      "id": "5debe798-d3ab-4422-9e97-29b25bfd078b",
+      "name": "Calculate Car Timings from Durations"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "af701ba3-4a67-49f1-b9cd-f4f7e896317b",
+              "leftValue": "={{ $json.items[0].template_id }}",
+              "rightValue": "TEMP_003",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        608
+      ],
+      "id": "feef9e29-2547-4635-869e-461e415bae4c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\nconst audioBase64 = input.items[0].audio_base64; // First (only) item for TEMP_003\nconst fullScript = $input.first().json.items[0].full_script;\nconst templateID = $input.first().json.items[0].template_id;\n\n// Decode base64 to binary buffer\nconst audioBuffer = Buffer.from(audioBase64, 'base64');\n\nreturn [{\n  json: {\n    text: fullScript,\n    full_script: fullScript,\n    template_id: templateID\n  },\n  binary: {\n    audio: {\n      data: audioBuffer.toString('base64'),\n      mimeType: 'audio/mpeg',\n      fileName: 'full_script.mp3',\n      fileExtension: 'mp3'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        512
+      ],
+      "id": "14803bd6-a48b-4b46-9db0-8d3c445059c4",
+      "name": "Prepare for Forced Alignment"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/forced-alignment",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "elevenLabsApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "=audio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        160,
+        528
+      ],
+      "id": "36381d2a-69a8-440f-a09d-42413c0f2001",
+      "name": "11Labs Forced Alignment API",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "SlTH3r2FtzR0lpfq",
+          "name": "ElevenLabs account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const alignmentData = $json;\nconst audioBase = $('Combine Binary Items').first().json.items[0].audio_base64;\n\n// ElevenLabs already gives us words!\nconst words = alignmentData.words;\n\nconsole.log(`Got ${words.length} words with timings`);\n\n// Chunk words into subtitle segments - prioritize natural breaks\nconst subtitleChunks = [];\nconst wordsPerChunk = 7; // Increased from 4 to 7\nconst maxChunkDuration = 3.5; // Increased from 2.5 to 3.5 seconds\nconst minWordsPerChunk = 4; // Don't make chunks TOO small\n\nlet chunkWords = [];\nlet chunkStartTime = null;\n\nfor (let i = 0; i < words.length; i++) {\n  const word = words[i];\n  \n  if (chunkStartTime === null) {\n    chunkStartTime = word.start;\n  }\n  \n  chunkWords.push(word);\n  \n  const chunkDuration = word.end - chunkStartTime;\n  const nextWord = words[i + 1];\n  \n  // Check if we should break here\n  const isPunctuation = word.text.match(/[.,!?;:]$/); // Word ends with punctuation\n  const isLastWord = i === words.length - 1;\n  const hitMaxWords = chunkWords.length >= wordsPerChunk;\n  const hitMaxDuration = chunkDuration >= maxChunkDuration;\n  const hasMinWords = chunkWords.length >= minWordsPerChunk;\n  \n  // Break on punctuation if we have enough words, OR force break if too long\n  const shouldBreak = isLastWord || \n                      (hitMaxWords && isPunctuation) || \n                      (hasMinWords && isPunctuation && chunkDuration > 2.0) ||\n                      hitMaxDuration;\n  \n  if (shouldBreak) {\n    const chunkText = chunkWords.map(w => w.text).join(' ');\n    const chunkEndTime = chunkWords[chunkWords.length - 1].end;\n    \n    subtitleChunks.push({\n      section_name: `subtitle_${subtitleChunks.length + 1}`,\n      section_index: subtitleChunks.length + 1,\n      section_text: chunkText,\n      duration_seconds: parseFloat((chunkEndTime - chunkStartTime).toFixed(2)),\n      start_time: parseFloat(chunkStartTime.toFixed(2))\n    });\n    \n    chunkWords = [];\n    chunkStartTime = null;\n  }\n}\n\nconsole.log(`Created ${subtitleChunks.length} subtitle chunks`);\n\nreturn [{\n  json: {\n    _audio_sections: subtitleChunks,\n    audio_base64: audioBase\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        592
+      ],
+      "id": "3ab54692-c5b3-4d26-9732-06fb5039ab9e",
+      "name": "Parse 11Labs response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b75618f6-93b4-4480-9a44-47fce4ded67b",
+              "leftValue": "={{ $json.template_id || $json.body.template_id }}",
+              "rightValue": "TEMP_003",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -800,
+        1568
+      ],
+      "id": "2084c06b-bb3a-4447-a08a-3e384a2b8a42",
+      "name": "If 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst audioBase64 = input.audio_base64;\n\nif (!audioBase64) {\n  throw new Error('No audio_base64 found in input');\n}\n\nconsole.log('Preparing audio for Cloudinary upload');\n\n// Cloudinary wants the data URI format: data:audio/mpeg;base64,{base64data}\nconst audioDataUri = `data:audio/mpeg;base64,${audioBase64}`;\n\nreturn [{\n  json: {\n    ...input,\n    audio_base64: audioDataUri,\n    // Pass through other data that might be needed downstream\n    template_id: input.template_id,\n    _audio_sections: input._audio_sections,\n    full_script: input.full_script\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        1008
+      ],
+      "id": "5247a1bb-2d13-4b90-882c-7ade608a1d7e",
+      "name": "Prepare TEMP_003 for Cloudinary"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        1648
+      ],
+      "id": "c9e9c87d-3bb3-455f-896f-49c973a028f2",
+      "name": "Aggregate Templates"
+    }
+  ],
+  "connections": {
+    "Check status": {
+      "main": [
+        [
+          {
+            "node": "Is complete?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is complete?": {
+      "main": [
+        [
+          {
+            "node": "Add video data to config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Check status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VBR - Create job": {
+      "main": [
+        [
+          {
+            "node": "VBR - Start job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VBR - Start job": {
+      "main": [
+        [
+          {
+            "node": "VBR - Check job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VBR - Check job": {
+      "main": [
+        [
+          {
+            "node": "VBR - Is done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VBR - Is done?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait - back to check job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait - back to check job": {
+      "main": [
+        [
+          {
+            "node": "VBR - Check job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload audio to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Add audio to config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create avatar video": {
+      "main": [
+        [
+          {
+            "node": "Check status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sections",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Add video data to config": {
+      "main": [
+        []
+      ]
+    },
+    "Add audio to config": {
+      "main": [
+        [
+          {
+            "node": "Create avatar video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sections": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split in Batches": {
+      "main": [
+        [
+          {
+            "node": "Combine Binary Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Section Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Section Audio": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Concatenate Audio Files": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Templates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract All Durations": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Binary Items": {
+      "main": [
+        [
+          {
+            "node": "Extract All Durations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Create Avatar Video Errors": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Car Timings from Durations": {
+      "main": [
+        [
+          {
+            "node": "Concatenate Audio Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Parse 11Labs response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prepare for Forced Alignment": {
+      "main": [
+        []
+      ]
+    },
+    "11Labs Forced Alignment API": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Parse 11Labs response": {
+      "main": [
+        []
+      ]
+    },
+    "If 2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Templates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Calculate Car Timings from Durations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare TEMP_003 for Cloudinary": {
+      "main": [
+        []
+      ]
+    },
+    "Aggregate Templates": {
+      "main": [
+        [
+          {
+            "node": "Upload audio to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "45bfad5e-1327-4747-b6ea-5f5444b39857",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-20T22:01:06.181Z",
+      "createdAt": "2025-10-20T22:01:06.181Z",
+      "role": "workflow:owner",
+      "workflowId": "q4Zl5Zk3nMUOK62m",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-10-25T13:07:25.750Z",
+      "createdAt": "2025-10-25T13:07:25.750Z",
+      "id": "9Q3iOPtGOC35RWTa",
+      "name": "ARCHIVED"
+    }
+  ]
+}
