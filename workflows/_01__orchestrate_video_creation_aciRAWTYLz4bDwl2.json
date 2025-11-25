@@ -1,0 +1,479 @@
+{
+  "updatedAt": "2025-11-24T14:59:53.000Z",
+  "createdAt": "2025-10-20T21:59:52.115Z",
+  "id": "aciRAWTYLz4bDwl2",
+  "name": "[01] Orchestrate video creation",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    ...$json,  // ← Keep everything including email!\n    status: \"success\",\n    video_url: $json.final_video_url,\n    duration: $json.duration,\n    message: \"Your video is ready! 🎉\"\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        32
+      ],
+      "id": "fea3d5c8-335f-479f-a2b5-e89fa7f6743b",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "sendTo": "=kellyraeknight78@gmail.com, {{ $json.email}}",
+        "subject": "Your Video is Ready! 🎬",
+        "message": "=<p>Great news! Your video has been generated.</p>\n<br/>\n<p>Template ID: {{ $json.template_id }}\n<p>Theme: {{ $json.theme }}</p>\n<p>Duration: {{ $json.video_duration }} seconds</p>\n<br/>\n<p><strong><a href=\"{{ $json.final_video_url }}\" style=\"background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;\">📥 View Video</a></strong></p>\n<p>After you've viewed the video, if you want to publish it, come back to this email and click the Publish button below.</p>\n<p><strong><a href=\"https://kelly-ads.app.n8n.cloud/webhook/approve-and-post?video_url={{ $json.final_video_url }}&caption=🚗 Capitol Car Credit 📍 125 N. Century Blvd, Rantoul, IL 61866 📞 217-893-8232 🌐 CCRantoul.com - Ask for SHAD and mention you saw this on {{$json.platform}}! 💯\" style=\"background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;\">📘 Post to {{$json.platform}}</a></strong></p>\n\n<p>Thank you for using Ad Pilot!</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        32
+      ],
+      "id": "35fbca4b-a233-4c59-8c1b-f1186216a460",
+      "name": "Send a message",
+      "webhookId": "16607c54-e38b-4155-917a-6037fc3ed622",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "eohLHC3Bquj0VHuG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Format Response').first().json;\n\n// Only cleanup if successful\nif (!config.final_video_url) {\n  console.log('Skipping cleanup - workflow failed');\n  return [{ json: config }];\n}\n\n//const tasks = [];\n\n// 1. Archive final video to Cloudinary\n// if (config.outputs.shotstack_video_url) {\n//   tasks.push({\n//     action: 'upload',\n//     type: 'final_video',\n//     url: config.outputs.shotstack_video_url,\n//     public_id: `final-videos/${new Date().toISOString().split('T')[0]}/${config.render_id || Date.now()}`\n//   });\n// }\n\n// 2. Delete temporary audio file\n// if (config.audio_cloudinary_id) {\n//   tasks.push({\n//     action: 'delete',\n//     type: 'audio',\n//     public_id: config.audio_cloudinary_id\n//   });\n// }\n\nreturn [{\n  json: {\n    ...config\n    //cleanup_tasks: tasks\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        32
+      ],
+      "id": "335cbdd3-75a3-4570-b16e-f0f5f5ab5914",
+      "name": "Cleanup and Archive"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "https://224132378494569:bNSqU5c7z0q3ujVeKPM0NUAqDr4@api.cloudinary.com/v1_1/dtpqxuwby/resources/video/upload",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "public_ids",
+              "value": "={{ $json.audio_cloudinary_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1408,
+        32
+      ],
+      "id": "c036cec9-340b-4155-9d38-00d2295535e5",
+      "name": "Delete Audio file",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Email allowlist - only these can use the system\nconst allowlist = [\n  'kelly@kellyrae.net',\n  'kellyraeknight78@gmail.com',\n  'esears48@gmail.com',\n  'kelly@ad-pilot.ai',\n  'eric@ad-pilot.ai',\n  'kimark100@aol.com',\n  'garyknight@carmackcars.com',\n  'karleeknight@gmail.com',\n  'karlee515@yahoo.com',\n  'Blakef1984@gmail.com',\n  'bfree98@aol.com',\n  'kacywaldhoff@yahoo.com',\n  'kacywaldhoff@gmail.com',\n  'Mark@ChampaignExperts.com',\n  'tessawaldhoff@gmail.com',\n  'laurenwaldhoff@gmail.com',\n  'shaddelaney@carmackcars.com',\n  'wedin95@aol.com ',\n  'terricox@carmackcars.com',\n  'hannah.blue1302@gmail.com',\n  'notredameone@yahoo.com',\n  'gregh@consolidatedccs.com'\n  // Add other authorized users here\n];\n\n// Get email from request\nconst email = $json.body?.email || $json.email;\n\n// Validate email exists\nif (!email) {\n  throw new Error('Email is required');\n}\n\n// Check if email is allowed (case-insensitive)\nconst isAllowed = allowlist.some(allowed => \n  email.toLowerCase() === allowed.toLowerCase()\n);\n\nif (!isAllowed) {\n  console.log(`Unauthorized email attempt: ${email}`);\n  throw new Error('Your email address is not authorized to use this system. Please contact support.');\n}\n\n// Validate email format\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(email)) {\n  throw new Error('Invalid email format');\n}\n\nconsole.log(`Authorized request from: ${email}`);\n\n// Pass through if valid\n// Only pass body values, pass at root level\nreturn [{\n  json: $json.body\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        32
+      ],
+      "id": "10d7147b-7ff9-4dd9-b346-a46eacd496fb",
+      "name": "Allow whitelisted emails only"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z36Cd1XZSVbd1bC3",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Z36Cd1XZSVbd1bC3",
+          "cachedResultName": "[04] Ad generation core"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {}
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        32
+      ],
+      "id": "7255d01e-fe26-4c30-ab97-0ba351f81aa7",
+      "name": "Call 'Ad generation core'",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ad-pilot",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        32
+      ],
+      "id": "8d961474-2d2e-4eaf-a80c-6d1e4c3681ae",
+      "name": "Webhook",
+      "webhookId": "6d1a0385-44cd-476c-8a78-30afdecdb2de"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Single error - format it for the email\nconst error = $input.first().json;\nconst nodeName = error.node?.name || 'Unknown node';\n\n// Handle different error formats from different APIs\nlet errorMsg = 'Unknown error';\n\n// Cloudinary error format: { \"error\": { \"message\": \"...\" } }\nif (error.error?.message) {\n  errorMsg = error.error.message;\n}\n// Generic message fallback\nelse if (error.message) {\n  errorMsg = error.message;\n}\n\nreturn [{\n  json: {\n    nodeName: nodeName,\n    errorMessage: errorMsg,\n    timestamp: new Date().toISOString(),\n    rawError: JSON.stringify(error, null, 2) // Include full error for debugging\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        240
+      ],
+      "id": "41b405c3-0ada-42ef-b3a8-c0dd2d0f0198",
+      "name": "Format Orchestration Errors"
+    },
+    {
+      "parameters": {
+        "fromEmail": "errors@ad-pilot.ai",
+        "toEmail": "kelly@ad-pilot.ai",
+        "subject": "=🚨 Script Orchestration Failed - {{ $json.nodeName }}",
+        "html": "={{ \"⚠️ Orchestrate Video Creation Workflow Error\\n\\n\" +\n\"Failed Node: \" + $json.nodeName + \"\\n\" +\n\"Error: \" + $json.errorMessage + \"\\n\\n\" +\n\"Time: \" + $json.timestamp + \"\\n\\n\" +\n\"Check n8n: https://kelly-ads.app.n8n.cloud/\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1264,
+        240
+      ],
+      "id": "e0ee6317-597c-49a7-90ef-45af06bef1f7",
+      "name": "Send email",
+      "webhookId": "68f17466-636c-4964-ad5e-feaabe206dd5",
+      "credentials": {
+        "smtp": {
+          "id": "5HPC3NyTgaxCbH6e",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorMessage": "Orchestration errored out."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        240
+      ],
+      "id": "bbe4127b-5baa-4c79-add0-1b3a56efe236",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "content": "# #1\n## Generate Script",
+        "height": 272,
+        "width": 208,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "0da5e17f-8791-4ecb-9f1c-a5dec7f35e0e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# #2\n## Generate Avatar",
+        "height": 272,
+        "width": 208,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        480,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "2d9c01ae-7cce-4651-9212-11e377849be3",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# #3\n## Generate Video",
+        "height": 272,
+        "width": 208,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        704,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "babdbde5-e90f-4483-b41f-f80ffeb7058b",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Video Generation\n# Orchestration Workflow",
+        "height": 608,
+        "width": 1792
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "b7576e24-1f34-4435-a971-32d39fe21823",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ys6T0zekEc0aLbvS",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/ys6T0zekEc0aLbvS",
+          "cachedResultName": "[02] Script generation"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "videoConfig"
+          ],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        32
+      ],
+      "id": "68a86824-5ac2-4ee8-a48a-50ecebb1ebc6",
+      "name": "Call '[02] Script generation'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "bH8RmQxbIUXI78cK",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/bH8RmQxbIUXI78cK",
+          "cachedResultName": "[03] Create avatar"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        544,
+        32
+      ],
+      "id": "75d87af5-0d78-4892-b57b-fb183ea9839e",
+      "name": "Call '[03] Create avatar'"
+    }
+  ],
+  "connections": {
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Cleanup and Archive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cleanup and Archive": {
+      "main": [
+        [
+          {
+            "node": "Delete Audio file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Allow whitelisted emails only": {
+      "main": [
+        [
+          {
+            "node": "Call '[02] Script generation'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Ad generation core'": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Allow whitelisted emails only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Orchestration Errors": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Audio file": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Format Orchestration Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[02] Script generation'": {
+      "main": [
+        [
+          {
+            "node": "Call '[03] Create avatar'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[03] Create avatar'": {
+      "main": [
+        [
+          {
+            "node": "Call 'Ad generation core'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "343811ca-6ea2-4252-9d64-316bebe97a76",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-20T21:59:52.122Z",
+      "createdAt": "2025-10-20T21:59:52.122Z",
+      "role": "workflow:owner",
+      "workflowId": "aciRAWTYLz4bDwl2",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-10-20T22:01:51.760Z",
+      "createdAt": "2025-10-20T22:01:51.760Z",
+      "id": "4o01JEB63Qahv9wy",
+      "name": "PROD"
+    }
+  ]
+}
