@@ -1,0 +1,1121 @@
+{
+  "updatedAt": "2025-11-26T20:27:47.000Z",
+  "createdAt": "2025-11-22T14:53:42.780Z",
+  "id": "bH8RmQxbIUXI78cK",
+  "name": "[03] Generate Avatar",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        1696
+      ],
+      "id": "6ca0f276-1654-44f8-baf9-b4f94ede4825",
+      "name": "Wait",
+      "webhookId": "a6450418-423b-411d-872d-223ca0619b51"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Single error - format it for the email\nconst error = $input.first().json;\nconst nodeName = error.node?.name || 'Unknown node';\n\n// Handle different error formats from different APIs\nlet errorMsg = 'Unknown error';\n\n// HeyGen error format: { \"error\": { \"code\": \"...\", \"message\": \"...\", \"detail\": \"...\" } }\nif (error.error?.code && error.error?.message) {\n  errorMsg = `[${error.error.code}] ${error.error.message}`;\n  if (error.error.detail) {\n    errorMsg += ` - ${error.error.detail}`;\n  }\n}\n// Cloudinary error format: { \"error\": { \"message\": \"...\" } }\nelse if (error.error?.message) {\n  errorMsg = error.error.message;\n}\n// ElevenLabs error format: { \"error\": { \"code\": \"...\", \"message\": \"...\" } }\n// (Same structure as HeyGen but without detail field - handled by first condition)\n// Generic message fallback\nelse if (error.message) {\n  errorMsg = error.message;\n}\n\nreturn [{\n  json: {\n    nodeName: nodeName,\n    errorMessage: errorMsg,\n    timestamp: new Date().toISOString(),\n    rawError: JSON.stringify(error, null, 2) // Include full error for debugging\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        1680
+      ],
+      "id": "83a8f36d-0e32-4e47-a8b1-edf9a4cc0cde",
+      "name": "Format Create Avatar Video Errors"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Avatar video errored out."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        1680
+      ],
+      "id": "45663354-74b7-458a-a21d-75d959756395",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst sectionTimings = config._section_timings;\n\nif (!sectionTimings || sectionTimings.length === 0) {\n  throw new Error('No section timings found!');\n}\n\n// Extract car timings (sections that aren't hook or cta)\nconst carTimings = sectionTimings.filter(t => \n  t.name !== 'hook' && t.name !== 'cta'\n);\n\n// Update vehicles with accurate timings\nconst updatedVehicles = config.vehicles ? config.vehicles.map((vehicle, index) => {\n  const carTiming = carTimings[index];\n  \n  if (!carTiming) {\n    console.warn(`No timing found for vehicle ${index + 1} (${vehicle.vin})`);\n    return vehicle;\n  }\n  \n  return {\n    ...vehicle,\n    start_time: Math.round(carTiming.start),\n    end_time: Math.round(carTiming.end)\n  };\n}) : [];\n\n// Total duration from last section's end time\nconst totalDuration = Math.round(sectionTimings[sectionTimings.length - 1].end);\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: updatedVehicles,\n    audio_duration: totalDuration\n  },\n  binary: $input.first().binary\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        1632
+      ],
+      "id": "a9085321-e6d7-4522-ac65-856ed886b9b0",
+      "name": "Calculate Car Timings from Durations"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\n\nreturn [{\n  json: {\n    ...config,\n    text: config.script.full_script\n  },\n  binary: $binary\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1184
+      ],
+      "id": "0c76457f-13ca-4f6f-8b84-ceb9c139c8b4",
+      "name": "Prepare for Forced Alignment"
+    },
+    {
+      "parameters": {
+        "content": "# #2 Generate Avatar Video",
+        "height": 864,
+        "width": 2272,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -688,
+        1024
+      ],
+      "typeVersion": 1,
+      "id": "2d4ab4c4-5e9b-42a3-b2dc-7eb4c265836b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Error path",
+        "height": 224,
+        "width": 432,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        1616
+      ],
+      "typeVersion": 1,
+      "id": "0948db8b-f71b-4d80-bfbd-fb10cbbb5c9f",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Success path",
+        "height": 208,
+        "width": 224,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        864,
+        1376
+      ],
+      "typeVersion": 1,
+      "id": "4b60bfe9-ddea-4eb4-9b45-c6a667ae4f73",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "\n  {\n    \"template_id\": \"TEMP_001\",\n    \"theme\": \"\",\n    \"topic\": \"\",\n    \"platform\": \"instagram\",\n    \"include_animation\": false,\n    \"avatar_id\": \"5b9c75a2f13e4d60b09bcfdafa7339dd\",\n    \"voice_id\": \"eezuv0zKVdVTS0jHdxFa\",\n    \"chromakey_color\": \"#6da264\",\n    \"chromakey_sensitivity\": \"8\",\n    \"avatar_name\": \"Kelly\",\n    \"script_length\": \"quick\",\n    \"email\": \"kelly@kellyrae.net\",\n    \"vins\": [\n      \"1N4BL4DV5RN378690\"\n    ],\n    \"test_mode\": null,\n    \"vehicles\": [\n      {\n        \"vin\": \"1N4BL4DV5RN378690\",\n        \"year\": 2024,\n        \"make\": \"Nissan\",\n        \"model\": \"Altima\",\n        \"price\": 23995,\n        \"mileage\": 40822,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/6f5088fa57e4f9c9f5b8d1aaa752828d.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91242\",\n        \"features\": [\n          \"4-Cyl 2.5 Liter\",\n          \"FWD\",\n          \"BLACK\"\n        ]\n      }\n    ],\n    \"timing_guidance\": {\n      \"target\": \"15-30 seconds\",\n      \"hook\": \"3-4 seconds\",\n      \"cta\": \"4-5 seconds\",\n      \"style\": \"Fast-paced, punchy, only the most critical selling points\"\n    },\n    \"target_duration\": \"15-18 seconds\",\n    \"script\": {\n      \"hook\": \"Check out this deal at Capitol Car Credit!\",\n      \"segments\": [\n        \"Twenty-twenty-four Neesawn Altima - twenty-three thousand nine ninety-five with great gas mileage!\"\n      ],\n      \"cta\": \"Call two one seven, eight nine three, eight two three two - financing available for qualified buyers!\",\n      \"full_script\": \"Check out this deal at Capitol Car Credit! Twenty-twenty-four Neesawn Altima - twenty-three thousand nine ninety-five with great gas mileage! Call two one seven, eight nine three, eight two three two - financing available for qualified buyers! [pause 1 second]\",\n      \"notes\": \"Emphasized fuel efficiency as top priority for target audience, used proper Nissan pronunciation, included financing mention in CTA for maximum appeal\"\n    }\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        1360
+      ],
+      "id": "1942a1bc-a9fa-48ee-b2d6-0f22232d6992",
+      "name": "Edit Fields",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -608,
+        1360
+      ],
+      "id": "71d541bd-13bd-48f5-8587-41e030ed86c4",
+      "name": "When Executed by Orchestrate Video Creation"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.text}}\",\n  \"model_id\": \"eleven_v3\",\n  \"voice_settings\": {\n    \"stability\": 0.5,\n    \"similarity_boost\": 0.75,\n    \"style\": 0,\n    \"use_speaker_boost\": true\n  },\n  \"output_format\": \"mp3_44100_128\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -48,
+        1232
+      ],
+      "id": "7e1d247c-f0ef-4807-b76d-abbc881fa6aa",
+      "name": "API: ElevenLabs, TTS",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "rF8Db64Xo3IjoeOL",
+          "name": "ElevenLabs API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cca8b346-501c-45ab-a0b4-b85747732f3a",
+              "leftValue": "={{ $json.template_id }}",
+              "rightValue": "TEMP_001",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "1abfa12b-6a58-43be-b3c7-7c40f9b28f3b",
+              "leftValue": "={{ $json.template_id }}",
+              "rightValue": "TEMP_002",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        1200
+      ],
+      "id": "592a02ca-c6fe-45dd-bc03-34f39640c1c1",
+      "name": "If: Needs Section Timings"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/forced-alignment",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "elevenLabsApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1120,
+        1248
+      ],
+      "id": "688352cf-4e22-45c6-9292-6e40e992973b",
+      "name": "API: ElevenLabs, Forced Alignment",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "SlTH3r2FtzR0lpfq",
+          "name": "ElevenLabs account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: $json.api_elevenlabs_forced_alignment\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        1120
+      ],
+      "id": "bd234d16-5d4f-4d12-ac3f-8783006aa89b",
+      "name": "Skip Forced Alignment"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c8890915-279c-42e5-ae88-22c0047cd339",
+              "leftValue": "={{ $json.api_elevenlabs_forced_alignment }}",
+              "rightValue": true,
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        1184
+      ],
+      "id": "2962b868-87da-4013-9024-071341b7bcfd",
+      "name": "If: Test, Skip Forced Alignment"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst rawWords = response.words;\nconst binary = $(\"Prepare for Forced Alignment\").first().binary;\nconst config = $('Prepare for Forced Alignment').first().json;\nconst script = config.script;\n\n// Merge words with their trailing spaces\nconst words = [];\nfor (let i = 0; i < rawWords.length; i++) {\n  const word = rawWords[i];\n  if (word.text.trim() !== '') {\n    // It's a real word - check if next entry is a space\n    const nextEntry = rawWords[i + 1];\n    const endTime = (nextEntry && nextEntry.text.trim() === '') \n      ? nextEntry.end  // Include the space timing\n      : word.end;      // No space after, use word end\n    \n    words.push({\n      text: word.text,\n      start: word.start,\n      end: endTime\n    });\n  }\n}\n\n// Build section texts in order\nconst sections = [\n  { name: 'hook', text: script.hook },\n  ...script.segments.map((text, i) => ({ name: `segment_${i}`, text })),\n  { name: 'cta', text: script.cta }\n];\n\nconst sectionTimings = [];\nlet wordIndex = 0;\n\nfor (const section of sections) {\n  const sectionWords = section.text.split(/\\s+/).filter(w => w.length > 0);\n  const wordCount = sectionWords.length;\n  \n  const startWord = words[wordIndex];\n  const endWord = words[wordIndex + wordCount - 1];\n  \n  if (!startWord || !endWord) {\n    console.warn(`Missing words for section ${section.name}`);\n    continue;\n  }\n  \n  sectionTimings.push({\n    name: section.name,\n    start: startWord.start,\n    end: endWord.end,\n    duration: endWord.end - startWord.start\n  });\n  \n  wordIndex += wordCount;\n}\n\nreturn [{\n  json: {\n    ...config,\n    \n    _section_timings: sectionTimings,\n\n    // Testing API Response\n    api_elevenlabs_forced_alignment : response\n  },\n  binary: binary\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        1184
+      ],
+      "id": "ad53fa1e-84a0-4e38-9fd7-a6c5b43f00c1",
+      "name": "Parse Forced Alignment Response"
+    },
+    {
+      "parameters": {
+        "fromEmail": "errors@ad-pilot.ai",
+        "toEmail": "kelly@ad-pilot.ai",
+        "subject": "=🚨 Avatar Generation Failed - {{ $json.nodeName }}",
+        "html": "={{ \"⚠️ Create Avatar Video Workflow Error\\n\\n\" +\n\"Failed Node: \" + $json.nodeName + \"\\n\" +\n\"Error: \" + $json.errorMessage + \"\\n\\n\" +\n\"Time: \" + $json.timestamp + \"\\n\\n\" +\n\"Check n8n: https://kelly-ads.app.n8n.cloud/\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        1680
+      ],
+      "id": "388cb3e1-b5d4-408a-adff-25ac9da4c94b",
+      "name": "Send Email",
+      "webhookId": "f0d4ff60-459c-4285-80e3-063a8a76c8da",
+      "credentials": {
+        "smtp": {
+          "id": "5HPC3NyTgaxCbH6e",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7e530ea0-2545-43a0-a589-1b816442e116",
+              "leftValue": "={{$json.data?.status}}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        1552
+      ],
+      "id": "9846f443-1045-48d3-b62b-65605ad87abe",
+      "name": "If: Avatar Complete"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "24b32897-40c6-4f03-9db3-9cf8448af739",
+              "leftValue": "={{ $json.api_heygen_create_avatar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        1488
+      ],
+      "id": "24e72cde-e2ff-4e25-9bc3-ae862d45689b",
+      "name": "If: Test, Skip Avatar"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: $json.api_heygen_create_avatar\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        1424
+      ],
+      "id": "308ab91d-9c1a-4da3-8fb2-aab2651ebe83",
+      "name": "Skip Avatar"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"Shad ad draft\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{ $json.audio_url }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1250 }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        1568
+      ],
+      "id": "41635a5e-64ee-4720-8a74-bd9e4ae27928",
+      "name": "API: HeyGen, Create Avatar",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.heygen.com/v1/video_status.get",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_id",
+              "value": "={{ $('API: HeyGen, Create Avatar').first().json.data.video_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        1552
+      ],
+      "id": "b479ea68-6a3e-4ea2-8364-ae5cba17c22f",
+      "name": "API: Check Avatar Status",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/video/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "=data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "resource_type",
+              "value": "auto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        128,
+        1216
+      ],
+      "id": "62302e07-eec4-451b-9abf-9d1c2b8436dd",
+      "name": "API: Cloudinary, Upload",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiResponse = $json;\nconst audioUrl = $json.secure_url;\nconst audioId = $json.public_id;\n\nconst config = $('Prepare Sections for TTS').first().json;\n\nif (!config) {\n  throw new Error('Could not find config.');\n}\n\nreturn [{\n  json: {\n    ...config,\n    \n    audio_url: audioUrl,\n    audio_cloudinary_id: audioId,\n\n    // Testing API Response\n    api_cloudinary_upload: apiResponse\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        1200
+      ],
+      "id": "3bfa26c8-2a22-467f-aabe-a00b3ac70cda",
+      "name": "Parse Upload Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b75618f6-93b4-4480-9a44-47fce4ded67b",
+              "leftValue": "={{ $json.template_id}}",
+              "rightValue": "TEMP_003",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        1504
+      ],
+      "id": "d1f13233-60a5-4d44-a263-977f4e5b6efa",
+      "name": "If: Template Type"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst script = config.script;\n\n// Validate script has what we need\nif (!script.full_script) {\n  throw new Error('Script missing full_script');\n}\n\nreturn [{\n  json: {\n    ...config,\n    text: script.full_script\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        1360
+      ],
+      "id": "806831e4-7c4e-441f-a9c3-3fc2c37b39db",
+      "name": "Prepare Sections for TTS"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This node runs after Cloudinary upload with the avatar video\nconst videoUrl = $json.data.video_url;\nconst duration = Number($json.data.duration);\nconst config = $('Remove Data Container').first().json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoUrl,\n    avatar_video_duration: duration,\n\n    // Testing API Responses\n    api_heygen_create_avatar: $json,\n    api_cloudinary_upload: undefined,\n    api_elevenlabs_forced_alignment: undefined\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        1456
+      ],
+      "id": "157b86f3-9999-4b3a-be9e-c299e3e278a6",
+      "name": "Parse Avatar Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e59a9fcd-5723-4be5-b2e9-52c3beb88b26",
+              "leftValue": "={{ $json.api_cloudinary_upload }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        1168
+      ],
+      "id": "955525c5-cc38-4013-884a-cfde3417c6b6",
+      "name": "If: Test, Skip TTS & Upload"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: $json.api_cloudinary_upload\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        1104
+      ],
+      "id": "dd807b6e-c970-4cb5-b356-1659b56c5d4a",
+      "name": "Skip TTS & Upload"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.audio_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        640,
+        1184
+      ],
+      "id": "3b4eb0a0-a5eb-431d-a977-8f32ccf71b65",
+      "name": "API: Cloudinary, Get Binary"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        48,
+        1488
+      ],
+      "id": "1553044c-6f7a-4455-a21c-e0a78ab534bd",
+      "name": "Aggregate: Configs"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: $json.data[0]\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        1488
+      ],
+      "id": "a7e3614b-9810-460a-9d18-2c4e1de2e0f4",
+      "name": "Remove Data Container"
+    }
+  ],
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "API: Check Avatar Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Create Avatar Video Errors": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Car Timings from Durations": {
+      "main": [
+        [
+          {
+            "node": "Aggregate: Configs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Forced Alignment": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip Forced Alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sections for TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Orchestrate Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: ElevenLabs, TTS": {
+      "main": [
+        [
+          {
+            "node": "API: Cloudinary, Upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Needs Section Timings": {
+      "main": [
+        [
+          {
+            "node": "API: Cloudinary, Get Binary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If: Template Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: ElevenLabs, Forced Alignment": {
+      "main": [
+        [
+          {
+            "node": "Parse Forced Alignment Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Forced Alignment": {
+      "main": [
+        [
+          {
+            "node": "Parse Forced Alignment Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Test, Skip Forced Alignment": {
+      "main": [
+        [
+          {
+            "node": "Skip Forced Alignment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: ElevenLabs, Forced Alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Forced Alignment Response": {
+      "main": [
+        [
+          {
+            "node": "If: Template Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Avatar Complete": {
+      "main": [
+        [
+          {
+            "node": "Parse Avatar Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Test, Skip Avatar": {
+      "main": [
+        [
+          {
+            "node": "Skip Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: HeyGen, Create Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Avatar": {
+      "main": [
+        [
+          {
+            "node": "If: Avatar Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HeyGen, Create Avatar": {
+      "main": [
+        [
+          {
+            "node": "API: Check Avatar Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Check Avatar Status": {
+      "main": [
+        [
+          {
+            "node": "If: Avatar Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Cloudinary, Upload": {
+      "main": [
+        [
+          {
+            "node": "Parse Upload Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Upload Response": {
+      "main": [
+        [
+          {
+            "node": "If: Needs Section Timings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Template Type": {
+      "main": [
+        [
+          {
+            "node": "Aggregate: Configs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Calculate Car Timings from Durations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sections for TTS": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip TTS & Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Avatar Response": {
+      "main": [
+        []
+      ]
+    },
+    "If: Test, Skip TTS & Upload": {
+      "main": [
+        [
+          {
+            "node": "Skip TTS & Upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: ElevenLabs, TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip TTS & Upload": {
+      "main": [
+        [
+          {
+            "node": "Parse Upload Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Cloudinary, Get Binary": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Forced Alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate: Configs": {
+      "main": [
+        [
+          {
+            "node": "Remove Data Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Data Container": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "af0ac98c-394b-4736-8091-db881d6ebe6e",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-11-22T14:53:42.784Z",
+      "createdAt": "2025-11-22T14:53:42.784Z",
+      "role": "workflow:owner",
+      "workflowId": "bH8RmQxbIUXI78cK",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-10-20T22:01:51.760Z",
+      "createdAt": "2025-10-20T22:01:51.760Z",
+      "id": "4o01JEB63Qahv9wy",
+      "name": "PROD"
+    }
+  ]
+}
