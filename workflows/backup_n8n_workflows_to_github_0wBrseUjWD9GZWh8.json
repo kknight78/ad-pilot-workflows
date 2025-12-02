@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-11-17T14:42:27.000Z",
+  "updatedAt": "2025-12-01T11:31:50.000Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -515,7 +515,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": true
   },
   "staticData": {
     "node:Daily Backup at 2 AM": {
@@ -526,7 +527,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "0a8abea8-dc94-4371-8a5c-09acb41feeb8",
+  "versionId": "f5b5ff12-d8cd-463b-b976-5c7dae133739",
   "triggerCount": 1,
   "shared": [
     {
