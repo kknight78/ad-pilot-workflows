@@ -1,0 +1,262 @@
+{
+  "updatedAt": "2025-12-02T12:18:36.658Z",
+  "createdAt": "2025-12-02T12:15:52.119Z",
+  "id": "whkdE4ChawR019Sn",
+  "name": "Theme Suggester",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "theme-suggest",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        200
+      ],
+      "webhookId": "theme-suggest"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "client_id",
+              "name": "client_id",
+              "value": "={{ $json.body.client_id || 'ccc' }}",
+              "type": "string"
+            },
+            {
+              "id": "location",
+              "name": "location",
+              "value": "={{ $json.body.location || 'Rantoul, IL' }}",
+              "type": "string"
+            },
+            {
+              "id": "current_date",
+              "name": "current_date",
+              "value": "={{ $now.format('MMMM D, YYYY') }}",
+              "type": "string"
+            },
+            {
+              "id": "current_month",
+              "name": "current_month",
+              "value": "={{ $now.format('MMMM') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "parse-request",
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "=You are a creative marketing strategist for a local used car dealership.\n\nGenerate 5-6 video ad theme suggestions based on current context.\n\n**Context:**\n- Client: {{ $json.client_id }}\n- Location: {{ $json.location }}\n- Current Date: {{ $json.current_date }}\n- Current Month: {{ $json.current_month }}\n\n**Consider these factors:**\n1. **Current season/weather** - What's the weather like in {{ $json.location }} right now? How does it affect driving?\n2. **Upcoming holidays** - Any holidays in the next 2-4 weeks?\n3. **Time of year events** - Tax season, back to school, graduation season, etc.\n4. **High-performing evergreen themes** - Financing options, trade-ins, reliability, family vehicles\n\n**Output format:**\nReturn ONLY a valid JSON object with this exact structure:\n{\n  \"themes\": [\n    {\n      \"name\": \"Theme Name\",\n      \"emoji\": \"single emoji\",\n      \"hook_example\": \"A catchy opening line for a video\",\n      \"why\": \"Brief explanation of why this theme is relevant right now\"\n    }\n  ]\n}\n\n**Rules:**\n- Generate exactly 5-6 themes\n- Each theme should be actionable for a car dealership video ad\n- Hook examples should be conversational and engaging (15-30 words)\n- Mix seasonal/timely themes with evergreen themes\n- Keep \"why\" explanations concise (1 sentence)\n- No markdown, just the JSON object\n\nGenerate themes now:",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "build-prompt",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyBFB8rHuBXVA3xPyWat-_vOoq30EP3-0io"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "1024"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "gemini-api",
+      "name": "Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON\nlet themes;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  const parsed = JSON.parse(cleanedResponse);\n  themes = parsed.themes || parsed;\n  \n  // Validate structure\n  if (!Array.isArray(themes)) {\n    throw new Error('Response is not an array');\n  }\n  \n  // Ensure each theme has required fields\n  themes = themes.map((theme, index) => ({\n    name: theme.name || `Theme ${index + 1}`,\n    emoji: theme.emoji || '🚗',\n    hook_example: theme.hook_example || theme.hook || 'Check out our latest deals!',\n    why: theme.why || theme.reason || 'Great for engagement'\n  }));\n  \n} catch (error) {\n  // Fallback themes if parsing fails\n  themes = [\n    {\n      name: \"Winter Weather Ready\",\n      emoji: \"❄️\",\n      hook_example: \"Is your car ready for winter? Here's what you need to know!\",\n      why: \"Seasonal relevance - winter driving concerns\"\n    },\n    {\n      name: \"Year-End Savings\",\n      emoji: \"💰\",\n      hook_example: \"Don't miss our year-end deals before they're gone!\",\n      why: \"End of year is prime time for car buying\"\n    },\n    {\n      name: \"Reliable Family Vehicles\",\n      emoji: \"👨‍👩‍👧‍👦\",\n      hook_example: \"Looking for a car the whole family will love?\",\n      why: \"Evergreen theme - families always need reliable vehicles\"\n    },\n    {\n      name: \"Easy Financing Options\",\n      emoji: \"✅\",\n      hook_example: \"Bad credit? No credit? No problem - here's how we can help.\",\n      why: \"Financing is a top concern for car buyers\"\n    },\n    {\n      name: \"Trade-In Value\",\n      emoji: \"🔄\",\n      hook_example: \"Your old car might be worth more than you think!\",\n      why: \"Trade-ins are a key part of the car buying process\"\n    }\n  ];\n}\n\nreturn { themes };"
+      },
+      "id": "parse-response",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, themes: $json.themes } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache, no-store, must-revalidate"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Request": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "5e993b54-19a2-4d74-9c2c-87ffc9b88fee",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-12-02T12:15:52.122Z",
+      "createdAt": "2025-12-02T12:15:52.122Z",
+      "role": "workflow:owner",
+      "workflowId": "whkdE4ChawR019Sn",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": []
+}
