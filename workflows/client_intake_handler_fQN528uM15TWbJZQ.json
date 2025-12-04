@@ -1,0 +1,227 @@
+{
+  "updatedAt": "2025-12-03T16:14:23.000Z",
+  "createdAt": "2025-12-03T15:22:36.363Z",
+  "id": "fQN528uM15TWbJZQ",
+  "name": "Client Intake Handler",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-intake",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ],
+      "webhookId": "client-intake"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate unique client ID\nconst now = new Date();\nconst year = now.getFullYear().toString().slice(-2);\nconst month = String(now.getMonth() + 1).padStart(2, '0');\nconst random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');\nconst clientId = `ADP-${year}${month}-${random}`;\n\nconst body = $input.first().json.body;\n\n// Flatten data for Google Sheets\nreturn {\n  json: {\n    clientId,\n    timestamp: body.timestamp,\n    \n    // Business Info\n    businessName: body.businessName,\n    businessAddress: body.businessAddress,\n    businessPhone: body.businessPhone,\n    websiteUrl: body.websiteUrl || '',\n    socialHandle: body.socialHandle || '',\n    industry: body.industry,\n    \n    // Platforms\n    platforms: body.platforms.join(', '),\n    platformStatuses: JSON.stringify(body.platformStatuses),\n    platformEmail: body.platformEmail,\n    platformNotes: body.platformNotes || '',\n    \n    // Portal Access\n    primaryContactName: body.primaryContactName,\n    primaryContactEmail: body.primaryContactEmail,\n    primaryContactPhone: body.primaryContactPhone || '',\n    additionalUsers: JSON.stringify(body.additionalUsers),\n    \n    // Verification Docs\n    ownerName: body.ownerName,\n    businessLicenseUrl: body.businessLicenseUrl || '',\n    ownerIdFrontUrl: body.ownerIdFrontUrl || '',\n    ownerIdBackUrl: body.ownerIdBackUrl || '',\n    \n    // Brand Assets\n    logoUrl: body.logoUrl || '',\n    brandColors: body.brandColors || '',\n    tagline: body.tagline || '',\n    exteriorPhotoUrl: body.exteriorPhotoUrl || '',\n    interiorPhotoUrl: body.interiorPhotoUrl || '',\n    otherPhotosUrls: Array.isArray(body.otherPhotosUrls) ? body.otherPhotosUrls.join(', ') : '',\n    \n    // Avatar People\n    avatarPeople: JSON.stringify(body.avatarPeople),\n    \n    // Plan & Pricing\n    selectedPlan: body.selectedPlan,\n    addons: body.addons.join(', '),\n    onboardingComplexity: body.onboardingComplexity,\n    onboardingTotal: body.onboardingTotal,\n    \n    // Notes\n    meetingNotes: body.meetingNotes || '',\n    followUpItems: body.followUpItems || '',\n    redFlags: body.redFlags || ''\n  }\n};"
+      },
+      "id": "prepare-data",
+      "name": "Prepare Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Submissions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "append-sheet",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        704,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g3qdIZMDD4wzQ69l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "notifications@ad-pilot.ai",
+        "toEmail": "eric@ad-pilot.ai",
+        "subject": "=New Client Intake: {{ $json.businessName }} ({{ $json.clientId }})",
+        "options": {}
+      },
+      "id": "email-eric",
+      "name": "Email Eric",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        208
+      ],
+      "webhookId": "59a431b4-f80b-4c00-adaf-60629dcec9d8",
+      "credentials": {
+        "smtp": {
+          "id": "5HPC3NyTgaxCbH6e",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "notifications@ad-pilot.ai",
+        "toEmail": "kelly@ad-pilot.ai",
+        "subject": "=New Client Intake: {{ $json.businessName }} ({{ $json.clientId }})",
+        "options": {}
+      },
+      "id": "email-kelly",
+      "name": "Email Kelly",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        400
+      ],
+      "webhookId": "d42a5619-c8b4-4df6-8cd3-312acf77a45a",
+      "credentials": {
+        "smtp": {
+          "id": "5HPC3NyTgaxCbH6e",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, clientId: $json.clientId, message: 'Intake submitted successfully' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        304
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "9c7d90e4-a07c-4701-b448-61c902602b67",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-12-03T15:22:36.365Z",
+      "createdAt": "2025-12-03T15:22:36.365Z",
+      "role": "workflow:owner",
+      "workflowId": "fQN528uM15TWbJZQ",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": []
+}
