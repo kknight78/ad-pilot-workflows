@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-11-29T23:12:45.000Z",
+  "updatedAt": "2025-12-01T11:31:02.000Z",
   "createdAt": "2025-11-29T18:12:07.917Z",
   "id": "8oLXQIapLoC4MbBj",
   "name": "[00] Job Gateway",
@@ -423,7 +423,8 @@
             "status": "={{ $json.final_video_url ? 'complete' : 'script_ready' }}",
             "updated_at": "={{ new Date().toISOString() }}",
             "script_data": "={{ JSON.stringify($json.script) }}",
-            "video_url": "={{ $json.final_video_url || '' }}"
+            "video_url": "={{ $json.final_video_url || '' }}",
+            "api_cache": "={{ $json.test_mode ? JSON.stringify({ api_claude_script_generation: $json.api_claude_script_generation, api_claude_categorize_photos: $json.api_claude_categorize_photos, api_claude_feature_identification: $json.api_claude_feature_identification }) : '' }}"
           },
           "matchingColumns": [
             "job_id"
@@ -535,6 +536,16 @@
               "type": "string",
               "canBeUsedToMatch": true,
               "removed": true
+            },
+            {
+              "id": "api_cache",
+              "displayName": "api_cache",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "row_number",
@@ -822,7 +833,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const row = $input.first().json;\n\nreturn [{\n  json: {\n    job_id: row.job_id,\n    status: row.status,\n    script_data: row.script_data ? JSON.parse(row.script_data) : null,\n    video_url: row.video_url || null,\n    error_message: row.error_message || null\n  }\n}];"
+        "jsCode": "const row = $input.first().json;\n\n// Parse api_cache if it exists\nlet apiCache = {};\nif (row.api_cache) {\n  try {\n    apiCache = JSON.parse(row.api_cache);\n  } catch (e) {\n    // Ignore parse errors\n  }\n}\n\nreturn [{\n  json: {\n    job_id: row.job_id,\n    status: row.status,\n    script_data: row.script_data ? JSON.parse(row.script_data) : null,\n    video_url: row.video_url || null,\n    error_message: row.error_message || null,\n    ...apiCache\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -963,14 +974,15 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": true
   },
   "staticData": null,
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "342bf74c-2686-43f9-b0a9-520e4e77bd42",
+  "versionId": "64d9f135-1a30-4567-8a43-b986e48b3c02",
   "triggerCount": 2,
   "shared": [
     {
