@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-11-19T19:09:54.000Z",
+  "updatedAt": "2025-12-01T14:56:56.000Z",
   "createdAt": "2025-11-19T17:00:36.769Z",
   "id": "1tPjDcRw1aH5uADH",
   "name": "Topic Suggestor",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "topic-suggest",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "https://demo.ad-pilot.ai"
+        }
       },
       "id": "4d220ddd-3b81-4432-aceb-3399e20e279c",
       "name": "Webhook",
@@ -36,7 +38,7 @@
             {
               "id": "has_guidance",
               "name": "has_guidance",
-              "value": "={{ $json.body.topic_guidance && $json.body.topic_guidance.trim().length > 0 }}",
+              "value": "={{ $json.body.topic_guidance.trim().length > 0 }}",
               "type": "boolean"
             },
             {
@@ -54,7 +56,7 @@
             {
               "id": "6e8cee15-ea70-4f20-b060-2403b70021b6",
               "name": "topic_guidance",
-              "value": "={{ $json.body.topic_guidance }}",
+              "value": "={{ $json.body.topic_guidance.trim() }}",
               "type": "string"
             }
           ]
@@ -174,7 +176,7 @@
               },
               {
                 "name": "Access-Control-Allow-Methods",
-                "value": "POST, OPTIONS"
+                "value": "GET, POST, OPTIONS"
               },
               {
                 "name": "Access-Control-Allow-Headers",
@@ -232,33 +234,6 @@
         1456,
         368
       ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "openAiApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { \"model\": \"gpt-4o-mini\", \"temperature\": 0.9, \"max_tokens\": 500, \"messages\": [{ \"role\": \"user\", \"content\": $json.prompt }] } }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        1760,
-        496
-      ],
-      "id": "31c4ae6e-a6f0-4e2b-9cd8-a6ede9b9c8be",
-      "name": "OpenAI API",
-      "credentials": {
-        "openAiApi": {
-          "id": "BlHKljo17Nw09bHn",
-          "name": "OpenAi account"
-        }
-      },
-      "disabled": true
     }
   ],
   "connections": {
@@ -306,11 +281,6 @@
         ]
       ]
     },
-    "OpenAI API": {
-      "main": [
-        []
-      ]
-    },
     "Gemini API": {
       "main": [
         [
@@ -324,12 +294,13 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": true
   },
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "6cc2f43e-a5e5-49d6-abe5-1c3a819ae3a5",
+  "versionId": "33ca530c-be1f-4784-a47d-0813decd8497",
   "triggerCount": 1,
   "shared": [
     {
