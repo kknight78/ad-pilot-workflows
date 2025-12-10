@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-02T12:18:36.658Z",
+  "updatedAt": "2025-12-05T01:00:20.000Z",
   "createdAt": "2025-12-02T12:15:52.119Z",
   "id": "whkdE4ChawR019Sn",
   "name": "Theme Suggester",
@@ -20,8 +20,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [
-        200,
-        200
+        208,
+        208
       ],
       "webhookId": "theme-suggest"
     },
@@ -44,7 +44,7 @@
             {
               "id": "current_date",
               "name": "current_date",
-              "value": "={{ $now.format('MMMM D, YYYY') }}",
+              "value": "={{ $now.format('MMMM d, yyyy') }}",
               "type": "string"
             },
             {
@@ -63,7 +63,7 @@
       "typeVersion": 3.3,
       "position": [
         400,
-        200
+        208
       ]
     },
     {
@@ -73,7 +73,7 @@
             {
               "id": "prompt",
               "name": "prompt",
-              "value": "=You are a creative marketing strategist for a local used car dealership.\n\nGenerate 5-6 video ad theme suggestions based on current context.\n\n**Context:**\n- Client: {{ $json.client_id }}\n- Location: {{ $json.location }}\n- Current Date: {{ $json.current_date }}\n- Current Month: {{ $json.current_month }}\n\n**Consider these factors:**\n1. **Current season/weather** - What's the weather like in {{ $json.location }} right now? How does it affect driving?\n2. **Upcoming holidays** - Any holidays in the next 2-4 weeks?\n3. **Time of year events** - Tax season, back to school, graduation season, etc.\n4. **High-performing evergreen themes** - Financing options, trade-ins, reliability, family vehicles\n\n**Output format:**\nReturn ONLY a valid JSON object with this exact structure:\n{\n  \"themes\": [\n    {\n      \"name\": \"Theme Name\",\n      \"emoji\": \"single emoji\",\n      \"hook_example\": \"A catchy opening line for a video\",\n      \"why\": \"Brief explanation of why this theme is relevant right now\"\n    }\n  ]\n}\n\n**Rules:**\n- Generate exactly 5-6 themes\n- Each theme should be actionable for a car dealership video ad\n- Hook examples should be conversational and engaging (15-30 words)\n- Mix seasonal/timely themes with evergreen themes\n- Keep \"why\" explanations concise (1 sentence)\n- No markdown, just the JSON object\n\nGenerate themes now:",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
               "type": "string"
             }
           ]
@@ -85,8 +85,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
       "position": [
-        600,
-        200
+        608,
+        208
       ]
     },
     {
@@ -129,7 +129,7 @@
       "typeVersion": 4.2,
       "position": [
         800,
-        200
+        208
       ]
     },
     {
@@ -141,8 +141,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        200
+        1008,
+        208
       ]
     },
     {
@@ -178,7 +178,7 @@
       "typeVersion": 1.1,
       "position": [
         1200,
-        200
+        208
       ]
     }
   ],
@@ -242,12 +242,12 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": true
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "5e993b54-19a2-4d74-9c2c-87ffc9b88fee",
+  "pinData": {},
+  "versionId": "13988da9-214c-4064-a4f5-6cd3dfd60952",
   "triggerCount": 1,
   "shared": [
     {
