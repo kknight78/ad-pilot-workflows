@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T12:57:16.824Z",
+  "updatedAt": "2025-12-10T13:20:58.740Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -416,7 +416,7 @@
         ],
         [
           {
-            "node": "Process One at a Time",
+            "node": "Aggregate Results",
             "type": "main",
             "index": 0
           }
@@ -500,7 +500,7 @@
       "main": [
         [
           {
-            "node": "Aggregate Results",
+            "node": "Process One at a Time",
             "type": "main",
             "index": 0
           }
@@ -591,7 +591,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "20c151d0-b689-48de-8501-45ee8bdfb104",
+  "versionId": "9ae92a1e-3506-4631-9931-834d3a1d9d48",
   "triggerCount": 1,
   "shared": [
     {
