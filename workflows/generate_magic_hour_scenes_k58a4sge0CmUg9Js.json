@@ -3,7 +3,6 @@
   "createdAt": "2025-10-21T14:34:53.110Z",
   "id": "k58a4sge0CmUg9Js",
   "name": "Generate Magic Hour Scenes",
-  "description": null,
   "active": false,
   "isArchived": true,
   "nodes": [
@@ -23,7 +22,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extract exterior photo and prepare for Magic Hour generation\nconst data = $json;\nconst selectedPhotos = data.selected_photos || [];\n\nconsole.log('\ud83c\udfac Preparing Magic Hour scene generation');\nconsole.log(`Theme: ${data.theme || 'default'}`);\nconsole.log(`Available photos: ${selectedPhotos.length}`);\n\n// Find the exterior hero photo\nconst exteriorPhoto = selectedPhotos.find(p => \n  p.category === 'exterior_hero' || \n  p.display_order === 1\n);\n\nif (!exteriorPhoto) {\n  throw new Error('No exterior photo found for Magic Hour generation');\n}\n\nconsole.log(`\u2705 Using exterior photo: ${exteriorPhoto.url}`);\n\n// Extract theme for setting/mood (simplified)\nconst theme = data.theme || 'Great deal';\nconst themeLower = theme.toLowerCase();\n\n// Determine setting based on theme keywords\nlet setting = 'scenic road';\nlet lighting = 'golden hour lighting';\nlet mood = 'premium automotive shot';\n\nif (themeLower.includes('fall') || themeLower.includes('autumn')) {\n  setting = 'tree-lined road with fall foliage';\n  lighting = 'warm autumn sunset';\n} else if (themeLower.includes('spring')) {\n  setting = 'suburban street with blooming flowers and green trees';\n  lighting = 'bright spring sunshine';\n} else if (themeLower.includes('summer')) {\n  setting = 'open highway with clear blue sky';\n  lighting = 'bright sunny day';\n} else if (themeLower.includes('winter')) {\n  setting = 'snowy road with winter trees';\n  lighting = 'crisp winter light';\n}\n\n// Build SIMPLE, VISUAL prompts (like your working examples)\nconst hookPrompt = `This car driving smoothly on ${setting}, ${lighting}, motion blur on background, entire car visible, moving forward`;\n\nconst ctaPrompt = `Wide angle of this car parked at modern dealership entrance, ${lighting}, sleek presentation, full car visible, stationary elegant showcase`;\n\nconsole.log('Hook prompt:', hookPrompt);\nconsole.log('CTA prompt:', ctaPrompt);\n\nreturn [{\n  json: {\n    ...data,\n    exterior_photo_url: exteriorPhoto.url,\n    theme: theme,\n    hook_prompt: hookPrompt,\n    cta_prompt: ctaPrompt,\n    ready_for_generation: true\n  }\n}];"
+        "jsCode": "// Extract exterior photo and prepare for Magic Hour generation\nconst data = $json;\nconst selectedPhotos = data.selected_photos || [];\n\nconsole.log('🎬 Preparing Magic Hour scene generation');\nconsole.log(`Theme: ${data.theme || 'default'}`);\nconsole.log(`Available photos: ${selectedPhotos.length}`);\n\n// Find the exterior hero photo\nconst exteriorPhoto = selectedPhotos.find(p => \n  p.category === 'exterior_hero' || \n  p.display_order === 1\n);\n\nif (!exteriorPhoto) {\n  throw new Error('No exterior photo found for Magic Hour generation');\n}\n\nconsole.log(`✅ Using exterior photo: ${exteriorPhoto.url}`);\n\n// Extract theme for setting/mood (simplified)\nconst theme = data.theme || 'Great deal';\nconst themeLower = theme.toLowerCase();\n\n// Determine setting based on theme keywords\nlet setting = 'scenic road';\nlet lighting = 'golden hour lighting';\nlet mood = 'premium automotive shot';\n\nif (themeLower.includes('fall') || themeLower.includes('autumn')) {\n  setting = 'tree-lined road with fall foliage';\n  lighting = 'warm autumn sunset';\n} else if (themeLower.includes('spring')) {\n  setting = 'suburban street with blooming flowers and green trees';\n  lighting = 'bright spring sunshine';\n} else if (themeLower.includes('summer')) {\n  setting = 'open highway with clear blue sky';\n  lighting = 'bright sunny day';\n} else if (themeLower.includes('winter')) {\n  setting = 'snowy road with winter trees';\n  lighting = 'crisp winter light';\n}\n\n// Build SIMPLE, VISUAL prompts (like your working examples)\nconst hookPrompt = `This car driving smoothly on ${setting}, ${lighting}, motion blur on background, entire car visible, moving forward`;\n\nconst ctaPrompt = `Wide angle of this car parked at modern dealership entrance, ${lighting}, sleek presentation, full car visible, stationary elegant showcase`;\n\nconsole.log('Hook prompt:', hookPrompt);\nconsole.log('CTA prompt:', ctaPrompt);\n\nreturn [{\n  json: {\n    ...data,\n    exterior_photo_url: exteriorPhoto.url,\n    theme: theme,\n    hook_prompt: hookPrompt,\n    cta_prompt: ctaPrompt,\n    ready_for_generation: true\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -62,7 +61,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse the Magic Hour response for hook scene\nconst response = $json;\n\nconsole.log('Magic Hour Hook response:', JSON.stringify(response).substring(0, 200));\n\n// Extract generation ID and status\nconst generationId = response.id || response.generation_id;\nconst status = response.status;\n\nif (!generationId) {\n  throw new Error('No generation ID returned from Magic Hour API');\n}\n\nconsole.log(`\u2705 Hook scene generation started: ${generationId}`);\nconsole.log(`Status: ${status}`);\n\n// Get original data\nconst originalData = $('Extract Exterior Photo & Build Prompts').first().json;\n\nreturn [{\n  json: {\n    ...originalData,\n    hook_generation_id: generationId,\n    hook_status: status,\n    hook_response: response\n  }\n}];"
+        "jsCode": "// Parse the Magic Hour response for hook scene\nconst response = $json;\n\nconsole.log('Magic Hour Hook response:', JSON.stringify(response).substring(0, 200));\n\n// Extract generation ID and status\nconst generationId = response.id || response.generation_id;\nconst status = response.status;\n\nif (!generationId) {\n  throw new Error('No generation ID returned from Magic Hour API');\n}\n\nconsole.log(`✅ Hook scene generation started: ${generationId}`);\nconsole.log(`Status: ${status}`);\n\n// Get original data\nconst originalData = $('Extract Exterior Photo & Build Prompts').first().json;\n\nreturn [{\n  json: {\n    ...originalData,\n    hook_generation_id: generationId,\n    hook_status: status,\n    hook_response: response\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -143,7 +142,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Hook is complete, extract video URL\nconst data = $json;\nconst hookVideoUrl = data.hook_response?.video_url || data.hook_response?.output_url || data.hook_video_url;\n\nif (!hookVideoUrl) {\n  throw new Error('Hook video URL not found in response');\n}\n\nconsole.log('\u2705 Hook scene complete!');\nconsole.log(`Hook video URL: ${hookVideoUrl}`);\n\nreturn [{\n  json: {\n    ...data,\n    hook_animation_url: hookVideoUrl,\n    hook_complete: true\n  }\n}];"
+        "jsCode": "// Hook is complete, extract video URL\nconst data = $json;\nconst hookVideoUrl = data.hook_response?.video_url || data.hook_response?.output_url || data.hook_video_url;\n\nif (!hookVideoUrl) {\n  throw new Error('Hook video URL not found in response');\n}\n\nconsole.log('✅ Hook scene complete!');\nconsole.log(`Hook video URL: ${hookVideoUrl}`);\n\nreturn [{\n  json: {\n    ...data,\n    hook_animation_url: hookVideoUrl,\n    hook_complete: true\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -182,7 +181,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse the Magic Hour response for CTA scene\nconst response = $json;\n\nconsole.log('Magic Hour CTA response:', JSON.stringify(response).substring(0, 200));\n\n// Extract generation ID and status\nconst generationId = response.id || response.generation_id;\nconst status = response.status;\n\nif (!generationId) {\n  throw new Error('No generation ID returned from Magic Hour API');\n}\n\nconsole.log(`\u2705 CTA scene generation started: ${generationId}`);\nconsole.log(`Status: ${status}`);\n\n// Get original data (including hook URL)\nconst originalData = $('Extract Hook Video URL').first().json;\n\nreturn [{\n  json: {\n    ...originalData,\n    cta_generation_id: generationId,\n    cta_status: status,\n    cta_response: response\n  }\n}];"
+        "jsCode": "// Parse the Magic Hour response for CTA scene\nconst response = $json;\n\nconsole.log('Magic Hour CTA response:', JSON.stringify(response).substring(0, 200));\n\n// Extract generation ID and status\nconst generationId = response.id || response.generation_id;\nconst status = response.status;\n\nif (!generationId) {\n  throw new Error('No generation ID returned from Magic Hour API');\n}\n\nconsole.log(`✅ CTA scene generation started: ${generationId}`);\nconsole.log(`Status: ${status}`);\n\n// Get original data (including hook URL)\nconst originalData = $('Extract Hook Video URL').first().json;\n\nreturn [{\n  json: {\n    ...originalData,\n    cta_generation_id: generationId,\n    cta_status: status,\n    cta_response: response\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -263,7 +262,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Both scenes complete! Extract final URLs\nconst data = $json;\n\nconst hookUrl = data.hook_animation_url;\nconst ctaUrl = data.cta_response?.video_url || data.cta_response?.output_url || data.cta_video_url;\n\nif (!hookUrl) {\n  throw new Error('Hook video URL missing');\n}\n\nif (!ctaUrl) {\n  throw new Error('CTA video URL missing');\n}\n\nconsole.log('\ud83c\udf89 Both Magic Hour scenes complete!');\nconsole.log(`Hook video: ${hookUrl}`);\nconsole.log(`CTA video: ${ctaUrl}`);\n\nreturn [{\n  json: {\n    ...data,\n    hook_animation_url: hookUrl,\n    cta_animation_url: ctaUrl,\n    magic_hour_complete: true,\n    animation_count: 2\n  }\n}];"
+        "jsCode": "// Both scenes complete! Extract final URLs\nconst data = $json;\n\nconst hookUrl = data.hook_animation_url;\nconst ctaUrl = data.cta_response?.video_url || data.cta_response?.output_url || data.cta_video_url;\n\nif (!hookUrl) {\n  throw new Error('Hook video URL missing');\n}\n\nif (!ctaUrl) {\n  throw new Error('CTA video URL missing');\n}\n\nconsole.log('🎉 Both Magic Hour scenes complete!');\nconsole.log(`Hook video: ${hookUrl}`);\nconsole.log(`CTA video: ${ctaUrl}`);\n\nreturn [{\n  json: {\n    ...data,\n    hook_animation_url: hookUrl,\n    cta_animation_url: ctaUrl,\n    magic_hour_complete: true,\n    animation_count: 2\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -291,7 +290,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Check hook status - just update the status field\nconst statusResponse = $json;\nconst originalData = $('Parse Hook Response').first().json;\n\nconst newStatus = statusResponse.status;\nconst downloads = statusResponse.downloads || [];\nconst videoUrl = downloads.length > 0 ? downloads[0] : null;\nconst error = statusResponse.error || null;\n\nconsole.log(`Hook status: ${newStatus}`);\n\n// Check for error states\nif (newStatus === 'error' || newStatus === 'canceled') {\n  throw new Error(`Magic Hour hook generation failed with status: ${error}`);\n}\n\nif (videoUrl) {\n  console.log(`\u2705 Hook video ready: ${videoUrl}`);\n}\n\n// Return updated data - will loop back to IF check\nreturn [{\n  json: {\n    ...originalData,\n    hook_status: newStatus,\n    hook_video_url: videoUrl,\n    hook_response: statusResponse\n  }\n}];"
+        "jsCode": "// Check hook status - just update the status field\nconst statusResponse = $json;\nconst originalData = $('Parse Hook Response').first().json;\n\nconst newStatus = statusResponse.status;\nconst downloads = statusResponse.downloads || [];\nconst videoUrl = downloads.length > 0 ? downloads[0] : null;\nconst error = statusResponse.error || null;\n\nconsole.log(`Hook status: ${newStatus}`);\n\n// Check for error states\nif (newStatus === 'error' || newStatus === 'canceled') {\n  throw new Error(`Magic Hour hook generation failed with status: ${error}`);\n}\n\nif (videoUrl) {\n  console.log(`✅ Hook video ready: ${videoUrl}`);\n}\n\n// Return updated data - will loop back to IF check\nreturn [{\n  json: {\n    ...originalData,\n    hook_status: newStatus,\n    hook_video_url: videoUrl,\n    hook_response: statusResponse\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -304,7 +303,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Check CTA status - just update the status field\nconst statusResponse = $json;\nconst originalData = $('Parse CTA Response').first().json;\n\nconst newStatus = statusResponse.status;\nconst downloads = statusResponse.downloads || [];\nconst videoUrl = downloads.length > 0 ? downloads[0] : null;\n\nconsole.log(`CTA status: ${newStatus}`);\n\n// Check for error states\nif (newStatus === 'error' || newStatus === 'canceled') {\n  throw new Error(`Magic Hour CTA generation failed with status: ${newStatus}`);\n}\n\nif (videoUrl) {\n  console.log(`\u2705 CTA video ready: ${videoUrl}`);\n}\n\n// Return updated data - will loop back to IF check\nreturn [{\n  json: {\n    ...originalData,\n    cta_status: newStatus,\n    cta_video_url: videoUrl,\n    cta_response: statusResponse\n  }\n}];"
+        "jsCode": "// Check CTA status - just update the status field\nconst statusResponse = $json;\nconst originalData = $('Parse CTA Response').first().json;\n\nconst newStatus = statusResponse.status;\nconst downloads = statusResponse.downloads || [];\nconst videoUrl = downloads.length > 0 ? downloads[0] : null;\n\nconsole.log(`CTA status: ${newStatus}`);\n\n// Check for error states\nif (newStatus === 'error' || newStatus === 'canceled') {\n  throw new Error(`Magic Hour CTA generation failed with status: ${newStatus}`);\n}\n\nif (videoUrl) {\n  console.log(`✅ CTA video ready: ${videoUrl}`);\n}\n\n// Return updated data - will loop back to IF check\nreturn [{\n  json: {\n    ...originalData,\n    cta_status: newStatus,\n    cta_video_url: videoUrl,\n    cta_response: statusResponse\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -509,7 +508,6 @@
   "meta": null,
   "pinData": {},
   "versionId": "e5caa77c-6e63-4c4c-bdd8-de3f5a7303ce",
-  "versionCounter": 2,
   "triggerCount": 0,
   "shared": [
     {
@@ -517,49 +515,7 @@
       "createdAt": "2025-10-21T14:34:53.114Z",
       "role": "workflow:owner",
       "workflowId": "k58a4sge0CmUg9Js",
-      "projectId": "bll44iFOa92qb20Q",
-      "project": {
-        "updatedAt": "2025-09-08T16:29:41.547Z",
-        "createdAt": "2025-09-08T16:29:38.593Z",
-        "id": "bll44iFOa92qb20Q",
-        "name": "Kelly Knight <kelly@kellyrae.net>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "projectRelations": [
-          {
-            "updatedAt": "2025-09-08T16:29:38.593Z",
-            "createdAt": "2025-09-08T16:29:38.593Z",
-            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
-            "projectId": "bll44iFOa92qb20Q",
-            "user": {
-              "updatedAt": "2025-12-10T08:00:00.000Z",
-              "createdAt": "2025-09-08T16:29:36.989Z",
-              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
-              "email": "kelly@kellyrae.net",
-              "firstName": "Kelly",
-              "lastName": "Knight",
-              "personalizationAnswers": null,
-              "settings": {
-                "userActivated": true,
-                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
-                "userActivatedAt": 1758474039124,
-                "npsSurvey": {
-                  "responded": true,
-                  "lastShownAt": 1759246180644
-                },
-                "dismissedCallouts": {
-                  "preBuiltAgentsCalloutHttpRequest": true
-                }
-              },
-              "disabled": false,
-              "mfaEnabled": false,
-              "lastActiveAt": "2025-12-10",
-              "isPending": false
-            }
-          }
-        ]
-      }
+      "projectId": "bll44iFOa92qb20Q"
     }
   ],
   "tags": [
