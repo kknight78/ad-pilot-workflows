@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-01T11:31:50.000Z",
+  "updatedAt": "2025-12-10T12:09:30.493Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -335,6 +335,39 @@
           "name": "SMTP account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const githubResponse = $input.first().json;\nconst workflowData = $('Needs Update?').item.json.workflow;\n\nconst currentSha = githubResponse.sha;\n// GitHub returns base64 content with newlines - remove them for comparison\nconst currentContentBase64 = (githubResponse.content || '').replace(/\\n/g, '').replace(/\\s/g, '');\nconst newContentBase64 = workflowData.contentBase64.replace(/\\s/g, '');\n\n// Compare content\nconst contentChanged = currentContentBase64 !== newContentBase64;\n\nconsole.log(`📊 ${workflowData.name}: contentChanged=${contentChanged}`);\n\nif (contentChanged) {\n  console.log(`📝 Will update: ${workflowData.name}`);\n  return [{ json: { \n    sha: currentSha,\n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else {\n  console.log(`⏭️ Skipping: ${workflowData.name} (no changes)`);\n  return [{ json: { \n    sha: currentSha,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'skipped_no_changes'\n  } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        388,
+        0
+      ],
+      "id": "compare-content-node",
+      "name": "Compare Content"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needs_update }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        568,
+        0
+      ],
+      "id": "if-content-changed",
+      "name": "Content Changed?"
     }
   ],
   "connections": {
@@ -433,7 +466,7 @@
       "main": [
         [
           {
-            "node": "Update File",
+            "node": "Compare Content",
             "type": "main",
             "index": 0
           }
@@ -512,11 +545,41 @@
           }
         ]
       ]
+    },
+    "Compare Content": {
+      "main": [
+        [
+          {
+            "node": "Content Changed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Changed?": {
+      "main": [
+        [
+          {
+            "node": "Update File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
-    "availableInMCP": true
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner"
   },
   "staticData": {
     "node:Daily Backup at 2 AM": {
@@ -527,7 +590,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "f5b5ff12-d8cd-463b-b976-5c7dae133739",
+  "versionId": "110638b2-6703-4d08-a1eb-022f73bba851",
   "triggerCount": 1,
   "shared": [
     {
