@@ -3,6 +3,7 @@
   "createdAt": "2025-12-01T15:46:55.445Z",
   "id": "nkCIvIMN2fkJV66O",
   "name": "Guidance Rules API",
+  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -611,6 +612,7 @@
   "meta": null,
   "pinData": null,
   "versionId": "5a03102a-b001-48cc-b2da-f642bfce3ce7",
+  "versionCounter": 9,
   "triggerCount": 3,
   "shared": [
     {
@@ -618,7 +620,49 @@
       "createdAt": "2025-12-01T15:46:55.447Z",
       "role": "workflow:owner",
       "workflowId": "nkCIvIMN2fkJV66O",
-      "projectId": "bll44iFOa92qb20Q"
+      "projectId": "bll44iFOa92qb20Q",
+      "project": {
+        "updatedAt": "2025-09-08T16:29:41.547Z",
+        "createdAt": "2025-09-08T16:29:38.593Z",
+        "id": "bll44iFOa92qb20Q",
+        "name": "Kelly Knight <kelly@kellyrae.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-08T16:29:38.593Z",
+            "createdAt": "2025-09-08T16:29:38.593Z",
+            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
+            "projectId": "bll44iFOa92qb20Q",
+            "user": {
+              "updatedAt": "2025-12-10T08:00:00.000Z",
+              "createdAt": "2025-09-08T16:29:36.989Z",
+              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
+              "email": "kelly@kellyrae.net",
+              "firstName": "Kelly",
+              "lastName": "Knight",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
+                "userActivatedAt": 1758474039124,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1759246180644
+                },
+                "dismissedCallouts": {
+                  "preBuiltAgentsCalloutHttpRequest": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
     }
   ],
   "tags": []

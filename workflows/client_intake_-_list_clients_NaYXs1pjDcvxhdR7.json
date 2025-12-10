@@ -1,117 +1,140 @@
 {
-  "updatedAt": "2025-12-05T21:41:59.000Z",
-  "createdAt": "2025-12-05T21:35:42.250Z",
-  "id": "Ir1x98MM9Fz7A99W",
-  "name": "Inventory API",
+  "updatedAt": "2025-12-03T17:10:14.000Z",
+  "createdAt": "2025-12-03T16:51:00.470Z",
+  "id": "NaYXs1pjDcvxhdR7",
+  "name": "Client Intake - List Clients",
   "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
     {
       "parameters": {
+        "path": "client-list",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "webhook-list",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ],
+      "webhookId": "client-list"
+    },
+    {
+      "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4",
-          "mode": "list",
-          "cachedResultName": "Inventory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit?usp=drivesdk"
+          "value": "1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g",
+          "mode": "id"
         },
         "sheetName": {
           "__rl": true,
-          "value": 13582147,
-          "mode": "list",
-          "cachedResultName": "Meta_Feed",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit#gid=13582147"
+          "value": "Submissions",
+          "mode": "name"
         },
         "options": {}
       },
+      "id": "read-sheet",
+      "name": "Read All Clients",
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "typeVersion": 4.5,
       "position": [
-        160,
-        0
+        480,
+        304
       ],
-      "id": "e4def39d-75f1-4f63-8fc6-3141d7b730b5",
-      "name": "Get row(s) in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "MmkEFg1TuHDH32HZ",
-          "name": "Google Sheets account 2"
+          "id": "g3qdIZMDD4wzQ69l",
+          "name": "Google Sheets account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "return items.map((row, i) => ({\n     json: {\n       id: row.json.vehicle_id || row.json.vin,\n       year: parseInt(row.json.year),\n       make: row.json.make,\n       model: row.json.model,\n       price: parseInt(row.json.price?.replace(/[^0-9]/g, \"\")),\n       mileage: parseInt(row.json[\"mileage.value\"]),\n       daysOnLot: parseInt(row.json.days_on_lot),\n       imageUrl: row.json[\"image[0].url\"],\n       vin: row.json.vin,\n       driveType: row.json.drivetrain\n     }\n   }));"
+        "jsCode": "// Extract just the fields needed for the dropdown\nconst clients = $input.all().map(item => ({\n  clientId: item.json.clientId,\n  businessName: item.json.businessName,\n  industry: item.json.industry,\n  primaryContactName: item.json.primaryContactName,\n  timestamp: item.json.timestamp\n}));\n\n// Sort by most recent first\nclients.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));\n\nreturn { json: { clients } };"
       },
+      "id": "format-list",
+      "name": "Format Client List",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        304,
-        0
-      ],
-      "id": "74b180cb-d87c-46cd-89bc-7c9f5c4e4735",
-      "name": "Transform"
+        704,
+        304
+      ]
     },
     {
       "parameters": {
-        "path": "inventory",
-        "responseMode": "responseNode",
-        "options": {}
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
       },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        0,
-        0
-      ],
-      "id": "f33fa7a1-f749-4229-a478-5499bdd87433",
-      "name": "Webhook: Inventory",
-      "webhookId": "22f5ca5b-10c4-4323-9102-64fb073a58af"
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
+      "id": "respond-list",
+      "name": "Respond",
       "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
+      "typeVersion": 1.1,
       "position": [
-        448,
-        0
-      ],
-      "id": "4b310065-2d2d-4551-bdaa-05e08d12de2d",
-      "name": "Respond to Webhook"
+        928,
+        304
+      ]
     }
   ],
   "connections": {
-    "Get row(s) in sheet": {
+    "Webhook": {
       "main": [
         [
           {
-            "node": "Transform",
+            "node": "Read All Clients",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Webhook: Inventory": {
+    "Read All Clients": {
       "main": [
         [
           {
-            "node": "Get row(s) in sheet",
+            "node": "Format Client List",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Transform": {
+    "Format Client List": {
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Respond",
             "type": "main",
             "index": 0
           }
@@ -120,22 +143,22 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
   "staticData": null,
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
+  "meta": null,
   "pinData": {},
-  "versionId": "13587c61-9566-4219-909e-43728211d6b6",
+  "versionId": "b0f7e1db-1736-41e2-b137-f3bb2637d23a",
   "versionCounter": 5,
   "triggerCount": 1,
   "shared": [
     {
-      "updatedAt": "2025-12-05T21:35:42.253Z",
-      "createdAt": "2025-12-05T21:35:42.253Z",
+      "updatedAt": "2025-12-03T16:51:00.472Z",
+      "createdAt": "2025-12-03T16:51:00.472Z",
       "role": "workflow:owner",
-      "workflowId": "Ir1x98MM9Fz7A99W",
+      "workflowId": "NaYXs1pjDcvxhdR7",
       "projectId": "bll44iFOa92qb20Q",
       "project": {
         "updatedAt": "2025-09-08T16:29:41.547Z",

@@ -3,6 +3,7 @@
   "createdAt": "2025-12-02T12:15:52.119Z",
   "id": "whkdE4ChawR019Sn",
   "name": "Theme Suggester",
+  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -73,7 +74,7 @@
             {
               "id": "prompt",
               "name": "prompt",
-              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\ud83c\udfaf WHO WE ARE:\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically \u2014 like neighbors, not salespeople.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\ud83d\udc65 TARGET AUDIENCE:\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\u2696\ufe0f LEGAL COMPLIANCE (CRITICAL):\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n\u274c NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n\u2705 Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\ud83c\udfa8 THEME QUALITY STANDARDS:\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\ud83d\udccb YOUR TASK:\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nGenerate 5-6 theme ideas for this week's video ads.\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"\ud83c\udfaf\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
               "type": "string"
             }
           ]
@@ -134,7 +135,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON\nlet themes;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  const parsed = JSON.parse(cleanedResponse);\n  themes = parsed.themes || parsed;\n  \n  // Validate structure\n  if (!Array.isArray(themes)) {\n    throw new Error('Response is not an array');\n  }\n  \n  // Ensure each theme has required fields\n  themes = themes.map((theme, index) => ({\n    name: theme.name || `Theme ${index + 1}`,\n    emoji: theme.emoji || '🚗',\n    hook_example: theme.hook_example || theme.hook || 'Check out our latest deals!',\n    why: theme.why || theme.reason || 'Great for engagement'\n  }));\n  \n} catch (error) {\n  // Fallback themes if parsing fails\n  themes = [\n    {\n      name: \"Winter Weather Ready\",\n      emoji: \"❄️\",\n      hook_example: \"Is your car ready for winter? Here's what you need to know!\",\n      why: \"Seasonal relevance - winter driving concerns\"\n    },\n    {\n      name: \"Year-End Savings\",\n      emoji: \"💰\",\n      hook_example: \"Don't miss our year-end deals before they're gone!\",\n      why: \"End of year is prime time for car buying\"\n    },\n    {\n      name: \"Reliable Family Vehicles\",\n      emoji: \"👨‍👩‍👧‍👦\",\n      hook_example: \"Looking for a car the whole family will love?\",\n      why: \"Evergreen theme - families always need reliable vehicles\"\n    },\n    {\n      name: \"Easy Financing Options\",\n      emoji: \"✅\",\n      hook_example: \"Bad credit? No credit? No problem - here's how we can help.\",\n      why: \"Financing is a top concern for car buyers\"\n    },\n    {\n      name: \"Trade-In Value\",\n      emoji: \"🔄\",\n      hook_example: \"Your old car might be worth more than you think!\",\n      why: \"Trade-ins are a key part of the car buying process\"\n    }\n  ];\n}\n\nreturn { themes };"
+        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON\nlet themes;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  const parsed = JSON.parse(cleanedResponse);\n  themes = parsed.themes || parsed;\n  \n  // Validate structure\n  if (!Array.isArray(themes)) {\n    throw new Error('Response is not an array');\n  }\n  \n  // Ensure each theme has required fields\n  themes = themes.map((theme, index) => ({\n    name: theme.name || `Theme ${index + 1}`,\n    emoji: theme.emoji || '\ud83d\ude97',\n    hook_example: theme.hook_example || theme.hook || 'Check out our latest deals!',\n    why: theme.why || theme.reason || 'Great for engagement'\n  }));\n  \n} catch (error) {\n  // Fallback themes if parsing fails\n  themes = [\n    {\n      name: \"Winter Weather Ready\",\n      emoji: \"\u2744\ufe0f\",\n      hook_example: \"Is your car ready for winter? Here's what you need to know!\",\n      why: \"Seasonal relevance - winter driving concerns\"\n    },\n    {\n      name: \"Year-End Savings\",\n      emoji: \"\ud83d\udcb0\",\n      hook_example: \"Don't miss our year-end deals before they're gone!\",\n      why: \"End of year is prime time for car buying\"\n    },\n    {\n      name: \"Reliable Family Vehicles\",\n      emoji: \"\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67\u200d\ud83d\udc66\",\n      hook_example: \"Looking for a car the whole family will love?\",\n      why: \"Evergreen theme - families always need reliable vehicles\"\n    },\n    {\n      name: \"Easy Financing Options\",\n      emoji: \"\u2705\",\n      hook_example: \"Bad credit? No credit? No problem - here's how we can help.\",\n      why: \"Financing is a top concern for car buyers\"\n    },\n    {\n      name: \"Trade-In Value\",\n      emoji: \"\ud83d\udd04\",\n      hook_example: \"Your old car might be worth more than you think!\",\n      why: \"Trade-ins are a key part of the car buying process\"\n    }\n  ];\n}\n\nreturn { themes };"
       },
       "id": "parse-response",
       "name": "Parse Response",
@@ -248,6 +249,7 @@
   "meta": null,
   "pinData": {},
   "versionId": "13988da9-214c-4064-a4f5-6cd3dfd60952",
+  "versionCounter": 9,
   "triggerCount": 1,
   "shared": [
     {
@@ -255,7 +257,49 @@
       "createdAt": "2025-12-02T12:15:52.122Z",
       "role": "workflow:owner",
       "workflowId": "whkdE4ChawR019Sn",
-      "projectId": "bll44iFOa92qb20Q"
+      "projectId": "bll44iFOa92qb20Q",
+      "project": {
+        "updatedAt": "2025-09-08T16:29:41.547Z",
+        "createdAt": "2025-09-08T16:29:38.593Z",
+        "id": "bll44iFOa92qb20Q",
+        "name": "Kelly Knight <kelly@kellyrae.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-08T16:29:38.593Z",
+            "createdAt": "2025-09-08T16:29:38.593Z",
+            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
+            "projectId": "bll44iFOa92qb20Q",
+            "user": {
+              "updatedAt": "2025-12-10T08:00:00.000Z",
+              "createdAt": "2025-09-08T16:29:36.989Z",
+              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
+              "email": "kelly@kellyrae.net",
+              "firstName": "Kelly",
+              "lastName": "Knight",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
+                "userActivatedAt": 1758474039124,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1759246180644
+                },
+                "dismissedCallouts": {
+                  "preBuiltAgentsCalloutHttpRequest": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
     }
   ],
   "tags": []

@@ -1,14 +1,15 @@
 {
-  "updatedAt": "2025-11-26T22:35:49.000Z",
+  "updatedAt": "2025-12-10T01:20:04.033Z",
   "createdAt": "2025-10-20T22:01:25.542Z",
   "id": "Z36Cd1XZSVbd1bC3",
   "name": "[04] Generate Video",
+  "description": null,
   "active": false,
   "isArchived": false,
   "nodes": [
     {
       "parameters": {
-        "jsCode": "const config = $json;\nconst vehicles = config.vehicles || [];\nconst cachedVehicles = [];\nconst needsProcessing = [];\n\n// TEMP_003 skips this, no vehicles required\nfor (const vehicle of vehicles) {\n  const vin = vehicle.vin;\n  \n  if (!vin) {\n    console.log('Vehicle missing VIN, using original');\n    cachedVehicles.push(vehicle);\n    continue;\n  }\n  \n  // Check if bg-removed image exists\n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`✓ VIN ${vin}: Found in cache`);\n      vehicle.photo_url = bgRemovedUrl;\n      cachedVehicles.push(vehicle);\n      continue;\n    }\n  } catch (error) {\n    // Not in cache\n  }\n  needsProcessing.push(vehicle);\n}\n\n// Return single item with arrays\nreturn [{\n  json: {\n    ...config,\n    vehicles: vehicles, // ← Now has updated URLs for cached vehicles\n    vehiclesToProcess: needsProcessing,\n    cachedVehicles: cachedVehicles\n  }\n}];"
+        "jsCode": "const config = $json;\nconst vehicles = config.vehicles || [];\nconst cachedVehicles = [];\nconst needsProcessing = [];\n\n// TEMP_003 skips this, no vehicles required\nfor (const vehicle of vehicles) {\n  const vin = vehicle.vin;\n  \n  if (!vin) {\n    console.log('Vehicle missing VIN, using original');\n    cachedVehicles.push(vehicle);\n    continue;\n  }\n  \n  // Check if bg-removed image exists\n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`\u2713 VIN ${vin}: Found in cache`);\n      vehicle.photo_url = bgRemovedUrl;\n      cachedVehicles.push(vehicle);\n      continue;\n    }\n  } catch (error) {\n    // Not in cache\n  }\n  needsProcessing.push(vehicle);\n}\n\n// Return single item with arrays\nreturn [{\n  json: {\n    ...config,\n    vehicles: vehicles, // \u2190 Now has updated URLs for cached vehicles\n    vehiclesToProcess: needsProcessing,\n    cachedVehicles: cachedVehicles\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -26,8 +27,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        528,
-        192
+        368,
+        160
       ],
       "id": "558fb222-cacc-4087-a229-4aa997b6777a",
       "name": "Wait for Render",
@@ -35,35 +36,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\n\nconst platformTexts = {\n  'tiktok': 'Ask for SHAD and mention you saw this on TIKTOK!',\n  'youtube': 'Ask for SHAD and mention you saw this on YOUTUBE!',\n  'instagram': 'Ask for SHAD and mention you saw this on INSTAGRAM!',\n  'facebook': 'Ask for SHAD and mention you saw this on FACEBOOK!',\n  'none': 'Ask for SHAD for a great deal!'\n};\n\nconst platform = $json.platform || 'none';\nconst platformText = platformTexts[platform];\n\nconst avatarUrl = config.avatar_video_url;\nconst avatarDuration = config.avatar_video_duration;\nconst vehicles = config.vehicles;\nconst musicUrl = config.media?.music_url;\nconst chromakeyColor = config.chromakey_color;\nconst chromakeySensitivity = config.chromakey_sensitivity;\n\n//const hasTheme = config.theme && config.theme.trim() !== '' && config.theme !== 'none';\n\n//const includeAnimation = config.include_animation || false;\n// const themeAnimationUrl = config.theme_animation_url || null;\n\nif (!avatarUrl) throw new Error('Missing avatar video URL');\nif (vehicles.length === 0) throw new Error('No vehicles in config');\nif (vehicles.length > 5) throw new Error('Maximum 5 vehicles allowed');\n\n// Animation only shows if ALL conditions met\nconst showAnimation = false;\n  //hasTheme && includeAnimation && themeAnimationUrl !== null;\n//const TIME_OFFSET = showAnimation ? 2.25 : 0;\n\n// Get hook duration from audio sections\nconst hookSection = config._section_timings?.find(t => t.name === 'hook');\nconst hookDuration = hookSection.duration;\n\n// Contact-Info-intro spans hook\nconst contactInfoIntroDuration = hookDuration;\n\n// Calculate contact info outro timing\nconst lastCar = vehicles[vehicles.length - 1];\nconst lastCarEndTime = lastCar.end;\nconst contactOutroStart = lastCarEndTime;\n\n// Calculate platform text duration 0 to outro start\nconst platformTextDuration = contactOutroStart;\n\n// Build base modifications\nconst modifications = {\n  // Platform text\n  \"platform-text.text\": platformText,\n  \"platform-text.animations[0].duration\": platformTextDuration,\n  \"background-music.source\": musicUrl,\n  \"Avatar-video.source\": avatarUrl,\n  //\"Avatar-video.time\": TIME_OFFSET,  // Start at 0 or 2.25s\n  \"Avatar-video.chroma_key_color\": chromakeyColor,\n  \"Avatar-video.chroma_key_sensitivity\": chromakeySensitivity,\n  //\"Contact-Info-intro.time\": TIME_OFFSET,\n  \"Contact-Info-intro.duration\": contactInfoIntroDuration,\n  \"Contact-Info-outro.time\": contactOutroStart,\n  \"duration\": avatarDuration,\n  \n  // Theme animation - only visible if user wants it\n  \"theme-animation.visible\": showAnimation,\n  //\"theme-animation.source\": themeAnimationUrl || \"\",\n  \"theme-text.visible\": showAnimation,\n  //\"theme-text.text\": config.theme || \"\"\n};\n\n// Add car modifications\nvehicles.forEach((vehicle, index) => {\n  const carNum = index + 1;\n  const duration = (vehicle.end || 0) - (vehicle.start || 0);\n  \n  let priceText = vehicle.price;\n  if (typeof priceText === 'string' && priceText.includes('USD')) {\n    priceText = priceText.replace(' USD', '').replace('USD', '');\n    const priceNum = parseFloat(priceText);\n    if (!isNaN(priceNum)) {\n      priceText = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n    }\n  } else if (typeof priceText === 'number') {\n    priceText = '$' + priceText.toLocaleString('en-US', {maximumFractionDigits: 0});\n  }\n  \n  // Format mileage with comma\n  const mileageText = Number(vehicle.mileage || 0).toLocaleString('en-US') + ' mi';\n  \n  const title = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;\n  \n  modifications[`Car${carNum}.time`] = vehicle.start;\n  modifications[`Car${carNum}.duration`] = duration;\n  modifications[`car-${carNum}.source`] = vehicle.photo_url;\n  modifications[`car-${carNum}-price.text`] = priceText;\n  modifications[`car-${carNum}-title.text`] = title;\n  modifications[`car-${carNum}-mileage.text`] = mileageText;\n});\n\n// Hide unused car slots (5 max)\nconst maxCars = 5;\nfor (let i = vehicles.length + 1; i <= maxCars; i++) {\n  modifications[`Car${i}.visible`] = false;\n}\n\nconst creatomateJson = {\n  \"template_id\": \"fa1c8b96-9d5d-4c93-9260-a2eb959220c5\",\n  \"modifications\": modifications\n};\n\nreturn [{\n  json: {\n    ...config,\n    creatomate: creatomateJson\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -16,
-        0
-      ],
-      "id": "1cb25711-1d55-4039-97f3-15a7dc7bd007",
-      "name": "Build TEMP_001 JSON"
-    },
-    {
-      "parameters": {
-        "jsCode": "return (async () => {\n\nconst config = $json;\n\nconst platformTexts = {\n  'tiktok': 'Ask for SHAD and mention you saw this on TIKTOK!',\n  'youtube': 'Ask for SHAD and mention you saw this on YOUTUBE!',\n  'instagram': 'Ask for SHAD and mention you saw this on INSTAGRAM!',\n  'facebook': 'Ask for SHAD and mention you saw this on FACEBOOK!',\n  'none': 'Ask for SHAD for a great deal!'\n};\n\nconst platform = $json.platform || 'none';\nconst platformText = platformTexts[platform];\n\nconst avatarUrl = config.avatar_video_url;\nconst avatarDuration = config.avatar_video_duration;\nconst chromaKeyColor = config.chromakey_color;\nconst chromaKeySensitivity = config.chromakey_sensitivity;\n\n// Get vehicle data from vehicles array\nconst vehicle = config.vehicles?.[0];\nif (!vehicle) {\n  throw new Error('No vehicle data found in config.vehicles');\n}\n\nconst heroCarUrl = vehicle.photo_url; // This is the background-removed hero image\nconst selected_photos = config.selected_photos || [];\nconst featurePhotos = selected_photos.slice(1, 6); // exclude hero\n\n// ========================================\n// PRE-FETCH ProMax IMAGES (warm up the server)\n// ========================================\nconsole.log('🔥 Pre-fetching ProMax images to warm up server...');\n\nconst preFetchUrls = [\n  heroCarUrl,  // Hero car photo\n  ...featurePhotos.map(p => p.photo_url)  // All featured photos\n].filter(url => url && url.startsWith('http'));  // Only valid URLs\n\ntry {\n  await Promise.all(\n    preFetchUrls.map(async (url) => {\n      try {\n        const response = await fetch(url, { method: 'HEAD' });  // HEAD request is faster\n        console.log(`✅ Pre-fetched: ${url.substring(0, 60)}...`);\n        return response;\n      } catch (err) {\n        console.log(`⚠️ Failed to pre-fetch: ${url} - ${err.message}`);\n        // Don't fail the whole process, just log it\n      }\n    })\n  );\n  console.log('✅ All images pre-fetched!');\n} catch (err) {\n  console.log(`⚠️ Pre-fetch error (continuing anyway): ${err.message}`);\n}\n\n// Small delay to let ProMax server settle\nawait new Promise(resolve => setTimeout(resolve, 1000));\n\nconsole.log('🎬 Images warmed up, continuing with Creatomate setup...');\n\nif (!avatarUrl) throw new Error('Missing avatar video URL');\nif (!heroCarUrl) throw new Error('Missing hero car image URL (vehicle.photo_url)');\nif (featurePhotos.length < 3 || featurePhotos.length > 5) {\n  throw new Error(`Need 3-5 feature photos, got ${featurePhotos.length}`);\n}\n\n// Get section timings from audio generation\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\n\nconst hookDuration = hookSection?.duration || 4;\n// sum of hook and hero speaking segments after which avatar and hero scale down\nconst heroPlusHookDuration = hookDuration + sectionTimings[1].duration;\n\n// Outro timing (starts when feature 5 ends)\nconst contactOutroStart = sectionTimings[6].end;\nconst platformTextDuration = avatarDuration;\n\nconsole.log(`📍 Contact outro starts at: ${contactOutroStart}s`);\n\n// Format price - handle both vehicle.price and root level Price/internetPrice\nlet priceText = vehicle.price || config.Price || config.internetPrice || '0';\nif (typeof priceText === 'string' && priceText.includes('USD')) {\n  priceText = priceText.replace(' USD', '').replace('USD', '');\n}\nconst priceNum = parseFloat(priceText);\nif (!isNaN(priceNum)) {\n  priceText = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n}\n\n// Generate wiggle animations every 3 seconds\nconst priceWiggles = [];\nfor (let t = 3; t < avatarDuration; t += 3) {\n  priceWiggles.push({\n    \"time\": t,\n    \"duration\": 0.5,\n    \"easing\": \"linear\",\n    \"type\": \"wiggle\"\n  });\n}\n\n// Format vehicle title from vehicle object\nconst vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;\n\n// Build base modifications\nconst modifications = {\n  \n  // Platform text\n  \"platform-text.text\": platformText,\n  \"platform-text.duration\": platformTextDuration,\n  \"platform-text.animations\":[\n    {\n      \"time\": 0,\n      \"duration\": platformTextDuration,\n      \"easing\": \"linear\",\n      \"type\": \"shift\",\n      \"direction\": \"left\",\n      \"repetitions\": \"3\"\n    }\n  ],\n  \n  // Hero car title and price mods\n  \"hero-car.source\": heroCarUrl,\n  \"hero-car.animations\": [\n    {\n      \"time\": heroPlusHookDuration,\n      \"duration\": 1,\n      \"type\": \"scale\",\n      \"fade\": false,\n      \"scope\": \"element\",\n      \"x_anchor\": \"79%\",\n      \"y_anchor\": \"6%\",\n      \"end_scale\": \"70%\",\n      \"start_scale\": \"100%\"\n    }\n  ],\n  \"hero-car-title.text\": vehicleTitle,\n  \"hero-car-price.text\": priceText,\n  \"hero-car-price.animations\": priceWiggles,\n  \n  // Contact info outro (starts with CTA)\n  \"Contact-Info-outro.time\": contactOutroStart,\n  \n  // Total duration\n  \"duration\": avatarDuration,\n\n  // Avatar mods\n  \"Avatar-video.source\": avatarUrl,\n  \"Avatar-video.chroma_key_color\": chromaKeyColor,\n  \"Avatar-video.chroma_key_sensitivity\": chromaKeySensitivity,\n  \"Avatar-video.animations\": [\n    {\n      \"time\": heroPlusHookDuration,\n      \"duration\": 1.5,\n      \"type\": \"scale\",\n      \"fade\": false,\n      \"scope\": \"element\",\n      \"x_anchor\": \"12%\",\n      \"y_anchor\": \"100%\",\n      \"end_scale\": \"70%\",\n      \"start_scale\": \"100%\"\n    }\n  ]\n};\n\n// Add feature photos with timing (only for photos that exist)\nfeaturePhotos.forEach((photo, index) => {\n  const photoNum = index + 1; // featured-1 through featured-5\n  const timingSeg = sectionTimings[photoNum + 1]; // timing array includes hook at 0\n  \n  if (photo && photo.photo_url && timingSeg) {\n    modifications[`featured-${photoNum}-photo.source`] = photo.photo_url;\n    modifications[`featured-${photoNum}-photo.time`] = timingSeg.start;\n    modifications[`featured-${photoNum}-photo.duration`] = timingSeg.duration;\n  }\n});\n\n// Hide unused feature photo slots (if we have less than 5)\nfor (let i = featurePhotos.length + 1; i <= 5; i++) {\n  modifications[`featured-${i}-photo.visible`] = false;\n}\n\nconst creatomateJson = {\n  \"template_id\": \"e20c9d7e-8f64-4c28-ac0f-bad1847276c4\",\n  \"modifications\": modifications\n};\n\nreturn [{\n  json: {\n    ...config,\n    creatomate: creatomateJson\n  }\n}];\n\n})();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -16,
-        144
-      ],
-      "id": "2eee1014-eba2-495f-959f-92d117d45ec1",
-      "name": "Build TEMP_002 JSON"
-    },
-    {
-      "parameters": {
         "fromEmail": "errors@ad-pilot.ai",
         "toEmail": "kelly@ad-pilot.ai",
-        "subject": "=🚨 Ad Generation Failed - {{ $json.nodeName }}",
+        "subject": "=\ud83d\udea8 Ad Generation Failed - {{ $json.nodeName }}",
         "html": "={{ \"Ad Generation Core Workflow Error\\n\\n\" +\n\"Failed Node: \" + $json.nodeName + \"\\n\" +\n\"Error: \" + $json.errorMessage + \"\\n\\n\" +\n\"Time: \" + $json.timestamp + \"\\n\\n\" +\n\"Check n8n: https://kelly-ads.app.n8n.cloud/\" }}",
         "options": {}
       },
@@ -98,19 +73,6 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\n\n// Get the HeyGen video URL from previous step\nconst avatarVideoUrl = config.avatar_video_url;\nconst chromaKeyColor = config.chromakey_color;\nconst chromaKeySensitivity = config.chromakey_sensitivity;\nconst hook = config.script.hook;\n\n// Build the Creatomate API payload for Template 3\nconst creatomatePayload = {\n  template_id: \"e4549c14-fd68-46c1-ac1b-9cab48241981\",\n  modifications: {\n    \"Avatar.source\": avatarVideoUrl,\n    \"Avatar.chroma_key_color\": chromaKeyColor,\n    \"Avatar.chroma_key_sensitivity\": chromaKeySensitivity,\n    \"video-title\": hook\n  }\n};\n\nreturn {\n  json: {\n    ...config,\n    creatomate: creatomatePayload,\n    template_id: \"e4549c14-fd68-46c1-ac1b-9cab48241981\"\n    \n  }\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -16,
-        288
-      ],
-      "id": "5c66817c-9dbf-4ae8-870f-635c8eece4cf",
-      "name": "Build TEMP_003 JSON"
-    },
-    {
-      "parameters": {
         "mode": "raw",
         "jsonOutput": "\n  {\n    \"_audio_sections\": [\n      {\n        \"section_name\": \"hook\",\n        \"section_index\": 0,\n        \"section_text\": \"Check out this deal at Capitol Car Credit!\"\n      },\n      {\n        \"section_name\": \"1N4BL4DV5RN378690\",\n        \"section_index\": 1,\n        \"section_text\": \"Twenty-twenty-four Neesawn Altima - just twenty-three thousand nine ninety-five with great gas mileage to save at the pump!\"\n      },\n      {\n        \"section_name\": \"cta\",\n        \"section_index\": 2,\n        \"section_text\": \"Call two one seven, eight nine three, eight two three two - financing available for qualified buyers!\"\n      }\n    ],\n    \"template_id\": \"TEMP_003\",\n    \"theme\": \"\",\n    \"topic\": \"How to change your oil\",\n    \"platform\": \"instagram\",\n    \"include_animation\": false,\n    \"avatar_id\": \"5b9c75a2f13e4d60b09bcfdafa7339dd\",\n    \"voice_id\": \"eezuv0zKVdVTS0jHdxFa\",\n    \"chromakey_color\": \"#6da264\",\n    \"chromakey_sensitivity\": \"8\",\n    \"avatar_name\": \"Kelly\",\n    \"script_length\": \"quick\",\n    \"email\": \"kelly@kellyrae.net\",\n    \"vins\": [\n      \"1N4BL4DV5RN378690\"\n    ],\n    \"test_mode\": true,\n    \"vehicles\": [\n      {\n        \"vin\": \"1N4BL4DV5RN378690\",\n        \"year\": 2024,\n        \"make\": \"Nissan\",\n        \"model\": \"Altima\",\n        \"price\": 23995,\n        \"mileage\": 40822,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/6f5088fa57e4f9c9f5b8d1aaa752828d.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91242\",\n        \"features\": [\n          \"4-Cyl 2.5 Liter\",\n          \"FWD\",\n          \"BLACK\"\n        ],\n        \"start_time\": 2,\n        \"end_time\": 10\n      }\n    ],\n    \"timing_guidance\": {\n      \"target\": \"15-30 seconds\",\n      \"hook\": \"3-4 seconds\",\n      \"cta\": \"4-5 seconds\",\n      \"style\": \"Fast-paced, punchy, only the most critical selling points\"\n    },\n    \"target_duration\": \"15-18 seconds\",\n    \"script\": {\n      \"hook\": \"Check out this deal at Capitol Car Credit!\",\n      \"segments\": [\n        \"Twenty-twenty-four Neesawn Altima - just twenty-three thousand nine ninety-five with great gas mileage to save at the pump!\"\n      ],\n      \"cta\": \"Call two one seven, eight nine three, eight two three two - financing available for qualified buyers!\",\n      \"full_script\": \"Check out this deal at Capitol Car Credit! Twenty-twenty-four Neesawn Altima - just twenty-three thousand nine ninety-five with great gas mileage to save at the pump! Call two one seven, eight nine three, eight two three two - financing available for qualified buyers! [pause 1 second]\",\n      \"notes\": \"Fast-paced single vehicle highlight focusing on fuel efficiency (top buyer priority) with clear pricing and financing availability. Used proper Nissan pronunciation and emphasized value with gas savings.\"\n    },\n    \"_section_timings\": [\n      {\n        \"section_name\": \"hook\",\n        \"start_time\": 0,\n        \"end_time\": 2,\n        \"duration\": 2\n      },\n      {\n        \"section_name\": \"1N4BL4DV5RN378690\",\n        \"start_time\": 2,\n        \"end_time\": 10,\n        \"duration\": 8\n      },\n      {\n        \"section_name\": \"cta\",\n        \"start_time\": 10,\n        \"end_time\": 17,\n        \"duration\": 7\n      }\n    ],\n    \"audio_duration\": 17,\n    \"audio_url\": \"https://res.cloudinary.com/dtpqxuwby/video/upload/v1763992829/gtvsrefyq07lz7smjfqp.mp3\",\n    \"audio_cloudinary_id\": \"gtvsrefyq07lz7smjfqp\",\n    \"avatar_video_url\": \"https://files2.heygen.ai/aws_pacific/avatar_tmp/9d1d4cfe12b842308662754fabe57f18/72f4019463d34c5a89960c77d906c261.mp4?Expires=1764597712&Signature=UmvnODZ~fS-CI73wc4NZ57L7se-5ZhzxWj7FaDYnAtFviShrgNkQqg1RG9MQfgi5CAZX44~IfUWtfl6RWWIJeKYzDR7Bdg46W2~aGNw8m8-2lEZ6gtv71W3-qpv~OGAk~cjIFVmvL8fgcyk54IYZvz9J1k~okGWodiAkJTwyfsVKlp0N9tCrWoqtStbKgEw-s4A863JI59oq39eXuWa8buAcurez072cPZ5MAS-P0SBX9fbFo4WWt7djzAS4nczXr6BmgJjsFql1ugNK9j6Dd~NvM3uVdBpeLlkitALcnjys4QeKXrb95dhsZqELH2Rnc8f484xTO-VRk8BOLVJ3IQ__&Key-Pair-Id=K38HBHX5LX3X2H\",\n    \"avatar_video_duration\": 16.2537\n  }\n",
         "options": {}
@@ -127,7 +89,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get all items coming into aggregate\nconst allItems = $input.all();\n\n// Get base config from Process All Vehicles\nconst baseConfig = $('Process All Vehicles').first().json;\nconst cachedVehicles = baseConfig.cachedVehicles || [];\nconst originalVehicles = baseConfig.vehicles || [];\n\nconsole.log(`Aggregate: Processing ${allItems.length} items`);\n\n// Process items from removebg/cloudinary flow\nconst processedVehicles = allItems\n  .filter(item => item.json.public_id && item.json.secure_url)\n  .map(item => {\n    const vin = item.json.public_id;\n    \n    // Find the original vehicle data to merge with\n    const originalVehicle = originalVehicles.find(v => v.vin === vin);\n    \n    if (!originalVehicle) {\n      console.warn(`⚠️ No original vehicle found for VIN ${vin}`);\n      return null;\n    }\n    return {\n      ...originalVehicle,  // ← Keep all original vehicle data\n      photo_url: item.json.secure_url  // ← Add Cloudinary URL\n    };\n  })\n  .filter(Boolean); // Remove any nulls\n\n// Create lookup maps by VIN\nconst processedByVin = {};\nprocessedVehicles.forEach(v => {\n  processedByVin[v.vin] = v;\n});\n\nconst cachedByVin = {};\ncachedVehicles.forEach(v => {\n  cachedByVin[v.vin] = v;\n});\n\n// Rebuild vehicles array in ORIGINAL order\nconst finalVehicles = originalVehicles.map(originalVehicle => {\n  const vin = originalVehicle.vin;\n  \n  // Use processed or cached version if available, otherwise original\n  return processedByVin[vin] || cachedByVin[vin] || originalVehicle;\n});\n\nconsole.log(`✓ Total: ${finalVehicles.length} vehicles in correct order`);\n\n// Clean config\nconst { vehiclesToProcess, cachedVehicles: _, ...cleanConfig } = baseConfig;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    vehicles: finalVehicles\n  }\n}];"
+        "jsCode": "// Get all items coming into aggregate\nconst allItems = $input.all();\n\n// Get base config from Process All Vehicles\nconst baseConfig = $('Process All Vehicles').first().json;\nconst cachedVehicles = baseConfig.cachedVehicles || [];\nconst originalVehicles = baseConfig.vehicles || [];\n\nconsole.log(`Aggregate: Processing ${allItems.length} items`);\n\n// Process items from removebg/cloudinary flow\nconst processedVehicles = allItems\n  .filter(item => item.json.public_id && item.json.secure_url)\n  .map(item => {\n    const vin = item.json.public_id;\n    \n    // Find the original vehicle data to merge with\n    const originalVehicle = originalVehicles.find(v => v.vin === vin);\n    \n    if (!originalVehicle) {\n      console.warn(`\u26a0\ufe0f No original vehicle found for VIN ${vin}`);\n      return null;\n    }\n    return {\n      ...originalVehicle,  // \u2190 Keep all original vehicle data\n      photo_url: item.json.secure_url  // \u2190 Add Cloudinary URL\n    };\n  })\n  .filter(Boolean); // Remove any nulls\n\n// Create lookup maps by VIN\nconst processedByVin = {};\nprocessedVehicles.forEach(v => {\n  processedByVin[v.vin] = v;\n});\n\nconst cachedByVin = {};\ncachedVehicles.forEach(v => {\n  cachedByVin[v.vin] = v;\n});\n\n// Rebuild vehicles array in ORIGINAL order\nconst finalVehicles = originalVehicles.map(originalVehicle => {\n  const vin = originalVehicle.vin;\n  \n  // Use processed or cached version if available, otherwise original\n  return processedByVin[vin] || cachedByVin[vin] || originalVehicle;\n});\n\nconsole.log(`\u2713 Total: ${finalVehicles.length} vehicles in correct order`);\n\n// Clean config\nconst { vehiclesToProcess, cachedVehicles: _, ...cleanConfig } = baseConfig;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    vehicles: finalVehicles\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -210,15 +172,6 @@
               "operator": {
                 "type": "number",
                 "operation": "gt"
-              }
-            },
-            {
-              "id": "b1b5d794-4c2b-43d2-907a-421a575d74e6",
-              "leftValue": "={{ $json.test_mode }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "notEquals"
               }
             }
           ],
@@ -320,98 +273,6 @@
     },
     {
       "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.template_id || $json.body.template_id }}",
-                    "rightValue": "TEMP_001",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "id": "2d4d2e14-2180-4c16-a0b7-6d0967ef9e9c"
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "TEMP_001"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "id": "8d22ed5a-dbb7-4694-b7c7-b08c95f7e6d2",
-                    "leftValue": "={{ $json.template_id || $json.body.template_id }}",
-                    "rightValue": "TEMP_002",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals",
-                      "name": "filter.operator.equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "TEMP_002"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "id": "905bb7fa-8bd1-4900-9d36-ebbd928f496e",
-                    "leftValue": "={{ $json.template_id || $json.body.template_id }}",
-                    "rightValue": "TEMP_003",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals",
-                      "name": "filter.operator.equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "TEMP_003"
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.3,
-      "position": [
-        -208,
-        80
-      ],
-      "id": "f5f34283-a204-4fd9-998e-80580feaabbe",
-      "name": "Switch on Template"
-    },
-    {
-      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -439,8 +300,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        176,
-        128
+        32,
+        96
       ],
       "id": "e31917be-d832-4f23-9f3a-8dfd718a570c",
       "name": "If: Test, Skip Video Creation"
@@ -452,8 +313,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        576,
-        64
+        368,
+        32
       ],
       "id": "aa6dce6f-6e60-452b-a4aa-4a90ebd7214d",
       "name": "Skip Video Creation"
@@ -486,21 +347,21 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        832,
-        176
+        720,
+        128
       ],
       "id": "cdc69818-5724-4f8c-ae10-d81bdabc5677",
       "name": "If: Succeeded?"
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\nconst config = $('Aggregate Configs').first().json;\n\nconst videoUrl = response.url;\nconst videoDuration = response.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\nreturn [{\n  json: {\n    template_id: config.template_id,\n    theme: config.theme,\n    topic: config.topic,\n    platform: config.platform,\n    avatar_name: config.avatar_name,\n    email: config.email,\n    test_mode: config.test_mode,\n    script_length: config.script_length,\n    audio_cloudinary_id: config.audio_cloudinary_id,\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n\n    // Save Test API Response\n    api_creatomate_create_video: response\n  }\n}];"
+        "jsCode": "const apiResponse = $json;\nconst config = $('Aggregate Configs').first().json;\nconst videoUrl = apiResponse.url;\nconst videoDuration = apiResponse.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,  // \u2190 Preserves ALL previous api_* keys!\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_creatomate_create_video: apiResponse })\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1024,
-        160
+        896,
+        112
       ],
       "id": "94a3f672-71bd-4b34-a989-262f4bef3c0e",
       "name": "Parse Video Creation Response"
@@ -522,8 +383,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        672,
-        192
+        528,
+        144
       ],
       "id": "cfbd1219-c74c-4024-9f11-0aef6b6c211b",
       "name": "API: Creatomate, Check Status",
@@ -550,8 +411,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        336,
-        208
+        176,
+        176
       ],
       "id": "3e365a4a-5fa9-4942-827f-6f51a60a38c7",
       "name": "API: Creatomate, Create Video",
@@ -570,6 +431,20 @@
       ],
       "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
       "name": "Parse Remove.bg"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return (async () => {\n\n// Unified Build Template JSON node\n// Fetches template by tag, modifies source in-place, returns full source for render\n\nconst config = $json;\n\n// ============================================\n// STEP 1: Determine Template Tag\n// ============================================\nconst clientId = (config.client || 'ccc').toUpperCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\n\n// Convert template_id to tag format\n// \"ad-multi-item-1\" \u2192 \"AD_MULTI-ITEM-1\"\nconst templateTag = templateId.toUpperCase().replace(/-/, '_');\nconst uniqueTag = `${clientId}_${templateTag}_${ratio}`;\n\nconsole.log(`\ud83c\udff7\ufe0f Fetching template with tag: ${uniqueTag}`);\n\n// ============================================\n// STEP 2: Fetch Template from Creatomate\n// ============================================\nconst apiKey = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\n// Step 1: Find template by tag (returns id, name, tags - but NOT source)\nconst templateList = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates?tags=${encodeURIComponent(uniqueTag)}`,\n  headers: {\n    'Authorization': `Bearer ${apiKey}`\n  },\n  json: true\n});\n\nif (!templateList || !Array.isArray(templateList) || templateList.length === 0) {\n  throw new Error(`No template found with tag: ${uniqueTag}`);\n}\n\nconst templateInfo = templateList[0];\nconsole.log(`\ud83d\udccd Found template: ${templateInfo.name} (ID: ${templateInfo.id})`);\n\n// Step 2: Fetch full template by ID (this returns the source)\nconst template = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates/${templateInfo.id}`,\n  headers: {\n    'Authorization': `Bearer ${apiKey}`\n  },\n  json: true\n});\n\nif (!template.source) {\n  throw new Error(`Template ${template.id} has no source property`);\n}\n\n// Deep clone the source\nconst source = JSON.parse(JSON.stringify(template.source));\n\nconsole.log(`\u2705 Loaded template source (${Object.keys(template.source).length} top-level keys)`);\n\n// ============================================\n// STEP 3: Build Swap Config from Incoming Data\n// ============================================\n\n// Platform info\nconst platformInput = (config.platform || 'tiktok').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst avatarName = config.avatar_name || 'SHAD';\n\n// Platform banner text\nconst platformTexts = {\n  'tiktok': `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  'youtube': `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  'instagram': `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  'facebook': `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  'none': `Ask for ${avatarName} for a great deal!`\n};\nconst platformText = platformTexts[basePlatform] || platformTexts['none'];\n\n// Timing from _section_timings\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection = sectionTimings.find(t => t.name === 'cta');\n\nconst hookEnd = hookSection?.end || 0;\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration || ctaSection?.end || 30;\n\n// Vehicles\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\n\n// Spotlight feature photos\nconst selectedPhotos = config.selected_photos || [];\nconst featurePhotos = selectedPhotos.slice(1, 6);\n\n// Price formatter\nfunction formatPrice(price) {\n  if (!price) return null;\n  let priceNum = price;\n  if (typeof price === 'string') {\n    priceNum = parseFloat(price.replace(/[^0-9.]/g, ''));\n  }\n  if (isNaN(priceNum)) return price;\n  return '$' + priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 });\n}\n\n// Build swap config\nconst swapConfig = {\n  hookEnd,\n  ctaStart,\n  videoDuration,\n  platformText,\n  bgMusicSource: config.media?.music_url,\n  bgImageSource: config.background_image_url,\n  avatar1Source: config.avatar_video_url,\n  avatar1ChromaColor: config.chromakey_color || \"#7fc741\",\n  avatar1ChromaSensitivity: config.chromakey_sensitivity || \"29\",\n  item0Source: heroVehicle.photo_url,\n  item0Title: heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}` : null,\n  item0Price: formatPrice(heroVehicle.price),\n  videoThumbnailText: config.script?.hook || config.topic || '',\n};\n\n// Spotlight features\nfeaturePhotos.forEach((photo, index) => {\n  const featureNum = index + 1;\n  const segmentTiming = sectionTimings.find(t => t.name === `segment_${featureNum}`);\n  swapConfig[`item0Feature${featureNum}Source`] = photo?.photo_url;\n  swapConfig[`item0Feature${featureNum}Time`] = segmentTiming?.start;\n  swapConfig[`item0Feature${featureNum}Duration`] = segmentTiming?.duration;\n});\n\n// Multi-item vehicles\nvehicles.forEach((vehicle, index) => {\n  const itemNum = index + 1;\n  if (itemNum > 5) return;\n  const segmentTiming = sectionTimings.find(t => t.name === `segment_${index}`);\n  swapConfig[`item${itemNum}Source`] = vehicle.photo_url;\n  swapConfig[`item${itemNum}Title`] = vehicle.year && vehicle.make && vehicle.model\n    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;\n  swapConfig[`item${itemNum}Price`] = formatPrice(vehicle.price);\n  swapConfig[`item${itemNum}Mileage`] = vehicle.mileage\n    ? `${Number(vehicle.mileage).toLocaleString('en-US')} mi` : null;\n  swapConfig[`item${itemNum}Time`] = segmentTiming?.start;\n  swapConfig[`item${itemNum}Duration`] = segmentTiming?.duration;\n  swapConfig[`item${itemNum}Visible`] = true;\n});\n\n// Mark unused slots\nfor (let i = vehicles.length + 1; i <= 5; i++) {\n  swapConfig[`item${i}Visible`] = false;\n}\n\nconsole.log(`\ud83d\udccb Config built for: ${templateId}`);\n\n// ============================================\n// STEP 4: Apply Swaps to Source\n// ============================================\n\nfunction applyScaleAnimTiming(element, cfg) {\n  if (!element.animations) return;\n  const scaleAnims = element.animations.filter(a => a.type === 'scale');\n  if (scaleAnims.length === 1 && cfg.hookEnd !== undefined) {\n    scaleAnims[0].time = cfg.hookEnd;\n  } else if (scaleAnims.length === 2) {\n    if (cfg.hookEnd !== undefined) scaleAnims[0].time = cfg.hookEnd;\n    if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.ctaStart;\n  }\n}\n\nfunction applySwaps(element, cfg, parent = null) {\n  const name = element.name;\n\n  // Avatar\n  if (name?.match(/^avatar-(\\d+)$/)) {\n    const n = RegExp.$1;\n    if (cfg[`avatar${n}Source`]) element.source = cfg[`avatar${n}Source`];\n    if (cfg[`avatar${n}ChromaColor`]) element.chroma_key_color = cfg[`avatar${n}ChromaColor`];\n    if (cfg[`avatar${n}ChromaSensitivity`]) element.chroma_key_sensitivity = cfg[`avatar${n}ChromaSensitivity`];\n    applyScaleAnimTiming(element, cfg);\n  }\n\n  // Item-0 (hero) scale animation\n  if (name === 'Item-0') {\n    applyScaleAnimTiming(element, cfg);\n  }\n\n  // Item-0 nested elements\n  if (name === 'photo' && parent === 'Item-0') {\n    if (cfg.item0Source) element.source = cfg.item0Source;\n  }\n  if (name === 'title' && parent === 'Item-0') {\n    if (cfg.item0Title) element.text = cfg.item0Title;\n  }\n  if (name === 'price' && parent === 'Item-0') {\n    if (cfg.item0Price) element.text = cfg.item0Price;\n  }\n\n  // Features inside Item-0\n  const featureMatch = name?.match(/^feature-(\\d+)$/);\n  if (featureMatch && parent === 'Item-0') {\n    const n = featureMatch[1];\n    if (cfg[`item0Feature${n}Source`]) element.source = cfg[`item0Feature${n}Source`];\n    if (cfg[`item0Feature${n}Time`] !== undefined) element.time = cfg[`item0Feature${n}Time`];\n    if (cfg[`item0Feature${n}Duration`] !== undefined) element.duration = cfg[`item0Feature${n}Duration`];\n  }\n\n  // Multi-item Items (1-5)\n  const itemMatch = name?.match(/^Item-(\\d+)$/);\n  if (itemMatch && itemMatch[1] !== '0') {\n    const n = itemMatch[1];\n    if (cfg[`item${n}Time`] !== undefined) element.time = cfg[`item${n}Time`];\n    if (cfg[`item${n}Duration`] !== undefined) element.duration = cfg[`item${n}Duration`];\n    if (cfg[`item${n}Visible`] === false) element.visible = false;\n  }\n\n  // Multi-item nested elements\n  const parentItemMatch = parent?.match(/^Item-(\\d+)$/);\n  if (parentItemMatch && parentItemMatch[1] !== '0') {\n    const n = parentItemMatch[1];\n    if (name === 'photo' && cfg[`item${n}Source`]) element.source = cfg[`item${n}Source`];\n    if (name === 'title' && cfg[`item${n}Title`]) element.text = cfg[`item${n}Title`];\n    if (name === 'price' && cfg[`item${n}Price`]) element.text = cfg[`item${n}Price`];\n    if (name === 'mileage' && cfg[`item${n}Mileage`]) element.text = cfg[`item${n}Mileage`];\n  }\n\n  // Platform banner\n  if (name === 'platform-banner') {\n    if (cfg.platformText) element.text = cfg.platformText;\n    if (element.animations?.[0] && cfg.videoDuration) {\n      element.animations[0].duration = cfg.videoDuration;\n    }\n  }\n\n  // Company intro - duration matches hook\n  if (name === 'Company-Intro' || name === 'Contact-Info-intro') {\n    if (cfg.hookEnd !== undefined) element.duration = cfg.hookEnd;\n  }\n\n  // Company outro\n  if (name === 'Company-Outro') {\n    if (cfg.ctaStart !== undefined) element.time = cfg.ctaStart;\n  }\n\n  // Background music/image\n  if (name === 'background-music' && cfg.bgMusicSource) {\n    element.source = cfg.bgMusicSource;\n  }\n  if (name === 'background-image' && cfg.bgImageSource) {\n    element.source = cfg.bgImageSource;\n  }\n\n  // Educational video thumbnail\n  if (name === 'video-thumbnail' && cfg.videoThumbnailText) {\n    element.text = cfg.videoThumbnailText;\n  }\n\n  // Recurse\n  if (element.elements && Array.isArray(element.elements)) {\n    element.elements.forEach(child => applySwaps(child, cfg, name));\n  }\n}\n\n// Set top-level duration\nif (swapConfig.videoDuration) {\n  source.duration = swapConfig.videoDuration;\n}\n\n// Apply swaps recursively\nif (source.elements && Array.isArray(source.elements)) {\n  source.elements.forEach(element => applySwaps(element, swapConfig, null));\n}\n\nconsole.log(`\u2705 Template modifications applied`);\n\n// ============================================\n// STEP 5: Return template_id + source for Creatomate\n// ============================================\n// Tested: Creatomate accepts both! This keeps template name in logs.\n\n// Clean swapConfig - remove undefined values for cleaner output\nconst cleanSwapConfig = Object.fromEntries(\n  Object.entries(swapConfig).filter(([_, v]) => v !== undefined)\n);\n\nconst output = {\n  ...config,\n  creatomate: {\n        source: source\n  },\n  _template_tag: uniqueTag,\n  _swap_config: cleanSwapConfig\n};\n\n// runOnceForEachItem mode: return single object, not array\nreturn {\n  json: JSON.parse(JSON.stringify(output))\n}\n\n})();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        96
+      ],
+      "id": "unified-build-template-json",
+      "name": "Build Template JSON"
     }
   ],
   "connections": {
@@ -595,44 +470,11 @@
         ]
       ]
     },
-    "Build TEMP_001 JSON": {
-      "main": [
-        [
-          {
-            "node": "If: Test, Skip Video Creation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build TEMP_002 JSON": {
-      "main": [
-        [
-          {
-            "node": "If: Test, Skip Video Creation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Alert: Gen Core Node Failed": {
       "main": [
         [
           {
             "node": "Stop and Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build TEMP_003 JSON": {
-      "main": [
-        [
-          {
-            "node": "If: Test, Skip Video Creation",
             "type": "main",
             "index": 0
           }
@@ -665,7 +507,7 @@
       "main": [
         [
           {
-            "node": "Switch on Template",
+            "node": "Build Template JSON",
             "type": "main",
             "index": 0
           }
@@ -753,31 +595,6 @@
         [
           {
             "node": "Format Node Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Switch on Template": {
-      "main": [
-        [
-          {
-            "node": "Build TEMP_001 JSON",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Build TEMP_002 JSON",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Build TEMP_003 JSON",
             "type": "main",
             "index": 0
           }
@@ -882,25 +699,81 @@
           }
         ]
       ]
+    },
+    "Build Template JSON": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip Video Creation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
   "staticData": null,
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "d93e5845-07be-4249-99bf-92158ad01f70",
-  "triggerCount": 1,
+  "versionId": "37372355-1cd4-4f13-b67c-245d2ed35507",
+  "versionCounter": 93,
+  "triggerCount": 0,
   "shared": [
     {
       "updatedAt": "2025-10-20T22:01:25.545Z",
       "createdAt": "2025-10-20T22:01:25.545Z",
       "role": "workflow:owner",
       "workflowId": "Z36Cd1XZSVbd1bC3",
-      "projectId": "bll44iFOa92qb20Q"
+      "projectId": "bll44iFOa92qb20Q",
+      "project": {
+        "updatedAt": "2025-09-08T16:29:41.547Z",
+        "createdAt": "2025-09-08T16:29:38.593Z",
+        "id": "bll44iFOa92qb20Q",
+        "name": "Kelly Knight <kelly@kellyrae.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-08T16:29:38.593Z",
+            "createdAt": "2025-09-08T16:29:38.593Z",
+            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
+            "projectId": "bll44iFOa92qb20Q",
+            "user": {
+              "updatedAt": "2025-12-10T08:00:00.000Z",
+              "createdAt": "2025-09-08T16:29:36.989Z",
+              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
+              "email": "kelly@kellyrae.net",
+              "firstName": "Kelly",
+              "lastName": "Knight",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
+                "userActivatedAt": 1758474039124,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1759246180644
+                },
+                "dismissedCallouts": {
+                  "preBuiltAgentsCalloutHttpRequest": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
     }
   ],
   "tags": [
