@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T13:36:08.748Z",
+  "updatedAt": "2025-12-10T15:10:20.300Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -23,7 +23,7 @@
       "typeVersion": 1.2,
       "position": [
         -1536,
-        112
+        96
       ]
     },
     {
@@ -38,8 +38,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1328,
-        112
+        -1312,
+        96
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -57,21 +57,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1104,
-        112
-      ]
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "id": "6d8f58ad-7bbc-46f0-b098-4398961b9b4c",
-      "name": "Process One at a Time",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        -880,
-        112
+        -1088,
+        96
       ]
     },
     {
@@ -105,8 +92,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -656,
-        112
+        -864,
+        96
       ],
       "retryOnFail": false,
       "waitBetweenTries": 2000,
@@ -121,16 +108,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\nconst workflowData = $('Process One at a Time').item.json;\n\n// Check response structure - error case has error.message and error.status\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log(`Checking ${workflowData.name}: isError=${isError}, status=${statusCode}`);\n\nif (isError || statusCode === 422) {\n  // File exists, needs SHA to update - route to update path\n  console.log(`📝 File exists, routing to update: ${workflowData.name}`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} else if (statusCode === 201) {\n  // New file created successfully\n  console.log(`✅ Created new file: ${workflowData.name}`);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'created'\n  } };\n} else {\n  // Unexpected response - log and route to update to be safe\n  console.log(`⚠️ Unexpected response for ${workflowData.name}, routing to update`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}",
-        "mode": "runOnceForEachItem"
+        "mode": "runOnceForEachItem",
+        "jsCode": "const response = $json;\nconst workflowData = $('Format for GitHub').item.json;\n\n// Check response structure - error case has error.message and error.status\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log(`Checking ${workflowData.name}: isError=${isError}, status=${statusCode}`);\n\nif (isError || statusCode === 422) {\n  // File exists, needs SHA to update - route to update path\n  console.log(`📝 File exists, routing to update: ${workflowData.name}`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} else if (statusCode === 201) {\n  // New file created successfully\n  console.log(`✅ Created new file: ${workflowData.name}`);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'created'\n  } };\n} else {\n  // Unexpected response - log and route to update to be safe\n  console.log(`⚠️ Unexpected response for ${workflowData.name}, routing to update`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}"
       },
       "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
       "name": "Check Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -448,
-        112
+        -640,
+        96
       ]
     },
     {
@@ -149,8 +136,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -224,
-        112
+        -416,
+        96
       ]
     },
     {
@@ -174,8 +161,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        208,
-        0
+        -192,
+        32
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -187,7 +174,7 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $('Needs Update?').item.json.filename }}",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -201,7 +188,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"message\": \"{{ 'Update: ' + $('Needs Update?').item.json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $('Needs Update?').item.json.workflow.contentBase64 }}\",\n  \"sha\": \"{{ $json.sha }}\",\n  \"branch\": \"main\"\n}",
+        "jsonBody": "={\n  \"message\": \"{{ 'Update: ' + $json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.workflow.contentBase64 }}\",\n  \"sha\": \"{{ $json.sha }}\",\n  \"branch\": \"main\"\n}",
         "options": {}
       },
       "id": "94041267-12ca-455e-9a09-e5f529953d08",
@@ -209,8 +196,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        432,
-        0
+        480,
+        -48
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -228,32 +215,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        0
+        704,
+        -48
       ]
-    },
-    {
-      "parameters": {},
-      "id": "77c1c47b-72db-48a6-b7c3-5315e6366f61",
-      "name": "Merge",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 2.1,
-      "position": [
-        656,
-        208
-      ]
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        -16,
-        16
-      ],
-      "id": "fcf3d34b-26d3-4041-a359-fc150fae36f5",
-      "name": "Wait",
-      "webhookId": "b83fc6ef-5128-499f-bc89-03cd9a6d573d"
     },
     {
       "parameters": {
@@ -262,8 +226,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        864,
-        208
+        928,
+        96
       ],
       "id": "5d9bea72-51b4-4ee0-9267-a6c57301477a",
       "name": "Aggregate Results"
@@ -297,8 +261,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1072,
-        208
+        1152,
+        96
       ],
       "id": "7940083a-972c-4589-becf-7da2615885d9",
       "name": "If"
@@ -308,8 +272,8 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1280,
-        304
+        1376,
+        192
       ],
       "id": "ec514100-f164-46dd-866d-424a59b5f24c",
       "name": "No Operation, do nothing"
@@ -325,8 +289,8 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        1280,
-        112
+        1376,
+        0
       ],
       "id": "c9c6bb97-4443-4b0a-bef8-b404f342acb8",
       "name": "Send email",
@@ -340,13 +304,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const githubResponse = $input.first().json;\nconst workflowData = $('Needs Update?').item.json.workflow;\n\nconst currentSha = githubResponse.sha;\n\n// FORCE FULL BACKUP - always update\nconsole.log(`📝 FORCE UPDATE: ${workflowData.name}`);\n\nreturn [{ json: { \n  sha: currentSha,\n  needs_update: true,\n  workflow: workflowData,\n  filename: workflowData.filename\n} }];"
+        "jsCode": "// GitHub response has: name, path, sha, content, etc.\nconst sha = $json.sha;\nconst githubFilename = $json.name; // e.g., \"inventory_api_Ir1x98MM9Fz7A99W.json\"\n\nconsole.log('GitHub file: ' + githubFilename + ' with SHA: ' + sha);\n\n// Find matching workflow from Needs Update? by filename\nconst needsUpdateItems = $('Needs Update?').all();\nconst matchingItem = needsUpdateItems.find(item => item.json.filename === githubFilename);\n\nif (!matchingItem) {\n  console.log('ERROR: No match found for: ' + githubFilename);\n  console.log('Available filenames: ' + needsUpdateItems.map(i => i.json.filename).join(', '));\n  throw new Error('Could not find matching workflow for ' + githubFilename);\n}\n\nconsole.log('Matched to workflow: ' + matchingItem.json.workflow.name);\n\nreturn {\n  json: {\n    sha: sha,\n    workflow: matchingItem.json.workflow,\n    filename: matchingItem.json.filename,\n    needs_update: true\n  }\n};",
+        "mode": "runOnceForEachItem"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        388,
-        0
+        32,
+        32
       ],
       "id": "compare-content-node",
       "name": "Compare Content"
@@ -365,8 +330,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        568,
-        0
+        256,
+        32
       ],
       "id": "if-content-changed",
       "name": "Content Changed?"
@@ -399,25 +364,7 @@
       "main": [
         [
           {
-            "node": "Process One at a Time",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Process One at a Time": {
-      "main": [
-        [
-          {
             "node": "Try Create File",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Aggregate Results",
             "type": "main",
             "index": 0
           }
@@ -426,6 +373,13 @@
     },
     "Try Create File": {
       "main": [
+        [
+          {
+            "node": "Check Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Check Result",
@@ -450,16 +404,16 @@
       "main": [
         [
           {
-            "node": "Wait",
+            "node": "Get Current SHA",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Merge",
+            "node": "Aggregate Results",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
@@ -469,6 +423,35 @@
         [
           {
             "node": "Compare Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Content": {
+      "main": [
+        [
+          {
+            "node": "Content Changed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Changed?": {
+      "main": [
+        [
+          {
+            "node": "Update File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Results",
             "type": "main",
             "index": 0
           }
@@ -490,29 +473,7 @@
       "main": [
         [
           {
-            "node": "Merge",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge": {
-      "main": [
-        [
-          {
-            "node": "Process One at a Time",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait": {
-      "main": [
-        [
-          {
-            "node": "Get Current SHA",
+            "node": "Aggregate Results",
             "type": "main",
             "index": 0
           }
@@ -547,35 +508,6 @@
           }
         ]
       ]
-    },
-    "Compare Content": {
-      "main": [
-        [
-          {
-            "node": "Content Changed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Content Changed?": {
-      "main": [
-        [
-          {
-            "node": "Update File",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
     }
   },
   "settings": {
@@ -592,7 +524,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "69d5a0ab-6c2b-4332-8112-f522d49a21c2",
+  "versionId": "34669d5c-1b06-47a8-b869-0536476d52b7",
   "triggerCount": 1,
   "shared": [
     {
