@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T12:09:30.493Z",
+  "updatedAt": "2025-12-10T12:18:32.770Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -338,7 +338,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const githubResponse = $input.first().json;\nconst workflowData = $('Needs Update?').item.json.workflow;\n\nconst currentSha = githubResponse.sha;\n// GitHub returns base64 content with newlines - remove them for comparison\nconst currentContentBase64 = (githubResponse.content || '').replace(/\\n/g, '').replace(/\\s/g, '');\nconst newContentBase64 = workflowData.contentBase64.replace(/\\s/g, '');\n\n// Compare content\nconst contentChanged = currentContentBase64 !== newContentBase64;\n\nconsole.log(`📊 ${workflowData.name}: contentChanged=${contentChanged}`);\n\nif (contentChanged) {\n  console.log(`📝 Will update: ${workflowData.name}`);\n  return [{ json: { \n    sha: currentSha,\n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else {\n  console.log(`⏭️ Skipping: ${workflowData.name} (no changes)`);\n  return [{ json: { \n    sha: currentSha,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'skipped_no_changes'\n  } }];\n}"
+        "jsCode": "const githubResponse = $input.first().json;\nconst workflowData = $('Needs Update?').item.json.workflow;\n\nconst currentSha = githubResponse.sha;\n\n// Decode GitHub's base64 content (it has newlines in the base64 string)\nconst githubBase64Clean = (githubResponse.content || '').replace(/\\n/g, '');\nconst githubContent = Buffer.from(githubBase64Clean, 'base64').toString('utf8');\n\n// Our new content (already JSON string)\nconst newContent = workflowData.content;\n\n// Parse both to compare as objects (ignores formatting differences)\nlet contentChanged = false;\ntry {\n  const githubJson = JSON.parse(githubContent);\n  const newJson = JSON.parse(newContent);\n  \n  // Compare the stringified versions (normalized)\n  const githubNormalized = JSON.stringify(githubJson, null, 2);\n  const newNormalized = JSON.stringify(newJson, null, 2);\n  \n  contentChanged = githubNormalized !== newNormalized;\n  \n  // Log some debug info\n  if (contentChanged) {\n    console.log(`📝 ${workflowData.name}: CHANGED`);\n    // Find what changed - check updatedAt\n    if (githubJson.updatedAt !== newJson.updatedAt) {\n      console.log(`   updatedAt: ${githubJson.updatedAt} -> ${newJson.updatedAt}`);\n    }\n  } else {\n    console.log(`⏭️ ${workflowData.name}: No changes`);\n  }\n} catch (e) {\n  // If JSON parsing fails, fall back to string comparison\n  console.log(`⚠️ JSON parse error for ${workflowData.name}, using string compare`);\n  contentChanged = githubContent !== newContent;\n}\n\nif (contentChanged) {\n  return [{ json: { \n    sha: currentSha,\n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else {\n  return [{ json: { \n    sha: currentSha,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'skipped_no_changes'\n  } }];\n}"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -590,7 +590,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "110638b2-6703-4d08-a1eb-022f73bba851",
+  "versionId": "d331685f-0740-4846-b4d4-79ee9f4eb03e",
   "triggerCount": 1,
   "shared": [
     {
