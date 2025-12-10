@@ -3,6 +3,7 @@
   "createdAt": "2025-10-20T23:22:47.811Z",
   "id": "ogvYCOfQwOj1LJaK",
   "name": "Generate Spotlight Ad",
+  "description": null,
   "active": false,
   "isArchived": true,
   "nodes": [
@@ -57,7 +58,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Input from webhook/form\nconst searchVin = $json.vin || $json.spotlight_vin || '';\nconst searchStock = $json.stock_number || '';\n\nif (!searchVin && !searchStock) {\n  throw new Error('Must provide VIN or Stock Number for spotlight ad');\n}\n\nconsole.log(`Searching for: VIN=${searchVin} Stock=${searchStock}`);\n\n// Get data from Spotlight_Data sheet\nconst spotlightData = $('Read Spotlight_Data Sheet').all();\n\n// Find matching car\nconst car = spotlightData.find(item => {\n  const vin = (item.json.VIN || '').trim();\n  const stock = (item.json.Stock_Number || '').trim();\n  \n  if (searchVin && vin === searchVin) return true;\n  if (searchStock && stock === searchStock) return true;\n  return false;\n});\n\nif (!car) {\n  throw new Error(`Car not found in Spotlight_Data: VIN=${searchVin} Stock=${searchStock}`);\n}\n\nconsole.log(`✅ Found: ${car.json.Year} ${car.json.Make} ${car.json.Model}`);\n\n// Parse images\nconst allImages = (car.json.All_Images || '')\n  .split('|')\n  .map(url => url.trim())\n  .filter(url => url.length > 0 && url.startsWith('https://'));\n\nif (allImages.length < 5) {\n  throw new Error(`Not enough images. Found ${allImages.length}, need at least 5 for spotlight ad.`);\n}\n\nconsole.log(`✅ Found ${allImages.length} images for analysis`);\n\nreturn [{\n  json: {\n    ...car.json,\n    all_image_urls: allImages,\n    image_count: allImages.length,\n    vehicle_id: car.json.VIN || car.json.Stock_Number,\n    year: car.json.Year,\n    make: car.json.Make,\n    model: car.json.Model,\n    trim: car.json.Trim,\n    price: car.json.Price,\n    mileage: car.json.Mileage,\n    body_style: car.json.Body_Style,\n    transmission: car.json.Transmission,\n    drivetrain: car.json.Drivetrain,\n    exterior_color: car.json.Exterior_Color,\n    vdp_url: car.json.VDP_URL,\n    theme: $('Webhook - Spotlight Ad Request').first().json.body.theme || 'Great deal on this vehicle'\n  }\n}];"
+        "jsCode": "// Input from webhook/form\nconst searchVin = $json.vin || $json.spotlight_vin || '';\nconst searchStock = $json.stock_number || '';\n\nif (!searchVin && !searchStock) {\n  throw new Error('Must provide VIN or Stock Number for spotlight ad');\n}\n\nconsole.log(`Searching for: VIN=${searchVin} Stock=${searchStock}`);\n\n// Get data from Spotlight_Data sheet\nconst spotlightData = $('Read Spotlight_Data Sheet').all();\n\n// Find matching car\nconst car = spotlightData.find(item => {\n  const vin = (item.json.VIN || '').trim();\n  const stock = (item.json.Stock_Number || '').trim();\n  \n  if (searchVin && vin === searchVin) return true;\n  if (searchStock && stock === searchStock) return true;\n  return false;\n});\n\nif (!car) {\n  throw new Error(`Car not found in Spotlight_Data: VIN=${searchVin} Stock=${searchStock}`);\n}\n\nconsole.log(`\u2705 Found: ${car.json.Year} ${car.json.Make} ${car.json.Model}`);\n\n// Parse images\nconst allImages = (car.json.All_Images || '')\n  .split('|')\n  .map(url => url.trim())\n  .filter(url => url.length > 0 && url.startsWith('https://'));\n\nif (allImages.length < 5) {\n  throw new Error(`Not enough images. Found ${allImages.length}, need at least 5 for spotlight ad.`);\n}\n\nconsole.log(`\u2705 Found ${allImages.length} images for analysis`);\n\nreturn [{\n  json: {\n    ...car.json,\n    all_image_urls: allImages,\n    image_count: allImages.length,\n    vehicle_id: car.json.VIN || car.json.Stock_Number,\n    year: car.json.Year,\n    make: car.json.Make,\n    model: car.json.Model,\n    trim: car.json.Trim,\n    price: car.json.Price,\n    mileage: car.json.Mileage,\n    body_style: car.json.Body_Style,\n    transmission: car.json.Transmission,\n    drivetrain: car.json.Drivetrain,\n    exterior_color: car.json.Exterior_Color,\n    vdp_url: car.json.VDP_URL,\n    theme: $('Webhook - Spotlight Ad Request').first().json.body.theme || 'Great deal on this vehicle'\n  }\n}];"
       },
       "id": "f57151db-e134-478d-8f57-5bfbbb4ca63e",
       "name": "Lookup Car in Spotlight Data",
@@ -205,7 +206,7 @@
     },
     {
       "parameters": {
-        "content": "## 📥 INPUT\nReceives VIN or Stock Number\nfrom web form or API call",
+        "content": "## \ud83d\udce5 INPUT\nReceives VIN or Stock Number\nfrom web form or API call",
         "color": 4
       },
       "id": "b8957555-f282-48af-9809-65684fe07e78",
@@ -219,7 +220,7 @@
     },
     {
       "parameters": {
-        "content": "## 🤖 AI PROCESSING\nClaude Vision selects best photos\nMagic Hour creates cinematic intro\nClaude writes detailed script",
+        "content": "## \ud83e\udd16 AI PROCESSING\nClaude Vision selects best photos\nMagic Hour creates cinematic intro\nClaude writes detailed script",
         "width": 480,
         "color": 5
       },
@@ -234,7 +235,7 @@
     },
     {
       "parameters": {
-        "content": "## 🎬 VIDEO CREATION\nHeyGen avatar speaks script\nCreatomate composes final video\nwith photos + intro + avatar",
+        "content": "## \ud83c\udfac VIDEO CREATION\nHeyGen avatar speaks script\nCreatomate composes final video\nwith photos + intro + avatar",
         "width": 480,
         "color": 6
       },
@@ -347,6 +348,7 @@
   },
   "pinData": {},
   "versionId": "e6ab2531-8ae9-4ea8-99e3-df7195884a2b",
+  "versionCounter": 1,
   "triggerCount": 0,
   "shared": [
     {
@@ -354,7 +356,49 @@
       "createdAt": "2025-10-20T23:22:47.814Z",
       "role": "workflow:owner",
       "workflowId": "ogvYCOfQwOj1LJaK",
-      "projectId": "bll44iFOa92qb20Q"
+      "projectId": "bll44iFOa92qb20Q",
+      "project": {
+        "updatedAt": "2025-09-08T16:29:41.547Z",
+        "createdAt": "2025-09-08T16:29:38.593Z",
+        "id": "bll44iFOa92qb20Q",
+        "name": "Kelly Knight <kelly@kellyrae.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-08T16:29:38.593Z",
+            "createdAt": "2025-09-08T16:29:38.593Z",
+            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
+            "projectId": "bll44iFOa92qb20Q",
+            "user": {
+              "updatedAt": "2025-12-10T08:00:00.000Z",
+              "createdAt": "2025-09-08T16:29:36.989Z",
+              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
+              "email": "kelly@kellyrae.net",
+              "firstName": "Kelly",
+              "lastName": "Knight",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
+                "userActivatedAt": 1758474039124,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1759246180644
+                },
+                "dismissedCallouts": {
+                  "preBuiltAgentsCalloutHttpRequest": true
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-12-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
     }
   ],
   "tags": [
