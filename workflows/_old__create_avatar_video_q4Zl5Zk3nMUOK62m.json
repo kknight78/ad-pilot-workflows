@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2025-11-23T18:54:31.000Z",
+  "updatedAt": "2025-11-24T13:44:51.000Z",
   "createdAt": "2025-10-20T22:01:06.178Z",
   "id": "q4Zl5Zk3nMUOK62m",
   "name": "(OLD) Create avatar video",
   "active": false,
-  "isArchived": false,
+  "isArchived": true,
   "nodes": [
     {
       "parameters": {
@@ -1035,7 +1035,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "45bfad5e-1327-4747-b6ea-5f5444b39857",
+  "versionId": "bee94fd5-1c3e-4f2b-83db-f7e3abf5636c",
   "triggerCount": 1,
   "shared": [
     {
