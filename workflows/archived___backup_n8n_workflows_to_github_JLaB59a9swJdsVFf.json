@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2025-11-15T22:42:00.000Z",
+  "updatedAt": "2025-11-17T14:42:08.000Z",
   "createdAt": "2025-11-15T19:29:20.678Z",
   "id": "JLaB59a9swJdsVFf",
   "name": "ARCHIVED - Backup n8n Workflows to GitHub",
   "active": false,
-  "isArchived": false,
+  "isArchived": true,
   "nodes": [
     {
       "parameters": {
@@ -382,7 +382,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "73c66c8c-2c30-4ddf-bf28-fca38c92326d",
+  "versionId": "304fc7c8-5b77-41f1-bf5e-8ab7088bb266",
   "triggerCount": 0,
   "shared": [
     {
