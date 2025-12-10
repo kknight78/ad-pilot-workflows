@@ -1,9 +1,8 @@
 {
-  "updatedAt": "2025-12-10T15:19:39.961Z",
+  "updatedAt": "2025-12-10T16:08:41.847Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
-  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -51,7 +50,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.item.json.data || $input.item.json;\nlet workflows = Array.isArray(data) ? data : [data];\n\n// Filter out any items that don't have an 'id' and 'name' (real workflows)\nworkflows = workflows.filter(wf => wf && wf.id && wf.name);\n\nconsole.log(`Processing ${workflows.length} valid workflows`);\n\nconst formattedWorkflows = workflows.map(wf => {\n  const safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\n  const filename = `${safeName}_${wf.id}.json`;\n  \n  return {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  };\n});\n\nreturn formattedWorkflows.map(wf => ({ json: wf }));"
+        "jsCode": "const data = $input.first().json.data || $input.first().json;\nlet workflows = Array.isArray(data) ? data : [data];\n\n// Filter out any items that don't have an 'id' and 'name' (real workflows)\nworkflows = workflows.filter(wf => wf && wf.id && wf.name);\n\nconsole.log(`Processing ${workflows.length} valid workflows`);\n\nconst formattedWorkflows = workflows.map(wf => {\n  const safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\n  const filename = `${safeName}_${wf.id}.json`;\n  \n  return {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  };\n});\n\nreturn formattedWorkflows.map(wf => ({ json: wf }));"
       },
       "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
       "name": "Format for GitHub",
@@ -110,7 +109,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const response = $json;\nconst workflowData = $('Format for GitHub').item.json;\n\n// Check response structure - error case has error.message and error.status\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log(`Checking ${workflowData.name}: isError=${isError}, status=${statusCode}`);\n\nif (isError || statusCode === 422) {\n  // File exists, needs SHA to update - route to update path\n  console.log(`\ud83d\udcdd File exists, routing to update: ${workflowData.name}`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} else if (statusCode === 201) {\n  // New file created successfully\n  console.log(`\u2705 Created new file: ${workflowData.name}`);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'created'\n  } };\n} else {\n  // Unexpected response - log and route to update to be safe\n  console.log(`\u26a0\ufe0f Unexpected response for ${workflowData.name}, routing to update`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}"
+        "jsCode": "const response = $json;\nconst workflowData = $('Format for GitHub').item.json;\n\n// Check response structure - error case has error.message and error.status\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log(`Checking ${workflowData.name}: isError=${isError}, status=${statusCode}`);\n\nif (isError || statusCode === 422) {\n  // File exists, needs SHA to update - route to update path\n  console.log(`📝 File exists, routing to update: ${workflowData.name}`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} else if (statusCode === 201) {\n  // New file created successfully\n  console.log(`✅ Created new file: ${workflowData.name}`);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'created'\n  } };\n} else {\n  // Unexpected response - log and route to update to be safe\n  console.log(`⚠️ Unexpected response for ${workflowData.name}, routing to update`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}"
       },
       "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
       "name": "Check Result",
@@ -155,7 +154,14 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 100
+            }
+          }
+        }
       },
       "id": "0764e992-7444-40cc-832e-4cdb916e5952",
       "name": "Get Current SHA",
@@ -190,7 +196,14 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"message\": \"{{ 'Update: ' + $json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.workflow.contentBase64 }}\",\n  \"sha\": \"{{ $json.sha }}\",\n  \"branch\": \"main\"\n}",
-        "options": {}
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 500
+            }
+          }
+        }
       },
       "id": "94041267-12ca-455e-9a09-e5f529953d08",
       "name": "Update File",
@@ -209,7 +222,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const workflow = $('Needs Update?').item.json.workflow;\nconsole.log(`\u2705 Updated: ${workflow.name}`);\nreturn [{ json: { success: true, action: 'updated', workflow: workflow.name } }];"
+        "jsCode": "const workflow = $('Needs Update?').item.json.workflow;\nconsole.log(`✅ Updated: ${workflow.name}`);\nreturn [{ json: { success: true, action: 'updated', workflow: workflow.name } }];"
       },
       "id": "886687ce-7bc4-405b-a3bc-0d5dabb18b41",
       "name": "Log Update",
@@ -222,7 +235,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Collect all the execution results\nconst allItems = $input.all();\n\nlet successes = 0;\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  if (item.json.success) {\n    successes++;\n  } else if (item.json.error || item.json.needs_update === undefined) {\n    failures++;\n    failedWorkflows.push(item.json.workflow?.name || item.json.workflow || 'Unknown');\n  }\n});\n\nconsole.log(`\u2705 Successes: ${successes}, \u274c Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    successes: successes,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
+        "jsCode": "// Collect all the execution results\nconst allItems = $input.all();\n\nlet successes = 0;\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  if (item.json.success) {\n    successes++;\n  } else if (item.json.error || item.json.needs_update === undefined) {\n    failures++;\n    failedWorkflows.push(item.json.workflow?.name || item.json.workflow || 'Unknown');\n  }\n});\n\nconsole.log(`✅ Successes: ${successes}, ❌ Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    successes: successes,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -283,7 +296,7 @@
       "parameters": {
         "fromEmail": "errors@ad-pilot.ai",
         "toEmail": "kelly@ad-pilot.ai",
-        "subject": "\u26a0\ufe0f n8n GitHub Backup Failed",
+        "subject": "⚠️ n8n GitHub Backup Failed",
         "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nSuccessful: \" + $json.successes + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
         "options": {}
       },
@@ -305,7 +318,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// CRITICAL: SHA and filename must come from the SAME GitHub response item\nconst sha = $json.sha;\nconst filename = $json.name; // GitHub returns filename as 'name'\n\nconsole.log('Processing GitHub file: ' + filename + ' (SHA: ' + sha.substring(0,8) + '...)');\n\n// Find the matching workflow data from Needs Update? by this filename\nconst needsUpdateItems = $('Needs Update?').all();\nconst matchingItem = needsUpdateItems.find(item => item.json.filename === filename);\n\nif (!matchingItem) {\n  console.log('ERROR: No workflow data found for: ' + filename);\n  throw new Error('No workflow data for ' + filename);\n}\n\n// Return with SHA and filename from GitHub, workflow data from our earlier node\nreturn {\n  json: {\n    sha: sha,           // From THIS GitHub response\n    filename: filename, // From THIS GitHub response (ensures they match!)\n    workflow: matchingItem.json.workflow,\n    needs_update: true\n  }\n};",
+        "jsCode": "// DEBUG: Log exactly what we're getting\nconsole.log('=== Compare Content Debug ===');\nconsole.log('Input $json keys:', Object.keys($json));\nconsole.log('Input $json.sha:', $json.sha);\nconsole.log('Input $json.name:', $json.name);\n\nconst sha = $json.sha;\nconst filename = $json.name;\n\n// Validate SHA looks like a blob SHA (40 hex chars)\nif (!sha || sha.length !== 40) {\n  console.log('ERROR: Invalid SHA:', sha);\n}\n\n// Find matching workflow from Needs Update?\nconst needsUpdateItems = $('Needs Update?').all();\nconsole.log('Needs Update items count:', needsUpdateItems.length);\n\nconst match = needsUpdateItems.find(i => i.json.filename === filename);\n\nif (!match) {\n  console.log('Available filenames:', needsUpdateItems.map(i => i.json.filename).join(', '));\n  throw new Error('No match for ' + filename);\n}\n\n// Check if match has a sha property (it shouldn't!)\nif (match.json.sha) {\n  console.log('WARNING: match.json has sha property:', match.json.sha);\n}\n\nconsole.log('Matched workflow:', match.json.workflow?.name);\nconsole.log('Output sha:', sha);\nconsole.log('Output filename:', filename);\n\nreturn {\n  json: {\n    sha: sha,\n    filename: filename,\n    workflow: match.json.workflow,\n    needs_update: true\n  }\n};",
         "mode": "runOnceForEachItem"
       },
       "type": "n8n-nodes-base.code",
@@ -434,25 +447,7 @@
       "main": [
         [
           {
-            "node": "Content Changed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Content Changed?": {
-      "main": [
-        [
-          {
             "node": "Update File",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Aggregate Results",
             "type": "main",
             "index": 0
           }
@@ -525,8 +520,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "d6249ff5-51e1-4273-ab3a-4f44c686c473",
-  "versionCounter": 60,
+  "versionId": "20c5da5b-14e4-41f8-bb43-4ca2d6265673",
   "triggerCount": 1,
   "shared": [
     {
@@ -534,49 +528,7 @@
       "createdAt": "2025-11-15T21:59:07.654Z",
       "role": "workflow:owner",
       "workflowId": "0wBrseUjWD9GZWh8",
-      "projectId": "bll44iFOa92qb20Q",
-      "project": {
-        "updatedAt": "2025-09-08T16:29:41.547Z",
-        "createdAt": "2025-09-08T16:29:38.593Z",
-        "id": "bll44iFOa92qb20Q",
-        "name": "Kelly Knight <kelly@kellyrae.net>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "projectRelations": [
-          {
-            "updatedAt": "2025-09-08T16:29:38.593Z",
-            "createdAt": "2025-09-08T16:29:38.593Z",
-            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
-            "projectId": "bll44iFOa92qb20Q",
-            "user": {
-              "updatedAt": "2025-12-10T08:00:00.000Z",
-              "createdAt": "2025-09-08T16:29:36.989Z",
-              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
-              "email": "kelly@kellyrae.net",
-              "firstName": "Kelly",
-              "lastName": "Knight",
-              "personalizationAnswers": null,
-              "settings": {
-                "userActivated": true,
-                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
-                "userActivatedAt": 1758474039124,
-                "npsSurvey": {
-                  "responded": true,
-                  "lastShownAt": 1759246180644
-                },
-                "dismissedCallouts": {
-                  "preBuiltAgentsCalloutHttpRequest": true
-                }
-              },
-              "disabled": false,
-              "mfaEnabled": false,
-              "lastActiveAt": "2025-12-10",
-              "isPending": false
-            }
-          }
-        ]
-      }
+      "projectId": "bll44iFOa92qb20Q"
     }
   ],
   "tags": []
