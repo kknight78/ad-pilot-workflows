@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T16:42:43.000Z",
+  "updatedAt": "2025-12-10T17:04:26.000Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -50,14 +50,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json.data || $input.first().json;\nlet workflows = Array.isArray(data) ? data : [data];\n\n// Filter out any items that don't have an 'id' and 'name' (real workflows)\nworkflows = workflows.filter(wf => wf && wf.id && wf.name);\n\nconsole.log(`Processing ${workflows.length} valid workflows`);\n\nconst formattedWorkflows = workflows.map(wf => {\n  const safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\n  const filename = `${safeName}_${wf.id}.json`;\n  \n  return {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  };\n});\n\nreturn formattedWorkflows.map(wf => ({ json: wf }));"
+        "mode": "runOnceForEachItem",
+        "jsCode": "// $json is now a single workflow object (e.g., the contents of one item from the 'data' array)\nconst wf = $json; \n\nconst safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\nconst filename = `${safeName}_${wf.id}.json`;\n\nreturn {\n  json: {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  }\n};"
       },
       "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
       "name": "Format for GitHub",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1088,
+        -880,
         96
       ]
     },
@@ -92,7 +93,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -864,
+        -656,
         96
       ],
       "retryOnFail": false,
@@ -109,14 +110,14 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const response = $json;\nconst workflowData = $input.item.json;\n\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log('Checking ' + workflowData.name + ': isError=' + isError + ', status=' + statusCode);\n\nif (isError || statusCode === 422) {\n  console.log('File exists, needs update: ' + workflowData.name);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} else if (statusCode === 201) {\n  console.log('Created: ' + workflowData.name);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData,\n    filename: workflowData.filename,\n    action: 'created'\n  } };\n} else {\n  console.log('Unknown status for ' + workflowData.name + ', routing to update');\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}"
+        "jsCode": "const response = $json;\nconst workflowData = $input.item.json;\n\n// Check if the input item contains an error property (from failed Try Create)\nconst hasError = response.error !== undefined || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\n// The item was sent to the error output of Try Create File (likely 422)\nif (hasError && (statusCode === 422 || statusCode === 409)) {\n  console.log('File exists (422/409), needs update: ' + workflowData.name);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} \n\n// The item succeeded (status 201 for created, or the error object was not present)\nelse if (statusCode === 201) {\n  console.log('File created successfully (201): ' + workflowData.name);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData,\n    filename: workflowData.filename,\n    action: 'created'\n  } };\n}\n\n// Any other successful code (e.g., 200, which shouldn't happen here) is treated as success\n// Any other unexpected failure is treated as needs update to attempt recovery (safe default)\nelse {\n  console.log('Unknown status (' + statusCode + ') or error condition. Routing to update for safety: ' + workflowData.name);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}"
       },
       "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
       "name": "Check Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -640,
+        -432,
         96
       ]
     },
@@ -136,7 +137,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -416,
+        -208,
         96
       ]
     },
@@ -157,8 +158,7 @@
         "options": {
           "batching": {
             "batch": {
-              "batchSize": 1,
-              "batchInterval": 100
+              "batchSize": 1
             }
           }
         }
@@ -168,7 +168,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -176,
+        32,
         -160
       ],
       "credentials": {
@@ -203,7 +203,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        128,
+        752,
         -160
       ],
       "credentials": {
@@ -220,7 +220,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        304,
+        928,
         112
       ],
       "id": "5d9bea72-51b4-4ee0-9267-a6c57301477a",
@@ -255,7 +255,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        528,
+        1152,
         112
       ],
       "id": "7940083a-972c-4589-becf-7da2615885d9",
@@ -266,7 +266,7 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        752,
+        1376,
         208
       ],
       "id": "ec514100-f164-46dd-866d-424a59b5f24c",
@@ -283,7 +283,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        752,
+        1376,
         16
       ],
       "id": "c9c6bb97-4443-4b0a-bef8-b404f342acb8",
@@ -299,16 +299,78 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// SHA from GitHub (Get Current SHA output)\nconst sha = $json.sha;\nconst githubFilename = $json.name;\n\n// Get workflow data from Needs Update? (matched by filename)\nconst items = $('Needs Update?').all();\nconst match = items.find(i => i.json.filename === githubFilename);\n\nif (!match) {\n  throw new Error('No match for ' + githubFilename);\n}\n\nreturn {\n  json: {\n    sha: sha,\n    filename: match.json.filename,\n    workflow: match.json.workflow,\n    needs_update: true\n  }\n};"
+        "jsCode": "// $json is the response from Get Current SHA (GitHub API response)\nconst sha = $json.sha;\nconst githubFilename = $json.name;\nconst githubContentBase64 = $json.content.replace(/\\n/g, ''); \nconst githubContentString = Buffer.from(githubContentBase64, 'base64').toString('utf8'); \n\n// --- Prepare old content (from GitHub) ---\nconst oldWf = JSON.parse(githubContentString);\ndelete oldWf.updatedAt;\ndelete oldWf.createdAt;\ndelete oldWf.versionId; \nconst oldContentClean = JSON.stringify(oldWf);\n\n\n// --- Get and prepare new content (from n8n API) ---\nconst items = $('Needs Update?').all();\nconst match = items.find(i => i.json.filename === githubFilename);\n\nif (!match) {\n  throw new Error('No match for ' + githubFilename);\n}\n\nconst newContentString = match.json.workflow.content;\nconst newWf = JSON.parse(newContentString);\ndelete newWf.updatedAt;\ndelete newWf.createdAt;\ndelete newWf.versionId; \nconst newContentClean = JSON.stringify(newWf);\n\n// Check if content has actually changed (excluding dynamic fields)\nconst contentHasChanged = newContentClean !== oldContentClean;\n\n// Return the required data, including the fresh SHA and the comparison result\nreturn {\n  json: {\n    sha: sha,\n    filename: githubFilename,\n    workflow: match.json.workflow,\n    // This will now be FALSE if only timestamps changed\n    needs_update: contentHasChanged, \n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -32,
+        176,
         -160
       ],
       "id": "compare-content-node",
       "name": "Compare Content"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        96
+      ],
+      "id": "f360cbde-c656-4301-899f-f9159123f054",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "amount": 0.5
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        -160
+      ],
+      "id": "4a74c6b3-eef9-4f4c-9c0f-6009ad071f91",
+      "name": "Wait",
+      "webhookId": "1cbc34de-8bfe-46ea-b72a-3931c0f8623b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e40f8f2c-9030-4419-a131-cba08d9ddac2",
+              "leftValue": "={{ $json.needs_update }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        -160
+      ],
+      "id": "c5dc8ca3-ae2b-4a13-8365-211a7c66023f",
+      "name": "If1"
     }
   ],
   "connections": {
@@ -327,7 +389,7 @@
       "main": [
         [
           {
-            "node": "Format for GitHub",
+            "node": "Split Out",
             "type": "main",
             "index": 0
           }
@@ -401,7 +463,7 @@
       "main": [
         [
           {
-            "node": "Update File",
+            "node": "If1",
             "type": "main",
             "index": 0
           }
@@ -447,6 +509,46 @@
           }
         ]
       ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Format for GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Update File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -463,7 +565,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "4093daeb-59d4-49d5-b0b3-b210e23c57ec",
+  "versionId": "119f02b6-69ca-4243-a385-c5d977368784",
   "triggerCount": 1,
   "shared": [
     {
