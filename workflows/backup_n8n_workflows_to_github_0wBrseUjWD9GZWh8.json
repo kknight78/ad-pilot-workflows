@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T13:20:58.740Z",
+  "updatedAt": "2025-12-10T13:36:08.748Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -108,7 +108,7 @@
         -656,
         112
       ],
-      "retryOnFail": true,
+      "retryOnFail": false,
       "waitBetweenTries": 2000,
       "credentials": {
         "httpHeaderAuth": {
@@ -116,7 +116,8 @@
           "name": "Github Token"
         }
       },
-      "continueOnFail": true
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -591,7 +592,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "9ae92a1e-3506-4631-9931-834d3a1d9d48",
+  "versionId": "69d5a0ab-6c2b-4332-8112-f522d49a21c2",
   "triggerCount": 1,
   "shared": [
     {
