@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-11-17T23:35:59.000Z",
+  "updatedAt": "2025-12-01T11:31:58.000Z",
   "createdAt": "2025-11-17T20:39:17.302Z",
   "id": "F2uYbqpA91Yr9KSg",
   "name": "Post to Facebook - Approve & Publish",
@@ -51,7 +51,7 @@
           "parameters": [
             {
               "name": "access_token",
-              "value": "EAAIlMjbhUBMBP3WFR1PghZC4Rta7OggYfI0Jge0tZACo6C7Sz0ABG7tUpMNZAUcbf5jujEXoaPZBIigCqMMIYcDcKATh6HZCZABAOHxlNm86VvsBX9cH4ixZCKqivFCWWZCiijLgoLtB6yaLgxmmenW86lAzMBnmvPjwsZCD4bm8VqwrMA3CxVDg24sFZC2nYGdx7KJs896eAQovQrhJjXuED4apBeoZBeXYBIiY7ZBfzzPnSIiffGH9LkROJPg4LgZDZD"
+              "value": "={{ $('Extract CCC Page Token').first().json.page_access_token }}"
             }
           ]
         },
@@ -74,7 +74,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        736,
+        1184,
         0
       ],
       "id": "20820905-5fba-4a6b-b1ad-f6295e7a0ab0",
@@ -125,10 +125,6 @@
             {
               "name": "upload_preset",
               "value": "n8n_unsigned"
-            },
-            {
-              "name": "public_id",
-              "value": "=facebook_{{ $now.format('yyyy-MM-dd') }}_test"
             }
           ]
         },
@@ -152,11 +148,47 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        944,
+        1408,
         0
       ],
       "id": "76f35bb4-cd36-4130-841f-312f0a43e7b4",
       "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v24.0/me/accounts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAAIlMjbhUBMBQLBx0hgFAZB3k5Vbk2vtEOZBNCDnPePTzDSmVZC1oJvZAYjZA9opvRK1rkb7fbTAGbnqmBpUossnKtpFa0WGZCWVnYTiOJpP5nZAXNN2yKSw5TPv2IIEU6OxVoIJg8Jxe7I9C9ZCSBr3qngO9f2MbzT9HxqBZBnfQZAxevzGyCw7s93hytLLn8c55emgZDZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        736,
+        0
+      ],
+      "id": "9bb3a827-3c94-4bcc-b337-0cefe4e3fc1d",
+      "name": "Get FB Page Tokens"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst previousData = $('Get secure url').first().json; // Get the video/caption data\n\n// Find Capitol Car Credit page in the response\nconst cccPage = response.data.find(page => page.id === '801034506751166');\n\nif (!cccPage) {\n  throw new Error('Capitol Car Credit page not found in response');\n}\n\nconsole.log('Found CCC page token, tasks:', cccPage.tasks);\n\nreturn [{\n  json: {\n    ...previousData, // Pass through all the video data!\n    page_access_token: cccPage.access_token,\n    page_id: cccPage.id,\n    page_name: cccPage.name\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "id": "a5a4a6a0-e9af-42e1-8c5f-bdd0010805da",
+      "name": "Extract CCC Page Token"
     }
   ],
   "connections": {
@@ -195,7 +227,13 @@
     },
     "Get secure url": {
       "main": [
-        []
+        [
+          {
+            "node": "Get FB Page Tokens",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Post to FB CCC page": {
@@ -208,15 +246,38 @@
           }
         ]
       ]
+    },
+    "Get FB Page Tokens": {
+      "main": [
+        [
+          {
+            "node": "Extract CCC Page Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract CCC Page Token": {
+      "main": [
+        [
+          {
+            "node": "Post to FB CCC page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": true
   },
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "ec18216f-ae04-4bab-b736-c7bed80a4de1",
+  "versionId": "a4127a74-25b6-4225-aecd-246ef057f78b",
   "triggerCount": 1,
   "shared": [
     {
