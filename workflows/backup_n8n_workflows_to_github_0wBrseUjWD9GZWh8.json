@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T12:45:06.936Z",
+  "updatedAt": "2025-12-10T12:50:16.511Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -120,7 +120,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const inputData = $input.first();\nconst response = inputData.json;\nconst workflowData = $('Process One at a Time').item.json;\n\n// GitHub returns 422 when file exists and needs SHA to update\n// Returns 201 when file was successfully created (new file)\nconst statusCode = response.statusCode || response.body?.statusCode;\nconst hasError = response.error || response.message?.includes('sha') || statusCode === 422;\n\nconsole.log(`Checking ${workflowData.name}: statusCode=${statusCode}, hasError=${hasError}`);\n\nif (statusCode === 201 || statusCode === 200) {\n  // File was created or updated successfully - but wait, 200 means it exists!\n  // Actually GitHub PUT to contents returns 201 for create, 200 for update\n  // If we got 200 without providing SHA, something is weird\n  // Let's check if this was a new file creation (201) vs existing\n  if (statusCode === 201) {\n    console.log(`✅ Created new file: ${workflowData.name}`);\n    return [{ json: { \n      success: true,\n      needs_update: false,\n      workflow: workflowData.name,\n      action: 'created'\n    } }];\n  }\n}\n\n// Any other case (422 error, or 200 which shouldn't happen) = file exists, check for updates\nconsole.log(`📝 File exists, will check for changes: ${workflowData.name}`);\nreturn [{ json: { \n  success: false, \n  needs_update: true,\n  workflow: workflowData,\n  filename: workflowData.filename\n} }];"
+        "jsCode": "const inputData = $input.first();\nconst response = inputData.json;\nconst workflowData = $('Process One at a Time').item.json;\n\n// Check response structure - error case has error.message and error.status\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log(`Checking ${workflowData.name}: isError=${isError}, status=${statusCode}`);\n\nif (isError || statusCode === 422) {\n  // File exists, needs SHA to update - route to update path\n  console.log(`📝 File exists, routing to update: ${workflowData.name}`);\n  return [{ json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else if (statusCode === 201) {\n  // New file created successfully\n  console.log(`✅ Created new file: ${workflowData.name}`);\n  return [{ json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'created'\n  } }];\n} else {\n  // Unexpected response - log and route to update to be safe\n  console.log(`⚠️ Unexpected response for ${workflowData.name}, routing to update`);\n  return [{ json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n}"
       },
       "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
       "name": "Check Result",
@@ -590,7 +590,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "3590ab4f-23ca-4f78-9a29-cfeb07c2ce4b",
+  "versionId": "2ba54f83-6fc0-414f-85a1-1ba31297b674",
   "triggerCount": 1,
   "shared": [
     {
