@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T12:50:16.511Z",
+  "updatedAt": "2025-12-10T12:57:16.824Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -120,7 +120,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const inputData = $input.first();\nconst response = inputData.json;\nconst workflowData = $('Process One at a Time').item.json;\n\n// Check response structure - error case has error.message and error.status\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log(`Checking ${workflowData.name}: isError=${isError}, status=${statusCode}`);\n\nif (isError || statusCode === 422) {\n  // File exists, needs SHA to update - route to update path\n  console.log(`📝 File exists, routing to update: ${workflowData.name}`);\n  return [{ json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n} else if (statusCode === 201) {\n  // New file created successfully\n  console.log(`✅ Created new file: ${workflowData.name}`);\n  return [{ json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'created'\n  } }];\n} else {\n  // Unexpected response - log and route to update to be safe\n  console.log(`⚠️ Unexpected response for ${workflowData.name}, routing to update`);\n  return [{ json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } }];\n}"
+        "jsCode": "const response = $json;\nconst workflowData = $('Process One at a Time').item.json;\n\n// Check response structure - error case has error.message and error.status\nconst isError = response.error || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\nconsole.log(`Checking ${workflowData.name}: isError=${isError}, status=${statusCode}`);\n\nif (isError || statusCode === 422) {\n  // File exists, needs SHA to update - route to update path\n  console.log(`📝 File exists, routing to update: ${workflowData.name}`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} else if (statusCode === 201) {\n  // New file created successfully\n  console.log(`✅ Created new file: ${workflowData.name}`);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData.name,\n    action: 'created'\n  } };\n} else {\n  // Unexpected response - log and route to update to be safe\n  console.log(`⚠️ Unexpected response for ${workflowData.name}, routing to update`);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}",
+        "mode": "runOnceForEachItem"
       },
       "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
       "name": "Check Result",
@@ -590,7 +591,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "2ba54f83-6fc0-414f-85a1-1ba31297b674",
+  "versionId": "20c151d0-b689-48de-8501-45ee8bdfb104",
   "triggerCount": 1,
   "shared": [
     {
