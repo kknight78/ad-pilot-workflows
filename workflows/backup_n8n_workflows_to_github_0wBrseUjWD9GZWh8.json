@@ -1,9 +1,8 @@
 {
-  "updatedAt": "2025-12-10T16:31:12.000Z",
+  "updatedAt": "2025-12-10T16:42:43.000Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
-  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -216,7 +215,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Collect all the execution results\nconst allItems = $input.all();\n\nlet successes = 0;\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  if (item.json.success) {\n    successes++;\n  } else if (item.json.error || item.json.needs_update === undefined) {\n    failures++;\n    failedWorkflows.push(item.json.workflow?.name || item.json.workflow || 'Unknown');\n  }\n});\n\nconsole.log(`\u2705 Successes: ${successes}, \u274c Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    successes: successes,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
+        "jsCode": "// Collect all the execution results\nconst allItems = $input.all();\n\nlet successes = 0;\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  if (item.json.success) {\n    successes++;\n  } else if (item.json.error || item.json.needs_update === undefined) {\n    failures++;\n    failedWorkflows.push(item.json.workflow?.name || item.json.workflow || 'Unknown');\n  }\n});\n\nconsole.log(`✅ Successes: ${successes}, ❌ Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    successes: successes,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -277,7 +276,7 @@
       "parameters": {
         "fromEmail": "errors@ad-pilot.ai",
         "toEmail": "kelly@ad-pilot.ai",
-        "subject": "\u26a0\ufe0f n8n GitHub Backup Failed",
+        "subject": "⚠️ n8n GitHub Backup Failed",
         "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nSuccessful: \" + $json.successes + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
         "options": {}
       },
@@ -348,13 +347,7 @@
     },
     "Try Create File": {
       "main": [
-        [
-          {
-            "node": "Check Result",
-            "type": "main",
-            "index": 0
-          }
-        ],
+        [],
         [
           {
             "node": "Check Result",
@@ -470,8 +463,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "5d11a18c-5af9-4462-b887-14eccf8a9c24",
-  "versionCounter": 88,
+  "versionId": "4093daeb-59d4-49d5-b0b3-b210e23c57ec",
   "triggerCount": 1,
   "shared": [
     {
@@ -479,49 +471,7 @@
       "createdAt": "2025-11-15T21:59:07.654Z",
       "role": "workflow:owner",
       "workflowId": "0wBrseUjWD9GZWh8",
-      "projectId": "bll44iFOa92qb20Q",
-      "project": {
-        "updatedAt": "2025-09-08T16:29:41.547Z",
-        "createdAt": "2025-09-08T16:29:38.593Z",
-        "id": "bll44iFOa92qb20Q",
-        "name": "Kelly Knight <kelly@kellyrae.net>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "projectRelations": [
-          {
-            "updatedAt": "2025-09-08T16:29:38.593Z",
-            "createdAt": "2025-09-08T16:29:38.593Z",
-            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
-            "projectId": "bll44iFOa92qb20Q",
-            "user": {
-              "updatedAt": "2025-12-10T08:00:00.000Z",
-              "createdAt": "2025-09-08T16:29:36.989Z",
-              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
-              "email": "kelly@kellyrae.net",
-              "firstName": "Kelly",
-              "lastName": "Knight",
-              "personalizationAnswers": null,
-              "settings": {
-                "userActivated": true,
-                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
-                "userActivatedAt": 1758474039124,
-                "npsSurvey": {
-                  "responded": true,
-                  "lastShownAt": 1759246180644
-                },
-                "dismissedCallouts": {
-                  "preBuiltAgentsCalloutHttpRequest": true
-                }
-              },
-              "disabled": false,
-              "mfaEnabled": false,
-              "lastActiveAt": "2025-12-10",
-              "isPending": false
-            }
-          }
-        ]
-      }
+      "projectId": "bll44iFOa92qb20Q"
     }
   ],
   "tags": []
