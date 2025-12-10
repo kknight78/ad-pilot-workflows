@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T17:04:26.000Z",
+  "updatedAt": "2025-12-10T17:09:19.000Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -196,7 +196,14 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"message\": \"{{ 'Update: ' + $json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.workflow.contentBase64 }}\",\n  \"sha\": \"{{ $json.sha }}\",\n  \"branch\": \"main\"\n}",
-        "options": {}
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 200
+            }
+          }
+        }
       },
       "id": "94041267-12ca-455e-9a09-e5f529953d08",
       "name": "Update File",
@@ -323,20 +330,6 @@
       ],
       "id": "f360cbde-c656-4301-899f-f9159123f054",
       "name": "Split Out"
-    },
-    {
-      "parameters": {
-        "amount": 0.5
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        592,
-        -160
-      ],
-      "id": "4a74c6b3-eef9-4f4c-9c0f-6009ad071f91",
-      "name": "Wait",
-      "webhookId": "1cbc34de-8bfe-46ea-b72a-3931c0f8623b"
     },
     {
       "parameters": {
@@ -521,22 +514,11 @@
         ]
       ]
     },
-    "Wait": {
-      "main": [
-        [
-          {
-            "node": "Update File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "If1": {
       "main": [
         [
           {
-            "node": "Wait",
+            "node": "Update File",
             "type": "main",
             "index": 0
           }
@@ -565,7 +547,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "119f02b6-69ca-4243-a385-c5d977368784",
+  "versionId": "dc358da6-ebb1-4131-8928-bea893e92154",
   "triggerCount": 1,
   "shared": [
     {
