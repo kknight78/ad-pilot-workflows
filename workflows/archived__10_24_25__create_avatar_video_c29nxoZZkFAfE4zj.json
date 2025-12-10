@@ -3,7 +3,6 @@
   "createdAt": "2025-10-01T16:25:56.824Z",
   "id": "c29nxoZZkFAfE4zj",
   "name": "ARCHIVED (10/24/25) Create avatar video",
-  "description": null,
   "active": false,
   "isArchived": true,
   "nodes": [
@@ -480,7 +479,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\nconst audioSections = config._audio_sections;\n\nif (!audioSections || audioSections.length === 0) {\n  throw new Error('No audio sections to concatenate!');\n}\n\nconsole.log(`Concatenating ${audioSections.length} audio sections...`);\n\n// Convert all base64 audio to buffers\nconst audioBuffers = audioSections.map(section => {\n  if (!section.audio_base64) {\n    throw new Error(`Section ${section.section_name} missing audio_base64!`);\n  }\n  return Buffer.from(section.audio_base64, 'base64');\n});\n\nconsole.log('Audio buffers created:', audioBuffers.map((buf, i) => \n  `${audioSections[i].section_name}: ${(buf.length / 1024).toFixed(2)}KB`\n).join(', '));\n\n// Simple concatenation: MP3 files can be concatenated by joining the data\n// This works because MP3 frames are self-contained\nconst concatenatedBuffer = Buffer.concat(audioBuffers);\n\n// Convert back to base64\nconst concatenatedBase64 = concatenatedBuffer.toString('base64');\n\nconst totalSize = concatenatedBuffer.length;\nconsole.log(`\u2705 Concatenated audio size: ${(totalSize / 1024).toFixed(2)} KB`);\n\nreturn [{\n  json: {\n    ...config,\n    outputs: {\n      ...(config.outputs || {}),\n      audio_base64: concatenatedBase64\n    }\n  }\n}];"
+        "jsCode": "const config = $json;\nconst audioSections = config._audio_sections;\n\nif (!audioSections || audioSections.length === 0) {\n  throw new Error('No audio sections to concatenate!');\n}\n\nconsole.log(`Concatenating ${audioSections.length} audio sections...`);\n\n// Convert all base64 audio to buffers\nconst audioBuffers = audioSections.map(section => {\n  if (!section.audio_base64) {\n    throw new Error(`Section ${section.section_name} missing audio_base64!`);\n  }\n  return Buffer.from(section.audio_base64, 'base64');\n});\n\nconsole.log('Audio buffers created:', audioBuffers.map((buf, i) => \n  `${audioSections[i].section_name}: ${(buf.length / 1024).toFixed(2)}KB`\n).join(', '));\n\n// Simple concatenation: MP3 files can be concatenated by joining the data\n// This works because MP3 frames are self-contained\nconst concatenatedBuffer = Buffer.concat(audioBuffers);\n\n// Convert back to base64\nconst concatenatedBase64 = concatenatedBuffer.toString('base64');\n\nconst totalSize = concatenatedBuffer.length;\nconsole.log(`✅ Concatenated audio size: ${(totalSize / 1024).toFixed(2)} KB`);\n\nreturn [{\n  json: {\n    ...config,\n    outputs: {\n      ...(config.outputs || {}),\n      audio_base64: concatenatedBase64\n    }\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -510,7 +509,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\nconst audioSections = $input.first().json._audio_sections;\n\nif (!audioSections || audioSections.length === 0) {\n  throw new Error('No audio sections found!');\n}\n\nconsole.log('Calculating timings for', audioSections.length, 'sections');\n\n// Calculate cumulative timings\nlet currentTime = 0;\nconst timings = [];\n\nfor (const section of audioSections) {\n  const startTime = currentTime;\n  const endTime = currentTime + section.duration_seconds;\n  \n  timings.push({\n    section_name: section.section_name,\n    start_time: Math.round(startTime),\n    end_time: Math.round(endTime),\n    duration: Math.round(section.duration_seconds)\n  });\n  \n  currentTime = endTime;\n  \n  console.log(`${section.section_name}: ${Math.round(startTime)}s - ${Math.round(endTime)}s`);\n}\n\n// Extract car timings specifically (sections with VINs)\nconst carTimings = timings.filter(t => \n  t.section_name !== 'hook' && t.section_name !== 'cta'\n);\n\nconsole.log('Car sections found:', carTimings.length);\n\n// Update vehicles with accurate timings\nconst updatedVehicles = config.vehicles.map((vehicle, index) => {\n  const carTiming = carTimings[index];\n  \n  if (!carTiming) {\n    console.warn(`No timing found for vehicle ${index + 1} (${vehicle.vin})`);\n    return vehicle;\n  }\n  \n  console.log(`Vehicle ${vehicle.vin}: ${carTiming.start_time}s - ${carTiming.end_time}s`);\n  \n  return {\n    ...vehicle,\n    start_time: carTiming.start_time,\n    end_time: carTiming.end_time\n  };\n});\n\nconst totalDuration = Math.round(currentTime);\n\nconsole.log(`\u2705 Total audio duration: ${totalDuration}s`);\nconsole.log(`\u2705 Updated ${updatedVehicles.length} vehicles with timings`);\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: updatedVehicles,\n    _audio_sections: audioSections,\n    _section_timings: timings,\n    outputs: {\n      ...(config.outputs || {}),\n      audio_duration: totalDuration\n    }\n  }\n}];\n\n// ... existing code ...\n\nconst fileSizeBytes = binaryData.length;\nconst BITRATE_KBPS = 128;\nconst durationSeconds = (fileSizeBytes * 8) / (BITRATE_KBPS * 1000);\nconst roundedDuration = Math.round(durationSeconds * 100) / 100;\n\nconsole.log(`File size: ${fileSizeBytes} bytes`);\nconsole.log(`Calculated duration: ${durationSeconds}s`);\nconsole.log(`Rounded duration: ${roundedDuration}s`);\n\nif (roundedDuration === 0 || !roundedDuration) {\n  console.warn('\u26a0\ufe0f Duration is 0 or null! File might be too small.');\n}"
+        "jsCode": "const config = $json;\nconst audioSections = $input.first().json._audio_sections;\n\nif (!audioSections || audioSections.length === 0) {\n  throw new Error('No audio sections found!');\n}\n\nconsole.log('Calculating timings for', audioSections.length, 'sections');\n\n// Calculate cumulative timings\nlet currentTime = 0;\nconst timings = [];\n\nfor (const section of audioSections) {\n  const startTime = currentTime;\n  const endTime = currentTime + section.duration_seconds;\n  \n  timings.push({\n    section_name: section.section_name,\n    start_time: Math.round(startTime),\n    end_time: Math.round(endTime),\n    duration: Math.round(section.duration_seconds)\n  });\n  \n  currentTime = endTime;\n  \n  console.log(`${section.section_name}: ${Math.round(startTime)}s - ${Math.round(endTime)}s`);\n}\n\n// Extract car timings specifically (sections with VINs)\nconst carTimings = timings.filter(t => \n  t.section_name !== 'hook' && t.section_name !== 'cta'\n);\n\nconsole.log('Car sections found:', carTimings.length);\n\n// Update vehicles with accurate timings\nconst updatedVehicles = config.vehicles.map((vehicle, index) => {\n  const carTiming = carTimings[index];\n  \n  if (!carTiming) {\n    console.warn(`No timing found for vehicle ${index + 1} (${vehicle.vin})`);\n    return vehicle;\n  }\n  \n  console.log(`Vehicle ${vehicle.vin}: ${carTiming.start_time}s - ${carTiming.end_time}s`);\n  \n  return {\n    ...vehicle,\n    start_time: carTiming.start_time,\n    end_time: carTiming.end_time\n  };\n});\n\nconst totalDuration = Math.round(currentTime);\n\nconsole.log(`✅ Total audio duration: ${totalDuration}s`);\nconsole.log(`✅ Updated ${updatedVehicles.length} vehicles with timings`);\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: updatedVehicles,\n    _audio_sections: audioSections,\n    _section_timings: timings,\n    outputs: {\n      ...(config.outputs || {}),\n      audio_duration: totalDuration\n    }\n  }\n}];\n\n// ... existing code ...\n\nconst fileSizeBytes = binaryData.length;\nconst BITRATE_KBPS = 128;\nconst durationSeconds = (fileSizeBytes * 8) / (BITRATE_KBPS * 1000);\nconst roundedDuration = Math.round(durationSeconds * 100) / 100;\n\nconsole.log(`File size: ${fileSizeBytes} bytes`);\nconsole.log(`Calculated duration: ${durationSeconds}s`);\nconsole.log(`Rounded duration: ${roundedDuration}s`);\n\nif (roundedDuration === 0 || !roundedDuration) {\n  console.warn('⚠️ Duration is 0 or null! File might be too small.');\n}"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -536,7 +535,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const allItems = $input.all();\n\nconsole.log('Combining', allItems.length, 'binary items');\n\nconst binaryItems = [];\n\nfor (let i = 0; i < allItems.length; i++) {\n  const item = allItems[i];\n  \n  // Get the actual binary buffer while we still have access\n  let binaryBuffer = null;\n  \n  try {\n    binaryBuffer = await this.helpers.getBinaryDataBuffer(i, 'data');\n    console.log(`\u2705 Got buffer ${i} (${item.json.name}): ${binaryBuffer.length} bytes`);\n  } catch (error) {\n    console.warn(`\u274c Failed buffer ${i}:`, error.message);\n  }\n  \n  // Convert to base64 NOW while we have the buffer\n  const audioBase64 = binaryBuffer ? binaryBuffer.toString('base64') : null;\n  \n  binaryItems.push({\n    name: item.json.name,\n    text: item.json.text,\n    index: item.json.index,\n    audio_base64: audioBase64, // Store base64 here!\n    file_size: item.binary?.data?.fileSize\n  });\n}\n\nreturn [{\n  json: {\n    items: binaryItems\n  }\n}];"
+        "jsCode": "const allItems = $input.all();\n\nconsole.log('Combining', allItems.length, 'binary items');\n\nconst binaryItems = [];\n\nfor (let i = 0; i < allItems.length; i++) {\n  const item = allItems[i];\n  \n  // Get the actual binary buffer while we still have access\n  let binaryBuffer = null;\n  \n  try {\n    binaryBuffer = await this.helpers.getBinaryDataBuffer(i, 'data');\n    console.log(`✅ Got buffer ${i} (${item.json.name}): ${binaryBuffer.length} bytes`);\n  } catch (error) {\n    console.warn(`❌ Failed buffer ${i}:`, error.message);\n  }\n  \n  // Convert to base64 NOW while we have the buffer\n  const audioBase64 = binaryBuffer ? binaryBuffer.toString('base64') : null;\n  \n  binaryItems.push({\n    name: item.json.name,\n    text: item.json.text,\n    index: item.json.index,\n    audio_base64: audioBase64, // Store base64 here!\n    file_size: item.binary?.data?.fileSize\n  });\n}\n\nreturn [{\n  json: {\n    items: binaryItems\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -844,7 +843,6 @@
   },
   "pinData": {},
   "versionId": "c6c09a13-0943-4f02-addf-d35ec8498e84",
-  "versionCounter": 1,
   "triggerCount": 1,
   "shared": [
     {
@@ -852,49 +850,7 @@
       "createdAt": "2025-10-01T16:25:56.828Z",
       "role": "workflow:owner",
       "workflowId": "c29nxoZZkFAfE4zj",
-      "projectId": "bll44iFOa92qb20Q",
-      "project": {
-        "updatedAt": "2025-09-08T16:29:41.547Z",
-        "createdAt": "2025-09-08T16:29:38.593Z",
-        "id": "bll44iFOa92qb20Q",
-        "name": "Kelly Knight <kelly@kellyrae.net>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "projectRelations": [
-          {
-            "updatedAt": "2025-09-08T16:29:38.593Z",
-            "createdAt": "2025-09-08T16:29:38.593Z",
-            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
-            "projectId": "bll44iFOa92qb20Q",
-            "user": {
-              "updatedAt": "2025-12-10T08:00:00.000Z",
-              "createdAt": "2025-09-08T16:29:36.989Z",
-              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
-              "email": "kelly@kellyrae.net",
-              "firstName": "Kelly",
-              "lastName": "Knight",
-              "personalizationAnswers": null,
-              "settings": {
-                "userActivated": true,
-                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
-                "userActivatedAt": 1758474039124,
-                "npsSurvey": {
-                  "responded": true,
-                  "lastShownAt": 1759246180644
-                },
-                "dismissedCallouts": {
-                  "preBuiltAgentsCalloutHttpRequest": true
-                }
-              },
-              "disabled": false,
-              "mfaEnabled": false,
-              "lastActiveAt": "2025-12-10",
-              "isPending": false
-            }
-          }
-        ]
-      }
+      "projectId": "bll44iFOa92qb20Q"
     }
   ],
   "tags": [
