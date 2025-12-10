@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2025-11-23T18:55:02.000Z",
+  "updatedAt": "2025-11-24T13:44:43.000Z",
   "createdAt": "2025-10-20T22:00:13.244Z",
   "id": "YZwWO3x8kdBjQvqX",
   "name": "(OLD) Script generation",
   "active": false,
-  "isArchived": false,
+  "isArchived": true,
   "nodes": [
     {
       "parameters": {
@@ -1120,7 +1120,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "c54c83a7-0b08-4f0c-9f2c-a69d73b13d25",
+  "versionId": "e3ad116d-c7b1-4564-b4c1-35f466b09f1c",
   "triggerCount": 1,
   "shared": [
     {
