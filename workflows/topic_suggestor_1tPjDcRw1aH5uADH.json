@@ -3,7 +3,6 @@
   "createdAt": "2025-11-19T17:00:36.769Z",
   "id": "1tPjDcRw1aH5uADH",
   "name": "Topic Suggestor",
-  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -80,7 +79,7 @@
             {
               "id": "prompt",
               "name": "prompt",
-              "value": "=You are a creative content strategist for Capitol Car Credit, a used car dealership in Rantoul, Illinois.\n\nGenerate 3 educational video topic ideas for the \"Capitol Smarts\" series featuring {{ $json.avatar_name }}, presented in {{ $('Parse Request').item.json.length_label }} format.\n\nCurrent month: {{ $json.current_month }}\n\n**Basic requirements:**\n- Must be genuinely helpful and educational (not salesy)\n- Should establish {{ $json.avatar_name }} as a trusted local expert\n- DO NOT include \"Capitol Smarts:\" prefix in your topics\n- DO NOT include time durations like \"(45 seconds)\" in your topics\n- Make topics feel authentic and conversational\n\n**Video length guidelines:**\n{{ $json.target_length === 'brief_15_30' ? '- Brief (15-30 sec): Single quick tip, one key insight, \"don\\'t do X, do Y instead\" style' : '' }}\n{{ $json.target_length === 'standard_30_45' ? '- Standard (30-45 sec): Top 3 lists, comparisons, process explanations' : '' }}\n{{ $json.target_length === 'detailed_45_60' ? '- Detailed (45-60 sec): Deep dives, step-by-step how-tos, behind-the-scenes' : '' }}\n\n{{ $json.has_guidance ? '**CRITICAL INSTRUCTION: FOLLOW USER GUIDANCE**\\n\\nThe user wants topics about: \"' + $json.topic_guidance + '\"\\n\\nHere are examples of how to follow guidance correctly:\\n\\nExample 1:\\nUser guidance: \"first car\"\\nGOOD topics: [\"First-Time Car Buyer Checklist: What You Need Before Shopping\", \"First Car Financing: Understanding Your Options with No Credit History\", \"Best Used Cars for First-Time Buyers Under $15,000\"]\\nBAD topics: [\"Extended warranties\", \"Trade-in values\"] \u274c These are NOT about first cars\\n\\nExample 2:\\nUser guidance: \"holiday driving\"\\nGOOD topics: [\"Holiday Road Trip Prep: Essential Checks Before Long Drives\", \"Avoiding Traffic Stress: Best Times to Travel This Holiday Season\", \"Winter Holiday Driving: What to Pack in Your Emergency Kit\"]\\nBAD topics: [\"Credit scores\", \"Dashboard lights\"] \u274c These are NOT about holiday driving\\n\\nExample 3:\\nUser guidance: \"vehicle maintenance\"\\nGOOD topics: [\"Essential Maintenance Schedule: What to Do Every 5,000 Miles\", \"DIY Oil Change: Is It Worth Doing Yourself?\", \"Brake Pad Warning Signs: When to Replace Them\"]\\nBAD topics: [\"Financing tips\", \"Negotiating prices\"] \u274c These are NOT about maintenance\\n\\n**NOW IT\\'S YOUR TURN:**\\nUser guidance: \"' + $json.topic_guidance + '\"\\n\\nYour 3 topics MUST be directly related to \"' + $json.topic_guidance + '\".\\nIf the guidance is \"first car\", talk about first-time buyer concerns.\\nIf the guidance is \"holiday driving\", talk about road trips and travel.\\nIf the guidance is \"maintenance\", talk about car care and upkeep.\\n\\nDo NOT generate topics about unrelated categories.' : '**GENERATE DIVERSE TOPICS**\\n\\nSince no specific guidance was provided, create 3 VARIED topics covering DIFFERENT categories.\\n\\nPossible categories:\\n- Car buying education (financing, trade-ins, negotiations)\\n- Used car inspection tips (what to check, red flags, test drives)\\n- Seasonal maintenance (timely for ' + $json.current_month + ')\\n- DIY troubleshooting (strange noises, won\\'t start, battery issues, fluid leaks)\\n- Behind the scenes at Capitol Car Credit\\n- Credit & financing tips (bad credit, no credit, down payments, APR)\\n- Expert opinions (extended warranties, new vs used, best brands)\\n- Safety & family concerns (car seats, safety features, reliability)\\n\\n**IMPORTANT:** Generate 3 topics from 3 DIFFERENT categories. Maximum 1 seasonal topic.' }}\n\n**Output format:**\nReturn ONLY a valid JSON array of exactly 3 topic strings. No markdown, no explanations.\n\nExample: [\"Topic 1 about {{ $json.has_guidance ? $json.topic_guidance : 'diverse subjects' }}\", \"Topic 2 about {{ $json.has_guidance ? $json.topic_guidance : 'diverse subjects' }}\", \"Topic 3 about {{ $json.has_guidance ? $json.topic_guidance : 'diverse subjects' }}\"]\n\n{{ $json.has_guidance ? 'REMINDER: All 3 topics must relate to: \"' + $json.topic_guidance + '\"' : 'REMINDER: Generate 3 topics from 3 different categories' }}\n\nGenerate now:",
+              "value": "=You are a creative content strategist for Capitol Car Credit, a used car dealership in Rantoul, Illinois.\n\nGenerate 3 educational video topic ideas for the \"Capitol Smarts\" series featuring {{ $json.avatar_name }}, presented in {{ $('Parse Request').item.json.length_label }} format.\n\nCurrent month: {{ $json.current_month }}\n\n**Basic requirements:**\n- Must be genuinely helpful and educational (not salesy)\n- Should establish {{ $json.avatar_name }} as a trusted local expert\n- DO NOT include \"Capitol Smarts:\" prefix in your topics\n- DO NOT include time durations like \"(45 seconds)\" in your topics\n- Make topics feel authentic and conversational\n\n**Video length guidelines:**\n{{ $json.target_length === 'brief_15_30' ? '- Brief (15-30 sec): Single quick tip, one key insight, \"don\\'t do X, do Y instead\" style' : '' }}\n{{ $json.target_length === 'standard_30_45' ? '- Standard (30-45 sec): Top 3 lists, comparisons, process explanations' : '' }}\n{{ $json.target_length === 'detailed_45_60' ? '- Detailed (45-60 sec): Deep dives, step-by-step how-tos, behind-the-scenes' : '' }}\n\n{{ $json.has_guidance ? '**CRITICAL INSTRUCTION: FOLLOW USER GUIDANCE**\\n\\nThe user wants topics about: \"' + $json.topic_guidance + '\"\\n\\nHere are examples of how to follow guidance correctly:\\n\\nExample 1:\\nUser guidance: \"first car\"\\nGOOD topics: [\"First-Time Car Buyer Checklist: What You Need Before Shopping\", \"First Car Financing: Understanding Your Options with No Credit History\", \"Best Used Cars for First-Time Buyers Under $15,000\"]\\nBAD topics: [\"Extended warranties\", \"Trade-in values\"] ❌ These are NOT about first cars\\n\\nExample 2:\\nUser guidance: \"holiday driving\"\\nGOOD topics: [\"Holiday Road Trip Prep: Essential Checks Before Long Drives\", \"Avoiding Traffic Stress: Best Times to Travel This Holiday Season\", \"Winter Holiday Driving: What to Pack in Your Emergency Kit\"]\\nBAD topics: [\"Credit scores\", \"Dashboard lights\"] ❌ These are NOT about holiday driving\\n\\nExample 3:\\nUser guidance: \"vehicle maintenance\"\\nGOOD topics: [\"Essential Maintenance Schedule: What to Do Every 5,000 Miles\", \"DIY Oil Change: Is It Worth Doing Yourself?\", \"Brake Pad Warning Signs: When to Replace Them\"]\\nBAD topics: [\"Financing tips\", \"Negotiating prices\"] ❌ These are NOT about maintenance\\n\\n**NOW IT\\'S YOUR TURN:**\\nUser guidance: \"' + $json.topic_guidance + '\"\\n\\nYour 3 topics MUST be directly related to \"' + $json.topic_guidance + '\".\\nIf the guidance is \"first car\", talk about first-time buyer concerns.\\nIf the guidance is \"holiday driving\", talk about road trips and travel.\\nIf the guidance is \"maintenance\", talk about car care and upkeep.\\n\\nDo NOT generate topics about unrelated categories.' : '**GENERATE DIVERSE TOPICS**\\n\\nSince no specific guidance was provided, create 3 VARIED topics covering DIFFERENT categories.\\n\\nPossible categories:\\n- Car buying education (financing, trade-ins, negotiations)\\n- Used car inspection tips (what to check, red flags, test drives)\\n- Seasonal maintenance (timely for ' + $json.current_month + ')\\n- DIY troubleshooting (strange noises, won\\'t start, battery issues, fluid leaks)\\n- Behind the scenes at Capitol Car Credit\\n- Credit & financing tips (bad credit, no credit, down payments, APR)\\n- Expert opinions (extended warranties, new vs used, best brands)\\n- Safety & family concerns (car seats, safety features, reliability)\\n\\n**IMPORTANT:** Generate 3 topics from 3 DIFFERENT categories. Maximum 1 seasonal topic.' }}\n\n**Output format:**\nReturn ONLY a valid JSON array of exactly 3 topic strings. No markdown, no explanations.\n\nExample: [\"Topic 1 about {{ $json.has_guidance ? $json.topic_guidance : 'diverse subjects' }}\", \"Topic 2 about {{ $json.has_guidance ? $json.topic_guidance : 'diverse subjects' }}\", \"Topic 3 about {{ $json.has_guidance ? $json.topic_guidance : 'diverse subjects' }}\"]\n\n{{ $json.has_guidance ? 'REMINDER: All 3 topics must relate to: \"' + $json.topic_guidance + '\"' : 'REMINDER: Generate 3 topics from 3 different categories' }}\n\nGenerate now:",
               "type": "string"
             }
           ]
@@ -302,7 +301,6 @@
   "meta": null,
   "pinData": {},
   "versionId": "33ca530c-be1f-4784-a47d-0813decd8497",
-  "versionCounter": 69,
   "triggerCount": 1,
   "shared": [
     {
@@ -310,49 +308,7 @@
       "createdAt": "2025-11-19T17:00:36.772Z",
       "role": "workflow:owner",
       "workflowId": "1tPjDcRw1aH5uADH",
-      "projectId": "bll44iFOa92qb20Q",
-      "project": {
-        "updatedAt": "2025-09-08T16:29:41.547Z",
-        "createdAt": "2025-09-08T16:29:38.593Z",
-        "id": "bll44iFOa92qb20Q",
-        "name": "Kelly Knight <kelly@kellyrae.net>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "projectRelations": [
-          {
-            "updatedAt": "2025-09-08T16:29:38.593Z",
-            "createdAt": "2025-09-08T16:29:38.593Z",
-            "userId": "a30987fe-4321-46e3-affb-75459c3320fc",
-            "projectId": "bll44iFOa92qb20Q",
-            "user": {
-              "updatedAt": "2025-12-10T08:00:00.000Z",
-              "createdAt": "2025-09-08T16:29:36.989Z",
-              "id": "a30987fe-4321-46e3-affb-75459c3320fc",
-              "email": "kelly@kellyrae.net",
-              "firstName": "Kelly",
-              "lastName": "Knight",
-              "personalizationAnswers": null,
-              "settings": {
-                "userActivated": true,
-                "firstSuccessfulWorkflowId": "DIT1A5BsEUock2GH",
-                "userActivatedAt": 1758474039124,
-                "npsSurvey": {
-                  "responded": true,
-                  "lastShownAt": 1759246180644
-                },
-                "dismissedCallouts": {
-                  "preBuiltAgentsCalloutHttpRequest": true
-                }
-              },
-              "disabled": false,
-              "mfaEnabled": false,
-              "lastActiveAt": "2025-12-10",
-              "isPending": false
-            }
-          }
-        ]
-      }
+      "projectId": "bll44iFOa92qb20Q"
     }
   ],
   "tags": []
