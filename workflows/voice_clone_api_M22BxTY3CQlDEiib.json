@@ -1,0 +1,365 @@
+{
+  "updatedAt": "2025-12-11T00:30:39.850Z",
+  "createdAt": "2025-12-11T00:12:44.908Z",
+  "id": "M22BxTY3CQlDEiib",
+  "name": "Voice Clone API",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice/clone",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-clone",
+      "name": "Webhook - Create Voice Clone",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "voice-clone-create"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice/preview",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-preview",
+      "name": "Webhook - Generate Preview",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        600
+      ],
+      "webhookId": "voice-preview-generate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/voices/add",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.body.name || 'Voice Clone' }}"
+            },
+            {
+              "name": "remove_background_noise",
+              "value": "true"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "files"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "http-create-clone",
+      "name": "ElevenLabs - Create Voice Clone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "rF8Db64Xo3IjoeOL",
+          "name": "ElevenLabs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.body.voice_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.body.text }}\",\n  \"model_id\": \"eleven_multilingual_v2\",\n  \"voice_settings\": {\n    \"stability\": 0.5,\n    \"similarity_boost\": 0.75\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "http-generate-preview",
+      "name": "ElevenLabs - Text to Speech",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        600
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "rF8Db64Xo3IjoeOL",
+          "name": "ElevenLabs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, voice_id: $json.voice_id, requires_verification: $json.requires_verification || false }) }}"
+      },
+      "id": "respond-clone-success",
+      "name": "Response - Clone Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.detail?.message || $json.message || 'Voice clone creation failed' }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "respond-clone-error",
+      "name": "Response - Clone Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "responseBinaryPropertyName": "data",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "audio/mpeg"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-preview-success",
+      "name": "Response - Preview Audio",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.message || 'Preview generation failed' }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "respond-preview-error",
+      "name": "Response - Preview Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-clone-success",
+              "leftValue": "={{ $json.voice_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-clone-success",
+      "name": "IF Clone Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-preview-success",
+              "leftValue": "={{ $binary.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-preview-success",
+      "name": "IF Preview Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        540,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Create Voice Clone": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - Create Voice Clone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Generate Preview": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - Text to Speech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - Create Voice Clone": {
+      "main": [
+        [
+          {
+            "node": "IF Clone Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - Text to Speech": {
+      "main": [
+        [
+          {
+            "node": "IF Preview Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Clone Success": {
+      "main": [
+        [
+          {
+            "node": "Response - Clone Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response - Clone Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Preview Success": {
+      "main": [
+        [
+          {
+            "node": "Response - Preview Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response - Preview Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "ae40a89b-f346-4cca-ba69-4b23e27a11dd",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2025-12-11T00:12:44.911Z",
+      "createdAt": "2025-12-11T00:12:44.911Z",
+      "role": "workflow:owner",
+      "workflowId": "M22BxTY3CQlDEiib",
+      "projectId": "bll44iFOa92qb20Q"
+    }
+  ],
+  "tags": []
+}
