@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T01:14:06.000Z",
+  "updatedAt": "2025-12-10T19:54:20.000Z",
   "createdAt": "2025-11-22T14:53:42.780Z",
   "id": "bH8RmQxbIUXI78cK",
   "name": "[03] Generate Avatar",
@@ -417,7 +417,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text_type\": \"ssml\",\n  \"voice_id\": \"{{$json.voice_id}}\",\n  \"text\": \"<speak>{{$json.text}}<break time='1s'/></speak>\",\n  \"with_timestamps\": true,\n  \"speed\": \"1\",\n  \"pitch\": \"0\",\n  \"elevenlabs_settings\": {\n    \"model\": \"eleven_3\",\n    \"similarity_boost\": 5,\n    \"stability\": 75,\n    \"style\": 0\n  }\n}",
+        "jsonBody": "={\n  \"text_type\": \"ssml\",\n  \"voice_id\": \"{{$json.voice_id}}\",\n  \"text\": \"<speak>{{$json.text}}<break time='1s' /></speak>\",\n  \"with_timestamps\": true,\n  \"speed\": \"1\",\n  \"pitch\": \"0\",\n  \"elevanlabs_settings\": {\n    \"model\": \"eleven_v3\",\n    \"similarity_boost\": 5,\n    \"stability\": 75,\n    \"style\": 0\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -773,7 +773,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "6222a975-d081-429a-9de7-538775f6acf1",
+  "versionId": "e7ba94f2-1c10-4bfc-b741-95e0649e48c8",
   "triggerCount": 0,
   "shared": [
     {
