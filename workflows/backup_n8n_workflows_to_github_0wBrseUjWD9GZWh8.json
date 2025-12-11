@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-10T17:11:27.000Z",
+  "updatedAt": "2025-12-11T10:29:39.611Z",
   "createdAt": "2025-11-15T21:59:07.648Z",
   "id": "0wBrseUjWD9GZWh8",
   "name": "Backup n8n Workflows to GitHub",
@@ -221,7 +221,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Collect all the execution results\nconst allItems = $input.all();\n\nlet successes = 0;\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  if (item.json.success) {\n    successes++;\n  } else if (item.json.error || item.json.needs_update === undefined) {\n    failures++;\n    failedWorkflows.push(item.json.workflow?.name || item.json.workflow || 'Unknown');\n  }\n});\n\nconsole.log(`✅ Successes: ${successes}, ❌ Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    successes: successes,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
+        "jsCode": "// Collect results from all three paths that feed into Aggregate Results:\n// 1. \"Needs Update?\" false path -> items that were created fresh (success: true)\n// 2. \"If1\" false path -> items that exist but content unchanged (skipped)\n// 3. \"Update File\" -> items that were actually updated on GitHub\n\nconst allItems = $input.all();\n\nlet created = 0;      // New files created\nlet updated = 0;      // Existing files updated\nlet unchanged = 0;    // No changes needed\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  const data = item.json;\n  \n  // Path 1: From \"Needs Update?\" false branch - newly created files\n  // These have success: true and action: 'created' from Check Result node\n  if (data.success === true && data.action === 'created') {\n    created++;\n    return;\n  }\n  \n  // Path 2: From \"If1\" false branch - content unchanged, no update needed\n  // These have needs_update: false from Compare Content node\n  if (data.needs_update === false && data.sha) {\n    unchanged++;\n    return;\n  }\n  \n  // Path 3: From \"Update File\" - successful GitHub API response\n  // GitHub returns commit object with sha on success (status 200)\n  if (data.commit && data.commit.sha) {\n    updated++;\n    return;\n  }\n  \n  // Also check for content.sha which GitHub returns on successful PUT\n  if (data.content && data.content.sha) {\n    updated++;\n    return;\n  }\n  \n  // If none of the above, it's a failure\n  failures++;\n  const name = data.workflow?.name || data.name || 'Unknown';\n  failedWorkflows.push(name);\n});\n\nconst totalProcessed = created + updated + unchanged;\n\nconsole.log(`✅ Created: ${created}, Updated: ${updated}, Unchanged: ${unchanged}, ❌ Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    created: created,\n    updated: updated,\n    unchanged: unchanged,\n    successes: totalProcessed,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -283,7 +283,7 @@
         "fromEmail": "errors@ad-pilot.ai",
         "toEmail": "kelly@ad-pilot.ai",
         "subject": "⚠️ n8n GitHub Backup Failed",
-        "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nSuccessful: \" + $json.successes + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
+        "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nCreated: \" + $json.created + \"\\nUpdated: \" + $json.updated + \"\\nUnchanged: \" + $json.unchanged + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
         "options": {}
       },
       "type": "n8n-nodes-base.emailSend",
@@ -546,7 +546,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "3e4a512d-aea5-41a7-abbc-7730196ad442",
+  "versionId": "82afc2bb-f842-4d06-a2ad-fb8814d72a9e",
   "triggerCount": 1,
   "shared": [
     {
