@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2025-12-01T11:31:58.000Z",
+  "updatedAt": "2025-12-10T18:08:03.000Z",
   "createdAt": "2025-11-17T20:39:17.302Z",
   "id": "F2uYbqpA91Yr9KSg",
   "name": "Post to Facebook - Approve & Publish",
-  "active": true,
+  "active": false,
   "isArchived": false,
   "nodes": [
     {
@@ -272,7 +272,7 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "availableInMCP": true
+    "availableInMCP": false
   },
   "staticData": null,
   "meta": null,
