@@ -1,0 +1,1096 @@
+{
+  "updatedAt": "2025-12-13T19:44:52.467Z",
+  "createdAt": "2025-12-13T13:57:20.492Z",
+  "id": "kvUtPMGwe1cr8dl1",
+  "name": "Backup n8n Workflows to GitHub",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "699bce1e-bba0-4099-9243-5dfae52faca1",
+      "name": "Daily Backup at 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1536,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://ad-pilot-n8n-production.up.railway.app/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "39ec583e-87f1-4f3c-8d15-d257e505bd16",
+      "name": "Get All Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1312,
+        96
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "b1OrgqNsUXGMEANF",
+          "name": "N8N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// $json is now a single workflow object (e.g., the contents of one item from the 'data' array)\nconst wf = $json; \n\nconst safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\nconst filename = `${safeName}_${wf.id}.json`;\n\nreturn {\n  json: {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  }\n};"
+      },
+      "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
+      "name": "Format for GitHub",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ 'Backup: ' + $json.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.contentBase64 }}\",\n  \"branch\": \"main\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "id": "90fdb52a-0db0-4d5d-8dbb-40a6c84f58dc",
+      "name": "Try Create File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        96
+      ],
+      "retryOnFail": false,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Qug4YyBVvyqrbbOe",
+          "name": "Github"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const response = $json;\nconst workflowData = $input.item.json;\n\n// Check if the input item contains an error property (from failed Try Create)\nconst hasError = response.error !== undefined || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\n// The item was sent to the error output of Try Create File (likely 422)\nif (hasError && (statusCode === 422 || statusCode === 409)) {\n  console.log('File exists (422/409), needs update: ' + workflowData.name);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} \n\n// The item succeeded (status 201 for created, or the error object was not present)\nelse if (statusCode === 201) {\n  console.log('File created successfully (201): ' + workflowData.name);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData,\n    filename: workflowData.filename,\n    action: 'created'\n  } };\n}\n\n// Any other successful code (e.g., 200, which shouldn't happen here) is treated as success\n// Any other unexpected failure is treated as needs update to attempt recovery (safe default)\nelse {\n  console.log('Unknown status (' + statusCode + ') or error condition. Routing to update for safety: ' + workflowData.name);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}"
+      },
+      "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
+      "name": "Check Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needs_update }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "3754192f-5991-4263-b83b-a48202bd5a87",
+      "name": "Needs Update?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "id": "0764e992-7444-40cc-832e-4cdb916e5952",
+      "name": "Get Current SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -16,
+        -16
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Qug4YyBVvyqrbbOe",
+          "name": "Github"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ 'Update: ' + $json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.workflow.contentBase64 }}\",\n  \"sha\": \"{{ $json.sha }}\",\n  \"branch\": \"main\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "id": "94041267-12ca-455e-9a09-e5f529953d08",
+      "name": "Update File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        -32
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Qug4YyBVvyqrbbOe",
+          "name": "Github"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect results from all three paths that feed into Aggregate Results:\n// 1. \"Needs Update?\" false path -> items that were created fresh (success: true)\n// 2. \"If1\" false path -> items that exist but content unchanged (skipped)\n// 3. \"Update File\" -> items that were actually updated on GitHub\n\nconst allItems = $input.all();\n\nlet created = 0;      // New files created\nlet updated = 0;      // Existing files updated\nlet unchanged = 0;    // No changes needed\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  const data = item.json;\n  \n  // Path 1: From \"Needs Update?\" false branch - newly created files\n  // These have success: true and action: 'created' from Check Result node\n  if (data.success === true && data.action === 'created') {\n    created++;\n    return;\n  }\n  \n  // Path 2: From \"If1\" false branch - content unchanged, no update needed\n  // These have needs_update: false from Compare Content node\n  if (data.needs_update === false && data.sha) {\n    unchanged++;\n    return;\n  }\n  \n  // Path 3: From \"Update File\" - successful GitHub API response\n  // GitHub returns commit object with sha on success (status 200)\n  if (data.commit && data.commit.sha) {\n    updated++;\n    return;\n  }\n  \n  // Also check for content.sha which GitHub returns on successful PUT\n  if (data.content && data.content.sha) {\n    updated++;\n    return;\n  }\n  \n  // If none of the above, it's a failure\n  failures++;\n  const name = data.workflow?.name || data.name || 'Unknown';\n  failedWorkflows.push(name);\n});\n\nconst totalProcessed = created + updated + unchanged;\n\nconsole.log(`✅ Created: ${created}, Updated: ${updated}, Unchanged: ${unchanged}, ❌ Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    created: created,\n    updated: updated,\n    unchanged: unchanged,\n    successes: totalProcessed,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        112
+      ],
+      "id": "5d9bea72-51b4-4ee0-9267-a6c57301477a",
+      "name": "Aggregate Results"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b2928d61-9cef-4c3a-9b03-c01a26891370",
+              "leftValue": "={{ $json.hasFailures }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        112
+      ],
+      "id": "7940083a-972c-4589-becf-7da2615885d9",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        944,
+        192
+      ],
+      "id": "ec514100-f164-46dd-866d-424a59b5f24c",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "fromEmail": "errors@ad-pilot.ai",
+        "toEmail": "kelly@ad-pilot.ai",
+        "subject": "⚠️ n8n GitHub Backup Failed",
+        "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nCreated: \" + $json.created + \"\\nUpdated: \" + $json.updated + \"\\nUnchanged: \" + $json.unchanged + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        16
+      ],
+      "id": "c9c6bb97-4443-4b0a-bef8-b404f342acb8",
+      "name": "Send email",
+      "webhookId": "97015b61-1940-4d68-8f6c-a0e246b9abb4",
+      "credentials": {
+        "smtp": {
+          "id": "shUPF7kLrXLXWHPo",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// $json is the response from Get Current SHA (GitHub API response)\nconst sha = $json.sha;\nconst githubFilename = $json.name;\nconst githubContentBase64 = $json.content.replace(/\\n/g, ''); \nconst githubContentString = Buffer.from(githubContentBase64, 'base64').toString('utf8'); \n\n// --- Prepare old content (from GitHub) ---\nconst oldWf = JSON.parse(githubContentString);\ndelete oldWf.updatedAt;\ndelete oldWf.createdAt;\ndelete oldWf.versionId; \nconst oldContentClean = JSON.stringify(oldWf);\n\n\n// --- Get and prepare new content (from n8n API) ---\nconst items = $('Needs Update?').all();\nconst match = items.find(i => i.json.filename === githubFilename);\n\nif (!match) {\n  throw new Error('No match for ' + githubFilename);\n}\n\nconst newContentString = match.json.workflow.content;\nconst newWf = JSON.parse(newContentString);\ndelete newWf.updatedAt;\ndelete newWf.createdAt;\ndelete newWf.versionId; \nconst newContentClean = JSON.stringify(newWf);\n\n// Check if content has actually changed (excluding dynamic fields)\nconst contentHasChanged = newContentClean !== oldContentClean;\n\n// Return the required data, including the fresh SHA and the comparison result\nreturn {\n  json: {\n    sha: sha,\n    filename: githubFilename,\n    workflow: match.json.workflow,\n    // This will now be FALSE if only timestamps changed\n    needs_update: contentHasChanged, \n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        -16
+      ],
+      "id": "compare-content-node",
+      "name": "Compare Content"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        96
+      ],
+      "id": "f360cbde-c656-4301-899f-f9159123f054",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e40f8f2c-9030-4419-a131-cba08d9ddac2",
+              "leftValue": "={{ $json.needs_update }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        272,
+        -16
+      ],
+      "id": "c5dc8ca3-ae2b-4a13-8365-211a7c66023f",
+      "name": "If1"
+    }
+  ],
+  "connections": {
+    "Daily Backup at 2 AM": {
+      "main": [
+        [
+          {
+            "node": "Get All Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for GitHub": {
+      "main": [
+        [
+          {
+            "node": "Try Create File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Try Create File": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Check Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Result": {
+      "main": [
+        [
+          {
+            "node": "Needs Update?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Update?": {
+      "main": [
+        [
+          {
+            "node": "Get Current SHA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current SHA": {
+      "main": [
+        [
+          {
+            "node": "Compare Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Content": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update File": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Format for GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Update File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": {
+    "node:Daily Backup at 2 AM": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "cced0c0e-32cf-4a42-a9c0-06503f07d862",
+  "activeVersionId": "cced0c0e-32cf-4a42-a9c0-06503f07d862",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-12-13T13:57:20.492Z",
+      "createdAt": "2025-12-13T13:57:20.492Z",
+      "role": "workflow:owner",
+      "workflowId": "kvUtPMGwe1cr8dl1",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2025-12-13T19:44:52.469Z",
+    "createdAt": "2025-12-13T19:44:52.469Z",
+    "versionId": "cced0c0e-32cf-4a42-a9c0-06503f07d862",
+    "workflowId": "kvUtPMGwe1cr8dl1",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 2 * * *"
+              }
+            ]
+          }
+        },
+        "id": "699bce1e-bba0-4099-9243-5dfae52faca1",
+        "name": "Daily Backup at 2 AM",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -1536,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://ad-pilot-n8n-production.up.railway.app/api/v1/workflows",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "39ec583e-87f1-4f3c-8d15-d257e505bd16",
+        "name": "Get All Workflows",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -1312,
+          96
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "b1OrgqNsUXGMEANF",
+            "name": "N8N"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// $json is now a single workflow object (e.g., the contents of one item from the 'data' array)\nconst wf = $json; \n\nconst safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\nconst filename = `${safeName}_${wf.id}.json`;\n\nreturn {\n  json: {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  }\n};"
+        },
+        "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
+        "name": "Format for GitHub",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -880,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github.v3+json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"message\": \"{{ 'Backup: ' + $json.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.contentBase64 }}\",\n  \"branch\": \"main\"\n}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1
+              }
+            }
+          }
+        },
+        "id": "90fdb52a-0db0-4d5d-8dbb-40a6c84f58dc",
+        "name": "Try Create File",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -656,
+          96
+        ],
+        "retryOnFail": false,
+        "waitBetweenTries": 2000,
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Qug4YyBVvyqrbbOe",
+            "name": "Github"
+          }
+        },
+        "continueOnFail": true,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const response = $json;\nconst workflowData = $input.item.json;\n\n// Check if the input item contains an error property (from failed Try Create)\nconst hasError = response.error !== undefined || response.name === 'AxiosError';\nconst statusCode = response.status || response.statusCode || 0;\n\n// The item was sent to the error output of Try Create File (likely 422)\nif (hasError && (statusCode === 422 || statusCode === 409)) {\n  console.log('File exists (422/409), needs update: ' + workflowData.name);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n} \n\n// The item succeeded (status 201 for created, or the error object was not present)\nelse if (statusCode === 201) {\n  console.log('File created successfully (201): ' + workflowData.name);\n  return { json: { \n    success: true,\n    needs_update: false,\n    workflow: workflowData,\n    filename: workflowData.filename,\n    action: 'created'\n  } };\n}\n\n// Any other successful code (e.g., 200, which shouldn't happen here) is treated as success\n// Any other unexpected failure is treated as needs update to attempt recovery (safe default)\nelse {\n  console.log('Unknown status (' + statusCode + ') or error condition. Routing to update for safety: ' + workflowData.name);\n  return { json: { \n    success: false, \n    needs_update: true,\n    workflow: workflowData,\n    filename: workflowData.filename\n  } };\n}"
+        },
+        "id": "91831251-4e97-4150-a12f-ef0d830b28b5",
+        "name": "Check Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -432,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "boolean": [
+              {
+                "value1": "={{ $json.needs_update }}",
+                "value2": true
+              }
+            ]
+          }
+        },
+        "id": "3754192f-5991-4263-b83b-a48202bd5a87",
+        "name": "Needs Update?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          -208,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github.v3+json"
+              }
+            ]
+          },
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1
+              }
+            }
+          }
+        },
+        "id": "0764e992-7444-40cc-832e-4cdb916e5952",
+        "name": "Get Current SHA",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -16,
+          -16
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Qug4YyBVvyqrbbOe",
+            "name": "Github"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github.v3+json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"message\": \"{{ 'Update: ' + $json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.workflow.contentBase64 }}\",\n  \"sha\": \"{{ $json.sha }}\",\n  \"branch\": \"main\"\n}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1
+              }
+            }
+          }
+        },
+        "id": "94041267-12ca-455e-9a09-e5f529953d08",
+        "name": "Update File",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          416,
+          -32
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Qug4YyBVvyqrbbOe",
+            "name": "Github"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Collect results from all three paths that feed into Aggregate Results:\n// 1. \"Needs Update?\" false path -> items that were created fresh (success: true)\n// 2. \"If1\" false path -> items that exist but content unchanged (skipped)\n// 3. \"Update File\" -> items that were actually updated on GitHub\n\nconst allItems = $input.all();\n\nlet created = 0;      // New files created\nlet updated = 0;      // Existing files updated\nlet unchanged = 0;    // No changes needed\nlet failures = 0;\nlet failedWorkflows = [];\n\nallItems.forEach(item => {\n  const data = item.json;\n  \n  // Path 1: From \"Needs Update?\" false branch - newly created files\n  // These have success: true and action: 'created' from Check Result node\n  if (data.success === true && data.action === 'created') {\n    created++;\n    return;\n  }\n  \n  // Path 2: From \"If1\" false branch - content unchanged, no update needed\n  // These have needs_update: false from Compare Content node\n  if (data.needs_update === false && data.sha) {\n    unchanged++;\n    return;\n  }\n  \n  // Path 3: From \"Update File\" - successful GitHub API response\n  // GitHub returns commit object with sha on success (status 200)\n  if (data.commit && data.commit.sha) {\n    updated++;\n    return;\n  }\n  \n  // Also check for content.sha which GitHub returns on successful PUT\n  if (data.content && data.content.sha) {\n    updated++;\n    return;\n  }\n  \n  // If none of the above, it's a failure\n  failures++;\n  const name = data.workflow?.name || data.name || 'Unknown';\n  failedWorkflows.push(name);\n});\n\nconst totalProcessed = created + updated + unchanged;\n\nconsole.log(`✅ Created: ${created}, Updated: ${updated}, Unchanged: ${unchanged}, ❌ Failures: ${failures}`);\n\nreturn [{\n  json: {\n    total: allItems.length,\n    created: created,\n    updated: updated,\n    unchanged: unchanged,\n    successes: totalProcessed,\n    failures: failures,\n    failedWorkflows: failedWorkflows,\n    hasFailures: failures > 0\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          576,
+          112
+        ],
+        "id": "5d9bea72-51b4-4ee0-9267-a6c57301477a",
+        "name": "Aggregate Results"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "b2928d61-9cef-4c3a-9b03-c01a26891370",
+                "leftValue": "={{ $json.hasFailures }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          720,
+          112
+        ],
+        "id": "7940083a-972c-4589-becf-7da2615885d9",
+        "name": "If"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          944,
+          192
+        ],
+        "id": "ec514100-f164-46dd-866d-424a59b5f24c",
+        "name": "No Operation, do nothing"
+      },
+      {
+        "parameters": {
+          "fromEmail": "errors@ad-pilot.ai",
+          "toEmail": "kelly@ad-pilot.ai",
+          "subject": "⚠️ n8n GitHub Backup Failed",
+          "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nCreated: \" + $json.created + \"\\nUpdated: \" + $json.updated + \"\\nUnchanged: \" + $json.unchanged + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          928,
+          16
+        ],
+        "id": "c9c6bb97-4443-4b0a-bef8-b404f342acb8",
+        "name": "Send email",
+        "webhookId": "97015b61-1940-4d68-8f6c-a0e246b9abb4",
+        "credentials": {
+          "smtp": {
+            "id": "shUPF7kLrXLXWHPo",
+            "name": "SMTP account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// $json is the response from Get Current SHA (GitHub API response)\nconst sha = $json.sha;\nconst githubFilename = $json.name;\nconst githubContentBase64 = $json.content.replace(/\\n/g, ''); \nconst githubContentString = Buffer.from(githubContentBase64, 'base64').toString('utf8'); \n\n// --- Prepare old content (from GitHub) ---\nconst oldWf = JSON.parse(githubContentString);\ndelete oldWf.updatedAt;\ndelete oldWf.createdAt;\ndelete oldWf.versionId; \nconst oldContentClean = JSON.stringify(oldWf);\n\n\n// --- Get and prepare new content (from n8n API) ---\nconst items = $('Needs Update?').all();\nconst match = items.find(i => i.json.filename === githubFilename);\n\nif (!match) {\n  throw new Error('No match for ' + githubFilename);\n}\n\nconst newContentString = match.json.workflow.content;\nconst newWf = JSON.parse(newContentString);\ndelete newWf.updatedAt;\ndelete newWf.createdAt;\ndelete newWf.versionId; \nconst newContentClean = JSON.stringify(newWf);\n\n// Check if content has actually changed (excluding dynamic fields)\nconst contentHasChanged = newContentClean !== oldContentClean;\n\n// Return the required data, including the fresh SHA and the comparison result\nreturn {\n  json: {\n    sha: sha,\n    filename: githubFilename,\n    workflow: match.json.workflow,\n    // This will now be FALSE if only timestamps changed\n    needs_update: contentHasChanged, \n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          128,
+          -16
+        ],
+        "id": "compare-content-node",
+        "name": "Compare Content"
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "data",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          -1104,
+          96
+        ],
+        "id": "f360cbde-c656-4301-899f-f9159123f054",
+        "name": "Split Out"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "e40f8f2c-9030-4419-a131-cba08d9ddac2",
+                "leftValue": "={{ $json.needs_update }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          272,
+          -16
+        ],
+        "id": "c5dc8ca3-ae2b-4a13-8365-211a7c66023f",
+        "name": "If1"
+      }
+    ],
+    "connections": {
+      "Daily Backup at 2 AM": {
+        "main": [
+          [
+            {
+              "node": "Get All Workflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get All Workflows": {
+        "main": [
+          [
+            {
+              "node": "Split Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format for GitHub": {
+        "main": [
+          [
+            {
+              "node": "Try Create File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Try Create File": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Check Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Result": {
+        "main": [
+          [
+            {
+              "node": "Needs Update?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Needs Update?": {
+        "main": [
+          [
+            {
+              "node": "Get Current SHA",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Current SHA": {
+        "main": [
+          [
+            {
+              "node": "Compare Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compare Content": {
+        "main": [
+          [
+            {
+              "node": "If1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update File": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Results": {
+        "main": [
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If": {
+        "main": [
+          [
+            {
+              "node": "Send email",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Out": {
+        "main": [
+          [
+            {
+              "node": "Format for GitHub",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If1": {
+        "main": [
+          [
+            {
+              "node": "Update File",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
+  "tags": []
+}
