@@ -1,0 +1,526 @@
+{
+  "updatedAt": "2025-12-13T17:47:24.661Z",
+  "createdAt": "2025-12-13T13:57:33.249Z",
+  "id": "iikhSfq75clObU9I",
+  "name": "Generate Magic Hour Scenes",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "655e1e2e-8bed-4c55-8d98-ecbfaba11cb4",
+      "name": "When Executed by Another Workflow",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract exterior photo and prepare for Magic Hour generation\nconst data = $json;\nconst selectedPhotos = data.selected_photos || [];\n\nconsole.log('🎬 Preparing Magic Hour scene generation');\nconsole.log(`Theme: ${data.theme || 'default'}`);\nconsole.log(`Available photos: ${selectedPhotos.length}`);\n\n// Find the exterior hero photo\nconst exteriorPhoto = selectedPhotos.find(p => \n  p.category === 'exterior_hero' || \n  p.display_order === 1\n);\n\nif (!exteriorPhoto) {\n  throw new Error('No exterior photo found for Magic Hour generation');\n}\n\nconsole.log(`✅ Using exterior photo: ${exteriorPhoto.url}`);\n\n// Extract theme for setting/mood (simplified)\nconst theme = data.theme || 'Great deal';\nconst themeLower = theme.toLowerCase();\n\n// Determine setting based on theme keywords\nlet setting = 'scenic road';\nlet lighting = 'golden hour lighting';\nlet mood = 'premium automotive shot';\n\nif (themeLower.includes('fall') || themeLower.includes('autumn')) {\n  setting = 'tree-lined road with fall foliage';\n  lighting = 'warm autumn sunset';\n} else if (themeLower.includes('spring')) {\n  setting = 'suburban street with blooming flowers and green trees';\n  lighting = 'bright spring sunshine';\n} else if (themeLower.includes('summer')) {\n  setting = 'open highway with clear blue sky';\n  lighting = 'bright sunny day';\n} else if (themeLower.includes('winter')) {\n  setting = 'snowy road with winter trees';\n  lighting = 'crisp winter light';\n}\n\n// Build SIMPLE, VISUAL prompts (like your working examples)\nconst hookPrompt = `This car driving smoothly on ${setting}, ${lighting}, motion blur on background, entire car visible, moving forward`;\n\nconst ctaPrompt = `Wide angle of this car parked at modern dealership entrance, ${lighting}, sleek presentation, full car visible, stationary elegant showcase`;\n\nconsole.log('Hook prompt:', hookPrompt);\nconsole.log('CTA prompt:', ctaPrompt);\n\nreturn [{\n  json: {\n    ...data,\n    exterior_photo_url: exteriorPhoto.url,\n    theme: theme,\n    hook_prompt: hookPrompt,\n    cta_prompt: ctaPrompt,\n    ready_for_generation: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        592
+      ],
+      "id": "1ec86002-12bb-4ffa-a22e-0aa038e57ee4",
+      "name": "Extract Exterior Photo & Build Prompts"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.magichour.ai/v1/image-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"style\": {\n    \"prompt\": \"{{ $json.hook_prompt }}\"\n  },\n  \"end_seconds\": 5,\n  \"name\": \"hook_scene\",\n  \"assets\": {\n    \"image_file_path\": \"{{ $json.exterior_photo_url }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        592
+      ],
+      "id": "bf6d691b-952b-4393-8330-3bdb47bbe77a",
+      "name": "Generate Hook Scene - Magic Hour API",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JqCEqmwxTMJ5cZ8Z",
+          "name": "Magic Hour API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the Magic Hour response for hook scene\nconst response = $json;\n\nconsole.log('Magic Hour Hook response:', JSON.stringify(response).substring(0, 200));\n\n// Extract generation ID and status\nconst generationId = response.id || response.generation_id;\nconst status = response.status;\n\nif (!generationId) {\n  throw new Error('No generation ID returned from Magic Hour API');\n}\n\nconsole.log(`✅ Hook scene generation started: ${generationId}`);\nconsole.log(`Status: ${status}`);\n\n// Get original data\nconst originalData = $('Extract Exterior Photo & Build Prompts').first().json;\n\nreturn [{\n  json: {\n    ...originalData,\n    hook_generation_id: generationId,\n    hook_status: status,\n    hook_response: response\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        592
+      ],
+      "id": "b82ffde1-931b-4685-827b-0c61e1e5469b",
+      "name": "Parse Hook Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "hook-complete",
+              "leftValue": "={{ $json.hook_status }}",
+              "rightValue": "complete",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        592
+      ],
+      "id": "d03a5c39-7aa8-40ae-803d-b11581af1f80",
+      "name": "Is Hook Complete?"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        512
+      ],
+      "id": "d9d2b9cf-47f2-4d84-ae61-4901f3696147",
+      "name": "Wait 15s",
+      "webhookId": "hook-wait"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.magichour.ai/v1/video-projects/{{ $json.hook_generation_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        512
+      ],
+      "id": "4d182471-554b-4ce5-9714-20e8811e356e",
+      "name": "Check Hook Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JqCEqmwxTMJ5cZ8Z",
+          "name": "Magic Hour API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Hook is complete, extract video URL\nconst data = $json;\nconst hookVideoUrl = data.hook_response?.video_url || data.hook_response?.output_url || data.hook_video_url;\n\nif (!hookVideoUrl) {\n  throw new Error('Hook video URL not found in response');\n}\n\nconsole.log('✅ Hook scene complete!');\nconsole.log(`Hook video URL: ${hookVideoUrl}`);\n\nreturn [{\n  json: {\n    ...data,\n    hook_animation_url: hookVideoUrl,\n    hook_complete: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        320
+      ],
+      "id": "22daf339-a3a8-43ab-a981-11c93ba41b08",
+      "name": "Extract Hook Video URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.magichour.ai/v1/image-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"style\": {\n    \"prompt\": \"{{ $json.cta_prompt }}\"\n  },\n  \"end_seconds\": 5,\n  \"name\": \"cta_scene\",\n  \"assets\": {\n    \"image_file_path\": \"{{ $json.exterior_photo_url }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        320
+      ],
+      "id": "94b31135-6668-4b67-94a5-c81edd32798d",
+      "name": "Generate CTA Scene - Magic Hour API",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JqCEqmwxTMJ5cZ8Z",
+          "name": "Magic Hour API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the Magic Hour response for CTA scene\nconst response = $json;\n\nconsole.log('Magic Hour CTA response:', JSON.stringify(response).substring(0, 200));\n\n// Extract generation ID and status\nconst generationId = response.id || response.generation_id;\nconst status = response.status;\n\nif (!generationId) {\n  throw new Error('No generation ID returned from Magic Hour API');\n}\n\nconsole.log(`✅ CTA scene generation started: ${generationId}`);\nconsole.log(`Status: ${status}`);\n\n// Get original data (including hook URL)\nconst originalData = $('Extract Hook Video URL').first().json;\n\nreturn [{\n  json: {\n    ...originalData,\n    cta_generation_id: generationId,\n    cta_status: status,\n    cta_response: response\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        320
+      ],
+      "id": "7818057d-1b9f-4ca6-ba6c-0dc808bbd16a",
+      "name": "Parse CTA Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cta-complete",
+              "leftValue": "={{ $json.cta_status }}",
+              "rightValue": "complete",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        320
+      ],
+      "id": "4939b263-757b-445a-b8e2-ef979611f012",
+      "name": "Is CTA Complete?"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        416
+      ],
+      "id": "058e5255-5740-46cd-89bf-481ab88a54b8",
+      "name": "Wait 15s2",
+      "webhookId": "cta-wait"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.magichour.ai/v1/video-projects/{{ $json.cta_generation_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        416
+      ],
+      "id": "25bcbf52-bbc7-4832-9a3c-54d47a4f8a6e",
+      "name": "Check CTA Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JqCEqmwxTMJ5cZ8Z",
+          "name": "Magic Hour API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Both scenes complete! Extract final URLs\nconst data = $json;\n\nconst hookUrl = data.hook_animation_url;\nconst ctaUrl = data.cta_response?.video_url || data.cta_response?.output_url || data.cta_video_url;\n\nif (!hookUrl) {\n  throw new Error('Hook video URL missing');\n}\n\nif (!ctaUrl) {\n  throw new Error('CTA video URL missing');\n}\n\nconsole.log('🎉 Both Magic Hour scenes complete!');\nconsole.log(`Hook video: ${hookUrl}`);\nconsole.log(`CTA video: ${ctaUrl}`);\n\nreturn [{\n  json: {\n    ...data,\n    hook_animation_url: hookUrl,\n    cta_animation_url: ctaUrl,\n    magic_hour_complete: true,\n    animation_count: 2\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        224
+      ],
+      "id": "acee0ff0-a2fc-4d12-9b6a-8e094df1ff0c",
+      "name": "Finalize Both Videos"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"template_id\": \"TEMP_002\",\n  \"theme\": \"Fall savings on this Acura\",\n  \"selected_photos\": [\n    {\n      \"url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/v1760976905/3FMCR9B60MRA85058.png\",\n      \"category\": \"exterior_hero\",\n      \"feature_callout\": \"Stunning silver 2023 MDX\",\n      \"display_order\": 1\n    }\n  ],\n  \"script\": {\n    \"hook\": \"Fall into luxury!\",\n    \"segments\": [\n      \"Check out this stunning twenty twenty-three Acura M D X with all-wheel drive!\"\n    ],\n    \"cta\": \"Just forty-eight thousand at Capitol Car Credit!\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        592
+      ],
+      "id": "a3f8ca81-5c9e-4fdb-9049-090d8947a921",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check hook status - just update the status field\nconst statusResponse = $json;\nconst originalData = $('Parse Hook Response').first().json;\n\nconst newStatus = statusResponse.status;\nconst downloads = statusResponse.downloads || [];\nconst videoUrl = downloads.length > 0 ? downloads[0] : null;\nconst error = statusResponse.error || null;\n\nconsole.log(`Hook status: ${newStatus}`);\n\n// Check for error states\nif (newStatus === 'error' || newStatus === 'canceled') {\n  throw new Error(`Magic Hour hook generation failed with status: ${error}`);\n}\n\nif (videoUrl) {\n  console.log(`✅ Hook video ready: ${videoUrl}`);\n}\n\n// Return updated data - will loop back to IF check\nreturn [{\n  json: {\n    ...originalData,\n    hook_status: newStatus,\n    hook_video_url: videoUrl,\n    hook_response: statusResponse\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        656
+      ],
+      "id": "3c1dfba7-ddc8-4410-a674-427c85cb5baa",
+      "name": "Check Hook Status & Handle Errors"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check CTA status - just update the status field\nconst statusResponse = $json;\nconst originalData = $('Parse CTA Response').first().json;\n\nconst newStatus = statusResponse.status;\nconst downloads = statusResponse.downloads || [];\nconst videoUrl = downloads.length > 0 ? downloads[0] : null;\n\nconsole.log(`CTA status: ${newStatus}`);\n\n// Check for error states\nif (newStatus === 'error' || newStatus === 'canceled') {\n  throw new Error(`Magic Hour CTA generation failed with status: ${newStatus}`);\n}\n\nif (videoUrl) {\n  console.log(`✅ CTA video ready: ${videoUrl}`);\n}\n\n// Return updated data - will loop back to IF check\nreturn [{\n  json: {\n    ...originalData,\n    cta_status: newStatus,\n    cta_video_url: videoUrl,\n    cta_response: statusResponse\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        496
+      ],
+      "id": "52dde2f5-5d84-4886-8a6b-143405f642d8",
+      "name": "Check CTA Status & Handle Errors"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        []
+      ]
+    },
+    "Extract Exterior Photo & Build Prompts": {
+      "main": [
+        [
+          {
+            "node": "Generate Hook Scene - Magic Hour API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Hook Scene - Magic Hour API": {
+      "main": [
+        [
+          {
+            "node": "Parse Hook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Hook Response": {
+      "main": [
+        [
+          {
+            "node": "Is Hook Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Hook Complete?": {
+      "main": [
+        [
+          {
+            "node": "Extract Hook Video URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 15s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 15s": {
+      "main": [
+        [
+          {
+            "node": "Check Hook Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Hook Status": {
+      "main": [
+        [
+          {
+            "node": "Check Hook Status & Handle Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Hook Video URL": {
+      "main": [
+        [
+          {
+            "node": "Generate CTA Scene - Magic Hour API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate CTA Scene - Magic Hour API": {
+      "main": [
+        [
+          {
+            "node": "Parse CTA Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CTA Response": {
+      "main": [
+        [
+          {
+            "node": "Is CTA Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is CTA Complete?": {
+      "main": [
+        [
+          {
+            "node": "Finalize Both Videos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 15s2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 15s2": {
+      "main": [
+        [
+          {
+            "node": "Check CTA Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check CTA Status": {
+      "main": [
+        [
+          {
+            "node": "Check CTA Status & Handle Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Extract Exterior Photo & Build Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Hook Status & Handle Errors": {
+      "main": [
+        [
+          {
+            "node": "Is Hook Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check CTA Status & Handle Errors": {
+      "main": [
+        [
+          {
+            "node": "Is CTA Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "6dba469e-1ad1-4c5a-bd64-946ad7f0809f",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-13T13:57:33.249Z",
+      "createdAt": "2025-12-13T13:57:33.249Z",
+      "role": "workflow:owner",
+      "workflowId": "iikhSfq75clObU9I",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
