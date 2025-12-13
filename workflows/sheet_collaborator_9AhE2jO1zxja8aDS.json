@@ -1,0 +1,614 @@
+{
+  "updatedAt": "2025-12-13T17:42:06.573Z",
+  "createdAt": "2025-12-13T13:57:26.458Z",
+  "id": "9AhE2jO1zxja8aDS",
+  "name": "Sheet Collaborator",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sheet-write",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ],
+      "webhookId": "sheet-write"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "append",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "append"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "read",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "read"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "init",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "init"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "update",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "update"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-action",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the incoming data\nconst body = $input.first().json.body;\nconst tab = body.tab;\nconst data = body.data;\n\n// Define column mappings for each tab\nconst columnMappings = {\n  'saas_costs': ['Service', 'Description', 'Monthly Cost', 'Notes'],\n  'variable_costs': ['Action', 'Cost Per Unit', 'Unit Type', 'Notes'],\n  'labor': ['Activity', 'Who', 'Hours/Month', 'Rate', 'Notes'],\n  'pricing': ['Item', 'Type', 'Price', 'Cost', 'Margin', 'Notes']\n};\n\n// Get the columns for this tab\nconst columns = columnMappings[tab] || Object.keys(data);\n\n// Build the row object\nconst row = {};\nfor (const col of columns) {\n  row[col] = data[col] || '';\n}\n\nreturn {\n  json: {\n    ...row,\n    _sheet_id: body.sheet_id,\n    _tab: tab\n  }\n};"
+      },
+      "id": "prepare-row",
+      "name": "Prepare Row Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json._sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json._tab }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "append-row",
+      "name": "Append Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        928,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.body.sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json.body.tab }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "read-rows",
+      "name": "Read Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        704,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'append', tab: $json._tab, message: 'Row added successfully' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-append",
+      "name": "Respond Append",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allEntries",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-read",
+      "name": "Respond Read",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Initialize sheet with all tabs and headers\nconst body = $input.first().json.body;\nconst sheetId = body.sheet_id;\n\n// Define all tabs and their headers\nconst tabConfigs = [\n  { name: 'saas_costs', headers: ['Service', 'Description', 'Monthly Cost', 'Notes'] },\n  { name: 'variable_costs', headers: ['Action', 'Cost Per Unit', 'Unit Type', 'Notes'] },\n  { name: 'labor', headers: ['Activity', 'Who', 'Hours/Month', 'Rate', 'Notes'] },\n  { name: 'pricing', headers: ['Item', 'Type', 'Price', 'Cost', 'Margin', 'Notes'] }\n];\n\n// Output each tab config for processing\nreturn tabConfigs.map(config => ({\n  json: {\n    _sheet_id: sheetId,\n    _tab_name: config.name,\n    _headers: config.headers\n  }\n}));"
+      },
+      "id": "prepare-init",
+      "name": "Prepare Init Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json._sheet_id }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ requests: [{ addSheet: { properties: { title: $json._tab_name } } }] }) }}",
+        "options": {}
+      },
+      "id": "create-tab",
+      "name": "Create Tab",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        928,
+        608
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json._sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json._tab_name }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "add-headers",
+      "name": "Add Headers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1152,
+        608
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'init', message: 'Tabs created with headers', tabs: ['saas_costs', 'variable_costs', 'labor', 'pricing'] }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-init",
+      "name": "Respond Init",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare update data\nconst body = $input.first().json.body;\nconst tab = body.tab;\nconst rowIndex = body.row_index;\nconst data = body.data;\n\n// Define column mappings for each tab\nconst columnMappings = {\n  'saas_costs': ['Service', 'Description', 'Monthly Cost', 'Notes'],\n  'variable_costs': ['Action', 'Cost Per Unit', 'Unit Type', 'Notes'],\n  'labor': ['Activity', 'Who', 'Hours/Month', 'Rate', 'Notes'],\n  'pricing': ['Item', 'Type', 'Price', 'Cost', 'Margin', 'Notes']\n};\n\n// Get the columns for this tab\nconst columns = columnMappings[tab] || Object.keys(data);\n\n// Build the row object\nconst row = { row_number: rowIndex };\nfor (const col of columns) {\n  if (data[col] !== undefined) {\n    row[col] = data[col];\n  }\n}\n\nreturn {\n  json: {\n    ...row,\n    _sheet_id: body.sheet_id,\n    _tab: tab\n  }\n};"
+      },
+      "id": "prepare-update",
+      "name": "Prepare Update Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json._sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json._tab }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "update-row",
+      "name": "Update Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        928,
+        800
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'update', tab: $json._tab, message: 'Row updated successfully' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-update",
+      "name": "Respond Update",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        800
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Prepare Row Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Init Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Update Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Row Data": {
+      "main": [
+        [
+          {
+            "node": "Append Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Row": {
+      "main": [
+        [
+          {
+            "node": "Respond Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rows": {
+      "main": [
+        [
+          {
+            "node": "Respond Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Init Data": {
+      "main": [
+        [
+          {
+            "node": "Create Tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tab": {
+      "main": [
+        [
+          {
+            "node": "Add Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Headers": {
+      "main": [
+        [
+          {
+            "node": "Respond Init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Update Data": {
+      "main": [
+        [
+          {
+            "node": "Update Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Row": {
+      "main": [
+        [
+          {
+            "node": "Respond Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "6bc0c166-89d1-4fd2-b40b-85e9d37f3fa5",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-13T13:57:26.458Z",
+      "createdAt": "2025-12-13T13:57:26.458Z",
+      "role": "workflow:owner",
+      "workflowId": "9AhE2jO1zxja8aDS",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
