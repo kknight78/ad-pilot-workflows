@@ -1,0 +1,276 @@
+{
+  "updatedAt": "2025-12-13T17:47:43.072Z",
+  "createdAt": "2025-12-13T13:57:32.022Z",
+  "id": "H9SRRsFj2eo7BcEE",
+  "name": "Topic Suggestor V1",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "topic-suggest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "6e2b1a65-59b2-4273-8d16-15ba0ebc2e8d",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "topic-suggest"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "length_label",
+              "name": "length_label",
+              "value": "={{ $json.target_length === 'brief_15_30' ? 'Brief (15-30 seconds)' : $json.target_length === 'standard_30_45' ? 'Standard (30-45 seconds)' : 'Detailed (45-60 seconds)' }}",
+              "type": "string"
+            },
+            {
+              "id": "has_guidance",
+              "name": "has_guidance",
+              "value": "={{ $json.topic_guidance && $json.topic_guidance.trim().length > 0 }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "58fdcb3c-31ac-4462-88ed-748f3f1c7761",
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "=AIzaSyBFB8rHuBXVA3xPyWat-_vOoq30EP3-0io"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "20c6923b-e66e-422c-9204-b50c114e320f",
+      "name": "Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "uuSn6y7mQF4FWsq2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "=You are a creative content strategist for Capitol Car Credit, a used car dealership in Rantoul, Illinois.\n\nGenerate 3 educational video topic ideas for our \"Capitol Smarts\" series. These are {{ $('Parse Request').item.json.length_label }} videos featuring Shad, our sales manager with 25+ years of experience.\n\n**Topic requirements:**\n- Must be genuinely helpful and educational (not salesy)\n- Should establish authority and trust\n- Should work well for {{ $('Parse Request').item.json.length_label }} format\n- Must be relevant to car buyers, used car ownership, or automotive topics\n{{ $('Parse Request').item.json.has_guidance ? '- Focus on: ' + $json.topic_guidance : '' }}\n\n**Video length constraints:**\n{{ $json.target_length === 'brief_15_30' ? '- Brief format (15-30 sec): Single quick tip, one key insight, \"don\\'t do X, do Y instead\" style' : '' }}\n{{ $json.target_length === 'standard_30_45' ? '- Standard format (30-45 sec): Top 3 lists, comparisons, process explanations, \"how to decide\" topics' : '' }}\n{{ $json.target_length === 'detailed_45_60' ? '- Detailed format (45-60 sec): Deep dives, step-by-step how-tos, behind-the-scenes explanations' : '' }}\n\n**Good topic categories:**\n- Car buying education (financing, trade-ins, what to bring)\n- Used car smarts (what to check, how to avoid scams)\n- Seasonal/winter tips (especially relevant now)\n- DIY troubleshooting (won't start, strange noises, dashboard lights)\n- Behind the scenes at CCC (how we choose/inspect cars)\n- Credit & financing (bad credit, no credit, down payments)\n- Controversial opinions (extended warranties, new vs used)\n\n**Examples of great topics:**\n- Brief: \"Don't pour hot water on your windshield — do this instead\"\n- Standard: \"Top 3 things to check when test-driving a car\"\n- Detailed: \"How financing works when you have no credit\"\n\n**Output format:**\nReturn ONLY a JSON array of 3 topic strings, nothing else. Example:\n[\"Topic idea 1\", \"Topic idea 2\", \"Topic idea 3\"]\n\nGenerate 3 diverse, engaging topics now:",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ec190d74-ea8b-482c-9d1a-ab7c251ef6c7",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON array\nlet suggestions;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  suggestions = JSON.parse(cleanedResponse);\n  \n  // Ensure it's an array of 3 strings\n  if (!Array.isArray(suggestions) || suggestions.length !== 3) {\n    throw new Error('Invalid response format');\n  }\n  \n} catch (error) {\n  // Fallback: try to extract topics manually\n  const lines = geminiResponse.split('\\n').filter(line => line.trim().length > 0);\n  suggestions = lines.slice(0, 3).map(line => {\n    // Remove leading numbers, bullets, quotes\n    return line.replace(/^[\\d\\-\\*\\.\"\\']\\s*/, '').replace(/[\"\\']$/, '').trim();\n  });\n  \n  // Ensure we have exactly 3\n  while (suggestions.length < 3) {\n    suggestions.push(`Topic suggestion ${suggestions.length + 1}`);\n  }\n  suggestions = suggestions.slice(0, 3);\n}\n\nreturn { suggestions };"
+      },
+      "id": "617d42ac-5140-4adf-861b-a63e06448805",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, suggestions: $json.suggestions } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "5f0f9a15-3f22-4e8c-88f4-59c4d2a42e2a",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: 'Failed to generate suggestions', message: $json.error?.message || 'Unknown error' } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "580e9337-31b4-4683-aa98-a7104cbae3f0",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        208
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Request": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "06c9fff9-e2ec-4e5b-a8a8-2e4cb159fa54",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-13T13:57:32.022Z",
+      "createdAt": "2025-12-13T13:57:32.022Z",
+      "role": "workflow:owner",
+      "workflowId": "H9SRRsFj2eo7BcEE",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
