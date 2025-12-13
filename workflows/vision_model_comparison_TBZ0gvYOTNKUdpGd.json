@@ -1,0 +1,464 @@
+{
+  "updatedAt": "2025-12-13T17:47:47.153Z",
+  "createdAt": "2025-12-13T13:57:31.162Z",
+  "id": "TBZ0gvYOTNKUdpGd",
+  "name": "Vision Model Comparison",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "ee274bdd-df4b-43dd-809f-5ab591ea2b54",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "vin",
+              "value": "={{ $json.vin }}"
+            },
+            {
+              "name": "theme",
+              "value": "={{ $json.theme }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2b51ebbe-6fc8-48c0-9c54-33b2e813a0a2",
+      "name": "Input VIN",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        80
+      ],
+      "notes": "Paste VIN here in the 'vin' field"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 467345130,
+          "mode": "list",
+          "cachedResultName": "Spotlight_Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit#gid=467345130"
+        },
+        "options": {}
+      },
+      "id": "ab7062ca-ae13-47bd-be35-5d57a7bcd083",
+      "name": "Fetch Car Inventory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -656,
+        80
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MmkEFg1TuHDH32HZ",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the VIN from the Input VIN node\n// New comment to test github workflow\nconst inputVin = $('Input VIN').first().json.vin;\nconst inputTheme = $('Input VIN').first().json.theme || 'none';\n\n// Find the matching vehicle from Parse Vehicle Data\nconst allVehicles = $input.all();\nconst matchingVehicle = allVehicles.find(item => item.json.VIN === inputVin);\n\nif (!matchingVehicle) {\n  throw new Error(`Vehicle with VIN ${inputVin} not found in Spotlight_Data sheet`);\n}\n\nconst vehicle = matchingVehicle.json;\n\n// Parse image URLs\nconst imageUrlsDelimited = vehicle.All_Images || '';\nconst allImages = imageUrlsDelimited\n  .split('|')\n  .filter(url => url.trim())\n  .map(url => url.trim());\n\nif (allImages.length === 0) {\n  throw new Error('No photos found for this vehicle');\n}\n\nconsole.log(`📸 Found ${allImages.length} photos for ${vehicle.Year} ${vehicle.Make} ${vehicle.Model}`);\n\n// Build vehicle object\nconst vehicle_obj = {\n  vin: vehicle.VIN,\n  year: vehicle.Year,\n  make: vehicle.Make,\n  model: vehicle.Model,\n  trim: vehicle.Trim,\n  price: vehicle.Price,\n  mileage: vehicle.Mileage,\n  engine: vehicle.Engine,\n  transmission: vehicle.Transmission,\n  drivetrain: vehicle.Drivetrain,\n  exterior_color: vehicle.Exterior_Color,\n  equipment: vehicle.Equipment,\n  all_images: allImages\n};\n\nreturn [{\n  json: {\n    vehicle: [vehicle_obj],\n    _input: {\n      script_length: 'standard',\n      theme: inputTheme\n    }\n  }\n}];"
+      },
+      "id": "f6d488df-1798-426f-bdb2-b3bb30a11c47",
+      "name": "Parse Vehicle Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nconst heroVehicle = data.vehicle[0];\n\nconsole.log(`🔍 Building Vision prompt for ${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}`);\n\n// Get all image URLs - use THUMBNAILS for Vision API (faster download)\nconst allImageUrls = heroVehicle.all_images \n  ? heroVehicle.all_images\n      .filter(url => url.trim())\n      .map(url => url + '/thumb/') // Add /thumb/ suffix\n  : [];\n\nif (allImageUrls.length === 0) {\n  throw new Error('No photos available for this vehicle');\n}\n\nconsole.log(`📸 Total photos: ${allImageUrls.length}`);\n\nconst maxIndex = allImageUrls.length - 1;\n\n// Get script length and theme\nconst scriptLength = data._input?.script_length || 'standard';\nconst theme = data._input?.theme || 'none';\nconsole.log(`📏 Script length: ${scriptLength}`);\nconsole.log(`🎨 Theme: ${theme}`);\n\n// Get equipment data for reference\nconst equipment = heroVehicle.equipment || '';\nconst hasLeather = equipment.toLowerCase().includes('leather');\nconst hasPowerSeats = equipment.toLowerCase().includes('power') && equipment.toLowerCase().includes('seat');\nconst hasHeatedSeats = equipment.toLowerCase().includes('heated');\nconst hasMoonroof = equipment.toLowerCase().includes('moonroof') || equipment.toLowerCase().includes('sunroof');\nconst has360Camera = equipment.toLowerCase().includes('multi-view') || equipment.toLowerCase().includes('360');\n\nconsole.log(`🪑 Equipment check: Leather=${hasLeather}, Power Seats=${hasPowerSeats}, Heated=${hasHeatedSeats}`);\n\n// Build the FULL PRODUCTION system prompt\nconst systemPrompt = `\n\nCRITICAL INSTRUCTION: Your response must START immediately with { and contain ONLY valid JSON. Do NOT include any explanatory text before or after the JSON. Do NOT use markdown code blocks.\n\n\nYou are an expert at analyzing vehicle photos for car dealership advertising that creates ENGAGING, FUN, and RELATABLE TikTok ads.\n\nYour task: Select 3-6 photos (1 hero exterior + 2-5 feature photos) for a premium TikTok spotlight ad showcasing this vehicle's best features.\n\nTARGET AUDIENCE: Young professionals (18-30) and first-time buyers who prioritize:\n- Modern technology (Apple CarPlay/Android Auto, touchscreens, safety features)\n- Reliability and good condition\n- Practical features (cargo space, seating comfort, climate control)\n- Value for money\n\nTHEME: ${theme === 'none' ? 'No specific theme' : theme}\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME INTEGRATION (${theme === 'none' ? 'Not applicable' : 'REQUIRED'}):\n═══════════════════════════════════════════════════════════════\n\n${theme !== 'none' ? `\nCurrent theme: \"${theme}\"\n\nIncorporate the theme naturally into your feature callouts! Make it fun and relevant:\n\nEXAMPLES BY THEME TYPE:\n- Christmas/Holiday: \"Spacious cargo perfect for holiday shopping\", \"Room for all those presents\"\n- Winter: \"Heated seats for freezing Illinois mornings\", \"All-wheel drive conquers winter roads\"\n- Summer: \"Crank the AC and beat the heat\", \"Sunroof for those perfect summer days\"\n- Back to School: \"Plenty of room for backpacks and gear\", \"Safe ride for new drivers\"\n- Road Trip: \"Apple CarPlay keeps everyone entertained\", \"Comfortable seats for long drives\"\n- Family: \"Third row seats the whole family\", \"Safety features protect your loved ones\"\n\nKeep it light, conversational, and relatable!\n` : 'No theme provided - use standard feature descriptions.'}\n\n═══════════════════════════════════════════════════════════════\n📸 PHOTO SELECTION - FLEXIBLE COUNT:\n═══════════════════════════════════════════════════════════════\n\nStandard: 1 hero + 5 features = 6 photos\nMinimum: 1 hero + 2 features = 3 photos\n\nWHEN TO USE FEWER PHOTOS:\n- Vehicle lacks premium features (no tech, no moonroof, basic interior)\n- Most photos are redundant or low-quality\n- Vehicle condition is rough (visible wear, damage)\n\nQUALITY OVER QUANTITY! Better to show 3 GREAT photos than 6 mediocre ones.\n\n═══════════════════════════════════════════════════════════════\n🎯 MULTIPLE FEATURES PER PHOTO (IMPORTANT!):\n═══════════════════════════════════════════════════════════════\n\nEach photo can highlight MULTIPLE features if they're visible!\n\nEXAMPLES:\n✅ Front interior shot → \"Heated leather seats, heated steering wheel, and dual-zone climate\"\n✅ Dashboard → \"Digital instrument cluster, Apple CarPlay, and wireless charging pad\"\n✅ Rear seats → \"Spacious third row seating with climate vents and cup holders\"\n✅ Cargo area → \"Tons of space - passes the tumbler test with cup holders galore!\"\n\nBe comprehensive but concise (12-25 words per callout).\nList features in order of importance (most impressive first).\n\n═══════════════════════════════════════════════════════════════\n📋 EQUIPMENT DATA FOR THIS VEHICLE:\n═══════════════════════════════════════════════════════════════\n\n${equipment || 'No equipment data available'}\n\nUSE THIS DATA TO:\n- Confirm features you see in photos\n- Avoid guessing about materials/features\n- Provide accurate descriptions\n\nKEY FEATURES DETECTED:\n- Leather: ${hasLeather ? 'YES - You may feature premium interior' : 'NO - Do not focus on seats'}\n- Power Seats: ${hasPowerSeats ? 'YES - Mention power-adjustable' : 'NO - Use generic \"adjustable seats\"'}\n- Heated Seats: ${hasHeatedSeats ? 'YES - Highlight this!' : 'NO'}\n- Moonroof/Sunroof: ${hasMoonroof ? 'YES - Priority feature!' : 'NO'}\n- 360/Multi-View Camera: ${has360Camera ? 'YES - Show this screen!' : 'NO'}\n\n═══════════════════════════════════════════════════════════════\n🪑 SEAT MATERIAL RULES - SIMPLIFIED:\n═══════════════════════════════════════════════════════════════\n\n${hasLeather ? `\n✅ Leather IS in equipment - you may select interior photos\n- Look for leather seating surfaces\n- Mention \"leather seats\" or \"premium leather interior\"\n- Combine with other features: \"Heated leather seats with power adjustment\"\n` : `\n❌ Leather is NOT in equipment - skip seat material discussion\n- Focus on OTHER features (tech, cargo, safety, comfort)\n- If showing interior, mention: \"Comfortable seating\" or \"Spacious interior\"\n- DO NOT analyze or mention seat materials\n`}\n\nSEAT CONTROLS:\n- Look for electronic buttons/switches on seat side → \"Power-adjustable seats\"\n- Equipment says \"Power Seats\" or \"Dual Power\" → Confirm power seats\n- Look for manual lever → Just say \"Adjustable seats\" (don't mention manual)\n- When uncertain → \"Comfortable seating\"\n\n═══════════════════════════════════════════════════════════════\n📱 SMARTPHONE INTEGRATION ACCURACY:\n═══════════════════════════════════════════════════════════════\n\nBE SPECIFIC about what you see:\n\nApple CarPlay:\n- Look for Apple logo on screen\n- iPhone-style interface\n- Apple's \"Now Playing\" design\n- iOS icons\n\nAndroid Auto:\n- Look for Google/Android branding\n- Material Design interface\n- \"Hey Google\" prompt visible\n- Android-style icons\n\nDESCRIPTIONS:\n- See Apple logo ONLY → \"Apple CarPlay\"\n- See Android logo ONLY → \"Android Auto\"  \n- See BOTH logos → \"Apple CarPlay and Android Auto\"\n- Generic phone icon only → \"Smartphone connectivity\"\n- Bluetooth symbol only → \"Bluetooth connection\"\n- If uncertain → \"Smartphone integration\" (generic)\n\n⚠️ DO NOT assume both are present unless you see BOTH logos clearly!\n\n═══════════════════════════════════════════════════════════════\n🎯 PHOTO SELECTION PRIORITY:\n═══════════════════════════════════════════════════════════════\n\n1. exterior_hero (REQUIRED) - Best exterior shot showing vehicle in good light\n\n2. HIGH-PRIORITY FEATURES (Select if available):\n   - sunroof/moonroof - Interior view of panoramic roof or moonroof controls\n   - 360_camera - Bird's-eye parking view screen (multi-angle display)\n   - heated_seats - Seat climate controls (heated/cooled/ventilated)\n   - premium_interior - ${hasLeather ? 'Leather seats and luxury materials' : 'High-quality interior (skip if basic)'}\n   - digital_dash - Advanced digital instrument cluster\n   - engine_bay - For luxury ($40K+), V6/V8/Turbo, or performance vehicles\n\n3. GOOD FEATURES (Select if no premium options):\n   - smartphone_integration - Apple CarPlay/Android Auto screen\n   - third_row - Family seating capacity\n   - climate_controls - Dual-zone or advanced climate system\n   - cargo_space - Exceptional trunk/cargo area (skip if average)\n\n4. AVOID (Unless exceptional):\n   - Basic touchscreen (if 360 camera exists, skip this)\n   - Standard backup camera (if 360 exists, skip this)\n   - Average cargo space (boring!)\n   - Redundant screens (only show ONE screen feature)\n\n═══════════════════════════════════════════════════════════════\n🎪 FUN & RELATABLE CALLOUTS:\n═══════════════════════════════════════════════════════════════\n\nMake it ENGAGING! Use conversational, relatable language:\n\n✅ Cup holders visible → \"Passes the tumbler test!\" or \"Cup holders for the whole crew\"\n✅ Large cargo → \"Room for all your stuff\" or \"Fits your entire life\"\n✅ Sunroof → \"Let the sunshine in\" or \"Open-air vibes\"\n✅ Heated seats → \"Your butt will thank you\" or \"Toasty warm on cold mornings\"\n✅ Third row → \"Seats the whole squad\" or \"Room for seven\"\n✅ Apple CarPlay → \"Stay connected on the go\" or \"Your phone, amplified\"\n✅ 360 camera → \"Park like a pro\" or \"See everything around you\"\n✅ Power liftgate → \"Hands-free convenience\" or \"Easy loading\"\n\n${theme !== 'none' ? `\nTHEME-SPECIFIC CALLOUTS for \"${theme}\":\n- Connect features to the theme naturally\n- Make it fun and memorable\n- Keep it conversational\n` : ''}\n\n═══════════════════════════════════════════════════════════════\n📏 QUALITY REQUIREMENTS:\n═══════════════════════════════════════════════════════════════\n\n- Well-lit photos only (skip dark or blurry)\n- Clear view of features being highlighted\n- Professional appearance (avoid awkward angles)\n- Shows vehicle in good condition\n- Each photo must highlight something DIFFERENT\n\n═══════════════════════════════════════════════════════════════\n📤 OUTPUT FORMAT:\n═══════════════════════════════════════════════════════════════\n\n{\n  \"selected_photos\": [\n    {\n      \"photo_index\": 0,\n      \"category\": \"exterior_hero\",\n      \"feature_callout\": \"Brief, engaging description (12-25 words) - can list MULTIPLE features if visible\",\n      \"display_order\": 1\n    },\n    // ... 2-5 more photos (minimum 3 total, maximum 6 total)\n  ],\n  \"rationale\": \"Why you selected these specific photos and feature count\"\n}\n\nCRITICAL RULES:\n- photo_index MUST be 0-${maxIndex} ONLY (you have ${allImageUrls.length} photos)\n- Select 3-6 photos total (quality over quantity!)\n- Each photo_index must be unique\n- display_order starts at 1\n- Feature callouts should list ALL visible features (up to 25 words)\n${theme !== 'none' ? `- Incorporate \"${theme}\" theme into callouts naturally\\n` : ''}- Use fun, relatable language\n- Output ONLY the JSON object. Start with { and end with }. Nothing else.`;\n\n// Build the user prompt\nconst userPrompt = `Analyze these ${allImageUrls.length} photos of a ${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model} (Price: $${heroVehicle.price}, Mileage: ${heroVehicle.mileage}) and select 3-6 photos for a ${theme !== 'none' ? `${theme}-themed ` : ''}TikTok spotlight ad.\n\n🚨 CRITICAL - PHOTO INDICES 🚨\nVALID INDICES: 0 through ${maxIndex}\nTOTAL PHOTOS: ${allImageUrls.length}\nDO NOT USE: ${maxIndex + 1} or higher (they don't exist!)\n\n🎯 YOUR GOALS:\n1. Select the BEST 3-6 photos (quality over quantity)\n2. Highlight MULTIPLE features per photo when possible\n3. Use fun, relatable language (cup holder test, passes the vibe check, etc.)\n${theme !== 'none' ? `4. Incorporate the \"${theme}\" theme naturally into feature callouts\\n` : ''}${theme !== 'none' ? '5' : '4'}. Emphasize VALUE, TECH, and PRACTICALITY for young buyers\n\nEquipment available: ${hasLeather ? 'Leather ✓' : 'No leather'}, ${hasPowerSeats ? 'Power seats ✓' : ''}, ${hasHeatedSeats ? 'Heated seats ✓' : ''}, ${hasMoonroof ? 'Moonroof ✓' : ''}, ${has360Camera ? '360 camera ✓' : ''}\n\nMake it ENGAGING! 🔥`;\n\n// Build vision_content for Claude\nconst visionContent = [\n  {\n    type: \"text\",\n    text: `${systemPrompt}\\n\\n${userPrompt}\\n\\nPHOTOS (each labeled with its index):`\n  }\n];\n\n// Add all images with explicit index labels\nallImageUrls.forEach((url, index) => {\n  visionContent.push({\n    type: \"text\",\n    text: `[PHOTO INDEX ${index}]`\n  });\n  visionContent.push({\n    type: \"image\",\n    source: {\n      type: \"url\",\n      url: url\n    }\n  });\n});\n\nreturn [{\n  json: {\n    ...data,\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    vision_content: visionContent,\n    all_image_urls: allImageUrls,\n    max_photo_index: maxIndex,\n    total_photos: allImageUrls.length,\n    equipment_flags: {\n      has_leather: hasLeather,\n      has_power_seats: hasPowerSeats,\n      has_heated_seats: hasHeatedSeats,\n      has_moonroof: hasMoonroof,\n      has_360_camera: has360Camera\n    }\n  }\n}];"
+      },
+      "id": "7a021a55-0288-49bd-8665-53ea6d2c9037",
+      "name": "Build Vision Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 2000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": $json.vision_content\n    }\n  ]\n} }}",
+        "options": {}
+      },
+      "id": "e3824303-4b23-44d1-8795-9eab4223896c",
+      "name": "Claude Vision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -16
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "zeHBwJZlhd7vKOA9",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyBFB8rHuBXVA3xPyWat-_vOoq30EP3-0io"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  contents: [{\n    parts: $json.gemini_parts\n  }],\n  generationConfig: {\n    temperature: 0.4,\n    maxOutputTokens: 4000\n  }\n} }}",
+        "options": {}
+      },
+      "id": "fa2fbbcb-35a4-492c-af60-94bfffdbb897",
+      "name": "Gemini Vision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeSonnetResponse = $('Claude Vision').first().json;\nconst claudeOpusResponse = $('Claude Vision Opus').first().json;\nconst geminiResponse = $('Gemini Vision').first().json;\nconst gptResponse = $('ChatGPT Vision').first().json;\nconst promptData = $('Build Vision Prompt').first().json;\n\nconst allImageUrls = promptData.all_image_urls;\nconst vehicle = promptData.vehicle[0];\n\n// Parse Claude Sonnet response\nlet claudeSonnetPhotos = [];\ntry {\n  const claudeText = claudeSonnetResponse.content[0].text\n    .replace(/```json\\n?/g, '')\n    .replace(/```\\n?/g, '')\n    .trim();\n  const claudeParsed = JSON.parse(claudeText);\n  claudeSonnetPhotos = claudeParsed.selected_photos || [];\n} catch (e) {\n  console.error('Failed to parse Claude Sonnet response:', e);\n}\n\n// Parse Claude Opus response\nlet claudeOpusPhotos = [];\ntry {\n  const opusText = claudeOpusResponse.content[0].text\n    .replace(/```json\\n?/g, '')\n    .replace(/```\\n?/g, '')\n    .trim();\n  const opusParsed = JSON.parse(opusText);\n  claudeOpusPhotos = opusParsed.selected_photos || [];\n} catch (e) {\n  console.error('Failed to parse Claude Opus response:', e);\n}\n\n// Parse Gemini response\nlet geminiPhotos = [];\ntry {\n  const geminiText = geminiResponse.candidates[0].content.parts[0].text\n    .replace(/```json\\n?/g, '')\n    .replace(/```\\n?/g, '')\n    .trim();\n  const geminiParsed = JSON.parse(geminiText);\n  geminiPhotos = geminiParsed.selected_photos || [];\n} catch (e) {\n  console.error('Failed to parse Gemini response:', e);\n}\n\n// Parse GPT-4 response\nlet gptPhotos = [];\ntry {\n  const gptText = gptResponse.choices[0].message.content\n    .replace(/```json\\n?/g, '')\n    .replace(/```\\n?/g, '')\n    .trim();\n  const gptParsed = JSON.parse(gptText);\n  gptPhotos = gptParsed.selected_photos || [];\n} catch (e) {\n  console.error('Failed to parse GPT response:', e);\n}\n\n// Find overlapping photos\nconst allSelections = new Map();\n[\n  { name: 'Claude Sonnet 4.5', photos: claudeSonnetPhotos },\n  { name: 'Claude Opus 4', photos: claudeOpusPhotos },\n  { name: 'Gemini 2.5 Pro', photos: geminiPhotos },\n  { name: 'GPT-4o', photos: gptPhotos }\n].forEach(model => {\n  model.photos.forEach(p => {\n    if (!allSelections.has(p.photo_index)) {\n      allSelections.set(p.photo_index, []);\n    }\n    allSelections.get(p.photo_index).push(model.name);\n  });\n});\n\n// Generate HTML report\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Vision Model Comparison - 4 Models</title>\n  <style>\n    body {\n      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;\n      max-width: 1600px;\n      margin: 0 auto;\n      padding: 20px;\n      background: #f5f5f5;\n    }\n    .header {\n      background: white;\n      padding: 20px;\n      border-radius: 8px;\n      margin-bottom: 20px;\n      box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n    }\n    h1 { margin: 0 0 10px 0; color: #333; }\n    .vehicle-info { color: #666; font-size: 14px; }\n    .stats {\n      display: grid;\n      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n      gap: 15px;\n      margin-top: 15px;\n    }\n    .stat {\n      background: #f0f0f0;\n      padding: 10px 15px;\n      border-radius: 4px;\n    }\n    .stat strong { color: #333; display: block; margin-bottom: 5px; }\n    \n    .comparison {\n      display: grid;\n      grid-template-columns: repeat(2, 1fr);\n      gap: 20px;\n      margin-bottom: 30px;\n    }\n    .model-section {\n      background: white;\n      padding: 20px;\n      border-radius: 8px;\n      box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n    }\n    .model-section h2 {\n      margin: 0 0 15px 0;\n      padding-bottom: 10px;\n      border-bottom: 3px solid #ddd;\n    }\n    .claude-sonnet h2 { border-bottom-color: #5436DA; color: #5436DA; }\n    .claude-opus h2 { border-bottom-color: #8B5CF6; color: #8B5CF6; }\n    .gemini h2 { border-bottom-color: #4285F4; color: #4285F4; }\n    .gpt h2 { border-bottom-color: #10A37F; color: #10A37F; }\n    \n    .selection-list {\n      display: flex;\n      flex-direction: column;\n      gap: 10px;\n    }\n    .selection-item {\n      padding: 12px;\n      border-radius: 4px;\n      border-left: 4px solid #ddd;\n      font-size: 13px;\n    }\n    .selection-item.claude-sonnet { border-left-color: #5436DA; background: #f0edff; }\n    .selection-item.claude-opus { border-left-color: #8B5CF6; background: #f5f0ff; }\n    .selection-item.gemini { border-left-color: #4285F4; background: #e8f0fe; }\n    .selection-item.gpt { border-left-color: #10A37F; background: #d1f4e8; }\n    .selection-item.overlap { border-left-color: #9C27B0; background: #f3e5f5; font-weight: 500; }\n    \n    .photo-index { font-weight: bold; color: #333; font-size: 12px; }\n    .photo-category { font-size: 11px; color: #666; margin: 5px 0; }\n    .photo-callout { font-size: 12px; color: #444; line-height: 1.4; }\n    \n    .selections {\n      background: white;\n      padding: 20px;\n      border-radius: 8px;\n      box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n      margin-bottom: 20px;\n    }\n    \n    .photo-grid {\n      display: grid;\n      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));\n      gap: 15px;\n      margin-top: 15px;\n    }\n    .photo-card {\n      border: 2px solid #ddd;\n      border-radius: 8px;\n      overflow: hidden;\n      background: white;\n    }\n    .photo-card.consensus { border-color: #9C27B0; border-width: 3px; }\n    .photo-card img {\n      width: 100%;\n      height: 150px;\n      object-fit: cover;\n    }\n    .photo-info {\n      padding: 10px;\n      font-size: 12px;\n    }\n    .model-pick {\n      margin: 5px 0;\n      padding: 5px;\n      border-radius: 3px;\n      font-size: 11px;\n    }\n    .model-pick.claude-sonnet { background: #f0edff; color: #5436DA; }\n    .model-pick.claude-opus { background: #f5f0ff; color: #8B5CF6; }\n    .model-pick.gemini { background: #e8f0fe; color: #4285F4; }\n    .model-pick.gpt { background: #d1f4e8; color: #10A37F; }\n    \n    .legend {\n      display: flex;\n      gap: 20px;\n      margin: 10px 0;\n      font-size: 13px;\n    }\n    .legend-item {\n      display: flex;\n      align-items: center;\n      gap: 5px;\n    }\n    .legend-box {\n      width: 20px;\n      height: 20px;\n      border-radius: 3px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>🔍 Vision Model Comparison - 4 Models</h1>\n    <div class=\"vehicle-info\">\n      <strong>${vehicle.year} ${vehicle.make} ${vehicle.model}</strong> • \n      VIN: ${vehicle.vin} • \n      Price: $${vehicle.price.toLocaleString()} • \n      Mileage: ${vehicle.mileage.toLocaleString()} mi\n    </div>\n    <div class=\"stats\">\n      <div class=\"stat\">\n        <strong>Total Photos:</strong> ${allImageUrls.length}\n      </div>\n      <div class=\"stat\" style=\"background: #f0edff;\">\n        <strong>Claude Sonnet 4.5:</strong> ${claudeSonnetPhotos.length} photos\n      </div>\n      <div class=\"stat\" style=\"background: #f5f0ff;\">\n        <strong>Claude Opus 4:</strong> ${claudeOpusPhotos.length} photos\n      </div>\n      <div class=\"stat\" style=\"background: #e8f0fe;\">\n        <strong>Gemini 2.5 Pro:</strong> ${geminiPhotos.length} photos\n      </div>\n      <div class=\"stat\" style=\"background: #d1f4e8;\">\n        <strong>GPT-4o:</strong> ${gptPhotos.length} photos\n      </div>\n    </div>\n  </div>\n\n  <div class=\"selections\">\n    <h2>📋 Model Selections</h2>\n    <div class=\"comparison\">\n      <div class=\"model-section claude-sonnet\">\n        <h2>Claude Sonnet 4.5</h2>\n        <div class=\"selection-list\">\n          ${claudeSonnetPhotos.map(p => {\n            const overlap = allSelections.get(p.photo_index).length > 1;\n            return `\n              <div class=\"selection-item ${overlap ? 'overlap' : 'claude-sonnet'}\">\n                <div class=\"photo-index\">Photo #${p.photo_index} ${overlap ? `⭐ (${allSelections.get(p.photo_index).length} models)` : ''}</div>\n                <div class=\"photo-category\">${p.category || 'N/A'}</div>\n                <div class=\"photo-callout\">${p.feature_callout || 'N/A'}</div>\n              </div>\n            `;\n          }).join('')}\n        </div>\n      </div>\n      \n      <div class=\"model-section claude-opus\">\n        <h2>Claude Opus 4</h2>\n        <div class=\"selection-list\">\n          ${claudeOpusPhotos.map(p => {\n            const overlap = allSelections.get(p.photo_index).length > 1;\n            return `\n              <div class=\"selection-item ${overlap ? 'overlap' : 'claude-opus'}\">\n                <div class=\"photo-index\">Photo #${p.photo_index} ${overlap ? `⭐ (${allSelections.get(p.photo_index).length} models)` : ''}</div>\n                <div class=\"photo-category\">${p.category || 'N/A'}</div>\n                <div class=\"photo-callout\">${p.feature_callout || 'N/A'}</div>\n              </div>\n            `;\n          }).join('')}\n        </div>\n      </div>\n      \n      <div class=\"model-section gemini\">\n        <h2>Gemini 2.5 Pro</h2>\n        <div class=\"selection-list\">\n          ${geminiPhotos.map(p => {\n            const overlap = allSelections.get(p.photo_index).length > 1;\n            return `\n              <div class=\"selection-item ${overlap ? 'overlap' : 'gemini'}\">\n                <div class=\"photo-index\">Photo #${p.photo_index} ${overlap ? `⭐ (${allSelections.get(p.photo_index).length} models)` : ''}</div>\n                <div class=\"photo-category\">${p.category || 'N/A'}</div>\n                <div class=\"photo-callout\">${p.feature_callout || 'N/A'}</div>\n              </div>\n            `;\n          }).join('')}\n        </div>\n      </div>\n      \n      <div class=\"model-section gpt\">\n        <h2>GPT-4o</h2>\n        <div class=\"selection-list\">\n          ${gptPhotos.map(p => {\n            const overlap = allSelections.get(p.photo_index).length > 1;\n            return `\n              <div class=\"selection-item ${overlap ? 'overlap' : 'gpt'}\">\n                <div class=\"photo-index\">Photo #${p.photo_index} ${overlap ? `⭐ (${allSelections.get(p.photo_index).length} models)` : ''}</div>\n                <div class=\"photo-category\">${p.category || 'N/A'}</div>\n                <div class=\"photo-callout\">${p.feature_callout || 'N/A'}</div>\n              </div>\n            `;\n          }).join('')}\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <div class=\"selections\">\n    <h2>🖼️ All Available Photos</h2>\n    <div class=\"legend\">\n      <div class=\"legend-item\">\n        <div class=\"legend-box\" style=\"background: #f0edff; border: 2px solid #5436DA;\"></div>\n        Claude Sonnet 4.5\n      </div>\n      <div class=\"legend-item\">\n        <div class=\"legend-box\" style=\"background: #f5f0ff; border: 2px solid #8B5CF6;\"></div>\n        Claude Opus 4\n      </div>\n      <div class=\"legend-item\">\n        <div class=\"legend-box\" style=\"background: #e8f0fe; border: 2px solid #4285F4;\"></div>\n        Gemini 2.5 Pro\n      </div>\n      <div class=\"legend-item\">\n        <div class=\"legend-box\" style=\"background: #d1f4e8; border: 2px solid #10A37F;\"></div>\n        GPT-4o\n      </div>\n      <div class=\"legend-item\">\n        <div class=\"legend-box\" style=\"background: #f3e5f5; border: 3px solid #9C27B0;\"></div>\n        Multiple models (consensus)\n      </div>\n    </div>\n    <div class=\"photo-grid\">\n      ${allImageUrls.map((url, index) => {\n        const models = allSelections.get(index) || [];\n        const claudeSonnetSel = claudeSonnetPhotos.find(p => p.photo_index === index);\n        const claudeOpusSel = claudeOpusPhotos.find(p => p.photo_index === index);\n        const geminiSel = geminiPhotos.find(p => p.photo_index === index);\n        const gptSel = gptPhotos.find(p => p.photo_index === index);\n        \n        return `\n          <div class=\"photo-card ${models.length > 1 ? 'consensus' : ''}\">\n            <img src=\"${url}\" alt=\"Photo ${index}\" />\n            <div class=\"photo-info\">\n              <div class=\"photo-index\">Photo #${index}</div>\n              ${claudeSonnetSel ? `\n                <div class=\"model-pick claude-sonnet\">\n                  <strong>Sonnet:</strong> ${claudeSonnetSel.category}<br/>\n                  ${claudeSonnetSel.feature_callout}\n                </div>\n              ` : ''}\n              ${claudeOpusSel ? `\n                <div class=\"model-pick claude-opus\">\n                  <strong>Opus:</strong> ${claudeOpusSel.category}<br/>\n                  ${claudeOpusSel.feature_callout}\n                </div>\n              ` : ''}\n              ${geminiSel ? `\n                <div class=\"model-pick gemini\">\n                  <strong>Gemini:</strong> ${geminiSel.category}<br/>\n                  ${geminiSel.feature_callout}\n                </div>\n              ` : ''}\n              ${gptSel ? `\n                <div class=\"model-pick gpt\">\n                  <strong>GPT-4o:</strong> ${gptSel.category}<br/>\n                  ${gptSel.feature_callout}\n                </div>\n              ` : ''}\n            </div>\n          </div>\n        `;\n      }).join('')}\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    html: html,\n    vehicle: vehicle,\n    claude_sonnet_selections: claudeSonnetPhotos,\n    claude_opus_selections: claudeOpusPhotos,\n    gemini_selections: geminiPhotos,\n    gpt_selections: gptPhotos\n  }\n}];"
+      },
+      "id": "f757bb2f-eb8c-4778-8c44-f084656e5787",
+      "name": "Generate HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "kelly@kellyrae.net",
+        "toEmail": "kelly@kellyrae.net",
+        "subject": "={{ \"Vision Comparison: \" + $json.vehicle.year + \" \" + $json.vehicle.make + \" \" + $json.vehicle.model }}",
+        "emailFormat": "html",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "f3e42e9c-d81b-45ee-b556-c95e270c6d3f",
+      "name": "Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        912,
+        80
+      ],
+      "webhookId": "a824bd8b-85e4-4507-b4a3-4c1f9c22f930",
+      "credentials": {
+        "smtp": {
+          "id": "5HPC3NyTgaxCbH6e",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return (async () => {\n  const data = $json;\n  const visionContent = data.vision_content;\n  const parts = [];\n\n  console.log('🖼️ Fetching and encoding images for Gemini...');\n\n  for (const item of visionContent) {\n    if (item.type === 'text') {\n      parts.push({ text: item.text });\n      console.log('📝 Added text item:', item.text.substring(0, 50));\n    } else if (item.type === 'image') {\n      try {\n        const imageUrl = item.source.url;\n        console.log(`🔍 Fetching: ${imageUrl.substring(0, 60)}...`);\n        \n        // Use $request helper instead of fetch\n        const response = await this.helpers.request({\n          method: 'GET',\n          uri: imageUrl,\n          encoding: null, // Important: get binary data\n        });\n        \n        // Convert to base64\n        const base64 = response.toString('base64');\n        \n        console.log(`📦 Encoded image: ${base64.length} characters of base64`);\n        \n        parts.push({\n          inlineData: {\n            mimeType: 'image/jpeg',\n            data: base64\n          }\n        });\n        \n        console.log(`✅ Successfully added image`);\n        \n      } catch (err) {\n        console.error(`❌ Failed to fetch/encode image: ${err.message}`);\n      }\n    }\n  }\n\n  console.log(`✅ Total parts prepared: ${parts.length}`);\n  console.log(`🔍 FINAL OUTPUT SAMPLE:`, JSON.stringify(parts.slice(0, 3), null, 2));\n\n  return [{\n    json: {\n      ...data,\n      gemini_parts: parts\n    }\n  }];\n})();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        128
+      ],
+      "id": "85f62de7-1133-4a03-8140-40473b2a5ecf",
+      "name": "Prepare Images for Gemini"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        464,
+        48
+      ],
+      "id": "c63ae001-111a-4a02-9fb3-c2a18fb38112",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  model: \"gpt-4o-mini\",\n  max_tokens: 2000,\n  temperature: 0.4,\n  messages: [\n    {\n      role: \"user\",\n      content: $json.vision_content.map(item => {\n        if (item.type === 'text') {\n          return { type: 'text', text: item.text };\n        } else if (item.type === 'image') {\n          return {\n            type: 'image_url',\n            image_url: { url: item.source.url }\n          };\n        }\n      })\n    }\n  ]\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        240,
+        -208
+      ],
+      "id": "302b8f57-e29c-40b9-9143-ad5b6511a295",
+      "name": "ChatGPT Vision",
+      "credentials": {
+        "openAiApi": {
+          "id": "BlHKljo17Nw09bHn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"model\": \"claude-opus-4-20250514\",\n  \"max_tokens\": 2000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": $json.vision_content\n    }\n  ]\n} }}",
+        "options": {}
+      },
+      "id": "aa8b05cf-c755-46b3-bf6e-c39731c21531",
+      "name": "Claude Vision Opus",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        368
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "zeHBwJZlhd7vKOA9",
+          "name": "Anthropic account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Input VIN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input VIN": {
+      "main": [
+        [
+          {
+            "node": "Fetch Car Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Car Inventory": {
+      "main": [
+        [
+          {
+            "node": "Parse Vehicle Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Vehicle Data": {
+      "main": [
+        [
+          {
+            "node": "Build Vision Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Vision Prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude Vision",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "ChatGPT Vision",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Claude Vision Opus",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Images for Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Vision": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Vision": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generate HTML Report": {
+      "main": [
+        [
+          {
+            "node": "Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Images for Gemini": {
+      "main": [
+        [
+          {
+            "node": "Gemini Vision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatGPT Vision": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Claude Vision Opus": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "3b7504d8-6a37-4985-a9d9-4bc0058f377d",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-13T13:57:31.162Z",
+      "createdAt": "2025-12-13T13:57:31.162Z",
+      "role": "workflow:owner",
+      "workflowId": "TBZ0gvYOTNKUdpGd",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
