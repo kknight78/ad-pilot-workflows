@@ -1,0 +1,401 @@
+{
+  "updatedAt": "2025-12-13T17:32:31.709Z",
+  "createdAt": "2025-12-13T13:57:25.702Z",
+  "id": "4BCNTMx7GaMIID92",
+  "name": "ARCHIVED - Backup n8n Workflows to GitHub",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "3ea02e3b-e291-46c9-bc79-d77c825fe252",
+      "name": "Daily Backup at 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1328,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://kelly-ads.app.n8n.cloud/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "b661b3f2-9a64-4963-9778-8868e758bd97",
+      "name": "Get All n8n Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1104,
+        112
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LCCBNzyoX2dEJyEA",
+          "name": "N8N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format each workflow for GitHub commit\nconst data = $input.item.json.data || $input.item.json;\nconst workflows = Array.isArray(data) ? data : [data];\n\nconst formattedWorkflows = workflows.map(wf => {\n  // Clean filename - remove special chars, make lowercase\n  const safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\n  const filename = `${safeName}_${wf.id}.json`;\n  \n  return {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  };\n});\n\nreturn formattedWorkflows.map(wf => ({ json: wf }));"
+      },
+      "id": "dd4657d2-4b02-4c9a-a19e-79c4115e4833",
+      "name": "Format for GitHub",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "58d8c3cb-bd7e-4c6b-a0be-e9a679fb436c",
+      "name": "Process One at a Time",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -656,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ 'Backup: ' + $json.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.contentBase64 }}\",\n  \"branch\": \"main\"\n}",
+        "options": {}
+      },
+      "id": "faf459df-1c3f-402b-aa56-86db7d6139b5",
+      "name": "Create File in GitHub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        16
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "04C2CxsFzc1VS9wa",
+          "name": "Github Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "file-exists",
+              "leftValue": "={{ $json.message }}",
+              "rightValue": "sha",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "37771af8-6af3-4fad-a170-4c1f400207ff",
+      "name": "File Already Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $('Process One at a Time').item.json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dac1def9-a552-45c8-90b4-65cfb94c5d10",
+      "name": "Get File SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "04C2CxsFzc1VS9wa",
+          "name": "Github Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $('Process One at a Time').item.json.filename }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "=Update: {{ $('Process One at a Time').item.json.name }} - {{ $now.toISO() }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $('Process One at a Time').item.json.contentBase64 }}"
+            },
+            {
+              "name": "sha",
+              "value": "={{ $json.sha }}"
+            },
+            {
+              "name": "branch",
+              "value": "main"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "056b7be4-dc41-4733-83c8-52d149a874d2",
+      "name": "Update Existing File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "04C2CxsFzc1VS9wa",
+          "name": "Github Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log success\nconst workflow = $('Process One at a Time').item.json;\nconsole.log(`✅ Backed up: ${workflow.name}`);\n\nreturn { json: { success: true, workflow: workflow.name } };"
+      },
+      "id": "e8d23bde-1e19-4664-8d0a-702fe52be55f",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        144
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "818ccc0e-c651-475d-a1b1-163c1abf2e3d",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        448,
+        112
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Backup at 2 AM": {
+      "main": [
+        [
+          {
+            "node": "Get All n8n Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All n8n Workflows": {
+      "main": [
+        [
+          {
+            "node": "Format for GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for GitHub": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process One at a Time": {
+      "main": [
+        [
+          {
+            "node": "Create File in GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create File in GitHub": {
+      "main": [
+        [
+          {
+            "node": "File Already Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Already Exists?": {
+      "main": [
+        [
+          {
+            "node": "Get File SHA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File SHA": {
+      "main": [
+        [
+          {
+            "node": "Update Existing File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Existing File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Success": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "781e5d77-26fe-4031-be58-784993369b43",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-13T13:57:25.702Z",
+      "createdAt": "2025-12-13T13:57:25.702Z",
+      "role": "workflow:owner",
+      "workflowId": "4BCNTMx7GaMIID92",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
