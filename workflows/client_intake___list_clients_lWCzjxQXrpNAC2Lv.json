@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2025-12-13T13:57:26.760Z",
+  "updatedAt": "2025-12-14T00:54:48.734Z",
   "createdAt": "2025-12-13T13:57:26.760Z",
   "id": "lWCzjxQXrpNAC2Lv",
   "name": "Client Intake - List Clients",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -41,35 +41,6 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Submissions",
-          "mode": "name"
-        },
-        "options": {}
-      },
-      "id": "read-sheet",
-      "name": "Read All Clients",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        480,
-        304
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g3qdIZMDD4wzQ69l",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "// Extract just the fields needed for the dropdown\nconst clients = $input.all().map(item => ({\n  clientId: item.json.clientId,\n  businessName: item.json.businessName,\n  industry: item.json.industry,\n  primaryContactName: item.json.primaryContactName,\n  timestamp: item.json.timestamp\n}));\n\n// Sort by most recent first\nclients.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));\n\nreturn { json: { clients } };"
       },
       "id": "format-list",
@@ -104,6 +75,35 @@
         928,
         304
       ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Submissions",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "230ae56c-f6fb-48f4-b0ed-06618a37ef7d",
+      "name": "Read All Clients",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        496,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "connections": {
@@ -112,17 +112,6 @@
         [
           {
             "node": "Read All Clients",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read All Clients": {
-      "main": [
-        [
-          {
-            "node": "Format Client List",
             "type": "main",
             "index": 0
           }
@@ -139,6 +128,17 @@
           }
         ]
       ]
+    },
+    "Read All Clients": {
+      "main": [
+        [
+          {
+            "node": "Format Client List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -148,10 +148,10 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "acddafb8-3c22-4fc2-943e-350129ff57f7",
-  "activeVersionId": null,
-  "triggerCount": 0,
+  "pinData": {},
+  "versionId": "effe3048-5324-4102-90a8-21fe2b37074b",
+  "activeVersionId": "effe3048-5324-4102-90a8-21fe2b37074b",
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2025-12-13T13:57:26.760Z",
@@ -161,6 +161,150 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": null,
+  "activeVersion": {
+    "updatedAt": "2025-12-14T00:54:48.736Z",
+    "createdAt": "2025-12-14T00:54:48.736Z",
+    "versionId": "effe3048-5324-4102-90a8-21fe2b37074b",
+    "workflowId": "lWCzjxQXrpNAC2Lv",
+    "nodes": [
+      {
+        "parameters": {
+          "path": "client-list",
+          "responseMode": "responseNode",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            }
+          }
+        },
+        "id": "webhook-list",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          272,
+          304
+        ],
+        "webhookId": "client-list"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract just the fields needed for the dropdown\nconst clients = $input.all().map(item => ({\n  clientId: item.json.clientId,\n  businessName: item.json.businessName,\n  industry: item.json.industry,\n  primaryContactName: item.json.primaryContactName,\n  timestamp: item.json.timestamp\n}));\n\n// Sort by most recent first\nclients.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));\n\nreturn { json: { clients } };"
+        },
+        "id": "format-list",
+        "name": "Format Client List",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          704,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-list",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          928,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Submissions",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "230ae56c-f6fb-48f4-b0ed-06618a37ef7d",
+        "name": "Read All Clients",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "position": [
+          496,
+          304
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "9WK1ZemzeOSj1j4A",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Read All Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Client List": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read All Clients": {
+        "main": [
+          [
+            {
+              "node": "Format Client List",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
   "tags": []
 }
