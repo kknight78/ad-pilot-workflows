@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T19:44:52.467Z",
+  "updatedAt": "2025-12-14T00:45:52.943Z",
   "createdAt": "2025-12-13T13:57:20.492Z",
   "id": "kvUtPMGwe1cr8dl1",
   "name": "Backup n8n Workflows to GitHub",
@@ -280,30 +280,6 @@
     },
     {
       "parameters": {
-        "fromEmail": "errors@ad-pilot.ai",
-        "toEmail": "kelly@ad-pilot.ai",
-        "subject": "⚠️ n8n GitHub Backup Failed",
-        "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nCreated: \" + $json.created + \"\\nUpdated: \" + $json.updated + \"\\nUnchanged: \" + $json.unchanged + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        928,
-        16
-      ],
-      "id": "c9c6bb97-4443-4b0a-bef8-b404f342acb8",
-      "name": "Send email",
-      "webhookId": "97015b61-1940-4d68-8f6c-a0e246b9abb4",
-      "credentials": {
-        "smtp": {
-          "id": "shUPF7kLrXLXWHPo",
-          "name": "SMTP account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "// $json is the response from Get Current SHA (GitHub API response)\nconst sha = $json.sha;\nconst githubFilename = $json.name;\nconst githubContentBase64 = $json.content.replace(/\\n/g, ''); \nconst githubContentString = Buffer.from(githubContentBase64, 'base64').toString('utf8'); \n\n// --- Prepare old content (from GitHub) ---\nconst oldWf = JSON.parse(githubContentString);\ndelete oldWf.updatedAt;\ndelete oldWf.createdAt;\ndelete oldWf.versionId; \nconst oldContentClean = JSON.stringify(oldWf);\n\n\n// --- Get and prepare new content (from n8n API) ---\nconst items = $('Needs Update?').all();\nconst match = items.find(i => i.json.filename === githubFilename);\n\nif (!match) {\n  throw new Error('No match for ' + githubFilename);\n}\n\nconst newContentString = match.json.workflow.content;\nconst newWf = JSON.parse(newContentString);\ndelete newWf.updatedAt;\ndelete newWf.createdAt;\ndelete newWf.versionId; \nconst newContentClean = JSON.stringify(newWf);\n\n// Check if content has actually changed (excluding dynamic fields)\nconst contentHasChanged = newContentClean !== oldContentClean;\n\n// Return the required data, including the fresh SHA and the comparison result\nreturn {\n  json: {\n    sha: sha,\n    filename: githubFilename,\n    workflow: match.json.workflow,\n    // This will now be FALSE if only timestamps changed\n    needs_update: contentHasChanged, \n  }\n};"
       },
@@ -363,6 +339,32 @@
       ],
       "id": "c5dc8ca3-ae2b-4a13-8365-211a7c66023f",
       "name": "If1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"errors@ad-pilot.ai\",\n  \"to\": \"kelly@ad-pilot.ai\", \n  \"subject\": \"⚠️ n8n GitHub Backup Failed\",\n  \"html\": \"GitHub backup workflow encountered errors:<br/><br/>Total workflows: {{ $json.total }}<br/>Created: {{ $json.created }}<br/>Updated: {{ $json.updated }}<br/>Unchanged: {{ $json.unchanged }}<br/>Failed: {{ $json.failures }}<br/><br/>Failed workflows:<br/>{{ $json.failedWorkflows.join('<br/>') }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        928,
+        16
+      ],
+      "id": "2497f8ea-debd-4eaa-9695-dc07c5366636",
+      "name": "Email Errors",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
     }
   ],
   "connections": {
@@ -488,7 +490,7 @@
       "main": [
         [
           {
-            "node": "Send email",
+            "node": "Email Errors",
             "type": "main",
             "index": 0
           }
@@ -544,8 +546,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "cced0c0e-32cf-4a42-a9c0-06503f07d862",
-  "activeVersionId": "cced0c0e-32cf-4a42-a9c0-06503f07d862",
+  "versionId": "6393a3c8-3f92-46ff-b090-311a6b6b29da",
+  "activeVersionId": "6393a3c8-3f92-46ff-b090-311a6b6b29da",
   "triggerCount": 1,
   "shared": [
     {
@@ -557,9 +559,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-13T19:44:52.469Z",
-    "createdAt": "2025-12-13T19:44:52.469Z",
-    "versionId": "cced0c0e-32cf-4a42-a9c0-06503f07d862",
+    "updatedAt": "2025-12-14T00:45:52.946Z",
+    "createdAt": "2025-12-14T00:45:52.946Z",
+    "versionId": "6393a3c8-3f92-46ff-b090-311a6b6b29da",
     "workflowId": "kvUtPMGwe1cr8dl1",
     "nodes": [
       {
@@ -836,30 +838,6 @@
       },
       {
         "parameters": {
-          "fromEmail": "errors@ad-pilot.ai",
-          "toEmail": "kelly@ad-pilot.ai",
-          "subject": "⚠️ n8n GitHub Backup Failed",
-          "html": "={{ \"GitHub backup workflow encountered errors:\\n\\nTotal workflows: \" + $json.total + \"\\nCreated: \" + $json.created + \"\\nUpdated: \" + $json.updated + \"\\nUnchanged: \" + $json.unchanged + \"\\nFailed: \" + $json.failures + \"\\n\\nFailed workflows:\\n\" + $json.failedWorkflows.join('\\n') + \"\\n\\nCheck n8n executions: https://kelly-ads.app.n8n.cloud/\" }}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.emailSend",
-        "typeVersion": 2.1,
-        "position": [
-          928,
-          16
-        ],
-        "id": "c9c6bb97-4443-4b0a-bef8-b404f342acb8",
-        "name": "Send email",
-        "webhookId": "97015b61-1940-4d68-8f6c-a0e246b9abb4",
-        "credentials": {
-          "smtp": {
-            "id": "shUPF7kLrXLXWHPo",
-            "name": "SMTP account"
-          }
-        }
-      },
-      {
-        "parameters": {
           "mode": "runOnceForEachItem",
           "jsCode": "// $json is the response from Get Current SHA (GitHub API response)\nconst sha = $json.sha;\nconst githubFilename = $json.name;\nconst githubContentBase64 = $json.content.replace(/\\n/g, ''); \nconst githubContentString = Buffer.from(githubContentBase64, 'base64').toString('utf8'); \n\n// --- Prepare old content (from GitHub) ---\nconst oldWf = JSON.parse(githubContentString);\ndelete oldWf.updatedAt;\ndelete oldWf.createdAt;\ndelete oldWf.versionId; \nconst oldContentClean = JSON.stringify(oldWf);\n\n\n// --- Get and prepare new content (from n8n API) ---\nconst items = $('Needs Update?').all();\nconst match = items.find(i => i.json.filename === githubFilename);\n\nif (!match) {\n  throw new Error('No match for ' + githubFilename);\n}\n\nconst newContentString = match.json.workflow.content;\nconst newWf = JSON.parse(newContentString);\ndelete newWf.updatedAt;\ndelete newWf.createdAt;\ndelete newWf.versionId; \nconst newContentClean = JSON.stringify(newWf);\n\n// Check if content has actually changed (excluding dynamic fields)\nconst contentHasChanged = newContentClean !== oldContentClean;\n\n// Return the required data, including the fresh SHA and the comparison result\nreturn {\n  json: {\n    sha: sha,\n    filename: githubFilename,\n    workflow: match.json.workflow,\n    // This will now be FALSE if only timestamps changed\n    needs_update: contentHasChanged, \n  }\n};"
         },
@@ -919,6 +897,32 @@
         ],
         "id": "c5dc8ca3-ae2b-4a13-8365-211a7c66023f",
         "name": "If1"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"errors@ad-pilot.ai\",\n  \"to\": \"kelly@ad-pilot.ai\", \n  \"subject\": \"⚠️ n8n GitHub Backup Failed\",\n  \"html\": \"GitHub backup workflow encountered errors:<br/><br/>Total workflows: {{ $json.total }}<br/>Created: {{ $json.created }}<br/>Updated: {{ $json.updated }}<br/>Unchanged: {{ $json.unchanged }}<br/>Failed: {{ $json.failures }}<br/><br/>Failed workflows:<br/>{{ $json.failedWorkflows.join('<br/>') }}\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          928,
+          16
+        ],
+        "id": "2497f8ea-debd-4eaa-9695-dc07c5366636",
+        "name": "Email Errors",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
       }
     ],
     "connections": {
@@ -1044,7 +1048,7 @@
         "main": [
           [
             {
-              "node": "Send email",
+              "node": "Email Errors",
               "type": "main",
               "index": 0
             }
