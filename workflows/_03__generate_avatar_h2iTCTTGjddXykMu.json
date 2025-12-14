@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T13:57:30.021Z",
+  "updatedAt": "2025-12-14T00:44:58.532Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -40,7 +40,7 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        -336,
+        -320,
         1600
       ],
       "id": "45663354-74b7-458a-a21d-75d959756395",
@@ -166,30 +166,6 @@
       ],
       "id": "592a02ca-c6fe-45dd-bc03-34f39640c1c1",
       "name": "If: Needs Section Timings"
-    },
-    {
-      "parameters": {
-        "fromEmail": "errors@ad-pilot.ai",
-        "toEmail": "kelly@ad-pilot.ai",
-        "subject": "=🚨 Avatar Generation Failed - {{ $json.nodeName }}",
-        "html": "={{ \"⚠️ Create Avatar Video Workflow Error\\n\\n\" +\n\"Failed Node: \" + $json.nodeName + \"\\n\" +\n\"Error: \" + $json.errorMessage + \"\\n\\n\" +\n\"Time: \" + $json.timestamp + \"\\n\\n\" +\n\"Check n8n: https://kelly-ads.app.n8n.cloud/\" }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        -464,
-        1600
-      ],
-      "id": "388cb3e1-b5d4-408a-adff-25ac9da4c94b",
-      "name": "Send Email",
-      "webhookId": "f0d4ff60-459c-4285-80e3-063a8a76c8da",
-      "credentials": {
-        "smtp": {
-          "id": "5HPC3NyTgaxCbH6e",
-          "name": "SMTP account"
-        }
-      }
     },
     {
       "parameters": {
@@ -430,7 +406,7 @@
       "name": "API: HeyGen, TTS",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "0TuQVmfBK1fbl1lq",
+          "id": "vHwnmobM8C8U7vIZ",
           "name": "HeyGen"
         }
       },
@@ -496,6 +472,32 @@
       ],
       "id": "955525c5-cc38-4013-884a-cfde3417c6b6",
       "name": "If: Test, Skip TTS"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"errors@ad-pilot.ai\",\n  \"to\": \"kelly@ad-pilot.ai\", \n  \"subject\": \"🚨 Avatar Generation Failed - {{ $json.nodeName }}\",\n  \"html\": \"⚠️ Avatar Creation Workflow Error<br/><br/>Failed Node: {{ $json.nodeName }}<br/>Error: {{ $json.errorMessage }}<br/><br/>Time: {{ $json.timestamp }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -448,
+        1600
+      ],
+      "id": "28e143cd-3552-49d4-91ed-87b254e5a9f3",
+      "name": "Email Errors",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
     }
   ],
   "connections": {
@@ -514,7 +516,7 @@
       "main": [
         [
           {
-            "node": "Send Email",
+            "node": "Email Errors",
             "type": "main",
             "index": 0
           }
@@ -555,17 +557,6 @@
         [
           {
             "node": "Aggregate: Configs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send Email": {
-      "main": [
-        [
-          {
-            "node": "Stop and Error",
             "type": "main",
             "index": 0
           }
@@ -761,6 +752,17 @@
           }
         ]
       ]
+    },
+    "Email Errors": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -770,8 +772,8 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "a1860909-dd1e-4222-a2d0-073841524331",
+  "pinData": {},
+  "versionId": "73c6900f-69f6-4698-8247-4648b15c7b15",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
