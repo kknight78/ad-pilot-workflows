@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T17:48:58.455Z",
+  "updatedAt": "2025-12-14T00:41:33.789Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -131,65 +131,12 @@
     },
     {
       "parameters": {
-        "sendTo": "=kellyraeknight78@gmail.com, {{ $json.email}}",
-        "subject": "Your Video is Ready! 🎬",
-        "message": "=<p>Great news! Your video has been generated.</p>\n<br/>\n<p>Template ID: {{ $json.template_id }}\n<p>Theme: {{ $json.theme }}</p>\n<p>Duration: {{ $json.video_duration }} seconds</p>\n<br/>\n<p><strong><a href=\"{{ $json.final_video_url }}\" style=\"background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;\">📥 View Video</a></strong></p>\n<p>After you've viewed the video, if you want to publish it, come back to this email and click the Publish button below.</p>\n<p><strong><a href=\"https://kelly-ads.app.n8n.cloud/webhook/approve-and-post?video_url={{ $json.final_video_url }}&caption=🚗 Capitol Car Credit 📍 125 N. Century Blvd, Rantoul, IL 61866 📞 217-893-8232 🌐 CCRantoul.com - Ask for SHAD and mention you saw this on {{$json.platform}}! 💯\" style=\"background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;\">📘 Post to {{$json.platform}}</a></strong></p>\n\n<p>Thank you for using Ad Pilot!</p>",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
-      "position": [
-        1152,
-        208
-      ],
-      "id": "35fbca4b-a233-4c59-8c1b-f1186216a460",
-      "name": "Send a Message",
-      "webhookId": "16607c54-e38b-4155-917a-6037fc3ed622",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "eohLHC3Bquj0VHuG",
-          "name": "Gmail account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "ys6T0zekEc0aLbvS",
+          "value": "gM6DTZfNbcSofqQO",
           "mode": "list",
-          "cachedResultUrl": "/workflow/ys6T0zekEc0aLbvS",
+          "cachedResultUrl": "/workflow/gM6DTZfNbcSofqQO",
           "cachedResultName": "[02] Generate Script"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [
-            "videoConfig"
-          ],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        352,
-        208
-      ],
-      "id": "68a86824-5ac2-4ee8-a48a-50ecebb1ebc6",
-      "name": "Call '[02] Generate Script'"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "bH8RmQxbIUXI78cK",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/bH8RmQxbIUXI78cK",
-          "cachedResultName": "[03] Generate Avatar"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -204,38 +151,11 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        592,
+        352,
         208
       ],
-      "id": "75d87af5-0d78-4892-b57b-fb183ea9839e",
-      "name": "Call '[03] Generate Avatar'"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "Z36Cd1XZSVbd1bC3",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/Z36Cd1XZSVbd1bC3",
-          "cachedResultName": "[04] Ad generation core"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {}
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        816,
-        208
-      ],
-      "id": "7255d01e-fe26-4c30-ab97-0ba351f81aa7",
-      "name": "Call 'Generate Video'",
-      "alwaysOutputData": true
+      "id": "68a86824-5ac2-4ee8-a48a-50ecebb1ebc6",
+      "name": "Call '[02] Generate Script'"
     },
     {
       "parameters": {
@@ -466,15 +386,100 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        1312,
+        1328,
         208
       ],
       "id": "62ae39ab-9a13-4b27-b515-b3f1ed431a13",
       "name": "Update Job Complete",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "g3qdIZMDD4wzQ69l",
+          "id": "9WK1ZemzeOSj1j4A",
           "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "h2iTCTTGjddXykMu",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/h2iTCTTGjddXykMu",
+          "cachedResultName": "[03] Generate Avatar"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        208
+      ],
+      "id": "75d87af5-0d78-4892-b57b-fb183ea9839e",
+      "name": "Call '[03] Generate Avatar'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "FOQ8foX33kSuaZEJ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/FOQ8foX33kSuaZEJ",
+          "cachedResultName": "[04] Generate Video"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        208
+      ],
+      "id": "7255d01e-fe26-4c30-ab97-0ba351f81aa7",
+      "name": "Call '[04] Generate Video'",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"kellyraeknight78@gmail.com, {{ $json.email }}\",\n  \"subject\": \"Your Video is Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video has been generated.</p><br/><p>Template ID: {{ $json.template_id }}</p><p>Theme: {{ $json.theme }}</p><p>Duration: {{ $json.video_duration }} seconds</p><br/><p><strong><a href='{{ $json.final_video_url }}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;'>🎬 View Video</a></strong></p>\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1168,
+        208
+      ],
+      "id": "1cf6849d-4548-4a44-9763-b485c720afc3",
+      "name": "Send Video Email",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
         }
       }
     }
@@ -484,7 +489,7 @@
       "main": [
         [
           {
-            "node": "Send a Message",
+            "node": "Send Video Email",
             "type": "main",
             "index": 0
           }
@@ -513,44 +518,11 @@
         ]
       ]
     },
-    "Send a Message": {
-      "main": [
-        [
-          {
-            "node": "Update Job Complete",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Call '[02] Generate Script'": {
       "main": [
         [
           {
             "node": "If: Script Preview Mode",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call '[03] Generate Avatar'": {
-      "main": [
-        [
-          {
-            "node": "Call 'Generate Video'",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call 'Generate Video'": {
-      "main": [
-        [
-          {
-            "node": "Format Response",
             "type": "main",
             "index": 0
           }
@@ -596,6 +568,39 @@
           }
         ]
       ]
+    },
+    "Call '[03] Generate Avatar'": {
+      "main": [
+        [
+          {
+            "node": "Call '[04] Generate Video'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[04] Generate Video'": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Video Email": {
+      "main": [
+        [
+          {
+            "node": "Update Job Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -605,9 +610,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "228e046d-47b5-475a-a28e-d931ffb984b5",
-  "activeVersionId": "228e046d-47b5-475a-a28e-d931ffb984b5",
+  "pinData": {},
+  "versionId": "dacbecc3-0744-4f6e-be13-9388049fc649",
+  "activeVersionId": "dacbecc3-0744-4f6e-be13-9388049fc649",
   "triggerCount": 1,
   "shared": [
     {
@@ -619,9 +624,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-13T13:57:29.229Z",
-    "createdAt": "2025-12-13T13:57:29.229Z",
-    "versionId": "228e046d-47b5-475a-a28e-d931ffb984b5",
+    "updatedAt": "2025-12-14T00:41:33.791Z",
+    "createdAt": "2025-12-14T00:41:33.791Z",
+    "versionId": "dacbecc3-0744-4f6e-be13-9388049fc649",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -749,65 +754,12 @@
       },
       {
         "parameters": {
-          "sendTo": "=kellyraeknight78@gmail.com, {{ $json.email}}",
-          "subject": "Your Video is Ready! 🎬",
-          "message": "=<p>Great news! Your video has been generated.</p>\n<br/>\n<p>Template ID: {{ $json.template_id }}\n<p>Theme: {{ $json.theme }}</p>\n<p>Duration: {{ $json.video_duration }} seconds</p>\n<br/>\n<p><strong><a href=\"{{ $json.final_video_url }}\" style=\"background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;\">📥 View Video</a></strong></p>\n<p>After you've viewed the video, if you want to publish it, come back to this email and click the Publish button below.</p>\n<p><strong><a href=\"https://kelly-ads.app.n8n.cloud/webhook/approve-and-post?video_url={{ $json.final_video_url }}&caption=🚗 Capitol Car Credit 📍 125 N. Century Blvd, Rantoul, IL 61866 📞 217-893-8232 🌐 CCRantoul.com - Ask for SHAD and mention you saw this on {{$json.platform}}! 💯\" style=\"background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;\">📘 Post to {{$json.platform}}</a></strong></p>\n\n<p>Thank you for using Ad Pilot!</p>",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.gmail",
-        "typeVersion": 2.1,
-        "position": [
-          1152,
-          208
-        ],
-        "id": "35fbca4b-a233-4c59-8c1b-f1186216a460",
-        "name": "Send a Message",
-        "webhookId": "16607c54-e38b-4155-917a-6037fc3ed622",
-        "credentials": {
-          "gmailOAuth2": {
-            "id": "eohLHC3Bquj0VHuG",
-            "name": "Gmail account"
-          }
-        }
-      },
-      {
-        "parameters": {
           "workflowId": {
             "__rl": true,
-            "value": "ys6T0zekEc0aLbvS",
+            "value": "gM6DTZfNbcSofqQO",
             "mode": "list",
-            "cachedResultUrl": "/workflow/ys6T0zekEc0aLbvS",
+            "cachedResultUrl": "/workflow/gM6DTZfNbcSofqQO",
             "cachedResultName": "[02] Generate Script"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [
-              "videoConfig"
-            ],
-            "schema": [],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.2,
-        "position": [
-          352,
-          208
-        ],
-        "id": "68a86824-5ac2-4ee8-a48a-50ecebb1ebc6",
-        "name": "Call '[02] Generate Script'"
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "bH8RmQxbIUXI78cK",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/bH8RmQxbIUXI78cK",
-            "cachedResultName": "[03] Generate Avatar"
           },
           "workflowInputs": {
             "mappingMode": "defineBelow",
@@ -822,38 +774,11 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          592,
+          352,
           208
         ],
-        "id": "75d87af5-0d78-4892-b57b-fb183ea9839e",
-        "name": "Call '[03] Generate Avatar'"
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "Z36Cd1XZSVbd1bC3",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/Z36Cd1XZSVbd1bC3",
-            "cachedResultName": "[04] Ad generation core"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {}
-          },
-          "options": {
-            "waitForSubWorkflow": true
-          }
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.2,
-        "position": [
-          816,
-          208
-        ],
-        "id": "7255d01e-fe26-4c30-ab97-0ba351f81aa7",
-        "name": "Call 'Generate Video'",
-        "alwaysOutputData": true
+        "id": "68a86824-5ac2-4ee8-a48a-50ecebb1ebc6",
+        "name": "Call '[02] Generate Script'"
       },
       {
         "parameters": {
@@ -1084,15 +1009,100 @@
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
         "position": [
-          1312,
+          1328,
           208
         ],
         "id": "62ae39ab-9a13-4b27-b515-b3f1ed431a13",
         "name": "Update Job Complete",
         "credentials": {
           "googleSheetsOAuth2Api": {
-            "id": "g3qdIZMDD4wzQ69l",
+            "id": "9WK1ZemzeOSj1j4A",
             "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "h2iTCTTGjddXykMu",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/h2iTCTTGjddXykMu",
+            "cachedResultName": "[03] Generate Avatar"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          592,
+          208
+        ],
+        "id": "75d87af5-0d78-4892-b57b-fb183ea9839e",
+        "name": "Call '[03] Generate Avatar'"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "FOQ8foX33kSuaZEJ",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/FOQ8foX33kSuaZEJ",
+            "cachedResultName": "[04] Generate Video"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {
+            "waitForSubWorkflow": true
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          816,
+          208
+        ],
+        "id": "7255d01e-fe26-4c30-ab97-0ba351f81aa7",
+        "name": "Call '[04] Generate Video'",
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"kellyraeknight78@gmail.com, {{ $json.email }}\",\n  \"subject\": \"Your Video is Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video has been generated.</p><br/><p>Template ID: {{ $json.template_id }}</p><p>Theme: {{ $json.theme }}</p><p>Duration: {{ $json.video_duration }} seconds</p><br/><p><strong><a href='{{ $json.final_video_url }}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;'>🎬 View Video</a></strong></p>\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1168,
+          208
+        ],
+        "id": "1cf6849d-4548-4a44-9763-b485c720afc3",
+        "name": "Send Video Email",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
           }
         }
       }
@@ -1102,7 +1112,7 @@
         "main": [
           [
             {
-              "node": "Send a Message",
+              "node": "Send Video Email",
               "type": "main",
               "index": 0
             }
@@ -1131,44 +1141,11 @@
           ]
         ]
       },
-      "Send a Message": {
-        "main": [
-          [
-            {
-              "node": "Update Job Complete",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Call '[02] Generate Script'": {
         "main": [
           [
             {
               "node": "If: Script Preview Mode",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Call '[03] Generate Avatar'": {
-        "main": [
-          [
-            {
-              "node": "Call 'Generate Video'",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Call 'Generate Video'": {
-        "main": [
-          [
-            {
-              "node": "Format Response",
               "type": "main",
               "index": 0
             }
@@ -1209,6 +1186,39 @@
           [
             {
               "node": "Respond to Webhook - No Script Preview",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call '[03] Generate Avatar'": {
+        "main": [
+          [
+            {
+              "node": "Call '[04] Generate Video'",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call '[04] Generate Video'": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Video Email": {
+        "main": [
+          [
+            {
+              "node": "Update Job Complete",
               "type": "main",
               "index": 0
             }
