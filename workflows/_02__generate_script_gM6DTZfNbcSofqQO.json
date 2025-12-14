@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T13:57:36.843Z",
+  "updatedAt": "2025-12-14T00:42:46.110Z",
   "createdAt": "2025-12-13T13:57:36.843Z",
   "id": "gM6DTZfNbcSofqQO",
   "name": "[02] Generate Script",
@@ -96,30 +96,6 @@
       ],
       "id": "71098943-07f6-42e5-b720-c456d85b47d8",
       "name": "Build Script Prompt TEMP_002"
-    },
-    {
-      "parameters": {
-        "fromEmail": "errors@ad-pilot.ai",
-        "toEmail": "kelly@ad-pilot.ai",
-        "subject": "=🚨 Script Generation Failed - {{ $json.nodeName }}",
-        "html": "={{ \"⚠️ Script Creation Workflow Error\\n\\n\" +\n\"Failed Node: \" + $json.nodeName + \"\\n\" +\n\"Error: \" + $json.errorMessage + \"\\n\\n\" +\n\"Time: \" + $json.timestamp + \"\\n\\n\" +\n\"Check n8n: https://kelly-ads.app.n8n.cloud/\" }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        4112,
-        384
-      ],
-      "id": "4d2f7a92-e722-44e3-9ea8-b728e46b0a9e",
-      "name": "Send email",
-      "webhookId": "27de60f3-eff1-498a-940f-588e35c432f2",
-      "credentials": {
-        "smtp": {
-          "id": "5HPC3NyTgaxCbH6e",
-          "name": "SMTP account"
-        }
-      }
     },
     {
       "parameters": {
@@ -505,7 +481,7 @@
           "name": "VideoBGRemover"
         },
         "anthropicApi": {
-          "id": "zeHBwJZlhd7vKOA9",
+          "id": "lw8bFQVznfoHFIjD",
           "name": "Anthropic account"
         }
       }
@@ -515,7 +491,9 @@
         "documentId": {
           "__rl": true,
           "value": "1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4",
-          "mode": "id"
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
@@ -536,8 +514,8 @@
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "MmkEFg1TuHDH32HZ",
-          "name": "Google Sheets account 2"
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
         }
       }
     },
@@ -578,7 +556,7 @@
       "name": "API: Claude, Feature Identification",
       "credentials": {
         "anthropicApi": {
-          "id": "zeHBwJZlhd7vKOA9",
+          "id": "lw8bFQVznfoHFIjD",
           "name": "Anthropic account"
         }
       },
@@ -732,7 +710,7 @@
       ],
       "credentials": {
         "anthropicApi": {
-          "id": "zeHBwJZlhd7vKOA9",
+          "id": "lw8bFQVznfoHFIjD",
           "name": "Anthropic account"
         }
       },
@@ -878,11 +856,37 @@
       "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "g3qdIZMDD4wzQ69l",
+          "id": "9WK1ZemzeOSj1j4A",
           "name": "Google Sheets account"
         }
       },
       "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"errors@ad-pilot.ai\",\n  \"to\": \"kelly@ad-pilot.ai\", \n  \"subject\": \"🚨 Script Generation Failed - {{ $json.nodeName }}\",\n  \"html\": \"⚠️ Script Creation Workflow Error<br/><br/>Failed Node: {{ $json.nodeName }}<br/>Error: {{ $json.errorMessage }}<br/><br/>Time: {{ $json.timestamp }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4112,
+        384
+      ],
+      "id": "3e285710-08c8-44c7-abd1-aa2e58876212",
+      "name": "Email Errors",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
     }
   ],
   "connections": {
@@ -963,17 +967,6 @@
         ]
       ]
     },
-    "Send email": {
-      "main": [
-        [
-          {
-            "node": "Stop and Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Build Script Prompt TEMP_003": {
       "main": [
         [
@@ -1022,7 +1015,7 @@
       "main": [
         [
           {
-            "node": "Send email",
+            "node": "Email Errors",
             "type": "main",
             "index": 0
           }
@@ -1372,6 +1365,17 @@
           }
         ]
       ]
+    },
+    "Email Errors": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1381,8 +1385,8 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "215eaf7a-3799-4e15-88b2-b7ba9ff5bd5b",
+  "pinData": {},
+  "versionId": "3255f1f0-a00b-4957-9a2b-5904809aa3c1",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
