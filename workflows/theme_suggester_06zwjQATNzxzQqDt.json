@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2025-12-13T13:57:35.713Z",
+  "updatedAt": "2025-12-13T22:10:14.200Z",
   "createdAt": "2025-12-13T13:57:35.713Z",
   "id": "06zwjQATNzxzQqDt",
   "name": "Theme Suggester",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -248,8 +248,8 @@
   "meta": null,
   "pinData": null,
   "versionId": "ae32bc51-23c4-4fcb-8ea3-5c6a834d4497",
-  "activeVersionId": null,
-  "triggerCount": 0,
+  "activeVersionId": "ae32bc51-23c4-4fcb-8ea3-5c6a834d4497",
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2025-12-13T13:57:35.713Z",
@@ -259,6 +259,248 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": null,
+  "activeVersion": {
+    "updatedAt": "2025-12-13T13:57:35.733Z",
+    "createdAt": "2025-12-13T13:57:35.733Z",
+    "versionId": "ae32bc51-23c4-4fcb-8ea3-5c6a834d4497",
+    "workflowId": "06zwjQATNzxzQqDt",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "theme-suggest",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-node",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1.1,
+        "position": [
+          208,
+          208
+        ],
+        "webhookId": "theme-suggest"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "client_id",
+                "name": "client_id",
+                "value": "={{ $json.body.client_id || 'ccc' }}",
+                "type": "string"
+              },
+              {
+                "id": "location",
+                "name": "location",
+                "value": "={{ $json.body.location || 'Rantoul, IL' }}",
+                "type": "string"
+              },
+              {
+                "id": "current_date",
+                "name": "current_date",
+                "value": "={{ $now.format('MMMM d, yyyy') }}",
+                "type": "string"
+              },
+              {
+                "id": "current_month",
+                "name": "current_month",
+                "value": "={{ $now.format('MMMM') }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "parse-request",
+        "name": "Parse Request",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.3,
+        "position": [
+          400,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "prompt",
+                "name": "prompt",
+                "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "build-prompt",
+        "name": "Build Prompt",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.3,
+        "position": [
+          608,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "AIzaSyBFB8rHuBXVA3xPyWat-_vOoq30EP3-0io"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "contents[0].parts[0].text",
+                "value": "={{ $json.prompt }}"
+              },
+              {
+                "name": "generationConfig.temperature",
+                "value": "0.9"
+              },
+              {
+                "name": "generationConfig.maxOutputTokens",
+                "value": "1024"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "gemini-api",
+        "name": "Gemini API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          800,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON\nlet themes;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  const parsed = JSON.parse(cleanedResponse);\n  themes = parsed.themes || parsed;\n  \n  // Validate structure\n  if (!Array.isArray(themes)) {\n    throw new Error('Response is not an array');\n  }\n  \n  // Ensure each theme has required fields\n  themes = themes.map((theme, index) => ({\n    name: theme.name || `Theme ${index + 1}`,\n    emoji: theme.emoji || '🚗',\n    hook_example: theme.hook_example || theme.hook || 'Check out our latest deals!',\n    why: theme.why || theme.reason || 'Great for engagement'\n  }));\n  \n} catch (error) {\n  // Fallback themes if parsing fails\n  themes = [\n    {\n      name: \"Winter Weather Ready\",\n      emoji: \"❄️\",\n      hook_example: \"Is your car ready for winter? Here's what you need to know!\",\n      why: \"Seasonal relevance - winter driving concerns\"\n    },\n    {\n      name: \"Year-End Savings\",\n      emoji: \"💰\",\n      hook_example: \"Don't miss our year-end deals before they're gone!\",\n      why: \"End of year is prime time for car buying\"\n    },\n    {\n      name: \"Reliable Family Vehicles\",\n      emoji: \"👨‍👩‍👧‍👦\",\n      hook_example: \"Looking for a car the whole family will love?\",\n      why: \"Evergreen theme - families always need reliable vehicles\"\n    },\n    {\n      name: \"Easy Financing Options\",\n      emoji: \"✅\",\n      hook_example: \"Bad credit? No credit? No problem - here's how we can help.\",\n      why: \"Financing is a top concern for car buyers\"\n    },\n    {\n      name: \"Trade-In Value\",\n      emoji: \"🔄\",\n      hook_example: \"Your old car might be worth more than you think!\",\n      why: \"Trade-ins are a key part of the car buying process\"\n    }\n  ];\n}\n\nreturn { themes };"
+        },
+        "id": "parse-response",
+        "name": "Parse Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1008,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { success: true, themes: $json.themes } }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                },
+                {
+                  "name": "Cache-Control",
+                  "value": "no-cache, no-store, must-revalidate"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-success",
+        "name": "Respond Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          208
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Parse Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Request": {
+        "main": [
+          [
+            {
+              "node": "Build Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Prompt": {
+        "main": [
+          [
+            {
+              "node": "Gemini API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini API": {
+        "main": [
+          [
+            {
+              "node": "Parse Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Response": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
   "tags": []
 }
