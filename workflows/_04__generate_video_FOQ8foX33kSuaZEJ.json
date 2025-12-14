@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T13:57:28.375Z",
+  "updatedAt": "2025-12-14T00:44:37.891Z",
   "createdAt": "2025-12-13T13:57:28.375Z",
   "id": "FOQ8foX33kSuaZEJ",
   "name": "[04] Generate Video",
@@ -32,30 +32,6 @@
       "id": "558fb222-cacc-4087-a229-4aa997b6777a",
       "name": "Wait for Render",
       "webhookId": "d49effb0-de50-4354-ac9b-59098b0af43f"
-    },
-    {
-      "parameters": {
-        "fromEmail": "errors@ad-pilot.ai",
-        "toEmail": "kelly@ad-pilot.ai",
-        "subject": "=🚨 Ad Generation Failed - {{ $json.nodeName }}",
-        "html": "={{ \"Ad Generation Core Workflow Error\\n\\n\" +\n\"Failed Node: \" + $json.nodeName + \"\\n\" +\n\"Error: \" + $json.errorMessage + \"\\n\\n\" +\n\"Time: \" + $json.timestamp + \"\\n\\n\" +\n\"Check n8n: https://kelly-ads.app.n8n.cloud/\" }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        960,
-        -96
-      ],
-      "id": "bcffc68b-5f47-473e-90ac-26af6e7248b4",
-      "name": "Alert: Gen Core Node Failed",
-      "webhookId": "f80ac84f-028a-4203-8d71-de5543ba2cbd",
-      "credentials": {
-        "smtp": {
-          "id": "5HPC3NyTgaxCbH6e",
-          "name": "SMTP account"
-        }
-      }
     },
     {
       "parameters": {
@@ -444,6 +420,32 @@
       ],
       "id": "unified-build-template-json",
       "name": "Build Template JSON"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"errors@ad-pilot.ai\",\n  \"to\": \"kelly@ad-pilot.ai\", \n  \"subject\": \"🚨 Video Generation Failed - {{ $json.nodeName }}\",\n  \"html\": \"⚠️ Video Creation Workflow Error<br/><br/>Failed Node: {{ $json.nodeName }}<br/>Error: {{ $json.errorMessage }}<br/><br/>Time: {{ $json.timestamp }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        960,
+        -96
+      ],
+      "id": "5806628c-bf99-4c78-b44e-e563d2f56a37",
+      "name": "Email Errors",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
     }
   ],
   "connections": {
@@ -463,17 +465,6 @@
         [
           {
             "node": "API: Creatomate, Check Status",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Alert: Gen Core Node Failed": {
-      "main": [
-        [
-          {
-            "node": "Stop and Error",
             "type": "main",
             "index": 0
           }
@@ -517,7 +508,7 @@
       "main": [
         [
           {
-            "node": "Alert: Gen Core Node Failed",
+            "node": "Email Errors",
             "type": "main",
             "index": 0
           }
@@ -709,6 +700,17 @@
           }
         ]
       ]
+    },
+    "Email Errors": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -718,8 +720,8 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "05283ce9-c157-40b7-a74d-c63441879904",
+  "pinData": {},
+  "versionId": "887e0ce9-e3c1-4d15-ac82-979cc4e25265",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
