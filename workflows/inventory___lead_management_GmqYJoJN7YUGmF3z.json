@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T00:04:33.371Z",
+  "updatedAt": "2025-12-14T11:03:28.481Z",
   "createdAt": "2025-12-13T13:57:23.566Z",
   "id": "GmqYJoJN7YUGmF3z",
   "name": "Inventory & Lead Management",
@@ -93,7 +93,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "position": [
         -224,
-        -144
+        -224
       ],
       "typeVersion": 1,
       "id": "2cfbda23-d08d-43c4-9b8b-d0d57bd7c553",
@@ -762,8 +762,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "419fa4c8-a7c5-4131-b9f1-2ba8fe54d7e6",
-  "activeVersionId": "419fa4c8-a7c5-4131-b9f1-2ba8fe54d7e6",
+  "versionId": "4141f283-1a6b-4a46-9010-f63e2f88870a",
+  "activeVersionId": "4141f283-1a6b-4a46-9010-f63e2f88870a",
   "triggerCount": 1,
   "shared": [
     {
@@ -775,9 +775,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-14T00:04:33.374Z",
-    "createdAt": "2025-12-14T00:04:33.374Z",
-    "versionId": "419fa4c8-a7c5-4131-b9f1-2ba8fe54d7e6",
+    "updatedAt": "2025-12-14T11:03:28.483Z",
+    "createdAt": "2025-12-14T11:03:28.483Z",
+    "versionId": "4141f283-1a6b-4a46-9010-f63e2f88870a",
     "workflowId": "GmqYJoJN7YUGmF3z",
     "nodes": [
       {
@@ -867,7 +867,7 @@
         "type": "n8n-nodes-base.stickyNote",
         "position": [
           -224,
-          -144
+          -224
         ],
         "typeVersion": 1,
         "id": "2cfbda23-d08d-43c4-9b8b-d0d57bd7c553",
