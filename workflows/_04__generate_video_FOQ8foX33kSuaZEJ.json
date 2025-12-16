@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T00:44:37.891Z",
+  "updatedAt": "2025-12-15T20:05:32.912Z",
   "createdAt": "2025-12-13T13:57:28.375Z",
   "id": "FOQ8foX33kSuaZEJ",
   "name": "[04] Generate Video",
@@ -396,7 +396,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Get the VIN from your JSON data\nconst vin = $json.vin;\n\n// Rename the binary file if it exists\nif ($binary.data) {\n  $binary.data.fileName = `${vin}.png`;\n}\n\n// Return everything - preserve ALL your JSON data\nreturn {\n  json: $json,  // This keeps ALL your fields intact\n  binary: $binary\n};"
+        "jsCode": "// Get the VIN from your JSON data\nconst vin = $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file - use $input.item.binary to preserve the actual data\nreturn {\n  json: $json,\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -721,7 +721,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "887e0ce9-e3c1-4d15-ac82-979cc4e25265",
+  "versionId": "3e77ffa6-8778-426d-b608-2e02461a87bb",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
