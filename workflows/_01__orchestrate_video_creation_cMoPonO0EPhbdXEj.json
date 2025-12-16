@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T00:41:33.789Z",
+  "updatedAt": "2025-12-15T16:24:27.621Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -465,7 +465,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"kellyraeknight78@gmail.com, {{ $json.email }}\",\n  \"subject\": \"Your Video is Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video has been generated.</p><br/><p>Template ID: {{ $json.template_id }}</p><p>Theme: {{ $json.theme }}</p><p>Duration: {{ $json.video_duration }} seconds</p><br/><p><strong><a href='{{ $json.final_video_url }}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;'>🎬 View Video</a></strong></p>\"\n}",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your Video is Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video has been generated.</p><br/><p>Template ID: {{ $json.template_id }}</p><p>Theme: {{ $json.theme }}</p><p>Duration: {{ $json.video_duration }} seconds</p><br/><p><strong><a href='{{ $json.final_video_url }}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;'>🎬 View Video</a></strong></p>\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -611,8 +611,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "dacbecc3-0744-4f6e-be13-9388049fc649",
-  "activeVersionId": "dacbecc3-0744-4f6e-be13-9388049fc649",
+  "versionId": "a21a40e2-670c-483f-b1e0-be03262ac2b3",
+  "activeVersionId": "a21a40e2-670c-483f-b1e0-be03262ac2b3",
   "triggerCount": 1,
   "shared": [
     {
@@ -624,9 +624,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-14T00:41:33.791Z",
-    "createdAt": "2025-12-14T00:41:33.791Z",
-    "versionId": "dacbecc3-0744-4f6e-be13-9388049fc649",
+    "updatedAt": "2025-12-15T16:24:27.627Z",
+    "createdAt": "2025-12-15T16:24:27.627Z",
+    "versionId": "a21a40e2-670c-483f-b1e0-be03262ac2b3",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -1088,7 +1088,7 @@
           "genericAuthType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"kellyraeknight78@gmail.com, {{ $json.email }}\",\n  \"subject\": \"Your Video is Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video has been generated.</p><br/><p>Template ID: {{ $json.template_id }}</p><p>Theme: {{ $json.theme }}</p><p>Duration: {{ $json.video_duration }} seconds</p><br/><p><strong><a href='{{ $json.final_video_url }}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;'>🎬 View Video</a></strong></p>\"\n}",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your Video is Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video has been generated.</p><br/><p>Template ID: {{ $json.template_id }}</p><p>Theme: {{ $json.theme }}</p><p>Duration: {{ $json.video_duration }} seconds</p><br/><p><strong><a href='{{ $json.final_video_url }}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;'>🎬 View Video</a></strong></p>\"\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
