@@ -1,0 +1,552 @@
+{
+  "updatedAt": "2025-12-19T01:48:33.836Z",
+  "createdAt": "2025-12-19T01:37:49.969Z",
+  "id": "3MLAcpvKTlDN5g9m",
+  "name": "[06] HeyGen Webhook Receiver",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "heygen-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "webhook-heygen",
+      "name": "Webhook: HeyGen Events",
+      "webhookId": "heygen-webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "OPTIONS",
+        "path": "heygen-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        500
+      ],
+      "id": "webhook-heygen-options",
+      "name": "Webhook: HeyGen OPTIONS",
+      "webhookId": "heygen-webhook-options"
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        500
+      ],
+      "id": "respond-options",
+      "name": "Respond OPTIONS OK"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nconsole.log('HeyGen Webhook received:', eventType, JSON.stringify(eventData));\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        240
+      ],
+      "id": "parse-webhook",
+      "name": "Parse Webhook Event"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-motion-success",
+              "leftValue": "={{ $json.event_type }}",
+              "rightValue": "photo_avatar_add_motion.success",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        240
+      ],
+      "id": "if-motion-success",
+      "name": "If: Motion Success"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.heygen.com/v2/photo_avatar/{{ $json.avatar_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        140
+      ],
+      "id": "get-avatar-details",
+      "name": "API: Get Avatar Details"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst avatarData = response.data || {};\nconst webhookData = $('Parse Webhook Event').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    event_type: webhookData.event_type,\n    avatar_id: avatarData.id,\n    group_id: avatarData.group_id,\n    name: avatarData.name,\n    status: avatarData.status,\n    is_motion: avatarData.is_motion,\n    image_url: avatarData.image_url,\n    motion_preview_url: avatarData.motion_preview_url,\n    default_voice_id: avatarData.default_voice_id,\n    created_at: avatarData.created_at,\n    received_at: webhookData.received_at\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        140
+      ],
+      "id": "extract-avatar-info",
+      "name": "Extract Avatar Info"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id, motion_preview_url: $json.motion_preview_url }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        140
+      ],
+      "id": "respond-success",
+      "name": "Respond Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Event type not handled', event_type: $json.event_type }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        340
+      ],
+      "id": "respond-unhandled",
+      "name": "Respond Unhandled"
+    },
+    {
+      "parameters": {
+        "content": "# HeyGen Webhook Receiver\\n\\nReceives webhook events from HeyGen:\\n- photo_avatar_add_motion.success\\n\\nWhen motion completes, fetches avatar details\\nto get the motion_preview_url that HeyGen\\nautomatically generates.",
+        "height": 180,
+        "width": 300,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        40
+      ],
+      "typeVersion": 1,
+      "id": "sticky-note",
+      "name": "Intro Note"
+    }
+  ],
+  "connections": {
+    "Webhook: HeyGen Events": {
+      "main": [
+        [
+          {
+            "node": "Parse Webhook Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: HeyGen OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond OPTIONS OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Webhook Event": {
+      "main": [
+        [
+          {
+            "node": "If: Motion Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Motion Success": {
+      "main": [
+        [
+          {
+            "node": "API: Get Avatar Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unhandled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Get Avatar Details": {
+      "main": [
+        [
+          {
+            "node": "Extract Avatar Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Avatar Info": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "4acaa62a-3779-4186-9d6a-c2dd80be7599",
+  "activeVersionId": "4acaa62a-3779-4186-9d6a-c2dd80be7599",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2025-12-19T01:37:49.969Z",
+      "createdAt": "2025-12-19T01:37:49.969Z",
+      "role": "workflow:owner",
+      "workflowId": "3MLAcpvKTlDN5g9m",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2025-12-19T01:48:33.838Z",
+    "createdAt": "2025-12-19T01:48:33.838Z",
+    "versionId": "4acaa62a-3779-4186-9d6a-c2dd80be7599",
+    "workflowId": "3MLAcpvKTlDN5g9m",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "heygen-webhook",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          240
+        ],
+        "id": "webhook-heygen",
+        "name": "Webhook: HeyGen Events",
+        "webhookId": "heygen-webhook"
+      },
+      {
+        "parameters": {
+          "httpMethod": "OPTIONS",
+          "path": "heygen-webhook",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          500
+        ],
+        "id": "webhook-heygen-options",
+        "name": "Webhook: HeyGen OPTIONS",
+        "webhookId": "heygen-webhook-options"
+      },
+      {
+        "parameters": {
+          "respondWith": "noData",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          220,
+          500
+        ],
+        "id": "respond-options",
+        "name": "Respond OPTIONS OK"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nconsole.log('HeyGen Webhook received:', eventType, JSON.stringify(eventData));\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          240
+        ],
+        "id": "parse-webhook",
+        "name": "Parse Webhook Event"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-motion-success",
+                "leftValue": "={{ $json.event_type }}",
+                "rightValue": "photo_avatar_add_motion.success",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          440,
+          240
+        ],
+        "id": "if-motion-success",
+        "name": "If: Motion Success"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.heygen.com/v2/photo_avatar/{{ $json.avatar_id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-Api-Key",
+                "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          660,
+          140
+        ],
+        "id": "get-avatar-details",
+        "name": "API: Get Avatar Details"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\nconst avatarData = response.data || {};\nconst webhookData = $('Parse Webhook Event').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    event_type: webhookData.event_type,\n    avatar_id: avatarData.id,\n    group_id: avatarData.group_id,\n    name: avatarData.name,\n    status: avatarData.status,\n    is_motion: avatarData.is_motion,\n    image_url: avatarData.image_url,\n    motion_preview_url: avatarData.motion_preview_url,\n    default_voice_id: avatarData.default_voice_id,\n    created_at: avatarData.created_at,\n    received_at: webhookData.received_at\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          140
+        ],
+        "id": "extract-avatar-info",
+        "name": "Extract Avatar Info"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id, motion_preview_url: $json.motion_preview_url }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1100,
+          140
+        ],
+        "id": "respond-success",
+        "name": "Respond Success"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, message: 'Event type not handled', event_type: $json.event_type }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          660,
+          340
+        ],
+        "id": "respond-unhandled",
+        "name": "Respond Unhandled"
+      },
+      {
+        "parameters": {
+          "content": "# HeyGen Webhook Receiver\\n\\nReceives webhook events from HeyGen:\\n- photo_avatar_add_motion.success\\n\\nWhen motion completes, fetches avatar details\\nto get the motion_preview_url that HeyGen\\nautomatically generates.",
+          "height": 180,
+          "width": 300,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -200,
+          40
+        ],
+        "typeVersion": 1,
+        "id": "sticky-note",
+        "name": "Intro Note"
+      }
+    ],
+    "connections": {
+      "Webhook: HeyGen Events": {
+        "main": [
+          [
+            {
+              "node": "Parse Webhook Event",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: HeyGen OPTIONS": {
+        "main": [
+          [
+            {
+              "node": "Respond OPTIONS OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Webhook Event": {
+        "main": [
+          [
+            {
+              "node": "If: Motion Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Motion Success": {
+        "main": [
+          [
+            {
+              "node": "API: Get Avatar Details",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond Unhandled",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Get Avatar Details": {
+        "main": [
+          [
+            {
+              "node": "Extract Avatar Info",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Avatar Info": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
+  "tags": []
+}
