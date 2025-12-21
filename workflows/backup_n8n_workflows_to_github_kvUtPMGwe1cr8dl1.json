@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T00:45:52.943Z",
+  "updatedAt": "2025-12-21T23:23:36.171Z",
   "createdAt": "2025-12-13T13:57:20.492Z",
   "id": "kvUtPMGwe1cr8dl1",
   "name": "Backup n8n Workflows to GitHub",
@@ -66,8 +66,8 @@
       "parameters": {
         "method": "PUT",
         "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -102,6 +102,10 @@
         "httpHeaderAuth": {
           "id": "Qug4YyBVvyqrbbOe",
           "name": "Github"
+        },
+        "githubApi": {
+          "id": "cuZkd1EB5raWuKGR",
+          "name": "GitHub account"
         }
       },
       "continueOnFail": true,
@@ -144,8 +148,8 @@
     {
       "parameters": {
         "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -175,6 +179,10 @@
         "httpHeaderAuth": {
           "id": "Qug4YyBVvyqrbbOe",
           "name": "Github"
+        },
+        "githubApi": {
+          "id": "cuZkd1EB5raWuKGR",
+          "name": "GitHub account"
         }
       }
     },
@@ -182,8 +190,8 @@
       "parameters": {
         "method": "PUT",
         "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -216,6 +224,10 @@
         "httpHeaderAuth": {
           "id": "Qug4YyBVvyqrbbOe",
           "name": "Github"
+        },
+        "githubApi": {
+          "id": "cuZkd1EB5raWuKGR",
+          "name": "GitHub account"
         }
       }
     },
@@ -546,8 +558,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "6393a3c8-3f92-46ff-b090-311a6b6b29da",
-  "activeVersionId": "6393a3c8-3f92-46ff-b090-311a6b6b29da",
+  "versionId": "10b331b0-a98d-43a1-8e89-96df52c29584",
+  "activeVersionId": "10b331b0-a98d-43a1-8e89-96df52c29584",
   "triggerCount": 1,
   "shared": [
     {
@@ -559,9 +571,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-14T00:45:52.946Z",
-    "createdAt": "2025-12-14T00:45:52.946Z",
-    "versionId": "6393a3c8-3f92-46ff-b090-311a6b6b29da",
+    "updatedAt": "2025-12-21T23:23:36.175Z",
+    "createdAt": "2025-12-21T23:23:36.175Z",
+    "versionId": "10b331b0-a98d-43a1-8e89-96df52c29584",
     "workflowId": "kvUtPMGwe1cr8dl1",
     "nodes": [
       {
@@ -624,8 +636,8 @@
         "parameters": {
           "method": "PUT",
           "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
@@ -660,6 +672,10 @@
           "httpHeaderAuth": {
             "id": "Qug4YyBVvyqrbbOe",
             "name": "Github"
+          },
+          "githubApi": {
+            "id": "cuZkd1EB5raWuKGR",
+            "name": "GitHub account"
           }
         },
         "continueOnFail": true,
@@ -702,8 +718,8 @@
       {
         "parameters": {
           "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
@@ -733,6 +749,10 @@
           "httpHeaderAuth": {
             "id": "Qug4YyBVvyqrbbOe",
             "name": "Github"
+          },
+          "githubApi": {
+            "id": "cuZkd1EB5raWuKGR",
+            "name": "GitHub account"
           }
         }
       },
@@ -740,8 +760,8 @@
         "parameters": {
           "method": "PUT",
           "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
@@ -774,6 +794,10 @@
           "httpHeaderAuth": {
             "id": "Qug4YyBVvyqrbbOe",
             "name": "Github"
+          },
+          "githubApi": {
+            "id": "cuZkd1EB5raWuKGR",
+            "name": "GitHub account"
           }
         }
       },
