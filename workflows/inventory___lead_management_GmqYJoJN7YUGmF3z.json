@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T11:03:28.481Z",
+  "updatedAt": "2025-12-21T23:05:14.659Z",
   "createdAt": "2025-12-13T13:57:23.566Z",
   "id": "GmqYJoJN7YUGmF3z",
   "name": "Inventory & Lead Management",
@@ -412,37 +412,6 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://sheets.googleapis.com/v4/spreadsheets/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4:batchUpdate",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleSheetsOAuth2Api",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{$json}}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1584,
-        -384
-      ],
-      "id": "32187144-624c-4925-bf1b-667bf4ba65f2",
-      "name": "Update Meta_Feed_Staging",
-      "executeOnce": true,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "LQZygyOyKZ5tikRW",
-          "name": "VideoBGRemover"
-        },
-        "googleSheetsOAuth2Api": {
-          "id": "9WK1ZemzeOSj1j4A",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "// Instead of reading from input, reference the original Build Sheet Data node\nconst sheetData = $('Build Sheet Data Meta').first().json.values;\n\n// Rest stays the same\nconst apiBody = {\n  \"requests\": [{\n    \"updateCells\": {\n      \"range\": {\n        \"sheetId\": 13582147,  // Feed sheet ID\n        \"startRowIndex\": 0,\n        \"startColumnIndex\": 0\n      },\n      \"rows\": sheetData.map(row => ({\n        \"values\": row.map(cell => ({\n          \"userEnteredValue\": {\n            \"stringValue\": String(cell)\n          }\n        }))\n      })),\n      \"fields\": \"userEnteredValue\"\n    }\n  }]\n};\n\nreturn [{ json: apiBody }];"
       },
       "type": "n8n-nodes-base.code",
@@ -504,6 +473,33 @@
         "httpBearerAuth": {
           "id": "vdxOfyrKMfWKSmAH",
           "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1584,
+        -384
+      ],
+      "id": "b9709e7e-6da5-4a51-b653-75d24acccb87",
+      "name": "Update Meta_Feed_Staging",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9WK1ZemzeOSj1j4A",
+          "name": "Google Sheets account"
         }
       }
     }
@@ -713,17 +709,6 @@
         ]
       ]
     },
-    "Update Meta_Feed_Staging": {
-      "main": [
-        [
-          {
-            "node": "Prepare API Request 2 Meta",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Prepare API Request 2 Meta": {
       "main": [
         [
@@ -740,6 +725,17 @@
         [
           {
             "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Meta_Feed_Staging": {
+      "main": [
+        [
+          {
+            "node": "Prepare API Request 2 Meta",
             "type": "main",
             "index": 0
           }
@@ -762,8 +758,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "4141f283-1a6b-4a46-9010-f63e2f88870a",
-  "activeVersionId": "4141f283-1a6b-4a46-9010-f63e2f88870a",
+  "versionId": "593776d6-88df-471f-bf64-eb09bcaa242f",
+  "activeVersionId": "593776d6-88df-471f-bf64-eb09bcaa242f",
   "triggerCount": 1,
   "shared": [
     {
@@ -775,9 +771,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-14T11:03:28.483Z",
-    "createdAt": "2025-12-14T11:03:28.483Z",
-    "versionId": "4141f283-1a6b-4a46-9010-f63e2f88870a",
+    "updatedAt": "2025-12-21T23:05:14.661Z",
+    "createdAt": "2025-12-21T23:05:14.661Z",
+    "versionId": "593776d6-88df-471f-bf64-eb09bcaa242f",
     "workflowId": "GmqYJoJN7YUGmF3z",
     "nodes": [
       {
@@ -1186,37 +1182,6 @@
       },
       {
         "parameters": {
-          "method": "POST",
-          "url": "https://sheets.googleapis.com/v4/spreadsheets/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4:batchUpdate",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "googleSheetsOAuth2Api",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={{$json}}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1584,
-          -384
-        ],
-        "id": "32187144-624c-4925-bf1b-667bf4ba65f2",
-        "name": "Update Meta_Feed_Staging",
-        "executeOnce": true,
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "LQZygyOyKZ5tikRW",
-            "name": "VideoBGRemover"
-          },
-          "googleSheetsOAuth2Api": {
-            "id": "9WK1ZemzeOSj1j4A",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
           "jsCode": "// Instead of reading from input, reference the original Build Sheet Data node\nconst sheetData = $('Build Sheet Data Meta').first().json.values;\n\n// Rest stays the same\nconst apiBody = {\n  \"requests\": [{\n    \"updateCells\": {\n      \"range\": {\n        \"sheetId\": 13582147,  // Feed sheet ID\n        \"startRowIndex\": 0,\n        \"startColumnIndex\": 0\n      },\n      \"rows\": sheetData.map(row => ({\n        \"values\": row.map(cell => ({\n          \"userEnteredValue\": {\n            \"stringValue\": String(cell)\n          }\n        }))\n      })),\n      \"fields\": \"userEnteredValue\"\n    }\n  }]\n};\n\nreturn [{ json: apiBody }];"
         },
         "type": "n8n-nodes-base.code",
@@ -1278,6 +1243,33 @@
           "httpBearerAuth": {
             "id": "vdxOfyrKMfWKSmAH",
             "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{$json}}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1584,
+          -384
+        ],
+        "id": "b9709e7e-6da5-4a51-b653-75d24acccb87",
+        "name": "Update Meta_Feed_Staging",
+        "executeOnce": true,
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "9WK1ZemzeOSj1j4A",
+            "name": "Google Sheets account"
           }
         }
       }
@@ -1487,17 +1479,6 @@
           ]
         ]
       },
-      "Update Meta_Feed_Staging": {
-        "main": [
-          [
-            {
-              "node": "Prepare API Request 2 Meta",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Prepare API Request 2 Meta": {
         "main": [
           [
@@ -1514,6 +1495,17 @@
           [
             {
               "node": "Stop and Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Meta_Feed_Staging": {
+        "main": [
+          [
+            {
+              "node": "Prepare API Request 2 Meta",
               "type": "main",
               "index": 0
             }
