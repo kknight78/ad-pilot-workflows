@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-19T01:48:33.836Z",
+  "updatedAt": "2025-12-21T22:35:23.112Z",
   "createdAt": "2025-12-19T01:37:49.969Z",
   "id": "3MLAcpvKTlDN5g9m",
   "name": "[06] HeyGen Webhook Receiver",
@@ -34,7 +34,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        500
+        512
       ],
       "id": "webhook-heygen-options",
       "name": "Webhook: HeyGen OPTIONS",
@@ -50,8 +50,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        220,
-        500
+        224,
+        512
       ],
       "id": "respond-options",
       "name": "Respond OPTIONS OK"
@@ -63,7 +63,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
+        224,
         240
       ],
       "id": "parse-webhook",
@@ -97,7 +97,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        440,
+        448,
         240
       ],
       "id": "if-motion-success",
@@ -105,7 +105,6 @@
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "=https://api.heygen.com/v2/photo_avatar/{{ $json.avatar_id }}",
         "sendHeaders": true,
         "headerParameters": {
@@ -121,8 +120,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        660,
-        140
+        672,
+        144
       ],
       "id": "get-avatar-details",
       "name": "API: Get Avatar Details"
@@ -135,7 +134,7 @@
       "typeVersion": 2,
       "position": [
         880,
-        140
+        144
       ],
       "id": "extract-avatar-info",
       "name": "Extract Avatar Info"
@@ -149,8 +148,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1100,
-        140
+        1104,
+        144
       ],
       "id": "respond-success",
       "name": "Respond Success"
@@ -164,8 +163,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        660,
-        340
+        672,
+        352
       ],
       "id": "respond-unhandled",
       "name": "Respond Unhandled"
@@ -179,12 +178,33 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -200,
-        40
+        -208,
+        48
       ],
       "typeVersion": 1,
       "id": "sticky-note",
       "name": "Intro Note"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE avatars\nSET motion_preview_url = '{{ $json.motion_preview_url }}',\n    status = 'completed',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1056,
+        -48
+      ],
+      "id": "postgres-update-avatar",
+      "name": "DB: Update Avatar Complete",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
     }
   ],
   "connections": {
@@ -254,6 +274,17 @@
       "main": [
         [
           {
+            "node": "DB: Update Avatar Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Update Avatar Complete": {
+      "main": [
+        [
+          {
             "node": "Respond Success",
             "type": "main",
             "index": 0
@@ -269,9 +300,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "4acaa62a-3779-4186-9d6a-c2dd80be7599",
-  "activeVersionId": "4acaa62a-3779-4186-9d6a-c2dd80be7599",
+  "pinData": {},
+  "versionId": "f3bb81ec-c4f7-4844-9124-a42248ae3d55",
+  "activeVersionId": "f3bb81ec-c4f7-4844-9124-a42248ae3d55",
   "triggerCount": 2,
   "shared": [
     {
@@ -283,9 +314,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-19T01:48:33.838Z",
-    "createdAt": "2025-12-19T01:48:33.838Z",
-    "versionId": "4acaa62a-3779-4186-9d6a-c2dd80be7599",
+    "updatedAt": "2025-12-21T22:35:23.116Z",
+    "createdAt": "2025-12-21T22:35:23.116Z",
+    "versionId": "f3bb81ec-c4f7-4844-9124-a42248ae3d55",
     "workflowId": "3MLAcpvKTlDN5g9m",
     "nodes": [
       {
@@ -316,7 +347,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          500
+          512
         ],
         "id": "webhook-heygen-options",
         "name": "Webhook: HeyGen OPTIONS",
@@ -332,8 +363,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          220,
-          500
+          224,
+          512
         ],
         "id": "respond-options",
         "name": "Respond OPTIONS OK"
@@ -345,7 +376,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          220,
+          224,
           240
         ],
         "id": "parse-webhook",
@@ -379,7 +410,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          440,
+          448,
           240
         ],
         "id": "if-motion-success",
@@ -387,7 +418,6 @@
       },
       {
         "parameters": {
-          "method": "GET",
           "url": "=https://api.heygen.com/v2/photo_avatar/{{ $json.avatar_id }}",
           "sendHeaders": true,
           "headerParameters": {
@@ -403,8 +433,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          660,
-          140
+          672,
+          144
         ],
         "id": "get-avatar-details",
         "name": "API: Get Avatar Details"
@@ -417,7 +447,7 @@
         "typeVersion": 2,
         "position": [
           880,
-          140
+          144
         ],
         "id": "extract-avatar-info",
         "name": "Extract Avatar Info"
@@ -431,8 +461,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1100,
-          140
+          1104,
+          144
         ],
         "id": "respond-success",
         "name": "Respond Success"
@@ -446,8 +476,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          660,
-          340
+          672,
+          352
         ],
         "id": "respond-unhandled",
         "name": "Respond Unhandled"
@@ -461,12 +491,33 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          -200,
-          40
+          -208,
+          48
         ],
         "typeVersion": 1,
         "id": "sticky-note",
         "name": "Intro Note"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE avatars\nSET motion_preview_url = '{{ $json.motion_preview_url }}',\n    status = 'completed',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1056,
+          -48
+        ],
+        "id": "postgres-update-avatar",
+        "name": "DB: Update Avatar Complete",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
       }
     ],
     "connections": {
@@ -533,6 +584,17 @@
         ]
       },
       "Extract Avatar Info": {
+        "main": [
+          [
+            {
+              "node": "DB: Update Avatar Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Update Avatar Complete": {
         "main": [
           [
             {
