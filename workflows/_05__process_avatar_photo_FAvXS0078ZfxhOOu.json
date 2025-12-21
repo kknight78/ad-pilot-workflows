@@ -1,0 +1,2334 @@
+{
+  "updatedAt": "2025-12-21T23:46:55.999Z",
+  "createdAt": "2025-12-17T14:15:04.048Z",
+  "id": "FAvXS0078ZfxhOOu",
+  "name": "[05] Process Avatar Photo",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-avatar-photo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "webhook-trigger",
+      "name": "Webhook: Process Avatar Photo",
+      "webhookId": "process-avatar-photo"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body, fallback to default\nconst defaultGroupId = \"585545c8034c4c43b3969797841efd6c\";\nconst groupId = body.group_id || defaultGroupId;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    avatar_name: body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        240
+      ],
+      "id": "parse-input",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-image-url",
+              "leftValue": "={{ $json.image_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        240
+      ],
+      "id": "check-image-source",
+      "name": "If: Has Image URL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.image_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        144
+      ],
+      "id": "download-image",
+      "name": "Download Image from URL"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Parse Input').first().json;\nconst base64 = input.image_base64;\n\nlet mime = 'image/jpeg';\nif (base64.startsWith('data:')) {\n  const match = base64.match(/^data:([^;]+);/);\n  if (match) mime = match[1];\n}\n\nreturn [{\n  json: {\n    ...input,\n    image_data: base64.replace(/^data:[^;]+;base64,/, ''),\n    mime_type: mime\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        352
+      ],
+      "id": "use-base64",
+      "name": "Use Base64 Image"
+    },
+    {
+      "parameters": {
+        "jsCode": "const binary = $input.first().binary;\nconst input = $('Parse Input').first().json;\n\nif (!binary || !binary.data) {\n  throw new Error('Failed to download image');\n}\n\nconst imageData = binary.data.data;\nconst mime = binary.data.mimeType || 'image/jpeg';\n\nreturn [{\n  json: {\n    ...input,\n    image_data: imageData,\n    mime_type: mime\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        144
+      ],
+      "id": "convert-to-base64",
+      "name": "Convert to Base64"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        240
+      ],
+      "id": "merge-paths",
+      "name": "Merge Paths"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"95fcc2a26d3899cd6c2691c900465aaeff466285a65c14638cc5f36f34befaf1\",\n  \"input\": {\n    \"image\": \"data:{{ $json.mime_type }};base64,{{ $json.image_data }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        240
+      ],
+      "id": "birefnet-start",
+      "name": "API: Replicate BiRefNet Start",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "e1reYzNejHyRRGq0",
+          "name": "Replicate"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1552,
+        240
+      ],
+      "id": "wait-birefnet",
+      "name": "Wait 3s",
+      "webhookId": "wait-birefnet"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('API: Replicate BiRefNet Start').first().json.urls.get }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        240
+      ],
+      "id": "birefnet-check",
+      "name": "API: Check BiRefNet Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "e1reYzNejHyRRGq0",
+          "name": "Replicate"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-completed",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1984,
+        240
+      ],
+      "id": "if-birefnet-done",
+      "name": "If: BiRefNet Complete"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-pending",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals",
+                "name": "filter.operator.notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2208,
+        352
+      ],
+      "id": "if-birefnet-pending",
+      "name": "If: BiRefNet Still Processing"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2432,
+        352
+      ],
+      "id": "wait-birefnet-retry",
+      "name": "Wait 2s (Retry)",
+      "webhookId": "wait-birefnet-retry"
+    },
+    {
+      "parameters": {
+        "jsCode": "const birefnetResult = $json;\nconst bgRemovedUrl = birefnetResult.output;\nconst inputData = $('Merge Paths').first().json;\n\nif (!bgRemovedUrl) {\n  throw new Error('No output URL from BiRefNet');\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    bg_removed_url: bgRemovedUrl,\n    status: 'bg_removed'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        144
+      ],
+      "id": "extract-birefnet-url",
+      "name": "Extract BiRefNet URL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.bg_removed_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2432,
+        144
+      ],
+      "id": "download-bg-removed",
+      "name": "Download BG Removed"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.heygen.com/v1/asset",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "image/png"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        144
+      ],
+      "id": "heygen-upload-asset",
+      "name": "API: HeyGen Upload Asset",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vHwnmobM8C8U7vIZ",
+          "name": "HeyGen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const assetResult = $json;\nconst inputData = $(\"Extract Processed Image\").first().json;\n\nlet imageKey = null;\nif (assetResult.data && assetResult.data.image_key) {\n  imageKey = assetResult.data.image_key;\n}\n\nif (!imageKey) {\n  throw new Error(\"Failed to get image_key from HeyGen: \" + JSON.stringify(assetResult));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    image_key: imageKey,\n    asset_id: assetResult.data.id || null,\n    status: \"asset_uploaded\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        144
+      ],
+      "id": "extract-image-key",
+      "name": "Extract Image Key"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/photo_avatar/add_motion",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": \"{{ $json.photo_avatar_id }}\",\n  \"motion_type\": \"{{ $json.motion_engine }}\",\n  \"prompt\": \"{{ $json.motion_prompt }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4400,
+        48
+      ],
+      "id": "heygen-add-motion",
+      "name": "API: HeyGen Add Motion",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vHwnmobM8C8U7vIZ",
+          "name": "HeyGen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const motionResult = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nlet motionAvatarId = null;\nif (motionResult.data && motionResult.data.id) {\n  motionAvatarId = motionResult.data.id;\n}\n\nif (!motionAvatarId) {\n  throw new Error('Failed to get motion avatar ID: ' + JSON.stringify(motionResult));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    motion_avatar_id: motionAvatarId,\n    status: 'motion_added'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4624,
+        48
+      ],
+      "id": "extract-motion-id",
+      "name": "Extract Motion ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\n\nreturn [{\n  json: {\n    success: true,\n    status: 'motion_processing',\n    request_id: data.request_id,\n    group_id: data.group_id,\n    avatar_name: data.avatar_name,\n    image_key: data.image_key,\n    photo_avatar_id: data.photo_avatar_id,\n    motion_avatar_id: data.motion_avatar_id,\n    motion_preset: data.motion_preset,\n    motion_engine: data.motion_engine,\n    bg_removed_url: data.bg_removed_url,\n    message: 'Motion is being generated. Webhook will notify when complete.',\n    webhook_event: 'photo_avatar_add_motion.success'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5072,
+        48
+      ],
+      "id": "format-response",
+      "name": "Format Success Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5280,
+        -32
+      ],
+      "id": "respond-success",
+      "name": "Respond Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Background removal failed\",\n  \"status\": \"{{ $json.status }}\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2640,
+        448
+      ],
+      "id": "respond-birefnet-error",
+      "name": "Respond BiRefNet Error"
+    },
+    {
+      "parameters": {
+        "content": "# Process Avatar Photo v10 - Complete Pipeline\n\n1. BiRefNet BG removal\n2. Download BG-removed PNG\n3. Upload to HeyGen Asset (get image_key)\n4. Add Look to Avatar Group (get photo_avatar_id)\n5. Poll until photo avatar is completed\n6. Add motion with selected preset\n7. Return photo_avatar_id for video generation\n\nMotion Presets:\n- talking_naturally\n- expert_presentation (default)\n- dynamic_announcement\n- keynote_speaker\n- thoughtful_conversation\n- telling_funny_story\n- compelling_pitch\n- encouraging_motivational\n- news_moderator",
+        "height": 220,
+        "width": 340,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "sticky-intro",
+      "name": "Intro Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/photo_avatar/avatar_group/add",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"group_id\": \"{{ $json.group_id }}\",\n  \"image_keys\": [\"{{ $json.image_key }}\"],\n  \"name\": \"{{ $json.avatar_name }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3088,
+        144
+      ],
+      "id": "add-look-to-group",
+      "name": "API: Add Look to Group",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vHwnmobM8C8U7vIZ",
+          "name": "HeyGen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nif (!response.data || !response.data.photo_avatar_list || response.data.photo_avatar_list.length === 0) {\n  throw new Error('Failed to add look to group: ' + JSON.stringify(response));\n}\n\nconst photoAvatar = response.data.photo_avatar_list[0];\n\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_id: photoAvatar.id,\n    photo_avatar_status: photoAvatar.status,\n    status: 'look_added'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3312,
+        144
+      ],
+      "id": "extract-photo-avatar-id",
+      "name": "Extract Photo Avatar ID"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3520,
+        144
+      ],
+      "id": "wait-photo-avatar",
+      "name": "Wait 5s (Photo Avatar)",
+      "webhookId": "wait-photo-avatar"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.heygen.com/v2/photo_avatar/{{ $(\"Extract Photo Avatar ID\").first().json.photo_avatar_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3744,
+        144
+      ],
+      "id": "check-photo-avatar-status",
+      "name": "API: Check Photo Avatar Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vHwnmobM8C8U7vIZ",
+          "name": "HeyGen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-completed",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3968,
+        144
+      ],
+      "id": "if-photo-avatar-complete",
+      "name": "If: Photo Avatar Complete"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-not-failed",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals",
+                "name": "filter.operator.notEquals"
+              }
+            },
+            {
+              "id": "check-not-rejected",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "identity_rejected",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals",
+                "name": "filter.operator.notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4192,
+        240
+      ],
+      "id": "if-photo-avatar-processing",
+      "name": "If: Photo Avatar Processing"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4384,
+        224
+      ],
+      "id": "wait-photo-avatar-retry",
+      "name": "Wait 3s (Retry)",
+      "webhookId": "wait-photo-avatar-retry"
+    },
+    {
+      "parameters": {
+        "jsCode": "const statusResponse = $json;\nconst inputData = $('Extract Photo Avatar ID').first().json;\n\n// Photo avatar is complete, we can now add motion\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_status: 'completed',\n    status: 'ready_for_motion'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4192,
+        48
+      ],
+      "id": "photo-avatar-ready",
+      "name": "Photo Avatar Ready"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Photo avatar creation failed\",\n  \"status\": \"{{ $json.data.status }}\",\n  \"message\": \"{{ $json.data.moderation_msg || \"Photo was rejected by HeyGen\" }}\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        4384,
+        400
+      ],
+      "id": "respond-avatar-error",
+      "name": "Respond Photo Avatar Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://web-production-41aea.up.railway.app/process",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"image_url\": \"{{ $json.bg_removed_url }}\",\n  \"original_image_url\": \"{{ $('Parse Input').first().json.image_url }}\",\n  \"output_format\": \"base64\"\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2352,
+        -48
+      ],
+      "id": "avatar-processor",
+      "name": "API: Avatar Processor"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst inputData = $(\"Extract BiRefNet URL\").first().json;\n\nif (!response.success) {\n  throw new Error(\"Avatar processor failed: \" + (response.error || \"Unknown error\"));\n}\n\nconst processedImage = response.processed_image;\nconst processingInfo = response.processing_info || {};\n\nreturn [{\n  json: {\n    ...inputData,\n    processed_image_base64: processedImage,\n    processing_info: processingInfo,\n    status: \"image_processed\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2624,
+        -48
+      ],
+      "id": "extract-processed-image",
+      "name": "Extract Processed Image"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $json;\nconst base64Data = inputData.processed_image_base64;\n\n// Remove data URL prefix if present\nconst cleanBase64 = base64Data.replace(/^data:image\\/png;base64,/, '');\n\n// Convert to Buffer\nconst buffer = Buffer.from(cleanBase64, 'base64');\n\n// Return with binary data\nreturn [{\n  json: inputData,\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'image/png',\n      fileName: 'processed-avatar.png'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        -64
+      ],
+      "id": "convert-base64-to-binary",
+      "name": "Convert Base64 to Binary"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO avatars (\n  person_name,\n  style_name,\n  group_id,\n  photo_avatar_id,\n  motion_avatar_id,\n  voice_id,\n  image_key,\n  motion_preset,\n  motion_engine,\n  status\n) VALUES (\n  '{{ $('Parse Input').first().json.avatar_name }}',\n  '{{ $('Parse Input').first().json.style_name || 'Default' }}',\n  '{{ $('Parse Input').first().json.group_id }}',\n  '{{ $json.photo_avatar_id }}',\n  '{{ $json.motion_avatar_id }}',\n  '{{ $('Parse Input').first().json.voice_id }}',\n  '{{ $json.image_key }}',\n  '{{ $('Parse Input').first().json.motion_preset }}',\n  '{{ $('Parse Input').first().json.motion_engine }}',\n  'processing'\n) RETURNING id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4848,
+        48
+      ],
+      "id": "postgres-insert-avatar",
+      "name": "DB: Insert Avatar",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: Process Avatar Photo": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "If: Has Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Has Image URL": {
+      "main": [
+        [
+          {
+            "node": "Download Image from URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use Base64 Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image from URL": {
+      "main": [
+        [
+          {
+            "node": "Convert to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Base64": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Base64 Image": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        [
+          {
+            "node": "API: Replicate BiRefNet Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Replicate BiRefNet Start": {
+      "main": [
+        [
+          {
+            "node": "Wait 3s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3s": {
+      "main": [
+        [
+          {
+            "node": "API: Check BiRefNet Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Check BiRefNet Status": {
+      "main": [
+        [
+          {
+            "node": "If: BiRefNet Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: BiRefNet Complete": {
+      "main": [
+        [
+          {
+            "node": "Extract BiRefNet URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If: BiRefNet Still Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: BiRefNet Still Processing": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s (Retry)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond BiRefNet Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s (Retry)": {
+      "main": [
+        [
+          {
+            "node": "API: Check BiRefNet Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract BiRefNet URL": {
+      "main": [
+        [
+          {
+            "node": "API: Avatar Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download BG Removed": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen Upload Asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HeyGen Upload Asset": {
+      "main": [
+        [
+          {
+            "node": "Extract Image Key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image Key": {
+      "main": [
+        [
+          {
+            "node": "API: Add Look to Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HeyGen Add Motion": {
+      "main": [
+        [
+          {
+            "node": "Extract Motion ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Motion ID": {
+      "main": [
+        [
+          {
+            "node": "DB: Insert Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 60s (Motion)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Preview Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Add Look to Group": {
+      "main": [
+        [
+          {
+            "node": "Extract Photo Avatar ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Photo Avatar ID": {
+      "main": [
+        [
+          {
+            "node": "Wait 5s (Photo Avatar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s (Photo Avatar)": {
+      "main": [
+        [
+          {
+            "node": "API: Check Photo Avatar Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Check Photo Avatar Status": {
+      "main": [
+        [
+          {
+            "node": "If: Photo Avatar Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Photo Avatar Complete": {
+      "main": [
+        [
+          {
+            "node": "Photo Avatar Ready",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If: Photo Avatar Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Photo Avatar Processing": {
+      "main": [
+        [
+          {
+            "node": "Wait 3s (Retry)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Photo Avatar Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3s (Retry)": {
+      "main": [
+        [
+          {
+            "node": "API: Check Photo Avatar Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Photo Avatar Ready": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen Add Motion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Avatar Processor": {
+      "main": [
+        [
+          {
+            "node": "Extract Processed Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Processed Image": {
+      "main": [
+        [
+          {
+            "node": "Convert Base64 to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Base64 to Binary": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen Upload Asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Insert Avatar": {
+      "main": [
+        [
+          {
+            "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "79251572-3735-4a2a-a6e6-88b088f5b21e",
+  "activeVersionId": "79251572-3735-4a2a-a6e6-88b088f5b21e",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-12-17T14:15:04.048Z",
+      "createdAt": "2025-12-17T14:15:04.048Z",
+      "role": "workflow:owner",
+      "workflowId": "FAvXS0078ZfxhOOu",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2025-12-21T23:46:56.002Z",
+    "createdAt": "2025-12-21T23:46:56.002Z",
+    "versionId": "79251572-3735-4a2a-a6e6-88b088f5b21e",
+    "workflowId": "FAvXS0078ZfxhOOu",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "process-avatar-photo",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          240
+        ],
+        "id": "webhook-trigger",
+        "name": "Webhook: Process Avatar Photo",
+        "webhookId": "process-avatar-photo"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body, fallback to default\nconst defaultGroupId = \"585545c8034c4c43b3969797841efd6c\";\nconst groupId = body.group_id || defaultGroupId;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    avatar_name: body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          240
+        ],
+        "id": "parse-input",
+        "name": "Parse Input"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-image-url",
+                "leftValue": "={{ $json.image_url }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          448,
+          240
+        ],
+        "id": "check-image-source",
+        "name": "If: Has Image URL"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.image_url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          144
+        ],
+        "id": "download-image",
+        "name": "Download Image from URL"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $('Parse Input').first().json;\nconst base64 = input.image_base64;\n\nlet mime = 'image/jpeg';\nif (base64.startsWith('data:')) {\n  const match = base64.match(/^data:([^;]+);/);\n  if (match) mime = match[1];\n}\n\nreturn [{\n  json: {\n    ...input,\n    image_data: base64.replace(/^data:[^;]+;base64,/, ''),\n    mime_type: mime\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          352
+        ],
+        "id": "use-base64",
+        "name": "Use Base64 Image"
+      },
+      {
+        "parameters": {
+          "jsCode": "const binary = $input.first().binary;\nconst input = $('Parse Input').first().json;\n\nif (!binary || !binary.data) {\n  throw new Error('Failed to download image');\n}\n\nconst imageData = binary.data.data;\nconst mime = binary.data.mimeType || 'image/jpeg';\n\nreturn [{\n  json: {\n    ...input,\n    image_data: imageData,\n    mime_type: mime\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          144
+        ],
+        "id": "convert-to-base64",
+        "name": "Convert to Base64"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          1104,
+          240
+        ],
+        "id": "merge-paths",
+        "name": "Merge Paths"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.replicate.com/v1/predictions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"version\": \"95fcc2a26d3899cd6c2691c900465aaeff466285a65c14638cc5f36f34befaf1\",\n  \"input\": {\n    \"image\": \"data:{{ $json.mime_type }};base64,{{ $json.image_data }}\"\n  }\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1328,
+          240
+        ],
+        "id": "birefnet-start",
+        "name": "API: Replicate BiRefNet Start",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "e1reYzNejHyRRGq0",
+            "name": "Replicate"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": 3
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1552,
+          240
+        ],
+        "id": "wait-birefnet",
+        "name": "Wait 3s",
+        "webhookId": "wait-birefnet"
+      },
+      {
+        "parameters": {
+          "url": "={{ $('API: Replicate BiRefNet Start').first().json.urls.get }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1760,
+          240
+        ],
+        "id": "birefnet-check",
+        "name": "API: Check BiRefNet Status",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "e1reYzNejHyRRGq0",
+            "name": "Replicate"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-completed",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1984,
+          240
+        ],
+        "id": "if-birefnet-done",
+        "name": "If: BiRefNet Complete"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-pending",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals",
+                  "name": "filter.operator.notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2208,
+          352
+        ],
+        "id": "if-birefnet-pending",
+        "name": "If: BiRefNet Still Processing"
+      },
+      {
+        "parameters": {
+          "amount": 2
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2432,
+          352
+        ],
+        "id": "wait-birefnet-retry",
+        "name": "Wait 2s (Retry)",
+        "webhookId": "wait-birefnet-retry"
+      },
+      {
+        "parameters": {
+          "jsCode": "const birefnetResult = $json;\nconst bgRemovedUrl = birefnetResult.output;\nconst inputData = $('Merge Paths').first().json;\n\nif (!bgRemovedUrl) {\n  throw new Error('No output URL from BiRefNet');\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    bg_removed_url: bgRemovedUrl,\n    status: 'bg_removed'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2208,
+          144
+        ],
+        "id": "extract-birefnet-url",
+        "name": "Extract BiRefNet URL"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.bg_removed_url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2432,
+          144
+        ],
+        "id": "download-bg-removed",
+        "name": "Download BG Removed"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://upload.heygen.com/v1/asset",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "image/png"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "binaryData",
+          "inputDataFieldName": "data",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2640,
+          144
+        ],
+        "id": "heygen-upload-asset",
+        "name": "API: HeyGen Upload Asset",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "vHwnmobM8C8U7vIZ",
+            "name": "HeyGen"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const assetResult = $json;\nconst inputData = $(\"Extract Processed Image\").first().json;\n\nlet imageKey = null;\nif (assetResult.data && assetResult.data.image_key) {\n  imageKey = assetResult.data.image_key;\n}\n\nif (!imageKey) {\n  throw new Error(\"Failed to get image_key from HeyGen: \" + JSON.stringify(assetResult));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    image_key: imageKey,\n    asset_id: assetResult.data.id || null,\n    status: \"asset_uploaded\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2864,
+          144
+        ],
+        "id": "extract-image-key",
+        "name": "Extract Image Key"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.heygen.com/v2/photo_avatar/add_motion",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"id\": \"{{ $json.photo_avatar_id }}\",\n  \"motion_type\": \"{{ $json.motion_engine }}\",\n  \"prompt\": \"{{ $json.motion_prompt }}\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4400,
+          48
+        ],
+        "id": "heygen-add-motion",
+        "name": "API: HeyGen Add Motion",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "vHwnmobM8C8U7vIZ",
+            "name": "HeyGen"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const motionResult = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nlet motionAvatarId = null;\nif (motionResult.data && motionResult.data.id) {\n  motionAvatarId = motionResult.data.id;\n}\n\nif (!motionAvatarId) {\n  throw new Error('Failed to get motion avatar ID: ' + JSON.stringify(motionResult));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    motion_avatar_id: motionAvatarId,\n    status: 'motion_added'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4624,
+          48
+        ],
+        "id": "extract-motion-id",
+        "name": "Extract Motion ID"
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $json;\n\nreturn [{\n  json: {\n    success: true,\n    status: 'motion_processing',\n    request_id: data.request_id,\n    group_id: data.group_id,\n    avatar_name: data.avatar_name,\n    image_key: data.image_key,\n    photo_avatar_id: data.photo_avatar_id,\n    motion_avatar_id: data.motion_avatar_id,\n    motion_preset: data.motion_preset,\n    motion_engine: data.motion_engine,\n    bg_removed_url: data.bg_removed_url,\n    message: 'Motion is being generated. Webhook will notify when complete.',\n    webhook_event: 'photo_avatar_add_motion.success'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5072,
+          48
+        ],
+        "id": "format-response",
+        "name": "Format Success Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          5280,
+          -32
+        ],
+        "id": "respond-success",
+        "name": "Respond Success"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"success\": false,\n  \"error\": \"Background removal failed\",\n  \"status\": \"{{ $json.status }}\"\n}",
+          "options": {
+            "responseCode": 500
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2640,
+          448
+        ],
+        "id": "respond-birefnet-error",
+        "name": "Respond BiRefNet Error"
+      },
+      {
+        "parameters": {
+          "content": "# Process Avatar Photo v10 - Complete Pipeline\n\n1. BiRefNet BG removal\n2. Download BG-removed PNG\n3. Upload to HeyGen Asset (get image_key)\n4. Add Look to Avatar Group (get photo_avatar_id)\n5. Poll until photo avatar is completed\n6. Add motion with selected preset\n7. Return photo_avatar_id for video generation\n\nMotion Presets:\n- talking_naturally\n- expert_presentation (default)\n- dynamic_announcement\n- keynote_speaker\n- thoughtful_conversation\n- telling_funny_story\n- compelling_pitch\n- encouraging_motivational\n- news_moderator",
+          "height": 220,
+          "width": 340,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -208,
+          48
+        ],
+        "typeVersion": 1,
+        "id": "sticky-intro",
+        "name": "Intro Note"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.heygen.com/v2/photo_avatar/avatar_group/add",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"group_id\": \"{{ $json.group_id }}\",\n  \"image_keys\": [\"{{ $json.image_key }}\"],\n  \"name\": \"{{ $json.avatar_name }}\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3088,
+          144
+        ],
+        "id": "add-look-to-group",
+        "name": "API: Add Look to Group",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "vHwnmobM8C8U7vIZ",
+            "name": "HeyGen"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nif (!response.data || !response.data.photo_avatar_list || response.data.photo_avatar_list.length === 0) {\n  throw new Error('Failed to add look to group: ' + JSON.stringify(response));\n}\n\nconst photoAvatar = response.data.photo_avatar_list[0];\n\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_id: photoAvatar.id,\n    photo_avatar_status: photoAvatar.status,\n    status: 'look_added'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3312,
+          144
+        ],
+        "id": "extract-photo-avatar-id",
+        "name": "Extract Photo Avatar ID"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          3520,
+          144
+        ],
+        "id": "wait-photo-avatar",
+        "name": "Wait 5s (Photo Avatar)",
+        "webhookId": "wait-photo-avatar"
+      },
+      {
+        "parameters": {
+          "url": "=https://api.heygen.com/v2/photo_avatar/{{ $(\"Extract Photo Avatar ID\").first().json.photo_avatar_id }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3744,
+          144
+        ],
+        "id": "check-photo-avatar-status",
+        "name": "API: Check Photo Avatar Status",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "vHwnmobM8C8U7vIZ",
+            "name": "HeyGen"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-completed",
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "completed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "or"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3968,
+          144
+        ],
+        "id": "if-photo-avatar-complete",
+        "name": "If: Photo Avatar Complete"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-not-failed",
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals",
+                  "name": "filter.operator.notEquals"
+                }
+              },
+              {
+                "id": "check-not-rejected",
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "identity_rejected",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals",
+                  "name": "filter.operator.notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          4192,
+          240
+        ],
+        "id": "if-photo-avatar-processing",
+        "name": "If: Photo Avatar Processing"
+      },
+      {
+        "parameters": {
+          "amount": 3
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          4384,
+          224
+        ],
+        "id": "wait-photo-avatar-retry",
+        "name": "Wait 3s (Retry)",
+        "webhookId": "wait-photo-avatar-retry"
+      },
+      {
+        "parameters": {
+          "jsCode": "const statusResponse = $json;\nconst inputData = $('Extract Photo Avatar ID').first().json;\n\n// Photo avatar is complete, we can now add motion\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_status: 'completed',\n    status: 'ready_for_motion'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4192,
+          48
+        ],
+        "id": "photo-avatar-ready",
+        "name": "Photo Avatar Ready"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"success\": false,\n  \"error\": \"Photo avatar creation failed\",\n  \"status\": \"{{ $json.data.status }}\",\n  \"message\": \"{{ $json.data.moderation_msg || \"Photo was rejected by HeyGen\" }}\"\n}",
+          "options": {
+            "responseCode": 400
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          4384,
+          400
+        ],
+        "id": "respond-avatar-error",
+        "name": "Respond Photo Avatar Error"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://web-production-41aea.up.railway.app/process",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"image_url\": \"{{ $json.bg_removed_url }}\",\n  \"original_image_url\": \"{{ $('Parse Input').first().json.image_url }}\",\n  \"output_format\": \"base64\"\n}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2352,
+          -48
+        ],
+        "id": "avatar-processor",
+        "name": "API: Avatar Processor"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\nconst inputData = $(\"Extract BiRefNet URL\").first().json;\n\nif (!response.success) {\n  throw new Error(\"Avatar processor failed: \" + (response.error || \"Unknown error\"));\n}\n\nconst processedImage = response.processed_image;\nconst processingInfo = response.processing_info || {};\n\nreturn [{\n  json: {\n    ...inputData,\n    processed_image_base64: processedImage,\n    processing_info: processingInfo,\n    status: \"image_processed\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2624,
+          -48
+        ],
+        "id": "extract-processed-image",
+        "name": "Extract Processed Image"
+      },
+      {
+        "parameters": {
+          "jsCode": "const inputData = $json;\nconst base64Data = inputData.processed_image_base64;\n\n// Remove data URL prefix if present\nconst cleanBase64 = base64Data.replace(/^data:image\\/png;base64,/, '');\n\n// Convert to Buffer\nconst buffer = Buffer.from(cleanBase64, 'base64');\n\n// Return with binary data\nreturn [{\n  json: inputData,\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'image/png',\n      fileName: 'processed-avatar.png'\n    }\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2864,
+          -64
+        ],
+        "id": "convert-base64-to-binary",
+        "name": "Convert Base64 to Binary"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO avatars (\n  person_name,\n  style_name,\n  group_id,\n  photo_avatar_id,\n  motion_avatar_id,\n  voice_id,\n  image_key,\n  motion_preset,\n  motion_engine,\n  status\n) VALUES (\n  '{{ $('Parse Input').first().json.avatar_name }}',\n  '{{ $('Parse Input').first().json.style_name || 'Default' }}',\n  '{{ $('Parse Input').first().json.group_id }}',\n  '{{ $json.photo_avatar_id }}',\n  '{{ $json.motion_avatar_id }}',\n  '{{ $('Parse Input').first().json.voice_id }}',\n  '{{ $json.image_key }}',\n  '{{ $('Parse Input').first().json.motion_preset }}',\n  '{{ $('Parse Input').first().json.motion_engine }}',\n  'processing'\n) RETURNING id;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4848,
+          48
+        ],
+        "id": "postgres-insert-avatar",
+        "name": "DB: Insert Avatar",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook: Process Avatar Photo": {
+        "main": [
+          [
+            {
+              "node": "Parse Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Input": {
+        "main": [
+          [
+            {
+              "node": "If: Has Image URL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Has Image URL": {
+        "main": [
+          [
+            {
+              "node": "Download Image from URL",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Use Base64 Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download Image from URL": {
+        "main": [
+          [
+            {
+              "node": "Convert to Base64",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert to Base64": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Use Base64 Image": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Paths": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate BiRefNet Start",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Replicate BiRefNet Start": {
+        "main": [
+          [
+            {
+              "node": "Wait 3s",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 3s": {
+        "main": [
+          [
+            {
+              "node": "API: Check BiRefNet Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Check BiRefNet Status": {
+        "main": [
+          [
+            {
+              "node": "If: BiRefNet Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: BiRefNet Complete": {
+        "main": [
+          [
+            {
+              "node": "Extract BiRefNet URL",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If: BiRefNet Still Processing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: BiRefNet Still Processing": {
+        "main": [
+          [
+            {
+              "node": "Wait 2s (Retry)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond BiRefNet Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 2s (Retry)": {
+        "main": [
+          [
+            {
+              "node": "API: Check BiRefNet Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract BiRefNet URL": {
+        "main": [
+          [
+            {
+              "node": "API: Avatar Processor",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download BG Removed": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen Upload Asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HeyGen Upload Asset": {
+        "main": [
+          [
+            {
+              "node": "Extract Image Key",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Image Key": {
+        "main": [
+          [
+            {
+              "node": "API: Add Look to Group",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HeyGen Add Motion": {
+        "main": [
+          [
+            {
+              "node": "Extract Motion ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Motion ID": {
+        "main": [
+          [
+            {
+              "node": "DB: Insert Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 60s (Motion)": {
+        "main": [
+          [
+            {
+              "node": "Prepare Preview Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Success Response": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Add Look to Group": {
+        "main": [
+          [
+            {
+              "node": "Extract Photo Avatar ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Photo Avatar ID": {
+        "main": [
+          [
+            {
+              "node": "Wait 5s (Photo Avatar)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 5s (Photo Avatar)": {
+        "main": [
+          [
+            {
+              "node": "API: Check Photo Avatar Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Check Photo Avatar Status": {
+        "main": [
+          [
+            {
+              "node": "If: Photo Avatar Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Photo Avatar Complete": {
+        "main": [
+          [
+            {
+              "node": "Photo Avatar Ready",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If: Photo Avatar Processing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Photo Avatar Processing": {
+        "main": [
+          [
+            {
+              "node": "Wait 3s (Retry)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond Photo Avatar Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 3s (Retry)": {
+        "main": [
+          [
+            {
+              "node": "API: Check Photo Avatar Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Photo Avatar Ready": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen Add Motion",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Avatar Processor": {
+        "main": [
+          [
+            {
+              "node": "Extract Processed Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Processed Image": {
+        "main": [
+          [
+            {
+              "node": "Convert Base64 to Binary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert Base64 to Binary": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen Upload Asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Insert Avatar": {
+        "main": [
+          [
+            {
+              "node": "Format Success Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
+  "tags": []
+}
