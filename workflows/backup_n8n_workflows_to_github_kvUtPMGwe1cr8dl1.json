@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-21T23:23:36.171Z",
+  "updatedAt": "2025-12-22T00:45:49.236Z",
   "createdAt": "2025-12-13T13:57:20.492Z",
   "id": "kvUtPMGwe1cr8dl1",
   "name": "Backup n8n Workflows to GitHub",
@@ -51,7 +51,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// $json is now a single workflow object (e.g., the contents of one item from the 'data' array)\nconst wf = $json; \n\nconst safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\nconst filename = `${safeName}_${wf.id}.json`;\n\nreturn {\n  json: {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  }\n};"
+        "jsCode": "// Sanitize workflow JSON to remove secrets before GitHub backup\nconst wf = $json;\n\nconst safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\nconst filename = `${safeName}_${wf.id}.json`;\n\n// Convert to string for regex-based sanitization\nlet content = JSON.stringify(wf, null, 2);\n\n// 1. Redact long hex strings (64+ chars) - catches Replicate model hashes\ncontent = content.replace(/\"[a-f0-9]{64,}\"/gi, '\"[HASH_REDACTED]\"');\n\n// 2. Redact JWT tokens (eyJ...)\ncontent = content.replace(/eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+/g, '[JWT_REDACTED]');\n\n// 3. Redact Replicate API keys (r8_xxxx pattern)\ncontent = content.replace(/r8_[A-Za-z0-9]{20,}/g, '[REPLICATE_KEY_REDACTED]');\n\n// 4. Redact base64 API keys (40+ chars ending in =)\ncontent = content.replace(/\"[A-Za-z0-9+\\/]{40,}={1,2}\"/g, '\"[BASE64_KEY_REDACTED]\"');\n\n// 5. Redact any remaining suspicious patterns that look like API keys\n// (32+ alphanumeric chars that aren't UUIDs or common IDs)\ncontent = content.replace(/\"[A-Za-z0-9]{40,}\"/g, (match) => {\n  // Don't redact if it looks like a UUID or known safe pattern\n  if (match.includes('-')) return match;\n  return '\"[POSSIBLE_SECRET_REDACTED]\"';\n});\n\nreturn {\n  json: {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: content,\n    contentBase64: Buffer.from(content).toString('base64')\n  }\n};"
       },
       "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
       "name": "Format for GitHub",
@@ -558,8 +558,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "10b331b0-a98d-43a1-8e89-96df52c29584",
-  "activeVersionId": "10b331b0-a98d-43a1-8e89-96df52c29584",
+  "versionId": "dd212677-beed-420e-aec7-20f19d560246",
+  "activeVersionId": "dd212677-beed-420e-aec7-20f19d560246",
   "triggerCount": 1,
   "shared": [
     {
@@ -571,9 +571,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-21T23:23:36.175Z",
-    "createdAt": "2025-12-21T23:23:36.175Z",
-    "versionId": "10b331b0-a98d-43a1-8e89-96df52c29584",
+    "updatedAt": "2025-12-22T00:45:49.239Z",
+    "createdAt": "2025-12-22T00:45:49.239Z",
+    "versionId": "dd212677-beed-420e-aec7-20f19d560246",
     "workflowId": "kvUtPMGwe1cr8dl1",
     "nodes": [
       {
@@ -621,7 +621,7 @@
       {
         "parameters": {
           "mode": "runOnceForEachItem",
-          "jsCode": "// $json is now a single workflow object (e.g., the contents of one item from the 'data' array)\nconst wf = $json; \n\nconst safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\nconst filename = `${safeName}_${wf.id}.json`;\n\nreturn {\n  json: {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: JSON.stringify(wf, null, 2),\n    contentBase64: Buffer.from(JSON.stringify(wf, null, 2)).toString('base64')\n  }\n};"
+          "jsCode": "// Sanitize workflow JSON to remove secrets before GitHub backup\nconst wf = $json;\n\nconst safeName = wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();\nconst filename = `${safeName}_${wf.id}.json`;\n\n// Convert to string for regex-based sanitization\nlet content = JSON.stringify(wf, null, 2);\n\n// 1. Redact long hex strings (64+ chars) - catches Replicate model hashes\ncontent = content.replace(/\"[a-f0-9]{64,}\"/gi, '\"[HASH_REDACTED]\"');\n\n// 2. Redact JWT tokens (eyJ...)\ncontent = content.replace(/eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+/g, '[JWT_REDACTED]');\n\n// 3. Redact Replicate API keys (r8_xxxx pattern)\ncontent = content.replace(/r8_[A-Za-z0-9]{20,}/g, '[REPLICATE_KEY_REDACTED]');\n\n// 4. Redact base64 API keys (40+ chars ending in =)\ncontent = content.replace(/\"[A-Za-z0-9+\\/]{40,}={1,2}\"/g, '\"[BASE64_KEY_REDACTED]\"');\n\n// 5. Redact any remaining suspicious patterns that look like API keys\n// (32+ alphanumeric chars that aren't UUIDs or common IDs)\ncontent = content.replace(/\"[A-Za-z0-9]{40,}\"/g, (match) => {\n  // Don't redact if it looks like a UUID or known safe pattern\n  if (match.includes('-')) return match;\n  return '\"[POSSIBLE_SECRET_REDACTED]\"';\n});\n\nreturn {\n  json: {\n    name: wf.name,\n    id: wf.id,\n    filename: filename,\n    content: content,\n    contentBase64: Buffer.from(content).toString('base64')\n  }\n};"
         },
         "id": "2e55ff74-e041-4839-8319-39f5be8b3017",
         "name": "Format for GitHub",
