@@ -111,7 +111,7 @@
           "parameters": [
             {
               "name": "X-Api-Key",
-              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+              "value": "[BASE64_KEY_REDACTED]"
             }
           ]
         },
@@ -424,7 +424,7 @@
             "parameters": [
               {
                 "name": "X-Api-Key",
-                "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+                "value": "[BASE64_KEY_REDACTED]"
               }
             ]
           },
