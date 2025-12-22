@@ -58,7 +58,7 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g",
+          "value": "[POSSIBLE_SECRET_REDACTED]",
           "mode": "id"
         },
         "sheetName": {
@@ -231,7 +231,7 @@
           "operation": "update",
           "documentId": {
             "__rl": true,
-            "value": "1fiCJMWhZGOXIqNmxswt92qQxAQ70bjz6FKxpVQMNO2g",
+            "value": "[POSSIBLE_SECRET_REDACTED]",
             "mode": "id"
           },
           "sheetName": {
