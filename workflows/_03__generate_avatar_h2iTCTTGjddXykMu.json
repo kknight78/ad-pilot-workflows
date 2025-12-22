@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T00:44:58.532Z",
+  "updatedAt": "2025-12-19T15:27:46.781Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -13,8 +13,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        480,
-        1648
+        608,
+        1632
       ],
       "id": "6ca0f276-1654-44f8-baf9-b4f94ede4825",
       "name": "Wait",
@@ -48,7 +48,7 @@
     },
     {
       "parameters": {
-        "content": "# #2 Generate Avatar Video",
+        "content": "# #2 Generate Avatar Video\n\nSupports both:\n- AV4 API (image_key) - better quality\n- Legacy API (talking_photo_id) - backwards compatible",
         "height": 864,
         "width": 1680,
         "color": 2
@@ -87,8 +87,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        608,
-        1424
+        544,
+        1344
       ],
       "typeVersion": 1,
       "id": "4b60bfe9-ddea-4eb4-9b45-c6a667ae4f73",
@@ -195,8 +195,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        368,
-        1504
+        320,
+        1424
       ],
       "id": "9846f443-1045-48d3-b62b-65605ad87abe",
       "name": "If: Avatar Complete"
@@ -258,7 +258,7 @@
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+              "value": "[BASE64_KEY_REDACTED]"
             },
             {
               "name": "accept",
@@ -272,7 +272,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"title\": \"Shad ad draft\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{ $json.audio_url }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1250 }\n}",
+        "jsonBody": "={\n  \"title\": \"Ad Pilot Video\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{ $json.audio_url }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1280 }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -303,7 +303,7 @@
           "parameters": [
             {
               "name": "X-Api-Key",
-              "value": "OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ=="
+              "value": "[BASE64_KEY_REDACTED]"
             }
           ]
         },
@@ -339,8 +339,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
-        1488
+        608,
+        1408
       ],
       "id": "157b86f3-9999-4b3a-be9e-c299e3e278a6",
       "name": "Parse Avatar Response"
@@ -498,6 +498,173 @@
           "name": "Resend"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8278a34b-3852-479c-a257-5d9a70385305",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        1616
+      ],
+      "id": "88cff766-f3a1-4cba-9f5a-1838a9861a9d",
+      "name": "If: Failed?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [REPLICATE_KEY_REDACTED]"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.avatar_video_url }}\",\n    \"output_type\": \"alpha-mask\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        1408
+      ],
+      "id": "d096c4dd-d626-4bd8-b6ea-f0b6d4675525",
+      "name": "API: Replicate, Create RVM",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        1488
+      ],
+      "id": "8db05eb0-6fe0-4a4c-a13b-bbb94616d25e",
+      "name": "Wait for RVM",
+      "webhookId": "c0c5d218-061b-406e-9fd7-ad89eaa268df"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('API: Replicate, Create RVM').first().json.urls.get }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [REPLICATE_KEY_REDACTED]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1216,
+        1408
+      ],
+      "id": "28739aec-d927-4e45-820e-f7eebf7ffeb5",
+      "name": "API: Replicate, Check RVM Status",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c9b8ce19-3c3b-4e8b-9ff6-41ad79951e8a",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        1408
+      ],
+      "id": "e9031cc1-1be5-4114-8a09-b4428f89cf87",
+      "name": "If: RVM Complete"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rvmResponse = $json;\nconst config = $('Parse Avatar Response').first().json;\n\n// RVM returns the mask video URL in the output field\nconst maskVideoUrl = rvmResponse.output;\n\nif (!maskVideoUrl) {\n  throw new Error('RVM did not return a mask video URL');\n}\n\nconsole.log('✓ RVM mask video:', maskVideoUrl);\n\nreturn [{\n  json: {\n    ...config,\n    avatar_mask_video_url: maskVideoUrl,\n\n    // Testing API Response\n    ...(config.test_mode && { api_replicate_rvm: rvmResponse })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        1328
+      ],
+      "id": "70cebe78-a324-4845-a136-b6dca1f93bad",
+      "name": "Parse RVM Response"
+    },
+    {
+      "parameters": {
+        "content": "## RVM Mask Generation\nSends avatar video to Replicate RVM to get alpha mask video",
+        "height": 300,
+        "width": 800,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        768,
+        1280
+      ],
+      "typeVersion": 1,
+      "id": "c99f6229-ac34-4411-9ac3-59bbed81b42d",
+      "name": "Sticky Note RVM"
     }
   ],
   "connections": {
@@ -574,7 +741,7 @@
         ],
         [
           {
-            "node": "Wait",
+            "node": "If: Failed?",
             "type": "main",
             "index": 0
           }
@@ -659,7 +826,13 @@
     },
     "Parse Avatar Response": {
       "main": [
-        []
+        [
+          {
+            "node": "API: Replicate, Create RVM",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Skip TTS & Upload": {
@@ -763,6 +936,94 @@
           }
         ]
       ]
+    },
+    "If: Failed?": {
+      "main": [
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Replicate, Create RVM": {
+      "main": [
+        [
+          {
+            "node": "API: Replicate, Check RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Replicate, Check RVM Status": {
+      "main": [
+        [
+          {
+            "node": "If: RVM Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Create Avatar Video Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: RVM Complete": {
+      "main": [
+        [
+          {
+            "node": "Parse RVM Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for RVM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for RVM": {
+      "main": [
+        [
+          {
+            "node": "API: Replicate, Check RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RVM Response": {
+      "main": [
+        []
+      ]
     }
   },
   "settings": {
@@ -773,7 +1034,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "73c6900f-69f6-4698-8247-4648b15c7b15",
+  "versionId": "1a85c165-1068-4d20-a7c7-5e48943d1937",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
