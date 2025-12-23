@@ -1,0 +1,173 @@
+{
+  "updatedAt": "2025-12-22T12:46:51.899Z",
+  "createdAt": "2025-12-22T12:45:45.151Z",
+  "id": "hYtZolDYfDyohw9z",
+  "name": "[TEMP] Import HeyGen Avatars",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "import-avatars",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "webhookId": "import-avatars"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.heygen.com/v2/avatar_group/585545c8034c4c43b3969797841efd6c/avatars",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        240
+      ],
+      "id": "get-avatars",
+      "name": "Get Kelly Avatars",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vHwnmobM8C8U7vIZ",
+          "name": "HeyGen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const avatars = $json.data.avatar_list;\nconst results = [];\n\nfor (const avatar of avatars) {\n  const styleName = avatar.name.replace(/'/g, \"''\");\n  const motionUrl = avatar.motion_preview_url ? avatar.motion_preview_url.replace(/'/g, \"''\") : null;\n  \n  results.push({\n    json: {\n      person_name: 'Kelly',\n      style_name: styleName,\n      group_id: avatar.group_id,\n      avatar_id: avatar.id,\n      is_motion: avatar.is_motion,\n      voice_id: avatar.default_voice_id || null,\n      motion_preview_url: motionUrl\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        240
+      ],
+      "id": "transform",
+      "name": "Transform Avatars"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO avatars (person_name, style_name, group_id, photo_avatar_id, motion_avatar_id, voice_id, motion_preview_url, status, is_active)\nSELECT \n  '{{ $json.person_name }}',\n  '{{ $json.style_name }}',\n  '{{ $json.group_id }}',\n  {{ $json.is_motion ? 'NULL' : \"'\" + $json.avatar_id + \"'\" }},\n  {{ $json.is_motion ? \"'\" + $json.avatar_id + \"'\" : 'NULL' }},\n  {{ $json.voice_id ? \"'\" + $json.voice_id + \"'\" : 'NULL' }},\n  {{ $json.motion_preview_url ? \"'\" + $json.motion_preview_url + \"'\" : 'NULL' }},\n  'completed',\n  true\nWHERE NOT EXISTS (\n  SELECT 1 FROM avatars \n  WHERE (motion_avatar_id = '{{ $json.avatar_id }}' OR photo_avatar_id = '{{ $json.avatar_id }}')\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        660,
+        240
+      ],
+      "id": "insert-db",
+      "name": "Insert if Not Exists",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as total_kelly_avatars FROM avatars WHERE group_id = '585545c8034c4c43b3969797841efd6c';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        880,
+        240
+      ],
+      "id": "count-result",
+      "name": "Count Results",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Kelly Avatars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Kelly Avatars": {
+      "main": [
+        [
+          {
+            "node": "Transform Avatars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Avatars": {
+      "main": [
+        [
+          {
+            "node": "Insert if Not Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert if Not Exists": {
+      "main": [
+        [
+          {
+            "node": "Count Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "b2fbcc4f-6e8d-446a-a1e0-2d3df39dcab5",
+  "activeVersionId": null,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-12-22T12:45:45.151Z",
+      "createdAt": "2025-12-22T12:45:45.151Z",
+      "role": "workflow:owner",
+      "workflowId": "hYtZolDYfDyohw9z",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
