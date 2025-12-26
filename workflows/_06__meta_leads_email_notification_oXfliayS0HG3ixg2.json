@@ -1,0 +1,107 @@
+{
+  "updatedAt": "2025-12-25T20:48:09.884Z",
+  "createdAt": "2025-12-25T19:55:35.815Z",
+  "id": "oXfliayS0HG3ixg2",
+  "name": "[06] Meta Leads Email Notification",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "id": "trigger-sheets",
+      "name": "Google Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "zKXLgM7UKR3DQtdL",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=garyknight@carmackcars.com ",
+        "subject": "=🚗 New Meta Lead: {{ $json.name || $json.Name || $json['Full Name'] || 'New Lead' }}",
+        "message": "=<h2>🚗 New Lead from Meta!</h2>\n\n<p><strong>Name:</strong> {{ $json.name || $json.Name || $json['Full Name'] || 'N/A' }}</p>\n<p><strong>Phone:</strong> {{ $json.phone || $json.Phone || $json['Phone Number'] || 'N/A' }}</p>\n<p><strong>Email:</strong> {{ $json.email || $json.Email || 'N/A' }}</p>\n\n<p><a href=\"https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit\">📊 View Leads Spreadsheet</a></p>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        304,
+        0
+      ],
+      "webhookId": "30c872fd-ab07-48b7-9126-9f1148c2b8eb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GvUwJAPOcbCg8WSd",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "718f7fdc-f0de-4ec6-8f47-53bed5276b4f",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-25T19:55:35.815Z",
+      "createdAt": "2025-12-25T19:55:35.815Z",
+      "role": "workflow:owner",
+      "workflowId": "oXfliayS0HG3ixg2",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
