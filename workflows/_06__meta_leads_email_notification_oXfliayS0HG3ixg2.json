@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2025-12-25T20:48:09.884Z",
+  "updatedAt": "2025-12-26T15:05:23.009Z",
   "createdAt": "2025-12-25T19:55:35.815Z",
   "id": "oXfliayS0HG3ixg2",
   "name": "[06] Meta Leads Email Notification",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -85,14 +85,20 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "staticData": null,
+  "staticData": {
+    "node:Google Sheets Trigger": {
+      "documentId": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
+      "sheetId": 0,
+      "lastIndexChecked": 15
+    }
+  },
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
   "versionId": "718f7fdc-f0de-4ec6-8f47-53bed5276b4f",
-  "activeVersionId": null,
-  "triggerCount": 0,
+  "activeVersionId": "718f7fdc-f0de-4ec6-8f47-53bed5276b4f",
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2025-12-25T19:55:35.815Z",
@@ -102,6 +108,89 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": null,
+  "activeVersion": {
+    "updatedAt": "2025-12-25T20:48:09.887Z",
+    "createdAt": "2025-12-25T20:48:09.887Z",
+    "versionId": "718f7fdc-f0de-4ec6-8f47-53bed5276b4f",
+    "workflowId": "oXfliayS0HG3ixg2",
+    "nodes": [
+      {
+        "parameters": {
+          "pollTimes": {
+            "item": [
+              {
+                "mode": "everyMinute"
+              }
+            ]
+          },
+          "documentId": {
+            "__rl": true,
+            "value": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "id"
+          },
+          "event": "rowAdded",
+          "options": {}
+        },
+        "id": "trigger-sheets",
+        "name": "Google Sheets Trigger",
+        "type": "n8n-nodes-base.googleSheetsTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ],
+        "credentials": {
+          "googleSheetsTriggerOAuth2Api": {
+            "id": "zKXLgM7UKR3DQtdL",
+            "name": "Google Sheets Trigger account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sendTo": "=garyknight@carmackcars.com ",
+          "subject": "=🚗 New Meta Lead: {{ $json.name || $json.Name || $json['Full Name'] || 'New Lead' }}",
+          "message": "=<h2>🚗 New Lead from Meta!</h2>\n\n<p><strong>Name:</strong> {{ $json.name || $json.Name || $json['Full Name'] || 'N/A' }}</p>\n<p><strong>Phone:</strong> {{ $json.phone || $json.Phone || $json['Phone Number'] || 'N/A' }}</p>\n<p><strong>Email:</strong> {{ $json.email || $json.Email || 'N/A' }}</p>\n\n<p><a href=\"https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit\">📊 View Leads Spreadsheet</a></p>",
+          "options": {}
+        },
+        "id": "send-email",
+        "name": "Send Email",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "position": [
+          304,
+          0
+        ],
+        "webhookId": "30c872fd-ab07-48b7-9126-9f1148c2b8eb",
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "GvUwJAPOcbCg8WSd",
+            "name": "Gmail account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Google Sheets Trigger": {
+        "main": [
+          [
+            {
+              "node": "Send Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
   "tags": []
 }
