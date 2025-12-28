@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-26T15:05:23.009Z",
+  "updatedAt": "2025-12-27T21:44:12.115Z",
   "createdAt": "2025-12-25T19:55:35.815Z",
   "id": "oXfliayS0HG3ixg2",
   "name": "[06] Meta Leads Email Notification",
@@ -18,12 +18,16 @@
         "documentId": {
           "__rl": true,
           "value": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
-          "mode": "id"
+          "mode": "list",
+          "cachedResultName": "CCC Meta Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
-          "mode": "id"
+          "value": 1059722368,
+          "mode": "list",
+          "cachedResultName": "Leads 2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit#gid=1059722368"
         },
         "event": "rowAdded",
         "options": {}
@@ -46,8 +50,8 @@
     {
       "parameters": {
         "sendTo": "=garyknight@carmackcars.com ",
-        "subject": "=🚗 New Meta Lead: {{ $json.name || $json.Name || $json['Full Name'] || 'New Lead' }}",
-        "message": "=<h2>🚗 New Lead from Meta!</h2>\n\n<p><strong>Name:</strong> {{ $json.name || $json.Name || $json['Full Name'] || 'N/A' }}</p>\n<p><strong>Phone:</strong> {{ $json.phone || $json.Phone || $json['Phone Number'] || 'N/A' }}</p>\n<p><strong>Email:</strong> {{ $json.email || $json.Email || 'N/A' }}</p>\n\n<p><a href=\"https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit\">📊 View Leads Spreadsheet</a></p>",
+        "subject": "=🚗 New Meta Lead: {{ $json.first_name}} {{ $json.last_name }} || 'New Lead' }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<body>\n<h2>🚗 New Lead from Meta!</h2>\n<p><strong>Name:</strong> {{ $json.first_name }} {{ $json.last_name }}</p>\n<p><strong>Phone:</strong> {{ $json.phone }}</p>\n<p><strong>Email:</strong> {{ $json.email }}</p>\n<p><a href=\"https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit\">📊 View Leads Spreadsheet</a></p>\n</body>\n</html>",
         "options": {}
       },
       "id": "send-email",
@@ -55,14 +59,41 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        304,
-        0
+        -240,
+        -64
       ],
       "webhookId": "30c872fd-ab07-48b7-9126-9f1148c2b8eb",
       "credentials": {
         "gmailOAuth2": {
           "id": "GvUwJAPOcbCg8WSd",
           "name": "Gmail account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"garyknight@carmackcars.com\",\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": \"🚗 New Meta Lead: {{ $json['first name'] }} {{ $json.last_name }}\",\n  \"html\": \"<h2>🚗 New Lead from Meta!</h2><p><strong>Name:</strong> {{ $json.first_name }} {{ $json.last_name }}</p><p><strong>Phone:</strong> {{ $json.phone }}</p><p><strong>Email:</strong> {{ $json.email }}</p><p><strong>Timeline:</strong> {{ $json.when_do_you_want_to_get_started }}</p><p><strong>Campaign:</strong> {{ $json.campaign_name }}</p><br/><p><a href='https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>📊 View Leads Spreadsheet</a></p>\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        240,
+        0
+      ],
+      "id": "d2f11c32-c1dd-40c7-9120-43bfd68448df",
+      "name": "Send Meta Lead Email",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
         }
       }
     }
@@ -72,7 +103,7 @@
       "main": [
         [
           {
-            "node": "Send Email",
+            "node": "Send Meta Lead Email",
             "type": "main",
             "index": 0
           }
@@ -88,16 +119,16 @@
   "staticData": {
     "node:Google Sheets Trigger": {
       "documentId": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
-      "sheetId": 0,
-      "lastIndexChecked": 15
+      "sheetId": 1059722368,
+      "lastIndexChecked": 2
     }
   },
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "718f7fdc-f0de-4ec6-8f47-53bed5276b4f",
-  "activeVersionId": "718f7fdc-f0de-4ec6-8f47-53bed5276b4f",
+  "versionId": "72a3bbe0-f71a-4795-8ab3-8c10c0590d50",
+  "activeVersionId": "72a3bbe0-f71a-4795-8ab3-8c10c0590d50",
   "triggerCount": 1,
   "shared": [
     {
@@ -109,9 +140,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-25T20:48:09.887Z",
-    "createdAt": "2025-12-25T20:48:09.887Z",
-    "versionId": "718f7fdc-f0de-4ec6-8f47-53bed5276b4f",
+    "updatedAt": "2025-12-27T21:44:12.120Z",
+    "createdAt": "2025-12-27T21:44:12.120Z",
+    "versionId": "72a3bbe0-f71a-4795-8ab3-8c10c0590d50",
     "workflowId": "oXfliayS0HG3ixg2",
     "nodes": [
       {
@@ -126,12 +157,16 @@
           "documentId": {
             "__rl": true,
             "value": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
-            "mode": "id"
+            "mode": "list",
+            "cachedResultName": "CCC Meta Leads",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit?usp=drivesdk"
           },
           "sheetName": {
             "__rl": true,
-            "value": "gid=0",
-            "mode": "id"
+            "value": 1059722368,
+            "mode": "list",
+            "cachedResultName": "Leads 2",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit#gid=1059722368"
           },
           "event": "rowAdded",
           "options": {}
@@ -154,8 +189,8 @@
       {
         "parameters": {
           "sendTo": "=garyknight@carmackcars.com ",
-          "subject": "=🚗 New Meta Lead: {{ $json.name || $json.Name || $json['Full Name'] || 'New Lead' }}",
-          "message": "=<h2>🚗 New Lead from Meta!</h2>\n\n<p><strong>Name:</strong> {{ $json.name || $json.Name || $json['Full Name'] || 'N/A' }}</p>\n<p><strong>Phone:</strong> {{ $json.phone || $json.Phone || $json['Phone Number'] || 'N/A' }}</p>\n<p><strong>Email:</strong> {{ $json.email || $json.Email || 'N/A' }}</p>\n\n<p><a href=\"https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit\">📊 View Leads Spreadsheet</a></p>",
+          "subject": "=🚗 New Meta Lead: {{ $json.first_name}} {{ $json.last_name }} || 'New Lead' }}",
+          "message": "=<!DOCTYPE html>\n<html>\n<body>\n<h2>🚗 New Lead from Meta!</h2>\n<p><strong>Name:</strong> {{ $json.first_name }} {{ $json.last_name }}</p>\n<p><strong>Phone:</strong> {{ $json.phone }}</p>\n<p><strong>Email:</strong> {{ $json.email }}</p>\n<p><a href=\"https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit\">📊 View Leads Spreadsheet</a></p>\n</body>\n</html>",
           "options": {}
         },
         "id": "send-email",
@@ -163,14 +198,41 @@
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.1,
         "position": [
-          304,
-          0
+          -240,
+          -64
         ],
         "webhookId": "30c872fd-ab07-48b7-9126-9f1148c2b8eb",
         "credentials": {
           "gmailOAuth2": {
             "id": "GvUwJAPOcbCg8WSd",
             "name": "Gmail account"
+          }
+        },
+        "disabled": true
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"garyknight@carmackcars.com\",\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": \"🚗 New Meta Lead: {{ $json['first name'] }} {{ $json.last_name }}\",\n  \"html\": \"<h2>🚗 New Lead from Meta!</h2><p><strong>Name:</strong> {{ $json.first_name }} {{ $json.last_name }}</p><p><strong>Phone:</strong> {{ $json.phone }}</p><p><strong>Email:</strong> {{ $json.email }}</p><p><strong>Timeline:</strong> {{ $json.when_do_you_want_to_get_started }}</p><p><strong>Campaign:</strong> {{ $json.campaign_name }}</p><br/><p><a href='https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>📊 View Leads Spreadsheet</a></p>\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          240,
+          0
+        ],
+        "id": "d2f11c32-c1dd-40c7-9120-43bfd68448df",
+        "name": "Send Meta Lead Email",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
           }
         }
       }
@@ -180,7 +242,7 @@
         "main": [
           [
             {
-              "node": "Send Email",
+              "node": "Send Meta Lead Email",
               "type": "main",
               "index": 0
             }
