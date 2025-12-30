@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-29T06:00:33.757Z",
+  "updatedAt": "2025-12-29T18:50:46.520Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -393,7 +393,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text_type\": \"ssml\",\n  \"voice_id\": \"{{$json.voice_id}}\",\n  \"text\": \"<speak><prosody rate='112%' pitch='+2st'>{{$json.text}}</prosody><break time='250ms' /></speak>\",\n  \"with_timestamps\": true,\n  \"speed\": \"1.12\",\n  \"pitch\": \"1\",\n  \"elevanlabs_settings\": {\n    \"model\": \"eleven_turbo_v2_5\",\n    \"similarity_boost\": 0.65,\n    \"stability\": 0.35,\n    \"style\": 0.45\n  }\n}\n",
+        "jsonBody": "={\n  \"text_type\": \"ssml\",\n  \"voice_id\": \"{{$json.voice_id}}\",\n  \"text\": \"<speak><prosody pitch=\\\"+2st\\\">{{$json.text}}</prosody><break time=\\\"250ms\\\" /></speak>\",\n  \"with_timestamps\": true,\n\"settings\": {\n  \"pitch\": 0,\n  \"speed\": 1.12,\n  \"volume\": 1\n},\n  \"elevanlabs_settings\": {\n    \"model\": \"eleven_turbo_v2_5\",\n    \"similarity_boost\": 0.65,\n    \"stability\": 0.35,\n    \"style\": 0.45\n  }\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -1034,7 +1034,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b9a01c25-ca91-44c4-9f4e-f23c6ccd6e4c",
+  "versionId": "54a165e4-5033-4553-93a3-0d2b3eda09d7",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
