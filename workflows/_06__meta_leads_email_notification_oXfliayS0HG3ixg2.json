@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-29T17:16:06.417Z",
+  "updatedAt": "2025-12-30T19:45:20.306Z",
   "createdAt": "2025-12-25T19:55:35.815Z",
   "id": "oXfliayS0HG3ixg2",
   "name": "[06] Meta Leads Email Notification",
@@ -61,11 +61,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        240,
+        300,
         0
       ],
       "id": "d2f11c32-c1dd-40c7-9120-43bfd68448df",
       "name": "Send Meta Lead Email",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "httpBearerAuth": {
           "id": "vdxOfyrKMfWKSmAH",
@@ -96,15 +98,15 @@
     "node:Google Sheets Trigger": {
       "documentId": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
       "sheetId": 1059722368,
-      "lastIndexChecked": 13
+      "lastIndexChecked": 18
     }
   },
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "9a0fbee6-8315-4878-bee6-88789ab19ff1",
-  "activeVersionId": "9a0fbee6-8315-4878-bee6-88789ab19ff1",
+  "versionId": "fe8a8c18-429c-4e49-a261-723c17323d31",
+  "activeVersionId": "fe8a8c18-429c-4e49-a261-723c17323d31",
   "triggerCount": 1,
   "shared": [
     {
@@ -116,9 +118,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-29T17:16:06.419Z",
-    "createdAt": "2025-12-29T17:16:06.419Z",
-    "versionId": "9a0fbee6-8315-4878-bee6-88789ab19ff1",
+    "updatedAt": "2025-12-30T19:45:20.309Z",
+    "createdAt": "2025-12-30T19:45:20.309Z",
+    "versionId": "fe8a8c18-429c-4e49-a261-723c17323d31",
     "workflowId": "oXfliayS0HG3ixg2",
     "nodes": [
       {
@@ -176,11 +178,13 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          240,
+          300,
           0
         ],
         "id": "d2f11c32-c1dd-40c7-9120-43bfd68448df",
         "name": "Send Meta Lead Email",
+        "retryOnFail": true,
+        "waitBetweenTries": 5000,
         "credentials": {
           "httpBearerAuth": {
             "id": "vdxOfyrKMfWKSmAH",
