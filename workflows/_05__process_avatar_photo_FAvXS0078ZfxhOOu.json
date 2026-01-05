@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-03T16:34:52.769Z",
+  "updatedAt": "2026-01-04T15:39:16.091Z",
   "createdAt": "2025-12-17T14:15:04.048Z",
   "id": "FAvXS0078ZfxhOOu",
   "name": "[05] Process Avatar Photo",
@@ -488,7 +488,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"group_id\": \"{{ $json.group_id }}\",\n  \"image_keys\": [\"{{ $json.image_key }}\"],\n  \"name\": \"{{ $json.avatar_name }}\"\n}",
+        "jsonBody": "={\n  \"group_id\": \"{{ $json.group_id }}\",\n  \"image_keys\": [\"{{ $json.image_key }}\"],\n  \"name\": \"{{ $json.style_name }}\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -1161,8 +1161,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "6d960767-95b6-41ba-b0c3-aa74c40ba30a",
-  "activeVersionId": "6d960767-95b6-41ba-b0c3-aa74c40ba30a",
+  "versionId": "8a5285a2-6023-46dc-a11f-1ca8ec962e52",
+  "activeVersionId": "8a5285a2-6023-46dc-a11f-1ca8ec962e52",
   "triggerCount": 1,
   "shared": [
     {
@@ -1174,9 +1174,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-03T16:34:52.772Z",
-    "createdAt": "2026-01-03T16:34:52.772Z",
-    "versionId": "6d960767-95b6-41ba-b0c3-aa74c40ba30a",
+    "updatedAt": "2026-01-04T15:39:16.095Z",
+    "createdAt": "2026-01-04T15:39:16.095Z",
+    "versionId": "8a5285a2-6023-46dc-a11f-1ca8ec962e52",
     "workflowId": "FAvXS0078ZfxhOOu",
     "nodes": [
       {
@@ -1661,7 +1661,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"group_id\": \"{{ $json.group_id }}\",\n  \"image_keys\": [\"{{ $json.image_key }}\"],\n  \"name\": \"{{ $json.avatar_name }}\"\n}",
+          "jsonBody": "={\n  \"group_id\": \"{{ $json.group_id }}\",\n  \"image_keys\": [\"{{ $json.image_key }}\"],\n  \"name\": \"{{ $json.style_name }}\"\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
