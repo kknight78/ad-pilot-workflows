@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-21T22:35:23.112Z",
+  "updatedAt": "2026-01-07T03:31:17.297Z",
   "createdAt": "2025-12-19T01:37:49.969Z",
   "id": "3MLAcpvKTlDN5g9m",
   "name": "[06] HeyGen Webhook Receiver",
@@ -188,7 +188,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE avatars\nSET motion_preview_url = '{{ $json.motion_preview_url }}',\n    status = 'completed',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
+        "query": "UPDATE avatars\nSET preview_video_url = '{{ $json.motion_preview_url }}',\n    preview_image_url = '{{ $json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -205,6 +205,34 @@
           "name": "Railway Postgres"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ccc.ad-pilot.ai/api/avatars/notify",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "motion_avatar_id",
+              "value": "={{ $(\"Extract Avatar Info\").first().json.avatar_id }}"
+            },
+            {
+              "name": "preview_video_url",
+              "value": "={{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "API: Send Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1306,
+        -48
+      ],
+      "id": "563ee9e4-c795-4b1d-a8e6-48ae2a3e65c0"
     }
   ],
   "connections": {
@@ -288,6 +316,11 @@
             "node": "Respond Success",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "API: Send Notification",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -301,8 +334,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "f3bb81ec-c4f7-4844-9124-a42248ae3d55",
-  "activeVersionId": "f3bb81ec-c4f7-4844-9124-a42248ae3d55",
+  "versionId": "2428b1fc-0c8e-4e14-a977-807fff9c5707",
+  "activeVersionId": "2428b1fc-0c8e-4e14-a977-807fff9c5707",
   "triggerCount": 2,
   "shared": [
     {
@@ -314,9 +347,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-21T22:35:23.116Z",
-    "createdAt": "2025-12-21T22:35:23.116Z",
-    "versionId": "f3bb81ec-c4f7-4844-9124-a42248ae3d55",
+    "updatedAt": "2026-01-07T03:31:17.302Z",
+    "createdAt": "2026-01-07T03:31:17.302Z",
+    "versionId": "2428b1fc-0c8e-4e14-a977-807fff9c5707",
     "workflowId": "3MLAcpvKTlDN5g9m",
     "nodes": [
       {
@@ -501,7 +534,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "UPDATE avatars\nSET motion_preview_url = '{{ $json.motion_preview_url }}',\n    status = 'completed',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
+          "query": "UPDATE avatars\nSET preview_video_url = '{{ $json.motion_preview_url }}',\n    preview_image_url = '{{ $json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
@@ -518,6 +551,34 @@
             "name": "Railway Postgres"
           }
         }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ccc.ad-pilot.ai/api/avatars/notify",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "motion_avatar_id",
+                "value": "={{ $(\"Extract Avatar Info\").first().json.avatar_id }}"
+              },
+              {
+                "name": "preview_video_url",
+                "value": "={{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "name": "API: Send Notification",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1306,
+          -48
+        ],
+        "id": "563ee9e4-c795-4b1d-a8e6-48ae2a3e65c0"
       }
     ],
     "connections": {
@@ -599,6 +660,11 @@
           [
             {
               "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "API: Send Notification",
               "type": "main",
               "index": 0
             }
