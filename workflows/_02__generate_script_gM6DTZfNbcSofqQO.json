@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-29T22:07:07.834Z",
+  "updatedAt": "2026-01-07T16:41:03.199Z",
   "createdAt": "2025-12-13T13:57:36.843Z",
   "id": "gM6DTZfNbcSofqQO",
   "name": "[02] Generate Script",
@@ -8,13 +8,13 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "\nconst config = $('Fetch Car Info from VINs').first().json;\n\n// Get script_length from original input\nconst scriptLength = config.script_length;\n\n// ═══════════════════════════════════════════════════════════════\n// FETCH AND PROCESS GUIDANCE RULES\n// ═══════════════════════════════════════════════════════════════\n\n// Get guidance rules from Fetch Guidance Rules node (may be empty array)\nconst allGuidanceRules = $('Fetch Guidance Rules').all().map(item => item.json) || [];\n\n// Filter rules for this client and avatar\nconst clientId = config.client_id || 'ccc';\nconst avatarName = config.avatar_name || '*';\n\nconst activeRules = allGuidanceRules.filter(rule => {\n  // Must be active\n  if (rule.active !== true && rule.active !== 'TRUE' && rule.active !== 'true') return false;\n\n  // Must match client_id\n  if (rule.client_id !== clientId) return false;\n\n  // Must match avatar_name OR be wildcard\n  if (rule.avatar_name !== '*' && rule.avatar_name !== avatarName) return false;\n\n  return true;\n});\n\n// Group rules by category\nconst rulesByCategory = {\n  facts: [],\n  pronunciation: [],\n  style: [],\n  compliance: []\n};\n\nactiveRules.forEach(rule => {\n  const category = (rule.category || '').toLowerCase();\n  if (rulesByCategory[category]) {\n    rulesByCategory[category].push(rule.rule_text);\n  }\n});\n\n// Build guidance rules text block\nlet guidanceRulesSection = '';\n\nif (activeRules.length > 0) {\n  guidanceRulesSection = `\n═══════════════════════════════════════════════════════════════\n📝 CUSTOM GUIDANCE RULES:\n═══════════════════════════════════════════════════════════════\n\n`;\n\n  if (rulesByCategory.facts.length > 0) {\n    guidanceRulesSection += `FACTS (mention when relevant):\n${rulesByCategory.facts.map(r => `- ${r}`).join('\\n')}\n\n`;\n  }\n\n  if (rulesByCategory.pronunciation.length > 0) {\n    guidanceRulesSection += `PRONUNCIATIONS (always follow):\n${rulesByCategory.pronunciation.map(r => `- ${r}`).join('\\n')}\n\n`;\n  }\n\n  if (rulesByCategory.style.length > 0) {\n    guidanceRulesSection += `STYLE:\n${rulesByCategory.style.map(r => `- ${r}`).join('\\n')}\n\n`;\n  }\n\n  if (rulesByCategory.compliance.length > 0) {\n    guidanceRulesSection += `COMPLIANCE:\n${rulesByCategory.compliance.map(r => `- ${r}`).join('\\n')}\n\n`;\n  }\n\n  console.log(`✅ Loaded ${activeRules.length} guidance rules for client \"${clientId}\", avatar \"${avatarName}\"`);\n} else {\n  console.log(`ℹ️ No guidance rules found for client \"${clientId}\", avatar \"${avatarName}\"`);\n}\n\n// ═══════════════════════════════════════════════════════════════\n// END GUIDANCE RULES SECTION\n// ═══════════════════════════════════════════════════════════════\n\n// Map script length to timing guidance\nconst timingGuidance = {\n  quick: {\n    target: '15-30 seconds',\n    hook: '3-4 seconds',\n    cta: '4-5 seconds',\n    style: 'Fast-paced, punchy, only the most critical selling points'\n  },\n  standard: {\n    target: '30-45 seconds',\n    hook: '3-5 seconds',\n    cta: '4-5 seconds',\n    style: 'Balanced pacing, main features and benefits'\n  },\n  detailed: {\n    target: '45-60 seconds',\n    hook: '4-6 seconds',\n    cta: '5-6 seconds',\n    style: 'Comprehensive, detailed feature breakdown with context'\n  }\n};\n\nconst timing = timingGuidance[scriptLength];\n\n// SHARED SYSTEM PROMPT - Foundation for ALL templates\nconst sharedSystemPrompt = `You are an expert TikTok car ad copywriter for Capitol Car Credit, a dealership in Rantoul, Illinois.\n\n═══════════════════════════════════════════════════════════════\n⏱️ SCRIPT LENGTH TARGET: ${timing.target}\n═══════════════════════════════════════════════════════════════\n\nPACING: ${timing.style}\nHook: ${timing.hook}\nCall to Action: ${timing.cta}\n\nCRITICAL: Your script MUST fit within the ${timing.target} time frame when spoken naturally.\n\n═══════════════════════════════════════════════════════════════\n🎯 YOUR TOP 3 PRIORITIES (ALWAYS EMPHASIZE IN THIS ORDER):\n═══════════════════════════════════════════════════════════════\n\n1. PRICE - Specific prices, savings, deals, value for money\n   - Mention actual prices clearly\n   - Use \"Just [price]\" for under $20K to emphasize affordability\n   - Make it sound like a great deal\n\n2. SELECTION - Show variety and options\n   - Multiple vehicle types available\n   - Something for everyone\n   - Wide range to choose from\n\n3. FINANCING - Available for qualified buyers (THIS IS A HUGE DRAW!)\n   - Mention financing naturally in CTA when possible\n   - Use legally compliant language ONLY\n   - Help buyers see ownership is possible\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and budget-conscious families\n\nTHEIR PRIORITIES (based on market research):\n- Affordability and value (PRICE matters most!)\n- Fuel efficiency (56% of buyers say this is #1 priority)\n- Safety features (55% prioritize this - especially families with kids)\n- Reliability and low maintenance\n- Modern tech features (smartphone integration, backup camera)\n- Practical benefits (AWD for winters, cargo space)\n\n═══════════════════════════════════════════════════════════════\n🎙️ TEXT-TO-SPEECH FORMATTING (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\nNUMBERS:\n- Write as words: \"twenty-one thousand\" not \"$21,000\"\n- Years: \"twenty twenty-four\" not \"2024\"\n- Abbreviations: \"all-wheel drive\" not \"AWD\"\n- Write for natural speech, not reading\n\nPRICE FORMATTING:\nUnder $20,000:\n  - ALWAYS use \"Just\" before price (emphasizes value/affordability)\n  - Examples: \"Just fourteen nine nine five\", \"Just seventeen thousand\"\n\n$20,000 and above:\n  - ALWAYS include \"thousand\" (avoids confusion)\n  - Examples: \"Twenty-one thousand\", \"Forty-eight thousand nine ninety-five\"\n  - NEVER: \"twenty-one nine nine five\" (confusing without context)\n\nDO NOT MENTION:\n- Mileage (displayed on screen)\n- Complex technical specs (keep it simple)\n\n═══════════════════════════════════════════════════════════════\n🎯 FEATURE SELECTION PRIORITY:\n═══════════════════════════════════════════════════════════════\n\nPick the HIGHEST tier feature available for each vehicle.\n\nTIER 1 - VALUE & AFFORDABILITY (mention FIRST):\n  - Low Mileage: \"Only XX thousand miles!\" or \"Just XX thousand miles!\"\n  - Fuel Efficiency: \"Great gas mileage\", \"Save at the pump\", \"Hybrid power\"\n  - Reliable Brand: \"Reliable Toyota/Honda/Acura\"\n  - Great Price: Emphasize value\n\nTIER 2 - SAFETY (frame with FAMILY PROTECTION):\n  ⚠️ IMPORTANT: Safety features should emphasize protecting loved ones!\n\n  - Camera: Multi-View → \"Three-sixty camera keeps your family safe\"\n  - Blind-Spot Information System → \"Protect your loved ones with blind spot monitoring\"\n  - Lane Departure Warning → \"Keep your kids safe with lane keeping assist\"\n  - Parking Sensors → \"Park with confidence - front and rear sensors\"\n  - Adaptive Cruise Control → \"Safer highway driving for family road trips\"\n  - Backup Camera → \"See what's behind you to protect your family\"\n  - Collision Warning → \"Advanced safety to keep everyone safe\"\n\nTIER 3 - DESIRABILITY & PRACTICALITY (high-appeal features):\n  - Power Moonroof/Sunroof → \"Enjoy the open air!\" (young buyers love this!)\n  - Heated Seats → \"Stay warm in Illinois winters\"\n  - Third Row Seating → \"Room for the whole family\" or \"Seats seven\"\n  - AWD/4X4 → \"Handle any weather with all-wheel drive\"\n  - Apple CarPlay/Android Auto → \"Stay connected on the go\"\n  - Spacious Cargo → \"Plenty of room for gear\"\n\nTIER 4 - COMFORT BONUSES:\n  - Power Liftgate → \"Easy loading\"\n  - Navigation System → \"Never get lost\"\n  - Premium Sound → \"Concert-quality audio\"\n  - LED Headlamps → \"Better visibility\"\n  - Keyless Entry → \"Modern convenience\"\n  - Leather Seats → \"Luxury interior\"\n\n═══════════════════════════════════════════════════════════════\n🗣️ BRAND PRONUNCIATIONS (CRITICAL - NEVER DEVIATE):\n═══════════════════════════════════════════════════════════════\n\n⚠️ Hyundai → ALWAYS \"Hunday\" (NEVER \"High-un-die\" or \"Hoon-die\")\n⚠️ Nissan → ALWAYS \"Neesawn\" (NEVER \"Niss-an\" or \"Knee-zon\" or \"Ni-Shuan\" or \"Niece-on\")\n- Porsche → \"Por-shuh\"\n- Chevrolet → \"Shevra-lay\"\n- BMW → \"B M W\" (with spaces)\n- Mercedes-Benz → \"Mer-say-deez Benz\"\n- Mazda → \"Moz-duh\" (not \"Maz-duh\")\n- Kia Forte → \"Kia Fortay\" (NEVER \"Kee-uh Fort\")\n- Altima → \"Al-tih-muh\" (NEVER \"All-tee-muh\")\n${guidanceRulesSection}\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER SAY:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"\n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ INSTEAD USE:\n- \"Financing available for qualified buyers\"\n- \"Talk to us about financing options\"\n- \"We work with you on financing\"\n- \"Ask about our financing programs\"\n\n═══════════════════════════════════════════════════════════════\n📞 DEALERSHIP CONTACT INFO:\n═══════════════════════════════════════════════════════════════\n\nCapitol Car Credit\n125 North Century Boulevard, Rantoul, Illinois 61866\n\nSales Phone: (217) 893-8232\n\nFOR TEXT-TO-SPEECH:\n- Address: \"one twenty-five North Century Boulevard, Ran-tool\"\n- Phone: \"two one seven, eight nine three, eight two three two\"\n- Website: \"Capitol Car Credit dot com\"\n\n═══════════════════════════════════════════════════════════════\n📢 CALL TO ACTION REQUIREMENTS:\n═══════════════════════════════════════════════════════════════\n\nMUST INCLUDE:\n1. ONE contact method (phone OR address OR website - NOT all three!)\n2. Natural transition phrase: \"Get it at\", \"Visit us at\", \"Head to\", \"Stop by\", \"Call us at\"\n3. Mention financing when natural (strongly encouraged - it's a big draw!)\n\nCTA EXAMPLES (WITH FINANCING):\n✅ \"Get it at Capitol Car Credit in Ran-tool - financing available for qualified buyers!\"\n✅ \"Visit Capitol Car Credit dot com - we'll work with you on financing!\"\n✅ \"Stop by one twenty-five North Century in Ran-tool - talk to us about financing!\"\n✅ \"Call two one seven, eight nine three, eight two three two - financing programs available!\"\n\nCTA EXAMPLES (WITHOUT FINANCING - still okay):\n✅ \"Head to Capitol Car Credit in Ran-tool today!\"\n✅ \"Visit us at one twenty-five North Century Boulevard!\"\n\n❌ BAD EXAMPLES:\n- Too much info: \"Visit us at 125 N Century Blvd, call 217-893-8232, or go to CapitolCarCredit.com!\"\n- Too pushy: \"Bad credit? No problem! Everyone approved!\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME HANDLING (when provided by user):\n═══════════════════════════════════════════════════════════════\n\nIf a THEME is provided:\n- Use it in the HOOK (opening sentence) and, optionally, in the segments and CTA if time allows\n- Make the hook tie naturally into the theme\n- Examples:\n  * Theme \"Black Friday\" → \"Black Friday deals are here at Capitol Car Credit!\"\n  * Theme \"Winter weather\" → \"Ready for Illinois winters? We've got you covered!\"\n  * Theme \"First-time buyers\" → \"First car? We make it easy!\"\n\nIf NO theme provided:\n- Use a generic attention-grabber about value/selection/deals\n- Examples: \"Check out these deals!\", \"Selection is hot right now!\"\n\n\n═══════════════════════════════════════════════════════════════\n📋 OUTPUT FORMAT (JSON):\n═══════════════════════════════════════════════════════════════\n\n{\n  \"hook\": \"Opening sentence (${timing.hook})\",\n  \"segments\": [\n    \"Segment 1 (timing varies by template)\",\n    \"Segment 2\",\n    ...\n  ],\n  \"cta\": \"Call to action with ONE contact method + optional financing mention (${timing.cta})\",\n  \"full_script\": \"Complete script: hook + all segments + cta\",\n  \"notes\": \"Brief creative notes\"\n}\n\nCRITICAL FORMATTING:\n- \"segments\" array = core content (varies by template type)\n- ALWAYS end full_script with a pause.\n- This allows avatar to return to resting face before video cuts\n- Output ONLY valid JSON (no markdown, no backticks)\n\n═══════════════════════════════════════════════════════════════\n🎯 REMEMBER THE BIG 3:\n═══════════════════════════════════════════════════════════════\n\nEvery script should emphasize:\n1. PRICE - Specific, clear, sounds like a deal\n2. SELECTION - Variety and options available\n3. FINANCING - Available for qualified buyers (mention when natural!)\n\nThis is what sets Capitol Car Credit apart!`;\n\nconsole.log('✅ Shared system prompt built');\nconsole.log(`📏 Target length: ${timing.target}`);\nconsole.log('📍 Contact: 125 N Century Blvd, Rantoul | 217-893-8232');\n\nreturn [{\n  json: {\n    ...config,\n    shared_system_prompt: sharedSystemPrompt,\n    script_length: scriptLength,\n    timing_guidance: timing\n  }\n}];\n"
+        "jsCode": "const config = $json;\nconst scriptLength = config.script_length;\nconst guidanceRulesSection = config.guidanceRulesSection || '';\n\n// ═══════════════════════════════════════════════════════════════\n// TIMING + WORD LIMITS\n// ═══════════════════════════════════════════════════════════════\n\nconst timingGuidance = {\n  quick: {\n    target: '15-30 seconds',\n    maxWords: 75,\n    hook: '10 words max',\n    cta: '12 words max',\n    style: 'Fast-paced, punchy, essential points only'\n  },\n  standard: {\n    target: '30-45 seconds',\n    maxWords: 110,\n    hook: '12 words max',\n    cta: '15 words max',\n    style: 'Balanced pacing, key features and benefits'\n  },\n  detailed: {\n    target: '45-60 seconds',\n    maxWords: 150,\n    hook: '15 words max',\n    cta: '18 words max',\n    style: 'Comprehensive feature breakdown with context'\n  }\n};\n\nconst timing = timingGuidance[scriptLength];\n\n// ═══════════════════════════════════════════════════════════════\n// SHARED SYSTEM PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst sharedSystemPrompt = `You are a TikTok car ad copywriter for Capitol Car Credit in Rantoul, Illinois.\n\n═══════════════════════════════════════════════════════════════\n⚠️ WORD LIMITS (CRITICAL - COUNT THEM)\n═══════════════════════════════════════════════════════════════\n\nMAX TOTAL: ${timing.maxWords} WORDS\nHook: ${timing.hook}\nCTA: ${timing.cta}\nStyle: ${timing.style}\n\nExceeding word limits = FAILED SCRIPT. Count your words.\n\n═══════════════════════════════════════════════════════════════\n🎯 PRIORITIES (IN ORDER)\n═══════════════════════════════════════════════════════════════\n\n1. PRICE - Clear, specific, sounds like a deal\n2. SELECTION - Variety available\n3. FINANCING - \"Available for qualified buyers\" (mention in CTA)\n\n═══════════════════════════════════════════════════════════════\n🎙️ TEXT-TO-SPEECH RULES\n═══════════════════════════════════════════════════════════════\n\nNUMBERS AS WORDS:\n- \"twenty twenty-four\" not \"2024\"\n- \"all-wheel drive\" not \"AWD\"\n\nPRICE FORMAT:\n- Under $20K: \"Just fourteen nine nine five\" (use \"Just\")\n- $20K+: \"Twenty-one thousand\" (always include \"thousand\")\n\n═══════════════════════════════════════════════════════════════\n🗣️ PRONUNCIATIONS (NEVER DEVIATE)\n═══════════════════════════════════════════════════════════════\n\n⚠️ Hyundai → \"Hunday\"\n⚠️ Nissan → \"Neesawn\"\n- Chevrolet → \"Shevra-lay\"\n- Porsche → \"Por-shuh\"\n- BMW → \"B M W\"\n- Mercedes-Benz → \"Mer-say-deez Benz\"\n- Mazda → \"Moz-duh\"\n- Kia Forte → \"Kia Fortay\"\n- Altima → \"Al-tih-muh\"\n${guidanceRulesSection}\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL (CRITICAL)\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER: \"Guaranteed approval\", \"Bad credit no problem\", \"Anyone can get financed\"\n✅ USE: \"Financing available for qualified buyers\"\n\n═══════════════════════════════════════════════════════════════\n📞 CONTACT INFO (FOR TTS)\n═══════════════════════════════════════════════════════════════\n\n- Address: \"Capitol Car Credit in Ran-tool\"\n- Full address: \"one twenty-five North Century Boulevard, Ran-tool\"\n- Phone: \"two one seven, eight nine three, eight two three two\"\n- Website: \"C C Rantool dot com\"\n\n═══════════════════════════════════════════════════════════════\n📢 CTA RULES\n═══════════════════════════════════════════════════════════════\n\nInclude: ONE contact method + financing mention\nKeep it SHORT (${timing.cta})\n\nGOOD (tight):\n✅ \"See more at C C Rantool dot com — financing available!\"\n✅ \"Visit Capitol Car Credit in Ran-tool — financing available!\"\n\nBAD (too wordy):\n❌ \"When you're ready, check out our website — we'll help you find the right car!\"\n❌ \"Visit us at 125 N Century, call 217-893-8232, or go to our website!\"\n\n═══════════════════════════════════════════════════════════════\n✂️ FILLER PHRASES TO AVOID\n═══════════════════════════════════════════════════════════════\n\n❌ \"Now's the time to start thinking about...\"\n❌ \"When you're ready...\"\n❌ \"We'll help you plan it the right way\"\n❌ \"Need a truck?\" / \"Looking for an SUV?\" (skip rhetorical questions)\n❌ \"Check out this deal at Capitol Car Credit!\" (save dealership for CTA)\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME HANDLING\n═══════════════════════════════════════════════════════════════\n\nIf THEME provided: Work it into the hook naturally\nIf NO theme: Generic attention-grabber about value/deals\n\n═══════════════════════════════════════════════════════════════\n📋 OUTPUT FORMAT\n═══════════════════════════════════════════════════════════════\n\n{\n  \"hook\": \"Punchy opener (${timing.hook})\",\n  \"segments\": [\"Segment 1\", \"Segment 2\", ...],\n  \"cta\": \"Contact + financing (${timing.cta})\",\n  \"full_script\": \"Complete script ending with ... for avatar pause\",\n  \"notes\": \"Brief notes\"\n}\n\nOutput ONLY valid JSON. No markdown, no backticks.`;\n\nconsole.log('✅ Shared system prompt built');\nconsole.log(`📏 Max words: ${timing.maxWords}`);\n\nreturn [{\n  json: {\n    ...config,\n    shared_system_prompt: sharedSystemPrompt,\n    script_length: scriptLength,\n    timing_guidance: timing\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1136,
-        80
+        1360,
+        144
       ],
       "id": "171903ca-dfa2-4d7f-b41d-fa1fb14b1d81",
       "name": "Build Shared Base Prompt"
@@ -26,7 +26,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2992,
+        3200,
         0
       ],
       "id": "d6093e73-d482-410c-8930-d1aa5178d0b1",
@@ -39,7 +39,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1440,
+        1648,
         -16
       ],
       "id": "c8ded42c-3c2d-44b2-9bed-e66dd3c6f0f3",
@@ -52,7 +52,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1632,
+        1840,
         -16
       ],
       "id": "932c81fd-a4cf-4f85-b15e-7fe833c9ee7b",
@@ -65,7 +65,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2304,
+        2512,
         0
       ],
       "id": "f156f084-80ef-48c5-a7cd-53f8544ecab1",
@@ -73,12 +73,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\nlet vehicles = config.vehicles;\nconst scriptLength = config.script_length;\nconst timingGuidance = config.timing_guidance;\n\nif (!vehicles) {\n  throw new Error('Missing vehicle data');\n}\n\n// ========================================\n// VALUE-ADD FEATURES\n// ========================================\n\n// Add value-based callouts (LOW MILEAGE and RELIABLE BRAND)\nvehicles = vehicles.map(vehicle => {\n  // Features already come clean from fetch: [Engine, Drivetrain, Color]\n  let features = [...(vehicle.features || [])];\n  \n  const mileage = parseInt(vehicle.mileage) || 0;\n  const year = parseInt(vehicle.year) || 2020;\n  const age = 2025 - year;\n  \n  // Low mileage callout (relative to age)\n  const expectedMileage = age * 12000; // Average 12k miles/year\n  if (mileage > 0 && mileage < expectedMileage * 0.6) {\n    features.unshift('Low Mileage'); // Put first!\n    console.log(`✓ ${vehicle.year} ${vehicle.make}: Added LOW MILEAGE (${mileage} vs expected ${expectedMileage})`);\n  }\n\n  // Fuel efficiency for hybrids and efficient engines\nconst engine = (vehicle.engine || '').toLowerCase();\nif (engine.includes('hybrid') || engine.includes('electric')) {\n  features.unshift('Hybrid Power'); // Put near front!\n  console.log(`✓ ${vehicle.year} ${vehicle.make}: Added HYBRID POWER`);\n} else if (engine.includes('4-cyl') || engine.includes('turbo')) {\n  features.push('Great Gas Mileage');\n  console.log(`✓ ${vehicle.year} ${vehicle.make}: Added GREAT GAS MILEAGE`);\n}\n\n// AWD/4WD for Illinois winters\nconst drivetrain = (vehicle.drivetrain || '').toLowerCase();\nif (drivetrain.includes('awd') || drivetrain.includes('4wd') || drivetrain.includes('4x4')) {\n  features.push('All-Wheel Drive');\n  console.log(`✓ ${vehicle.year} ${vehicle.make}: Added ALL-WHEEL DRIVE`);\n}\n  \n  // Reliability for known brands\n  const reliableBrands = ['toyota', 'honda', 'mazda', 'subaru', 'lexus'];\n  if (reliableBrands.includes(vehicle.make.toLowerCase())) {\n    features.push('Reliable Brand');\n    console.log(`✓ ${vehicle.make}: Added RELIABLE BRAND`);\n  }\n  \n  return {\n    ...vehicle,\n    features: features.length > 0 ? features : ['Great Condition'] // fallback\n  };\n});\n\nconsole.log('Vehicles after feature processing:', vehicles.length);\nvehicles.forEach(v => {\n  console.log(`  ${v.year} ${v.make} ${v.model}: ${v.features.join(', ')}`);\n});\n\n// ========================================\n// GET SHARED BASE PROMPT\n// ========================================\n\nconst sharedPrompt = $('Build Shared Base Prompt').first()?.json?.shared_system_prompt || '';\n\nif (!sharedPrompt) {\n  console.warn('⚠️ No shared prompt found - building standalone');\n}\n\n// ========================================\n// MULTI-CAR SPECIFIC ADDITIONS\n// ========================================\n\n// Calculate per-vehicle timing based on script length\nlet perVehicleTiming;\nlet timeTarget;\n\nif (scriptLength === 'quick') {\n  perVehicleTiming = vehicles.length <= 2 ? '4-5 seconds each' : '3-4 seconds each';\n  timeTarget = vehicles.length === 1 ? '15-18 seconds' : vehicles.length === 2 ? '18-21 seconds' : '21-24 seconds';\n} else if (scriptLength === 'standard') {\n  perVehicleTiming = vehicles.length <= 2 ? '6-7 seconds each' : '5-6 seconds each';\n  timeTarget = vehicles.length === 1 ? '20-23 seconds' : vehicles.length === 2 ? '23-26 seconds' : '26-29 seconds';\n} else { // detailed\n  perVehicleTiming = vehicles.length <= 2 ? '8-10 seconds each' : '6-8 seconds each';\n  timeTarget = vehicles.length === 1 ? '25-30 seconds' : vehicles.length === 2 ? '30-35 seconds' : '35-40 seconds';\n}\n\nconst multiCarAdditions = `\n\n═══════════════════════════════════════════════════════════════\n🚗 MULTI-CAR AD SPECIFIC RULES:\n═══════════════════════════════════════════════════════════════\n\nSTYLE: FAST, PUNCHY, SCROLL-STOPPING\nSCRIPT LENGTH: ${timingGuidance.target}\n\nTIMING TARGETS FOR ${vehicles.length} VEHICLE(S):\n- Hook: ${timingGuidance.hook}\n- Each vehicle segment: ${perVehicleTiming}\n- CTA: ${timingGuidance.cta}\n- Total target: ${timeTarget}\n\nPACING: ${timingGuidance.style}\n\nSCRIPT STRUCTURE:\n1. HOOK (${timingGuidance.hook}): ONE punchy sentence that grabs attention\n2. SEGMENTS - ONE PER CAR (${perVehicleTiming}): Price + ${scriptLength === 'quick' ? 'ONE killer feature' : scriptLength === 'standard' ? '1-2 key features' : '2-3 features with context'}\n3. CTA (${timingGuidance.cta}): Dealership name + ONE contact method (address, phone number, or url) + financing mention\n  - Examples:\n    - URL: \"Find Capitol Car Credit's full inventory at C C Ran-tool dot com\"\n    - ADDRESS: \"Visit us at Capitol Car Credit at one twenty five, North Century Boulevard in Ran-tool\"\n    - PHONE NUMBER: \"Contact Capitol Car Credit at two one seven, eight nine three, eight two three two, we're waiting to hear from you!\"\n\nSTYLE GUIDE:\n✅ SHORT sentences (5-8 words max per sentence for quick, 8-12 for standard, 12-15 for detailed)\n✅ ${scriptLength === 'quick' ? 'ONE feature per car' : scriptLength === 'standard' ? '1-2 features per car' : '2-3 features per car with brief context'}\n✅ Fast-paced, energetic, value-focused\n✅ Price FIRST for each car\n✅ Emphasize VALUE: \"easy on your wallet\", \"great deal\", \"reliable\"\n\n❌ NO long descriptions (unless detailed script)\n❌ NO multiple features per car (unless standard/detailed)\n❌ NO repetitive features across cars in same ad\n\nFEATURE DIVERSITY (CRITICAL):\n⚠️ Use DIFFERENT features for each car in the ad!\n\nGOOD (varied): \n- \"Just fourteen nine nine five for this low mileage Accord!\"\n- \"Just seventeen thousand for this all-wheel drive Civic with heated seats!\" \n- \"Just twelve nine ninety-five for this reliable Camry with great gas mileage!\"\n\nBAD (repetitive):\n- \"Low mileage Accord!\"\n- \"Low mileage Civic!\"\n- \"Low mileage Camry!\" ← BORING!\n\nIf multiple cars have the same top feature, pick the NEXT BEST feature from a different tier.`;\n\nconst systemPrompt = sharedPrompt + multiCarAdditions;\n\n// ========================================\n// USER PROMPT\n// ========================================\n\nconst userPrompt = `Generate a ${timingGuidance.target} script for this TikTok car ad:\n\nTHEME: ${config.theme || 'none'}\n\nVEHICLES (${vehicles.length} total):\n${vehicles.map((v, i) => {\n  // Parse price to determine formatting\n  let priceNum = parseFloat(String(v.price).replace(' USD', '').replace('USD', '').replace(/[^0-9.]/g, ''));\n  let priceFormatted = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n  \n  return `\n${i + 1}. ${v.year} ${v.make} ${v.model}\n   Price: ${priceFormatted} ${priceNum < 20000 ? '(Use: \"Just [price]\")' : '(Use: \"[price] thousand\")'}\n   TOP Features: ${v.features.slice(0, 3).join(', ')}\n   (Pick ${scriptLength === 'quick' ? 'ONE' : scriptLength === 'standard' ? '1-2' : '2-3'} - make sure each car gets a DIFFERENT feature!)`;\n}).join('\\n')\n\n}\n\nREQUIREMENTS:\n1. Hook: ONE punchy sentence ${config.theme ? `(theme: \"${config.theme}\")` : '(generic attention-grabber)'} (${timingGuidance.hook})\n2. Each car segment: Price + ${scriptLength === 'quick' ? 'ONE feature' : scriptLength === 'standard' ? '1-2 features' : '2-3 features'} (${perVehicleTiming})\n3. CTA: Transition phrase + dealership + ONE contact (phone number, url, or address) + financing mention (${timingGuidance.cta})\n4. Target length: ${timeTarget}\n5. Pacing: ${timingGuidance.style}\n6. ⚠️ CRITICAL: Use DIFFERENT features for each car! Variety keeps it interesting!\n7. END with \"...\" for avatar resting face\n\nOUTPUT AS JSON:\n{\n  \"hook\": \"ONE punchy sentence here\",\n  \"segments\": [\n    ${vehicles.map((v, i) => `\"${v.year} ${v.make} description (${perVehicleTiming})\"`).join(',\\n    ')}\n  ],\n  \"cta\": \"Call to action with ONE contact + financing mention\",\n  \"full_script\": \"hook + all segments + cta\",\n  \"notes\": \"Your notes\"\n}\n\nRemember: ${timingGuidance.style}, DIFFERENT features per car, PROPER price formatting, CORRECT brand pronunciations, MENTION FINANCING!`;\n\nreturn [{\n  json: {\n    ...config,\n\n    // Claude prompts\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    target_duration: timeTarget\n  }\n}];"
+        "jsCode": "const config = $json;\nlet vehicles = config.vehicles;\nconst scriptLength = config.script_length;\nconst timingGuidance = config.timing_guidance;\n\nif (!vehicles) {\n  throw new Error('Missing vehicle data');\n}\n\n// ========================================\n// CAP VEHICLE COUNT BY SCRIPT LENGTH\n// ========================================\n\nconst maxVehicles = {\n  quick: 2,\n  standard: 3,\n  detailed: 5\n};\n\nif (vehicles.length > maxVehicles[scriptLength]) {\n  console.warn(`⚠️ Too many vehicles for ${scriptLength} script. Limiting from ${vehicles.length} to ${maxVehicles[scriptLength]}`);\n  vehicles = vehicles.slice(0, maxVehicles[scriptLength]);\n}\n\n// ========================================\n// WORD COUNT LIMITS\n// ========================================\n\nconst wordLimits = {\n  quick: { total: 75, hook: 10, perCar: 15, cta: 12 },\n  standard: { total: 110, hook: 12, perCar: 20, cta: 15 },\n  detailed: { total: 150, hook: 15, perCar: 25, cta: 18 }\n};\n\nconst limits = wordLimits[scriptLength];\n\n// ========================================\n// VALUE-ADD FEATURES\n// ========================================\n\nvehicles = vehicles.map(vehicle => {\n  let features = [...(vehicle.features || [])];\n  \n  const mileage = parseInt(vehicle.mileage) || 0;\n  const year = parseInt(vehicle.year) || 2020;\n  const age = 2025 - year;\n  \n  // Low mileage callout (relative to age)\n  const expectedMileage = age * 12000;\n  if (mileage > 0 && mileage < expectedMileage * 0.6) {\n    features.unshift('Low Mileage');\n    console.log(`✓ ${vehicle.year} ${vehicle.make}: Added LOW MILEAGE (${mileage} vs expected ${expectedMileage})`);\n  }\n\n  // Fuel efficiency for hybrids and efficient engines\n  const engine = (vehicle.engine || '').toLowerCase();\n  if (engine.includes('hybrid') || engine.includes('electric')) {\n    features.unshift('Hybrid Power');\n    console.log(`✓ ${vehicle.year} ${vehicle.make}: Added HYBRID POWER`);\n  } else if (engine.includes('4-cyl') || engine.includes('turbo')) {\n    features.push('Great Gas Mileage');\n    console.log(`✓ ${vehicle.year} ${vehicle.make}: Added GREAT GAS MILEAGE`);\n  }\n\n  // AWD/4WD for Illinois winters\n  const drivetrain = (vehicle.drivetrain || '').toLowerCase();\n  if (drivetrain.includes('awd') || drivetrain.includes('4wd') || drivetrain.includes('4x4')) {\n    features.push('All-Wheel Drive');\n    console.log(`✓ ${vehicle.year} ${vehicle.make}: Added ALL-WHEEL DRIVE`);\n  }\n  \n  // Reliability for known brands\n  const reliableBrands = ['toyota', 'honda', 'mazda', 'subaru', 'lexus'];\n  if (reliableBrands.includes(vehicle.make.toLowerCase())) {\n    features.push('Reliable Brand');\n    console.log(`✓ ${vehicle.make}: Added RELIABLE BRAND`);\n  }\n  \n  return {\n    ...vehicle,\n    features: features.length > 0 ? features : ['Great Condition']\n  };\n});\n\nconsole.log(`Vehicles after processing: ${vehicles.length}`);\nvehicles.forEach(v => {\n  console.log(`  ${v.year} ${v.make} ${v.model}: ${v.features.join(', ')}`);\n});\n\n// ========================================\n// GET SHARED BASE PROMPT\n// ========================================\n\nconst sharedPrompt = $('Build Shared Base Prompt').first()?.json?.shared_system_prompt || '';\n\nif (!sharedPrompt) {\n  console.warn('⚠️ No shared prompt found - building standalone');\n}\n\n// ========================================\n// FEATURE COUNT PER CAR\n// ========================================\n\nconst featureCount = {\n  quick: 'ONE',\n  standard: '1-2',\n  detailed: '2-3'\n};\n\n// ========================================\n// MULTI-CAR SPECIFIC ADDITIONS\n// ========================================\n\nconst multiCarAdditions = `\n\n═══════════════════════════════════════════════════════════════\n🚗 MULTI-CAR AD RULES\n═══════════════════════════════════════════════════════════════\n\n⚠️ HARD WORD LIMITS (COUNT THEM - EXCEEDING = FAIL):\n- Total script: MAX ${limits.total} WORDS\n- Hook: MAX ${limits.hook} words\n- Each car segment: MAX ${limits.perCar} words\n- CTA: MAX ${limits.cta} words\n\nSTRUCTURE:\n1. HOOK: One punchy sentence (${limits.hook} words max)\n2. SEGMENTS: Price + ${featureCount[scriptLength]} feature per car (${limits.perCar} words max each)\n3. CTA: Dealership + ONE contact method + financing (${limits.cta} words max)\n\nSEGMENT PATTERN (tight!):\n✅ \"This Silverado — V8 power, four-wheel drive, winter-ready.\"\n✅ \"Ram fifteen hundred — HEMI, dependable, just twenty-four thousand.\"\n❌ \"Need a truck? This Silverado has a powerful V8 and four-wheel drive — ready for work or winter.\" (TOO LONG)\n\nCTA PATTERN (pick ONE):\n✅ \"See more at C C Rantool dot com — financing available!\"\n✅ \"Visit Capitol Car Credit in Rantool — financing available!\"\n❌ \"When you're ready, check out CCRantool.com — we'll help you plan it the right way.\" (TOO WORDY)\n\nFEATURE DIVERSITY:\nUse DIFFERENT features for each car. If multiple cars share the same top feature, pick the NEXT BEST one.\n\nFILLER PHRASES TO AVOID:\n❌ \"Now's the time to start thinking about...\"\n❌ \"When you're ready...\"\n❌ \"We'll help you plan it the right way\"\n❌ \"Need a truck?\" / \"Looking for an SUV?\" (skip the questions)\n`;\n\nconst systemPrompt = sharedPrompt + multiCarAdditions;\n\n// ========================================\n// USER PROMPT\n// ========================================\n\nconst userPrompt = `Generate a ${scriptLength.toUpperCase()} multi-car ad script.\n\nTHEME: ${config.theme || 'none'}\n\nVEHICLES (${vehicles.length}):\n${vehicles.map((v, i) => {\n  let priceNum = parseFloat(String(v.price).replace(' USD', '').replace('USD', '').replace(/[^0-9.]/g, ''));\n  let priceFormatted = '$' + priceNum.toLocaleString('en-US', {maximumFractionDigits: 0});\n  \n  return `${i + 1}. ${v.year} ${v.make} ${v.model} — ${priceFormatted} ${priceNum < 20000 ? '(say \"Just [price]\")' : '(say \"[price] thousand\")'}\n   Features: ${v.features.slice(0, 3).join(', ')} — pick ${featureCount[scriptLength]}, each car different!`;\n}).join('\\n')}\n\nWORD LIMITS (CRITICAL):\n- Hook: ${limits.hook} words max\n- Each segment: ${limits.perCar} words max  \n- CTA: ${limits.cta} words max\n- TOTAL: ${limits.total} words max\n\nOUTPUT JSON:\n{\n  \"hook\": \"Punchy opener (${limits.hook} words max)\",\n  \"segments\": [\n    ${vehicles.map(v => `\"${v.year} ${v.make} — price + feature (${limits.perCar} words max)\"`).join(',\\n    ')}\n  ],\n  \"cta\": \"Dealership + contact + financing (${limits.cta} words max)\",\n  \"full_script\": \"Complete script ending with ... for avatar pause\",\n  \"notes\": \"Brief notes\"\n}`;\n\nreturn [{\n  json: {\n    ...config,\n    vehicles, // pass the (possibly trimmed) vehicles array\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    word_limits: limits\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3952,
+        4160,
         -192
       ],
       "id": "ad226bad-f815-4a28-80c1-bd19c2d3f6de",
@@ -86,12 +86,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\nconst verifiedFeatures = config.verified_features || {};\nconst selectedPhotosObject = config.selected_photos || {};\nconst theme = config.theme || 'none';\nconst scriptLength = config.script_length || 'standard';\n\n// Helper function to remove /thumb/ suffix\nconst getFullResUrl = (url) => {\n  return url.replace('/thumb/', '/');\n};\n\n// TRANSFORM selected_photos from object to Template 2 array format\nconst selectedPhotosArray = [];\n\n// Add hero first\nif (selectedPhotosObject.hero_exterior) {\n  selectedPhotosArray.push({\n    photo_url: getFullResUrl(selectedPhotosObject.hero_exterior.photo_url), // Remove /thumb/\n    photo_index: selectedPhotosObject.hero_exterior.photo_index,\n    category: \"exterior_hero\",\n    feature_callout: \"\",\n    display_order: 1\n  });\n}\n\n// Priority order for features (most important first)\nconst priorityOrder = [\n  'engine_bay',\n  'moonroof',\n  'infotainment_360_camera',\n  'infotainment_carplay',\n  'front_seats',\n  'steering_wheel',\n  'instrument_cluster',\n  'cargo_area',\n  'second_row_seats',\n  'third_row_seats',\n  'special_feature',\n  'infotainment_other'\n];\n\n// Add features in priority order\nlet displayOrder = 2;\npriorityOrder.forEach(category => {\n  const featureData = verifiedFeatures[category];\n  const photoData = selectedPhotosObject[category];\n  \n  if (featureData?.script_features && photoData) {\n    selectedPhotosArray.push({\n      photo_url: getFullResUrl(photoData.photo_url), // Remove /thumb/\n      photo_index: photoData.photo_index,\n      category: category,\n      feature_callout: featureData.script_features,\n      display_order: displayOrder++\n    });\n  }\n});\n\n// Limit to top 5 features (plus hero = 6 total for Template 2)\nconst finalPhotos = selectedPhotosArray.slice(0, 6);\n\n// Build feature list for script prompt\nconst featureSegments = finalPhotos\n  .filter(p => p.category !== 'exterior_hero')\n  .map((photo, index) => `Segment ${index + 2}: ${photo.feature_callout}`)\n  .join('\\n');\n\n// Build the user prompt for script generation\nconst userPrompt = `Write a TikTok video script for Template 2 (single vehicle spotlight).\n\nVEHICLE DETAILS:\n- ${vehicle.year} ${vehicle.make} ${vehicle.model}\n- Price: $${vehicle.price}\n- Mileage: ${vehicle.mileage}\n\nTHEME: ${theme === 'none' ? 'No specific theme' : theme}\n\nSCRIPT STRUCTURE (CRITICAL):\nYou must create EXACTLY ${finalPhotos.length} segments:\n\nSegment 1 (HERO - exterior shot):\n- Introduce the vehicle with year, make, model\n- ${theme !== 'none' ? `Incorporate \"${theme}\" theme naturally` : 'Use attention-grabbing opener'}\n- Example: \"${theme !== 'none' ? theme + ' -' : ''} Check out this ${vehicle.year} ${vehicle.make} ${vehicle.model}!\"\n\n${featureSegments}\n\nEach segment (2-${finalPhotos.length}) should:\n- Be ONE sentence describing ONLY that photo's feature\n- Be concise and punchy (${scriptLength} pacing: ${config.timing_guidance?.style || 'Fast-paced'})\n- Use the exact feature callout provided above\n- NOT combine multiple features\n\nCRITICAL REQUIREMENTS:\n1. Output EXACTLY ${finalPhotos.length} segments in the segments array\n2. Each segment describes ONE photo in order\n3. Segment 1 = hero (vehicle intro with ${theme !== 'none' ? 'theme' : 'hook'})\n4. Segments 2-${finalPhotos.length} = features (one per segment)\n5. Use natural, conversational language for text-to-speech\n6. Write numbers as words (e.g., \"twenty-eight thousand nine ninety-five\")\n7. Follow pronunciation rules (Hyundai = \"Hunday\", Nissan = \"Neesawn\")\n8. Keep it ${scriptLength} (${config.timing_guidance?.target || '15-30 seconds'})\n9. End with CTA including ONE contact method + financing mention\n\nOUTPUT FORMAT:\n{\n  \"hook\": \"Opening hook (3-4 seconds) with ${theme !== 'none' ? 'theme: ' + theme : 'attention-grabber'}\",\n  \"segments\": [\n    \"Segment 1: ${vehicle.year} ${vehicle.make} ${vehicle.model} intro\",\n    \"Segment 2: First feature callout\",\n    \"Segment 3: Second feature callout\"\n  ],\n  \"cta\": \"Call to action (4-5 seconds) with contact + financing\",\n  \"full_script\": \"hook + all segments + cta\",\n  \"notes\": \"Brief creative notes\"\n}\n\nCreate a fast-paced, engaging script!`;\n\nreturn [{\n  json: {\n    ...config,\n    selected_photos: finalPhotos,\n    user_prompt: userPrompt,\n    photos_selected: finalPhotos.length,\n    total_photos_analyzed: config.total_photos || 0,\n    rationale: `Selected top ${finalPhotos.length - 1} features based on verified equipment data and visual confirmation. Hero shot introduces the vehicle, followed by priority features: ${finalPhotos.slice(1).map(p => p.category).join(', ')}.`\n  }\n}];"
+        "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\nconst verifiedFeatures = config.verified_features || {};\nconst selectedPhotosObject = config.selected_photos || {};\nconst theme = config.theme || 'none';\nconst scriptLength = config.script_length || 'standard';\nconst timing = config.timing_guidance || {};\n\n// Helper function to remove /thumb/ suffix\nconst getFullResUrl = (url) => {\n  return url.replace('/thumb/', '/');\n};\n\n// ═══════════════════════════════════════════════════════════════\n// TRANSFORM SELECTED PHOTOS TO ARRAY FORMAT\n// ═══════════════════════════════════════════════════════════════\n\nconst selectedPhotosArray = [];\n\n// Add hero first\nif (selectedPhotosObject.hero_exterior) {\n  selectedPhotosArray.push({\n    photo_url: getFullResUrl(selectedPhotosObject.hero_exterior.photo_url),\n    photo_index: selectedPhotosObject.hero_exterior.photo_index,\n    category: \"exterior_hero\",\n    feature_callout: \"\",\n    display_order: 1\n  });\n}\n\n// Priority order for features (most important first)\nconst priorityOrder = [\n  'engine_bay',\n  'moonroof',\n  'infotainment_360_camera',\n  'infotainment_carplay',\n  'front_seats',\n  'steering_wheel',\n  'instrument_cluster',\n  'cargo_area',\n  'second_row_seats',\n  'third_row_seats',\n  'special_feature',\n  'infotainment_other'\n];\n\n// Add features in priority order\nlet displayOrder = 2;\npriorityOrder.forEach(category => {\n  const featureData = verifiedFeatures[category];\n  const photoData = selectedPhotosObject[category];\n  \n  if (featureData?.script_features && photoData) {\n    selectedPhotosArray.push({\n      photo_url: getFullResUrl(photoData.photo_url),\n      photo_index: photoData.photo_index,\n      category: category,\n      feature_callout: featureData.script_features,\n      display_order: displayOrder++\n    });\n  }\n});\n\n// Limit to top 5 features (plus hero = 6 total)\nconst finalPhotos = selectedPhotosArray.slice(0, 6);\nconst featureCount = finalPhotos.length - 1; // minus hero\n\n// ═══════════════════════════════════════════════════════════════\n// GET SHARED BASE PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst sharedPrompt = $('Build Shared Base Prompt').first()?.json?.shared_system_prompt || '';\n\nif (!sharedPrompt) {\n  console.warn('⚠️ No shared prompt found - Template 2 missing critical rules!');\n}\n\n// ═══════════════════════════════════════════════════════════════\n// WORD LIMITS (per-segment is Template 2 specific)\n// ═══════════════════════════════════════════════════════════════\n\nconst perSegmentWords = { quick: 10, standard: 12, detailed: 15 };\nconst segmentLimit = perSegmentWords[scriptLength];\n\n// ═══════════════════════════════════════════════════════════════\n// TEMPLATE 2 SPECIFIC ADDITIONS\n// ═══════════════════════════════════════════════════════════════\n\nconst template2Additions = `\n\n═══════════════════════════════════════════════════════════════\n🚗 SINGLE-CAR SPOTLIGHT RULES\n═══════════════════════════════════════════════════════════════\n\nThis is a FEATURE WALKTHROUGH for ONE vehicle.\nEach segment matches a specific photo shown on screen.\n\nSTRUCTURE:\n1. HOOK/HERO: Introduce vehicle (exterior shot)\n2-${finalPhotos.length}. FEATURE SEGMENTS: One feature per photo\nFINAL: CTA with contact + financing\n\nSEGMENT RULES:\n- Each segment = ONE sentence about ONE feature\n- Max ${segmentLimit} words per segment\n- Match the feature to what's visible in that photo\n- Keep it punchy, no fluff\n\nSEGMENT PATTERN:\n✅ \"Heated leather seats — stay warm all winter.\"\n✅ \"Three-sixty camera for easy parking.\"\n✅ \"Moonroof — enjoy the open sky.\"\n❌ \"And check out these amazing heated leather seats that will keep you warm during those cold Illinois winters!\" (TOO WORDY)\n❌ \"Next up we have the interior where you'll find...\" (FILLER)\n`;\n\nconst systemPrompt = sharedPrompt + template2Additions;\n\n// ═══════════════════════════════════════════════════════════════\n// BUILD FEATURE LIST FOR USER PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst featureSegments = finalPhotos\n  .filter(p => p.category !== 'exterior_hero')\n  .map((photo, index) => `${index + 2}. \"${photo.feature_callout}\" (${segmentLimit} words max)`)\n  .join('\\n');\n\n// ═══════════════════════════════════════════════════════════════\n// USER PROMPT\n// ═══════════════════════════════════════════════════════════════\n\n// Parse price for formatting hint\nconst priceNum = parseFloat(String(vehicle.price).replace(/[^0-9.]/g, ''));\nconst priceHint = priceNum < 20000 ? '(say \"Just [price]\")' : '(say \"[price] thousand\")';\n\nconst userPrompt = `Write a ${scriptLength.toUpperCase()} single-car spotlight script.\n\nVEHICLE: ${vehicle.year} ${vehicle.make} ${vehicle.model}\nPRICE: $${vehicle.price.toLocaleString()} ${priceHint}\nTHEME: ${theme === 'none' ? 'None (generic hook)' : theme}\n\nSEGMENTS (${finalPhotos.length} total — one per photo):\n\n1. HOOK/HERO: Introduce the ${vehicle.year} ${vehicle.make} ${vehicle.model}${theme !== 'none' ? ` with \"${theme}\" theme` : ''}\n\nFEATURES:\n${featureSegments}\n\nCTA: ONE contact method + financing mention\n\nOUTPUT JSON:\n{\n  \"hook\": \"Vehicle intro${theme !== 'none' ? ' + theme' : ''} (hero shot)\",\n  \"segments\": [\n    \"Segment 1: Hero intro with price\",\n    ${finalPhotos.slice(1).map((p, i) => `\"Segment ${i + 2}: ${p.feature_callout}\"`).join(',\\n    ')}\n  ],\n  \"cta\": \"Contact + financing\",\n  \"full_script\": \"Complete script ending with ...\",\n  \"notes\": \"Brief notes\"\n}`;\n\n// ═══════════════════════════════════════════════════════════════\n// RETURN\n// ═══════════════════════════════════════════════════════════════\n\nconsole.log(`✅ Template 2 prompt built for ${vehicle.year} ${vehicle.make} ${vehicle.model}`);\nconsole.log(`📸 ${finalPhotos.length} photos selected (1 hero + ${featureCount} features)`);\nconsole.log(`📏 Per-segment limit: ${segmentLimit} words`);\n\nreturn [{\n  json: {\n    ...config,\n    selected_photos: finalPhotos,\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    segment_word_limit: segmentLimit,\n    photos_selected: finalPhotos.length,\n    total_photos_analyzed: config.total_photos || 0,\n    rationale: `Selected ${featureCount} features: ${finalPhotos.slice(1).map(p => p.category).join(', ')}.`\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3952,
+        4160,
         -48
       ],
       "id": "71098943-07f6-42e5-b720-c456d85b47d8",
@@ -104,7 +104,7 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        4240,
+        4448,
         384
       ],
       "id": "bf56da31-0f0a-4eb3-8c4c-4c50ace36add",
@@ -112,12 +112,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\n\n// Get avatar name from config\nconst avatarName = config.avatar_name || 'Shad'; // Default to Shad if not provided\n\n// Get script length timing (from previous node)\nconst scriptLength = config.script_length || 'medium'; // quick, standard, detailed\n\n// Define timing based on script length\nconst timings = {\n  quick: { hook: 3, value: 25, authority: 7, cta: 5, total: 40 },\n  standard: { hook: 3, value: 35, authority: 7, cta: 10, total: 55 },\n  detailed: { hook: 3, value: 50, authority: 10, cta: 12, total: 75 }\n};\n\nconst timing = timings[scriptLength];\n\n// Build the social / organic / edu prompt for Claude\nconst claudePrompt = `\nYou are writing a SHORT-FORM, SCROLL-STOPPING educational video script for ${avatarName} at Capitol Car Credit, a used car dealership in Rantoul, Illinois (125 North Century Boulevard).\n\nThis is NOT a sales video.\nThis IS opinionated, high-energy education designed to stop scrolling, challenge assumptions, and teach ONE useful thing fast.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 CORE GOAL (CRITICAL)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMake the viewer feel:\n“I didn’t know that — I’m glad I watched.”\n\nIf the script sounds calm, neutral, or blog-like, it has FAILED.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📌 TOPIC\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${config.topic || config.theme || 'Car buying advice'}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n👥 TARGET AUDIENCE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nYoung, budget-conscious, first-time car buyers who worry about:\n- wasting money\n- making a bad decision\n- getting taken advantage of\n- putting their family at risk\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⏱️ STRUCTURE & TIMING (NON-NEGOTIABLE)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nHook: ${timing.hook} seconds  \nValue: ${timing.value} seconds  \nAuthority: ${timing.authority} seconds  \nCTA: ${timing.cta} seconds  \nTotal: ~${timing.total} seconds\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔥 HOOK RULES (VERY IMPORTANT)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Start with a STRONG STATEMENT, not a polite question\n- Imply a mistake, myth, danger, or cost\n- Avoid “Quick tip”, “Did you know”, or soft curiosity\n- The hook should sound like something someone might argue with\n\nGOOD:\n- “Most people mess this up.”\n- “This mistake costs people money.”\n- “If you hear this noise, pay attention.”\n\nBAD:\n- “Are you wondering…”\n- “Today we’re going to talk about…”\n- “Here’s a quick tip…”\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚡ DELIVERY & ENERGY (CRITICAL)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Short sentences (5–8 words max whenever possible)\n- Punchy, confident phrasing\n- Opinionated but trustworthy\n- NO filler phrases (“a lot of people ask me…”)\n- Write for FAST speech, not reading\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🧠 VALUE SECTION RULES\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Teach ONE core idea only\n- Frame it as: what most people get wrong → what to do instead\n- Use concrete, easy-to-visualize examples\n- Avoid long explanations or lists\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🏆 AUTHORITY SECTION RULES\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Tie advice to real-world experience\n- Keep it SHORT and grounded\n- Example framing:\n  “I’ve seen this for years.”\n  “This comes up all the time.”\n  “I’ve watched people make this mistake.”\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📣 CTA RULES (SOFT, NOT SALESY)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Ask for engagement FIRST (comment, follow, save)\n- Then a light Capitol Car Credit mention\n- No urgency pressure\n- No hype language\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚫 TTS COMPATIBILITY (CRITICAL)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nAll script text will be spoken by text-to-speech.\n- NO emojis anywhere in hook, segments, cta, or full_script\n- Emojis are allowed ONLY in the \"notes\" field (for on-screen text)\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🧾 OUTPUT FORMAT (MUST MATCH EXACTLY)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nReturn a JSON object with this EXACT structure:\n\n{\n  \"hook\": \"3–4 second strong opening statement\",\n  \"segments\": [\n    \"Main value section (fast, punchy, mistake → fix framing)\",\n    \"Authority reinforcement (short, credibility-based)\"\n  ],\n  \"cta\": \"Engagement ask + soft Capitol Car Credit mention\",\n  \"full_script\": \"Complete script flowing naturally from hook → value → authority → CTA. Use <break time='0.5s' /> or <break time='1s' /> where it helps pacing. Total speaking time ~${timing.total} seconds.\",\n  \"notes\": \"5–7 ultra-short punchy phrases (3–6 words each) suitable for optional on-screen text. Emphasize mistakes, risks, or consequences.\",\n  \"_claude_notes\": \"Brief explanation of the hook angle and why it works\"\n}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚫 HARD FAIL CONDITIONS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Neutral, blog-style explanations\n- Soft educational tone\n- Overly long sentences\n- Multiple tips instead of one core idea\n- Generic advice without stakes\n\nWrite now.\n`;\n\nreturn {\n  json: {\n    ...config,\n    user_prompt: claudePrompt,\n    timing: timing\n  }\n};\n"
+        "jsCode": "const config = $json;\n\n// Get avatar name from config\nconst avatarName = config.avatar_name || 'Shad'; // Default to Shad if not provided\n\n// Get script length timing (from previous node)\nconst scriptLength = config.script_length || 'medium'; // quick, standard, detailed\n\n// Define timing based on script length\nconst timings = {\n  quick: { hook: 3, value: 25, authority: 7, cta: 5, total: 40 },\n  standard: { hook: 3, value: 35, authority: 7, cta: 10, total: 55 },\n  detailed: { hook: 3, value: 50, authority: 10, cta: 12, total: 75 }\n};\n\nconst timing = timings[scriptLength];\n\n// Build the social / organic / edu prompt for Claude\nconst claudePrompt = `\nYou are writing a SHORT-FORM, SCROLL-STOPPING educational video script for ${avatarName} at Capitol Car Credit, a used car dealership in Rantoul, Illinois (125 North Century Boulevard).\n\nThis is NOT a sales video.\nThis IS opinionated, high-energy education designed to stop scrolling, challenge assumptions, and teach ONE useful thing fast.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 CORE GOAL (CRITICAL)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMake the viewer feel:\n“I didn’t know that — I’m glad I watched.”\n\nIf the script sounds calm, neutral, or blog-like, it has FAILED.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📌 TOPIC\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${config.topic || config.theme || 'Car buying advice'}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n👥 TARGET AUDIENCE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nYoung, budget-conscious, first-time car buyers who worry about:\n- wasting money\n- making a bad decision\n- getting taken advantage of\n- putting their family at risk\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⏱️ STRUCTURE & TIMING (NON-NEGOTIABLE)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nHook: ${timing.hook} seconds  \nValue: ${timing.value} seconds  \nAuthority: ${timing.authority} seconds  \nCTA: ${timing.cta} seconds  \nTotal: ~${timing.total} seconds\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔥 HOOK RULES (VERY IMPORTANT)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Start with a STRONG STATEMENT, not a polite question\n- Imply a mistake, myth, danger, or cost\n- Avoid “Quick tip”, “Did you know”, or soft curiosity\n- The hook should sound like something someone might argue with\n\nGOOD:\n- “Most people mess this up.”\n- “This mistake costs people money.”\n- “If you hear this noise, pay attention.”\n\nBAD:\n- “Are you wondering…”\n- “Today we’re going to talk about…”\n- “Here’s a quick tip…”\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚡ DELIVERY & ENERGY (CRITICAL)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Short sentences (5–8 words max whenever possible)\n- Punchy, confident phrasing\n- Opinionated but trustworthy\n- NO filler phrases (“a lot of people ask me…”)\n- Write for FAST speech, not reading\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🧠 VALUE SECTION RULES\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Teach ONE core idea only\n- Frame it as: what most people get wrong → what to do instead\n- Use concrete, easy-to-visualize examples\n- Avoid long explanations or lists\n\n${config.guidanceRulesSection || ''}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🏆 AUTHORITY SECTION RULES\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Tie advice to real-world experience\n- Keep it SHORT and grounded\n- Example framing:\n  “I’ve seen this for years.”\n  “This comes up all the time.”\n  “I’ve watched people make this mistake.”\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📣 CTA RULES (SOFT, NOT SALESY)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Ask for engagement FIRST (comment, follow, save)\n- Then a light Capitol Car Credit mention\n- No urgency pressure\n- No hype language\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚫 TTS COMPATIBILITY (CRITICAL)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nAll script text will be spoken by text-to-speech.\n- NO emojis anywhere in hook, segments, cta, or full_script\n- Emojis are allowed ONLY in the \"notes\" field (for on-screen text)\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🧾 OUTPUT FORMAT (MUST MATCH EXACTLY)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nReturn a JSON object with this EXACT structure:\n\n{\n  \"hook\": \"3–4 second strong opening statement\",\n  \"segments\": [\n    \"Main value section (fast, punchy, mistake → fix framing)\",\n    \"Authority reinforcement (short, credibility-based)\"\n  ],\n  \"cta\": \"Engagement ask + soft Capitol Car Credit mention\",\n  \"full_script\": \"Complete script flowing naturally from hook → value → authority → CTA. Use <break time='0.5s' /> or <break time='1s' /> where it helps pacing. Total speaking time ~${timing.total} seconds.\",\n  \"notes\": \"5–7 ultra-short punchy phrases (3–6 words each) suitable for optional on-screen text. Emphasize mistakes, risks, or consequences.\",\n  \"_claude_notes\": \"Brief explanation of the hook angle and why it works\"\n}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚫 HARD FAIL CONDITIONS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n- Neutral, blog-style explanations\n- Soft educational tone\n- Overly long sentences\n- Multiple tips instead of one core idea\n- Generic advice without stakes\n\nWrite now.\n`;\n\nreturn {\n  json: {\n    ...config,\n    user_prompt: claudePrompt,\n    timing: timing\n  }\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3968,
+        4176,
         192
       ],
       "id": "336bf8bd-795b-4072-8928-7cd0cbf88e62",
@@ -128,25 +128,11 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        688,
-        80
+        1056,
+        144
       ],
       "id": "0d4af0b1-1d94-4f7f-93f5-b2ef0583deee",
       "name": "Merge: Config with Inventory"
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.first().json;\nreturn [{\n  json: input.body\n}];"
-      },
-      "id": "5fe652c9-9672-4ac8-8a41-59f46fee7c2e",
-      "name": "Restructure config",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        16,
-        176
-      ],
-      "disabled": true
     },
     {
       "parameters": {
@@ -200,7 +186,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3968,
+        4176,
         384
       ],
       "id": "74e1d4fe-8f00-469c-9431-335022e1a2f5",
@@ -250,7 +236,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        192,
+        544,
         176
       ],
       "id": "64391fd8-17dd-42a7-916c-df995f8fe030",
@@ -284,8 +270,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1280,
-        80
+        1504,
+        144
       ],
       "id": "f079a106-b70a-4b76-847e-afcda07ee5ab",
       "name": "If: Feature Photos"
@@ -319,7 +305,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1792,
+        2000,
         -16
       ],
       "id": "f336e118-e90b-4a2d-889d-ecb42175adf3",
@@ -354,7 +340,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2512,
+        2720,
         0
       ],
       "id": "94b5114b-6559-4c22-bf5d-fdd5bfbe25fe",
@@ -389,7 +375,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3184,
+        3392,
         0
       ],
       "id": "b5e859ce-c0b1-4718-89ca-088f60a9435f",
@@ -402,8 +388,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        512,
-        16
+        896,
+        128
       ],
       "id": "c814151d-0bc4-4253-a0c8-11d92029f90d",
       "name": "Combine Spreadsheet Data"
@@ -415,8 +401,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        864,
-        80
+        1216,
+        144
       ],
       "id": "0fb932eb-3dee-4079-b0b0-7374acadec24",
       "name": "Fetch Car Info from VINs"
@@ -428,7 +414,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1936,
+        2144,
         -96
       ],
       "id": "6d44a5df-2346-4ce7-ad89-fad5aa113439",
@@ -441,7 +427,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2096,
+        2304,
         -16
       ],
       "id": "433c72d7-dcc7-4e22-836b-222aef450043",
@@ -470,7 +456,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1936,
+        2144,
         32
       ],
       "id": "752295fe-7598-4b8e-b64a-98d3359b6d66",
@@ -509,8 +495,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        336,
-        16
+        752,
+        128
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -526,7 +512,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2656,
+        2864,
         -96
       ],
       "id": "cf9a49be-f418-4e32-97cc-125258af5f13",
@@ -549,7 +535,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2656,
+        2864,
         48
       ],
       "id": "6c0a8ff6-289e-44d4-a686-fc29e533014a",
@@ -589,7 +575,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3344,
+        3552,
         -16
       ],
       "id": "b910fd9c-9e84-46f8-9886-31aedf06dcbd",
@@ -604,7 +590,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3488,
+        3696,
         -32
       ],
       "id": "45a01157-ebc3-4fc6-9675-7405ce66b01c",
@@ -638,7 +624,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3648,
+        3856,
         -32
       ],
       "id": "2a89fee3-72bf-4e01-ac5d-ad25a99f1da4",
@@ -652,7 +638,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3792,
+        4000,
         -48
       ],
       "id": "64da0924-589c-4fa7-85e3-c625cdd26fce",
@@ -705,7 +691,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4544,
+        4752,
         -32
       ],
       "credentials": {
@@ -755,7 +741,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        4384,
+        4592,
         -112
       ],
       "id": "1dc60f41-78d4-48ad-bdf0-9d1392292905",
@@ -768,7 +754,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4544,
+        4752,
         -176
       ],
       "id": "f1d0ded6-7c9b-4e9b-8939-dba10e9f4552",
@@ -783,7 +769,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4704,
+        4912,
         -112
       ]
     },
@@ -795,7 +781,7 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        4112,
+        4320,
         -112
       ],
       "id": "e1b7324f-d614-4a72-a661-be6c5cfb1dfb",
@@ -808,7 +794,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2816,
+        3024,
         0
       ],
       "id": "5fb2621e-973e-439c-8afe-4ee7ed2c8603",
@@ -821,7 +807,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4256,
+        4464,
         -112
       ],
       "id": "9b593a38-46e0-4170-bc3c-3bb1a2645f8a",
@@ -848,8 +834,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        992,
-        80
+        160,
+        176
       ],
       "id": "guidance-rules-node-001",
       "name": "Fetch Guidance Rules",
@@ -876,7 +862,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        4112,
+        4320,
         384
       ],
       "id": "3e285710-08c8-44c7-abd1-aa2e58876212",
@@ -887,6 +873,34 @@
           "name": "Resend"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allGuidanceRules = $('Fetch Guidance Rules').all().map(item => item.json) || [];\nconst config = $('Pass Config').first().json;\nconst clientId = config.client_id || 'ccc';\nconst avatarName = config.avatar_name || '*';\n\n// Filter rules\nconst activeRules = allGuidanceRules.filter(rule => {\n  if (rule.active !== true && rule.active !== 'TRUE' && rule.active !== 'true') return false;\n  if (rule.client_id !== clientId) return false;\n  if (rule.avatar_name !== '*' && rule.avatar_name !== avatarName) return false;\n  return true;\n});\n\n// Group by category\nconst rulesByCategory = {\n  facts: [],\n  pronunciation: [],\n  style: [],\n  compliance: []\n};\n\nactiveRules.forEach(rule => {\n  const category = (rule.category || '').toLowerCase();\n  if (rulesByCategory[category]) {\n    rulesByCategory[category].push(rule.rule_text);\n  }\n});\n\n// Build the section string\nlet guidanceRulesSection = '';\nif (activeRules.length > 0) {\n  guidanceRulesSection = `\\n📝 CUSTOM GUIDANCE RULES:\\n`;\n  if (rulesByCategory.facts.length > 0) {\n    guidanceRulesSection += `\\nFACTS (use these exactly):\\n${rulesByCategory.facts.map(r => `- ${r}`).join('\\n')}\\n`;\n  }\n  if (rulesByCategory.pronunciation.length > 0) {\n    guidanceRulesSection += `\\nPRONUNCIATIONS:\\n${rulesByCategory.pronunciation.map(r => `- ${r}`).join('\\n')}\\n`;\n  }\n  if (rulesByCategory.style.length > 0) {\n    guidanceRulesSection += `\\nSTYLE:\\n${rulesByCategory.style.map(r => `- ${r}`).join('\\n')}\\n`;\n  }\n  if (rulesByCategory.compliance.length > 0) {\n    guidanceRulesSection += `\\nCOMPLIANCE:\\n${rulesByCategory.compliance.map(r => `- ${r}`).join('\\n')}\\n`;\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    guidanceRulesSection,\n    rulesByCategory  // in case you need individual categories\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        176
+      ],
+      "id": "bc8bfa0a-2a54-46c7-a30c-9ea0798e6beb",
+      "name": "Parse Guidance"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        176
+      ],
+      "id": "2925906e-f154-4670-9716-aabfdc9ce42f",
+      "name": "Pass Config"
     }
   ],
   "connections": {
@@ -989,22 +1003,11 @@
         ]
       ]
     },
-    "Restructure config": {
-      "main": [
-        [
-          {
-            "node": "If: Template ID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "When Executed by Orchestrate Video Creation": {
       "main": [
         [
           {
-            "node": "Restructure config",
+            "node": "Pass Config",
             "type": "main",
             "index": 0
           }
@@ -1132,7 +1135,7 @@
       "main": [
         [
           {
-            "node": "Fetch Guidance Rules",
+            "node": "Build Shared Base Prompt",
             "type": "main",
             "index": 0
           }
@@ -1359,7 +1362,7 @@
       "main": [
         [
           {
-            "node": "Build Shared Base Prompt",
+            "node": "Parse Guidance",
             "type": "main",
             "index": 0
           }
@@ -1376,6 +1379,28 @@
           }
         ]
       ]
+    },
+    "Parse Guidance": {
+      "main": [
+        [
+          {
+            "node": "If: Template ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass Config": {
+      "main": [
+        [
+          {
+            "node": "Fetch Guidance Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1386,7 +1411,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "ca9f6671-c60e-4247-b682-7cc4131bd921",
+  "versionId": "fd18d791-1ab7-4cb0-8370-e99c8f31c79b",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
