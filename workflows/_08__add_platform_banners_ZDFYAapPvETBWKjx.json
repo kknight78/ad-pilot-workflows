@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-07T22:05:20.322Z",
+  "updatedAt": "2026-01-08T16:53:00.668Z",
   "createdAt": "2026-01-07T19:48:03.949Z",
   "id": "ZDFYAapPvETBWKjx",
   "name": "[08] Add Platform Banners",
@@ -89,7 +89,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\nconst originalConfig = $('Split by Platforms').item.json._original_config;\n\nreturn [{\n  json: {\n    platform: response.platform,\n    ratio: originalConfig.ratio,\n    video_url: response.video_url,\n    avatar_name: response.avatar_name\n  }\n}];"
+        "jsCode": "const response = $json;\nconst originalConfig = $('Split by Platforms').item.json._original_config;\n\nreturn {\n  json: {\n    platform: response.platform,\n    ratio: originalConfig.ratio,\n    video_url: response.video_url,\n    avatar_name: response.avatar_name\n  }\n};",
+        "mode": "runOnceForEachItem"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -283,7 +284,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "5e1660f6-eae1-439d-8b14-92af602cffed",
+  "versionId": "b4de2355-07f5-486a-bbd6-0fda8b535e3f",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
