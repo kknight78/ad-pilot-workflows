@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-07T23:23:21.151Z",
+  "updatedAt": "2026-01-08T17:36:24.303Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -212,7 +212,7 @@
           "matchingColumns": [],
           "schema": [],
           "attemptToConvertTypes": false,
-          "convertFieldsToString": false
+          "convertFieldsToString": true
         },
         "options": {
           "waitForSubWorkflow": true
@@ -347,7 +347,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item (includes job_id, email, etc.)\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\n// Return everything including job_id from baseConfig\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
+        "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -366,7 +366,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready!\",\n  \"html\": \"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: {{ $json.template_id }}</p><p>Theme: {{ $json.theme || 'N/A' }}</p><br/><p><strong>Videos:</strong></p>{{ $json.video_links_html }}\"\n}",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: {{ $json.template_id }}</p><p>Theme: {{ $json.theme || 'N/A' }}</p><br/><p><strong>Videos:</strong></p>{{ $json.video_links_html }}\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -402,7 +402,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "job_id": "={{ $json.job_id }}",
+            "job_id": "={{ $('Webhook').item.json.body.job_id }}",
             "status": "complete",
             "updated_at": "={{ new Date().toISOString() }}",
             "video_url": "={{ $json.final_video_url }}"
@@ -712,8 +712,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "115fda29-bc75-4c9f-a973-fedc02b03c21",
-  "activeVersionId": "115fda29-bc75-4c9f-a973-fedc02b03c21",
+  "versionId": "db3497b1-0742-4c6d-9502-fb08c925d890",
+  "activeVersionId": "db3497b1-0742-4c6d-9502-fb08c925d890",
   "triggerCount": 1,
   "shared": [
     {
@@ -725,9 +725,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-07T23:23:21.156Z",
-    "createdAt": "2026-01-07T23:23:21.156Z",
-    "versionId": "115fda29-bc75-4c9f-a973-fedc02b03c21",
+    "updatedAt": "2026-01-08T17:36:24.306Z",
+    "createdAt": "2026-01-08T17:36:24.306Z",
+    "versionId": "db3497b1-0742-4c6d-9502-fb08c925d890",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -936,7 +936,7 @@
             "matchingColumns": [],
             "schema": [],
             "attemptToConvertTypes": false,
-            "convertFieldsToString": false
+            "convertFieldsToString": true
           },
           "options": {
             "waitForSubWorkflow": true
@@ -1071,7 +1071,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item (includes job_id, email, etc.)\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\n// Return everything including job_id from baseConfig\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
+          "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1090,7 +1090,7 @@
           "genericAuthType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready!\",\n  \"html\": \"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: {{ $json.template_id }}</p><p>Theme: {{ $json.theme || 'N/A' }}</p><br/><p><strong>Videos:</strong></p>{{ $json.video_links_html }}\"\n}",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: {{ $json.template_id }}</p><p>Theme: {{ $json.theme || 'N/A' }}</p><br/><p><strong>Videos:</strong></p>{{ $json.video_links_html }}\"\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
@@ -1126,7 +1126,7 @@
           "columns": {
             "mappingMode": "defineBelow",
             "value": {
-              "job_id": "={{ $json.job_id }}",
+              "job_id": "={{ $('Webhook').item.json.body.job_id }}",
               "status": "complete",
               "updated_at": "={{ new Date().toISOString() }}",
               "video_url": "={{ $json.final_video_url }}"
