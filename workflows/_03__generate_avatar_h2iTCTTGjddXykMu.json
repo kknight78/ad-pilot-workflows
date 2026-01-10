@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-09T12:11:30.385Z",
+  "updatedAt": "2026-01-10T03:55:28.219Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -11,7 +11,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        256,
+        336,
         1344
       ],
       "id": "wait-node",
@@ -33,7 +33,7 @@
     },
     {
       "parameters": {
-        "errorMessage": "={{ $json.error }}"
+        "errorMessage": "={{ $json.id }}"
       },
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
@@ -115,7 +115,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        240,
+        512,
         1168
       ],
       "id": "if-complete",
@@ -179,7 +179,7 @@
       "typeVersion": 2,
       "position": [
         -16,
-        1200
+        1184
       ],
       "id": "store-config",
       "name": "Store Config + Video ID"
@@ -211,17 +211,17 @@
       "id": "check-status",
       "name": "API: Check Avatar Status",
       "alwaysOutputData": true,
-      "onError": "continueErrorOutput"
+      "retryOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "// Merge config back with HeyGen response\nconst storedData = $('Store Config + Video ID').item.json;\nconst config = storedData._config;\nconst result = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: result.data.video_url,\n    avatar_video_id: result.data.video_id\n  }\n}];"
+        "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = result._config;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_id: videoData.id,\n    avatar_video_duration: result.avatar_video_duration\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        1152
+        880,
+        1232
       ],
       "id": "parse-avatar",
       "name": "Parse Avatar Response"
@@ -234,7 +234,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.config.email || 'kelly@ad-pilot.ai' }}\",\n  \"subject\": \"[03] Avatar Generation Failed\",\n  \"html\": \"<h2>Avatar generation failed</h2><pre>{{ $json.details }}</pre>\"\n}",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.config.email || 'kelly@ad-pilot.ai' }}\",\n  \"subject\": \"[03] Avatar Generation Failed\",\n  \"html\": {{ JSON.stringify(\"<h2>Avatar generation failed</h2><pre>\" + JSON.stringify($json.details, null, 2) + \"</pre>\") }}\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -279,8 +279,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        448,
-        1344
+        736,
+        1296
       ],
       "id": "if-failed",
       "name": "If: Failed?"
@@ -292,6 +292,11 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "openAiApi",
         "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
         "sendBody": true,
         "contentType": "multipart-form-data",
         "bodyParameters": {
@@ -322,8 +327,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        848,
-        1152
+        736,
+        1024
       ],
       "id": "transcribe",
       "name": "API: Transcribe Video (Whisper)",
@@ -337,49 +342,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $('Merge Config with Binary').item.json;\nconst whisper = $json;\n\n// Get script sections\nconst script = config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\n\n// Get word timestamps from Whisper\nconst words = whisper.words || [];\n\nif (words.length === 0) {\n  console.log('No word timestamps from Whisper, skipping timing calculation');\n  return [{\n    json: {\n      ...config,\n      _section_timings: null,\n      whisper_text: whisper.text || ''\n    }\n  }];\n}\n\n// Normalize for comparison\nfunction normalize(text) {\n  return (text || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\n// Get first and last words from text\nfunction getFirstLastWords(text) {\n  const words = (text || '').split(/\\s+/).filter(w => w);\n  if (words.length === 0) return { first: '', last: '' };\n  return {\n    first: normalize(words[0]),\n    last: normalize(words[words.length - 1])\n  };\n}\n\n// Find word index by matching (with fuzzy fallback)\nfunction findWord(whisperWords, target, startIdx, direction = 1) {\n  if (!target) return -1;\n  \n  const endIdx = direction > 0 ? whisperWords.length : -1;\n  \n  for (let i = startIdx; direction > 0 ? i < endIdx : i > endIdx; i += direction) {\n    const whisperWord = normalize(whisperWords[i].word);\n    \n    // Exact match\n    if (whisperWord === target) return i;\n    \n    // Fuzzy: one contains the other (for partial matches)\n    if (whisperWord.includes(target) || target.includes(whisperWord)) return i;\n    \n    // Fuzzy: same first 3+ chars (for phonetic spellings like neesawn/nissan)\n    if (target.length >= 3 && whisperWord.length >= 3) {\n      if (whisperWord.slice(0, 3) === target.slice(0, 3)) return i;\n    }\n  }\n  \n  return -1;\n}\n\n// Build sections\nconst sections = [];\nsections.push({ name: 'hook', ...getFirstLastWords(hook) });\nsegments.forEach((seg, idx) => {\n  sections.push({ name: 'segment_' + idx, ...getFirstLastWords(seg) });\n});\nsections.push({ name: 'cta', ...getFirstLastWords(cta) });\n\nconsole.log('Sections to find:', sections.map(s => s.name + ': \"' + s.first + '\"...\"' + s.last + '\"').join(', '));\n\n// Find timings for each section\nconst sectionTimings = [];\nlet searchStart = 0;\n\nsections.forEach((section, idx) => {\n  // Find first word (start of section)\n  let startWordIdx = findWord(words, section.first, searchStart, 1);\n  \n  // If not found, use end of previous section + 1\n  if (startWordIdx === -1) {\n    startWordIdx = searchStart;\n    console.log(section.name + ': first word \"' + section.first + '\" not found, using idx ' + startWordIdx);\n  }\n  \n  // Find last word (end of section) - search forward from start\n  let endWordIdx = findWord(words, section.last, startWordIdx, 1);\n  \n  // If not found, estimate based on next section's start or end of audio\n  if (endWordIdx === -1) {\n    // Look for next section's first word to bound our search\n    const nextSection = sections[idx + 1];\n    if (nextSection) {\n      const nextStart = findWord(words, nextSection.first, startWordIdx + 1, 1);\n      endWordIdx = nextStart > 0 ? nextStart - 1 : Math.min(startWordIdx + 10, words.length - 1);\n    } else {\n      endWordIdx = words.length - 1; // Last section goes to end\n    }\n    console.log(section.name + ': last word \"' + section.last + '\" not found, using idx ' + endWordIdx);\n  }\n  \n  // Ensure valid range\n  startWordIdx = Math.max(0, Math.min(startWordIdx, words.length - 1));\n  endWordIdx = Math.max(startWordIdx, Math.min(endWordIdx, words.length - 1));\n  \n  const timing = {\n    name: section.name,\n    start: words[startWordIdx].start,\n    end: words[endWordIdx].end,\n    duration: words[endWordIdx].end - words[startWordIdx].start\n  };\n  \n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + timing.start.toFixed(2) + 's - ' + timing.end.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n  \n  // Next section starts after this one\n  searchStart = endWordIdx + 1;\n});\n\nreturn [{\n  json: {\n    ...config,\n    _section_timings: sectionTimings,\n    whisper_text: whisper.text || ''\n  }\n}];"
+        "jsCode": "const config = $('Download Avatar Video').item.json;\nconst whisper = $json;\n\n// Get script sections\n// Use script_normal for Whisper matching (has normal spellings/numbers)\n// Falls back to phonetic script if script_normal not available\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\n\n// Get word timestamps from Whisper\nconst words = whisper.words || [];\n\nif (words.length === 0) {\n  console.log('No word timestamps from Whisper, skipping timing calculation');\n  return [{\n    json: {\n      ...config,\n      _section_timings: null,\n      whisper_text: whisper.text || ''\n    }\n  }];\n}\n\n// Normalize for comparison\nfunction normalize(text) {\n  return (text || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\n// Get first and last words from text\nfunction getFirstLastWords(text) {\n  const words = (text || '').split(/\\s+/).filter(w => w);\n  if (words.length === 0) return { first: '', last: '' };\n  return {\n    first: normalize(words[0]),\n    last: normalize(words[words.length - 1])\n  };\n}\n\n// Find word index by matching (with fuzzy fallback)\nfunction findWord(whisperWords, target, startIdx, direction = 1) {\n  if (!target) return -1;\n  \n  const endIdx = direction > 0 ? whisperWords.length : -1;\n  \n  for (let i = startIdx; direction > 0 ? i < endIdx : i > endIdx; i += direction) {\n    const whisperWord = normalize(whisperWords[i].word);\n    \n    // Exact match\n    if (whisperWord === target) return i;\n    \n    // Fuzzy: one contains the other (for partial matches)\n    if (whisperWord.includes(target) || target.includes(whisperWord)) return i;\n    \n    // Fuzzy: same first 5+ chars (for phonetic spellings like neesawn/nissan)\n    // Using 5 chars to avoid false positives like capability/capital (both start with 'cap')\n    if (target.length >= 5 && whisperWord.length >= 5) {\n      if (whisperWord.slice(0, 5) === target.slice(0, 5)) return i;\n    }\n  }\n  \n  return -1;\n}\n\n// Build sections\nconst sections = [];\nsections.push({ name: 'hook', ...getFirstLastWords(hook) });\nsegments.forEach((seg, idx) => {\n  sections.push({ name: 'segment_' + idx, ...getFirstLastWords(seg) });\n});\nsections.push({ name: 'cta', ...getFirstLastWords(cta) });\n\nconsole.log('Sections to find:', sections.map(s => s.name + ': \"' + s.first + '\"...\"' + s.last + '\"').join(', '));\n\n// Find timings for each section\nconst sectionTimings = [];\nlet searchStart = 0;\n\nsections.forEach((section, idx) => {\n  // Find first word (start of section)\n  let startWordIdx = findWord(words, section.first, searchStart, 1);\n  \n  // If not found, use end of previous section + 1\n  if (startWordIdx === -1) {\n    startWordIdx = searchStart;\n    console.log(section.name + ': first word \"' + section.first + '\" not found, using idx ' + startWordIdx);\n  }\n  \n  // Determine the search boundary for this section's end word\n  let searchBoundary;\n  const nextSection = sections[idx + 1];\n  if (nextSection) {\n    // Find where next section starts\n    const nextStart = findWord(words, nextSection.first, startWordIdx + 1, 1);\n    searchBoundary = nextStart > 0 ? nextStart - 1 : words.length - 1;\n  } else {\n    searchBoundary = words.length - 1; // Last section goes to end\n  }\n  \n  // Find last word (end of section) - search BACKWARD from boundary to find last occurrence\n  let endWordIdx = findWord(words, section.last, searchBoundary, -1);\n  \n  // If not found or found before start, fall back to the boundary itself\n  if (endWordIdx === -1 || endWordIdx < startWordIdx) {\n    endWordIdx = searchBoundary;\n    console.log(section.name + ': last word \"' + section.last + '\" not found, using boundary idx ' + endWordIdx);\n  }\n  \n  // Ensure valid range\n  startWordIdx = Math.max(0, Math.min(startWordIdx, words.length - 1));\n  endWordIdx = Math.max(startWordIdx, Math.min(endWordIdx, words.length - 1));\n  \n  const timing = {\n    name: section.name,\n    start: words[startWordIdx].start,\n    end: words[endWordIdx].end,\n    duration: words[endWordIdx].end - words[startWordIdx].start\n  };\n  \n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + timing.start.toFixed(2) + 's - ' + timing.end.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n  \n  // Next section starts after this one\n  searchStart = endWordIdx + 1;\n});\n\n// Note: avatar_video_duration comes from Preserve Config for Loop (HeyGen's duration, not Whisper's)\nreturn [{\n  json: {\n    ...config,\n    _section_timings: sectionTimings,\n    whisper_text: whisper.text || ''\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1056,
-        1136
+        912,
+        1008
       ],
       "id": "calc-timings",
       "name": "Calculate Timings from Whisper"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $json._section_timings }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "isNotEmpty"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1024,
-        1136
-      ],
-      "id": "if-needs-timings",
-      "name": "If: Needs Section Timings"
     },
     {
       "parameters": {
@@ -404,14 +376,14 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.avatar_video_url }}\"\n  }\n}",
+        "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.avatar_video_url }}\",\n  \"output_type\": \"alpha-mask\"\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1264,
-        1120
+        1072,
+        1008
       ],
       "id": "rvm-create",
       "name": "API: Replicate, Create RVM",
@@ -424,8 +396,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1456,
-        1232
+        1472,
+        1104
       ],
       "id": "wait-rvm",
       "name": "Wait for RVM",
@@ -448,8 +420,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1600,
-        1104
+        1280,
+        992
       ],
       "id": "rvm-status",
       "name": "API: Replicate, Check RVM Status",
@@ -482,8 +454,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1792,
-        1088
+        1568,
+        976
       ],
       "id": "if-rvm-complete",
       "name": "If: RVM Complete"
@@ -495,8 +467,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2000,
-        1072
+        1760,
+        960
       ],
       "id": "parse-rvm",
       "name": "Parse RVM Response"
@@ -510,8 +482,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -224,
-        1104
+        -240,
+        896
       ],
       "typeVersion": 1,
       "id": "sticky-avatar",
@@ -551,26 +523,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// No timings needed - pass through without them\nconst config = $json;\nreturn [{ json: config }];"
+        "jsCode": "// Preserve config and video_id through the wait loop\nconst storedData = $('Store Config + Video ID').item.json;\nconst statusResult = $json;\n\nreturn [{\n  json: {\n    _config: storedData._config,\n    video_id: storedData.video_id,\n    avatar_video_duration: statusResult.data?.duration,\n    status: statusResult.data?.status || 'pending',\n    data: statusResult.data\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1056,
-        1376
-      ],
-      "id": "no-timings",
-      "name": "No Timings Needed"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Preserve config and video_id through the wait loop\nconst storedData = $('Store Config + Video ID').item.json;\nconst statusResult = $json;\n\nreturn [{\n  json: {\n    _config: storedData._config,\n    video_id: storedData.video_id,\n    status: statusResult.data?.status || 'pending',\n    data: statusResult.data\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        144,
-        1344
+        320,
+        1168
       ],
       "id": "preserve-for-loop",
       "name": "Preserve Config for Loop"
@@ -590,8 +549,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        544,
-        1008
+        624,
+        976
       ],
       "id": "download_video",
       "name": "Download Avatar Video"
@@ -674,11 +633,12 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        640,
-        1152
+        464,
+        752
       ],
       "id": "merge_config",
-      "name": "Merge Config with Binary"
+      "name": "OLD Merge Config with Binary",
+      "disabled": true
     }
   ],
   "connections": {
@@ -764,13 +724,7 @@
             "index": 0
           }
         ],
-        [
-          {
-            "node": "Format Errors",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Preserve Config for Loop": {
@@ -864,35 +818,6 @@
       "main": [
         [
           {
-            "node": "If: Needs Section Timings",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If: Needs Section Timings": {
-      "main": [
-        [
-          {
-            "node": "API: Replicate, Create RVM",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Timings Needed",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "No Timings Needed": {
-      "main": [
-        [
-          {
             "node": "API: Replicate, Create RVM",
             "type": "main",
             "index": 0
@@ -974,22 +899,16 @@
       "main": [
         [
           {
-            "node": "Merge Config with Binary",
+            "node": "API: Transcribe Video (Whisper)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Merge Config with Binary": {
+    "OLD Merge Config with Binary": {
       "main": [
-        [
-          {
-            "node": "API: Transcribe Video (Whisper)",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     }
   },
@@ -1001,7 +920,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "45f07332-6053-44c0-bf1e-3b9df597aa5d",
+  "versionId": "37a9cbdc-3a30-429a-b3d0-f6baefe2cbbf",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
