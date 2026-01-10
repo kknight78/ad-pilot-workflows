@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-08T17:36:24.303Z",
+  "updatedAt": "2026-01-09T23:27:43.208Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -34,7 +34,7 @@
       "typeVersion": 2.1,
       "position": [
         -400,
-        200
+        208
       ],
       "id": "webhook-node",
       "name": "Webhook",
@@ -47,8 +47,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -200,
-        200
+        -208,
+        208
       ],
       "id": "filter-emails",
       "name": "Filter on Whitelisted Emails"
@@ -75,7 +75,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        200
+        208
       ],
       "id": "call-script",
       "name": "Call '[02] Generate Script'"
@@ -107,7 +107,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        200,
+        208,
         0
       ],
       "id": "if-preview",
@@ -121,7 +121,7 @@
       "typeVersion": 2,
       "position": [
         400,
-        -100
+        -96
       ],
       "id": "delete-preview",
       "name": "Delete Preview Mode"
@@ -135,8 +135,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        600,
-        -100
+        608,
+        -96
       ],
       "id": "respond-preview",
       "name": "Respond - Script Preview"
@@ -153,7 +153,7 @@
       "typeVersion": 1.4,
       "position": [
         400,
-        100
+        112
       ],
       "id": "respond-started",
       "name": "Respond - Generation Started"
@@ -179,8 +179,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        600,
-        200
+        608,
+        208
       ],
       "id": "call-avatar",
       "name": "Call '[03] Generate Avatar'"
@@ -193,7 +193,7 @@
       "typeVersion": 2,
       "position": [
         800,
-        200
+        208
       ],
       "id": "split-ratios",
       "name": "Split by Ratios"
@@ -214,16 +214,16 @@
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
+        "mode": "each",
         "options": {
           "waitForSubWorkflow": true
-        },
-        "mode": "each"
+        }
       },
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1000,
-        200
+        1008,
+        208
       ],
       "id": "call-video",
       "name": "Call '[04] Generate Video'",
@@ -257,20 +257,20 @@
       "typeVersion": 2.2,
       "position": [
         1200,
-        200
+        208
       ],
       "id": "if-needs-banners",
       "name": "If: Needs Platform Banners"
     },
     {
       "parameters": {
-        "jsCode": "// Prepare data for [08] Add Platform Banners\nconst config = $json;\n\nreturn [{\n  json: {\n    video_url: config.final_video_url,\n    avatar_name: config.avatar_name,\n    platforms: config._platforms,\n    ratio: config.ratio,\n    _original_config: config\n  }\n}];"
+        "jsCode": "// Prepare data for [08] Add Platform Banners\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      video_url: config.final_video_url,\n      avatar_name: config.avatar_name,\n      platforms: config._platforms,\n      ratio: config.ratio,\n      _original_config: config\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        120
+        1408,
+        128
       ],
       "id": "prep-banners",
       "name": "Prepare for Banners"
@@ -291,6 +291,7 @@
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
+        "mode": "each",
         "options": {
           "waitForSubWorkflow": true
         }
@@ -299,33 +300,33 @@
       "typeVersion": 1.2,
       "position": [
         1600,
-        120
+        128
       ],
       "id": "call-banners",
       "name": "Call '[08] Add Platform Banners'"
     },
     {
       "parameters": {
-        "jsCode": "// No banners needed - create platform_videos array with single video\nconst config = $json;\n\nreturn [{\n  json: {\n    ...config,\n    platform_videos: [{\n      platform: 'none',\n      ratio: config.ratio,\n      video_url: config.final_video_url\n    }]\n  }\n}];"
+        "jsCode": "// No banners needed - create platform_videos array with single video\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.final_video_url\n      }]\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        280
+        1408,
+        288
       ],
       "id": "no-banners",
       "name": "No Banners - Passthrough"
     },
     {
       "parameters": {
-        "jsCode": "// Merge banner results with original config\nconst bannerResult = $json;\nconst originalConfig = bannerResult._original_config || {};\n\nreturn [{\n  json: {\n    ...originalConfig,\n    platform_videos: bannerResult.platform_videos\n  }\n}];"
+        "jsCode": "// Pass through results from [08]\n// [08] Format Output already spreads _original_config (with email etc) into root\n// and adds platform_videos - so just pass through all items\nconst allItems = $input.all();\nreturn allItems.map(item => ({ json: item.json }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1800,
-        120
+        1808,
+        128
       ],
       "id": "merge-banner-results",
       "name": "Merge Banner Results"
@@ -340,20 +341,20 @@
       "typeVersion": 1,
       "position": [
         2000,
-        200
+        208
       ],
       "id": "aggregate-all",
       "name": "Aggregate All Videos"
     },
     {
       "parameters": {
-        "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
+        "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item (has email, template_id, etc)\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\nconsole.log(`Email: ${baseConfig.email}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2200,
-        200
+        2208,
+        208
       ],
       "id": "format-response",
       "name": "Format Response"
@@ -366,14 +367,14 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: {{ $json.template_id }}</p><p>Theme: {{ $json.theme || 'N/A' }}</p><br/><p><strong>Videos:</strong></p>{{ $json.video_links_html }}\"\n}",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": {{ JSON.stringify(\"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: \" + $json.template_id + \"</p><p>Theme: \" + ($json.theme || 'N/A') + \"</p><br/><p><strong>Videos:</strong></p>\" + $json.video_links_html) }}\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
         2400,
-        200
+        208
       ],
       "id": "send-email",
       "name": "Send Video Email",
@@ -440,8 +441,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2600,
-        200
+        2608,
+        208
       ],
       "id": "update-job",
       "name": "Update Job Complete",
@@ -455,14 +456,13 @@
     {
       "parameters": {
         "content": "# Video Generation Orchestration v2\n\nSupports:\n- Multiple ratios per job\n- Platform-specific banners via ffmpeg\n- Organic templates (no banners)",
-        "height": 160,
         "width": 400,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
         -400,
-        -100
+        -96
       ],
       "typeVersion": 1,
       "id": "sticky-main",
@@ -477,7 +477,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        780,
+        784,
         80
       ],
       "typeVersion": 1,
@@ -493,7 +493,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1380,
+        1392,
         0
       ],
       "typeVersion": 1,
@@ -712,8 +712,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "db3497b1-0742-4c6d-9502-fb08c925d890",
-  "activeVersionId": "db3497b1-0742-4c6d-9502-fb08c925d890",
+  "versionId": "0a1d50c3-ffe1-4506-8fc4-97160e0a9913",
+  "activeVersionId": "0a1d50c3-ffe1-4506-8fc4-97160e0a9913",
   "triggerCount": 1,
   "shared": [
     {
@@ -725,9 +725,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-08T17:36:24.306Z",
-    "createdAt": "2026-01-08T17:36:24.306Z",
-    "versionId": "db3497b1-0742-4c6d-9502-fb08c925d890",
+    "updatedAt": "2026-01-09T23:27:43.213Z",
+    "createdAt": "2026-01-09T23:27:43.213Z",
+    "versionId": "0a1d50c3-ffe1-4506-8fc4-97160e0a9913",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -758,7 +758,7 @@
         "typeVersion": 2.1,
         "position": [
           -400,
-          200
+          208
         ],
         "id": "webhook-node",
         "name": "Webhook",
@@ -771,8 +771,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -200,
-          200
+          -208,
+          208
         ],
         "id": "filter-emails",
         "name": "Filter on Whitelisted Emails"
@@ -799,7 +799,7 @@
         "typeVersion": 1.2,
         "position": [
           0,
-          200
+          208
         ],
         "id": "call-script",
         "name": "Call '[02] Generate Script'"
@@ -831,7 +831,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          200,
+          208,
           0
         ],
         "id": "if-preview",
@@ -845,7 +845,7 @@
         "typeVersion": 2,
         "position": [
           400,
-          -100
+          -96
         ],
         "id": "delete-preview",
         "name": "Delete Preview Mode"
@@ -859,8 +859,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.4,
         "position": [
-          600,
-          -100
+          608,
+          -96
         ],
         "id": "respond-preview",
         "name": "Respond - Script Preview"
@@ -877,7 +877,7 @@
         "typeVersion": 1.4,
         "position": [
           400,
-          100
+          112
         ],
         "id": "respond-started",
         "name": "Respond - Generation Started"
@@ -903,8 +903,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          600,
-          200
+          608,
+          208
         ],
         "id": "call-avatar",
         "name": "Call '[03] Generate Avatar'"
@@ -917,7 +917,7 @@
         "typeVersion": 2,
         "position": [
           800,
-          200
+          208
         ],
         "id": "split-ratios",
         "name": "Split by Ratios"
@@ -938,16 +938,16 @@
             "attemptToConvertTypes": false,
             "convertFieldsToString": true
           },
+          "mode": "each",
           "options": {
             "waitForSubWorkflow": true
-          },
-          "mode": "each"
+          }
         },
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1000,
-          200
+          1008,
+          208
         ],
         "id": "call-video",
         "name": "Call '[04] Generate Video'",
@@ -981,20 +981,20 @@
         "typeVersion": 2.2,
         "position": [
           1200,
-          200
+          208
         ],
         "id": "if-needs-banners",
         "name": "If: Needs Platform Banners"
       },
       {
         "parameters": {
-          "jsCode": "// Prepare data for [08] Add Platform Banners\nconst config = $json;\n\nreturn [{\n  json: {\n    video_url: config.final_video_url,\n    avatar_name: config.avatar_name,\n    platforms: config._platforms,\n    ratio: config.ratio,\n    _original_config: config\n  }\n}];"
+          "jsCode": "// Prepare data for [08] Add Platform Banners\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      video_url: config.final_video_url,\n      avatar_name: config.avatar_name,\n      platforms: config._platforms,\n      ratio: config.ratio,\n      _original_config: config\n    }\n  };\n});"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1400,
-          120
+          1408,
+          128
         ],
         "id": "prep-banners",
         "name": "Prepare for Banners"
@@ -1015,6 +1015,7 @@
             "attemptToConvertTypes": false,
             "convertFieldsToString": true
           },
+          "mode": "each",
           "options": {
             "waitForSubWorkflow": true
           }
@@ -1023,33 +1024,33 @@
         "typeVersion": 1.2,
         "position": [
           1600,
-          120
+          128
         ],
         "id": "call-banners",
         "name": "Call '[08] Add Platform Banners'"
       },
       {
         "parameters": {
-          "jsCode": "// No banners needed - create platform_videos array with single video\nconst config = $json;\n\nreturn [{\n  json: {\n    ...config,\n    platform_videos: [{\n      platform: 'none',\n      ratio: config.ratio,\n      video_url: config.final_video_url\n    }]\n  }\n}];"
+          "jsCode": "// No banners needed - create platform_videos array with single video\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.final_video_url\n      }]\n    }\n  };\n});"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1400,
-          280
+          1408,
+          288
         ],
         "id": "no-banners",
         "name": "No Banners - Passthrough"
       },
       {
         "parameters": {
-          "jsCode": "// Merge banner results with original config\nconst bannerResult = $json;\nconst originalConfig = bannerResult._original_config || {};\n\nreturn [{\n  json: {\n    ...originalConfig,\n    platform_videos: bannerResult.platform_videos\n  }\n}];"
+          "jsCode": "// Pass through results from [08]\n// [08] Format Output already spreads _original_config (with email etc) into root\n// and adds platform_videos - so just pass through all items\nconst allItems = $input.all();\nreturn allItems.map(item => ({ json: item.json }));"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1800,
-          120
+          1808,
+          128
         ],
         "id": "merge-banner-results",
         "name": "Merge Banner Results"
@@ -1064,20 +1065,20 @@
         "typeVersion": 1,
         "position": [
           2000,
-          200
+          208
         ],
         "id": "aggregate-all",
         "name": "Aggregate All Videos"
       },
       {
         "parameters": {
-          "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
+          "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item (has email, template_id, etc)\nconst baseConfig = allItems[0] || {};\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log(`Total videos generated: ${allVideos.length}`);\nconsole.log(`Email: ${baseConfig.email}`);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none' \n    ? `${v.ratio} - ${v.platform}` \n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2200,
-          200
+          2208,
+          208
         ],
         "id": "format-response",
         "name": "Format Response"
@@ -1090,14 +1091,14 @@
           "genericAuthType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": \"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: {{ $json.template_id }}</p><p>Theme: {{ $json.theme || 'N/A' }}</p><br/><p><strong>Videos:</strong></p>{{ $json.video_links_html }}\"\n}",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": {{ JSON.stringify(\"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: \" + $json.template_id + \"</p><p>Theme: \" + ($json.theme || 'N/A') + \"</p><br/><p><strong>Videos:</strong></p>\" + $json.video_links_html) }}\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
           2400,
-          200
+          208
         ],
         "id": "send-email",
         "name": "Send Video Email",
@@ -1164,8 +1165,8 @@
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
         "position": [
-          2600,
-          200
+          2608,
+          208
         ],
         "id": "update-job",
         "name": "Update Job Complete",
@@ -1179,14 +1180,13 @@
       {
         "parameters": {
           "content": "# Video Generation Orchestration v2\n\nSupports:\n- Multiple ratios per job\n- Platform-specific banners via ffmpeg\n- Organic templates (no banners)",
-          "height": 160,
           "width": 400,
           "color": 5
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
           -400,
-          -100
+          -96
         ],
         "typeVersion": 1,
         "id": "sticky-main",
@@ -1201,7 +1201,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          780,
+          784,
           80
         ],
         "typeVersion": 1,
@@ -1217,7 +1217,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          1380,
+          1392,
           0
         ],
         "typeVersion": 1,
