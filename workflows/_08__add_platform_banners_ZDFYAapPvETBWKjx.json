@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-08T16:53:00.668Z",
+  "updatedAt": "2026-01-09T19:43:25.439Z",
   "createdAt": "2026-01-07T19:48:03.949Z",
   "id": "ZDFYAapPvETBWKjx",
   "name": "[08] Add Platform Banners",
@@ -14,20 +14,20 @@
       "typeVersion": 1.1,
       "position": [
         -400,
-        200
+        208
       ],
       "id": "trigger-node",
       "name": "When Called"
     },
     {
       "parameters": {
-        "jsCode": "// Input: { video_url, avatar_name, platforms: ['YOUTUBE', 'TIKTOK', ...], ratio }\nconst config = $json;\nconst platforms = config.platforms || [];\n\nif (platforms.length === 0) {\n  // No platforms = no banners needed, return original video\n  return [{\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.video_url\n      }]\n    }\n  }];\n}\n\n// Split into one item per platform\nreturn platforms.map(platform => ({\n  json: {\n    video_url: config.video_url,\n    avatar_name: config.avatar_name,\n    platform: platform,\n    ratio: config.ratio,\n    _original_config: config\n  }\n}));"
+        "jsCode": "// Input: { video_url, avatar_name, platforms: ['YOUTUBE', 'TIKTOK', ...], ratio, _original_config }\nconst config = $json;\nconst platforms = config.platforms || [];\n\nif (platforms.length === 0) {\n  // No platforms = no banners needed, return original video\n  return [{\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.video_url\n      }]\n    }\n  }];\n}\n\n// Split into one item per platform, passing banner_config from template\n// Note: _banner_config is inside _original_config (from [04])\nreturn platforms.map(platform => ({\n  json: {\n    video_url: config.video_url,\n    avatar_name: config.avatar_name,\n    platform: platform,\n    ratio: config.ratio,\n    banner_config: config._original_config?._banner_config,\n    _original_config: config._original_config\n  }\n}));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -200,
-        200
+        -208,
+        208
       ],
       "id": "split-platforms",
       "name": "Split by Platforms"
@@ -61,7 +61,7 @@
       "typeVersion": 2.2,
       "position": [
         0,
-        200
+        208
       ],
       "id": "if-has-platforms",
       "name": "If: Has Platforms"
@@ -72,7 +72,7 @@
         "url": "https://ffmpeg-banner-api-production.up.railway.app/add-banner",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"video_url\": \"{{ $json.video_url }}\",\n  \"avatar_name\": \"{{ $json.avatar_name }}\",\n  \"platform\": \"{{ $json.platform }}\"\n}",
+        "jsonBody": "={\n  \"video_url\": \"{{ $json.video_url }}\",\n  \"avatar_name\": \"{{ $json.avatar_name }}\",\n  \"platform\": \"{{ $json.platform }}\",\n  \"banner_config\": {{ $json.banner_config ? JSON.stringify($json.banner_config) : 'null' }}\n}",
         "options": {
           "timeout": 300000
         }
@@ -80,8 +80,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        200,
-        120
+        208,
+        128
       ],
       "id": "call-ffmpeg-api",
       "name": "API: ffmpeg Banner",
@@ -89,14 +89,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\nconst originalConfig = $('Split by Platforms').item.json._original_config;\n\nreturn {\n  json: {\n    platform: response.platform,\n    ratio: originalConfig.ratio,\n    video_url: response.video_url,\n    avatar_name: response.avatar_name\n  }\n};",
-        "mode": "runOnceForEachItem"
+        "mode": "runOnceForEachItem",
+        "jsCode": "const response = $json;\nconst originalConfig = $('Split by Platforms').item.json._original_config;\n\nreturn {\n  json: {\n    platform: response.platform,\n    ratio: originalConfig.ratio,\n    video_url: response.video_url,\n    avatar_name: response.avatar_name\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         400,
-        120
+        112
       ],
       "id": "parse-ffmpeg-response",
       "name": "Parse ffmpeg Response"
@@ -110,8 +110,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        600,
-        200
+        608,
+        208
       ],
       "id": "aggregate-results",
       "name": "Aggregate Platform Videos"
@@ -124,7 +124,7 @@
       "typeVersion": 2,
       "position": [
         800,
-        200
+        208
       ],
       "id": "format-output",
       "name": "Format Output"
@@ -152,8 +152,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        200,
-        280
+        208,
+        288
       ],
       "id": "no-platforms-passthrough",
       "name": "No Platforms - Passthrough"
@@ -166,7 +166,7 @@
       "typeVersion": 2,
       "position": [
         400,
-        200
+        224
       ],
       "id": "handle-ffmpeg-error",
       "name": "Handle ffmpeg Error"
@@ -283,8 +283,8 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "b4de2355-07f5-486a-bbd6-0fda8b535e3f",
+  "pinData": {},
+  "versionId": "a0c9a1ad-e699-4c28-af34-f3ea0995be2c",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
