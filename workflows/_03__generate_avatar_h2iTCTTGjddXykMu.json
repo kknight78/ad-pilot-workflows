@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-10T17:04:52.467Z",
+  "updatedAt": "2026-01-12T00:24:08.710Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -158,7 +158,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"title\": \"Ad Pilot Video\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"text\",\n        \"voice_id\": \"{{ $json.effective_voice_id }}\",\n        \"input_text\": \"{{ $json.script.full_script }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1280 }\n}",
-        "options": {}
+        "options": {
+          "timeout": 900000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -920,7 +922,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b9d2ace1-9b6e-407c-94a8-987c4bc49e6a",
+  "versionId": "c71fcb2d-f18a-4a43-918b-f97331535e75",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
