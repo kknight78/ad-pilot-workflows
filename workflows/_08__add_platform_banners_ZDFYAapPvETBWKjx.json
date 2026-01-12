@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-09T19:43:25.439Z",
+  "updatedAt": "2026-01-12T00:52:41.428Z",
   "createdAt": "2026-01-07T19:48:03.949Z",
   "id": "ZDFYAapPvETBWKjx",
   "name": "[08] Add Platform Banners",
@@ -21,7 +21,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Input: { video_url, avatar_name, platforms: ['YOUTUBE', 'TIKTOK', ...], ratio, _original_config }\nconst config = $json;\nconst platforms = config.platforms || [];\n\nif (platforms.length === 0) {\n  // No platforms = no banners needed, return original video\n  return [{\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.video_url\n      }]\n    }\n  }];\n}\n\n// Split into one item per platform, passing banner_config from template\n// Note: _banner_config is inside _original_config (from [04])\nreturn platforms.map(platform => ({\n  json: {\n    video_url: config.video_url,\n    avatar_name: config.avatar_name,\n    platform: platform,\n    ratio: config.ratio,\n    banner_config: config._original_config?._banner_config,\n    _original_config: config._original_config\n  }\n}));"
+        "jsCode": "// Input: { video_url, avatar_name, platforms: ['YOUTUBE', 'TIKTOK', ...], ratio, _original_config }\nconst config = $json;\nconst platforms = config.platforms || [];\n\nif (platforms.length === 0) {\n  // No platforms = no banners needed, return original video\n  return [{\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.video_url\n      }]\n    }\n  }];\n}\n\n// Split into one item per platform, passing banner_config from template\n// Note: _banner_config is inside _original_config (from [04])\nreturn platforms.map(platform => ({\n  json: {\n    video_url: config.video_url,\n    avatar_name: config.avatar_name,\n    platform: platform,\n    ratio: config.ratio,\n    banner_config: config._banner_config || config._original_config?._banner_config,\n    _original_config: config._original_config\n  }\n}));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -284,7 +284,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "a0c9a1ad-e699-4c28-af34-f3ea0995be2c",
+  "versionId": "e90c7f36-2c83-4140-9530-292bf8eeed84",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
