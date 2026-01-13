@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-10T13:01:25.322Z",
+  "updatedAt": "2026-01-13T00:31:22.399Z",
   "createdAt": "2025-12-13T13:57:36.843Z",
   "id": "gM6DTZfNbcSofqQO",
   "name": "[02] Generate Script",
@@ -78,15 +78,15 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1632,
-        -352
+        1792,
+        -192
       ],
       "id": "ad226bad-f815-4a28-80c1-bd19c2d3f6de",
       "name": "Build Script Prompt TEMP_001"
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\nconst verifiedFeatures = config.verified_features || {};\nconst selectedPhotosObject = config.selected_photos || {};\nconst theme = config.theme || 'none';\nconst scriptLength = config.script_length || 'standard';\nconst timing = config.timing_guidance || {};\n\n// Helper function to remove /thumb/ suffix\nconst getFullResUrl = (url) => {\n  return url.replace('/thumb/', '/');\n};\n\n// ═══════════════════════════════════════════════════════════════\n// TRANSFORM SELECTED PHOTOS TO ARRAY FORMAT\n// ═══════════════════════════════════════════════════════════════\n\nconst selectedPhotosArray = [];\n\n// Add hero first\nif (selectedPhotosObject.hero_exterior) {\n  selectedPhotosArray.push({\n    photo_url: getFullResUrl(selectedPhotosObject.hero_exterior.photo_url),\n    photo_index: selectedPhotosObject.hero_exterior.photo_index,\n    category: \"exterior_hero\",\n    feature_callout: \"\",\n    display_order: 1\n  });\n}\n\n// Priority order for features (most important first)\nconst priorityOrder = [\n  'engine_bay',\n  'moonroof',\n  'infotainment_360_camera',\n  'infotainment_carplay',\n  'front_seats',\n  'steering_wheel',\n  'instrument_cluster',\n  'cargo_area',\n  'second_row_seats',\n  'third_row_seats',\n  'special_feature',\n  'infotainment_other'\n];\n\n// Add features in priority order\nlet displayOrder = 2;\npriorityOrder.forEach(category => {\n  const featureData = verifiedFeatures[category];\n  const photoData = selectedPhotosObject[category];\n  \n  if (featureData?.script_features && photoData) {\n    selectedPhotosArray.push({\n      photo_url: getFullResUrl(photoData.photo_url),\n      photo_index: photoData.photo_index,\n      category: category,\n      feature_callout: featureData.script_features,\n      display_order: displayOrder++\n    });\n  }\n});\n\n// Limit to top 5 features (plus hero = 6 total)\nconst finalPhotos = selectedPhotosArray.slice(0, 6);\nconst featureCount = finalPhotos.length - 1; // minus hero\n\n// ═══════════════════════════════════════════════════════════════\n// GET SHARED BASE PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst sharedPrompt = $('Build Shared Base Prompt').first()?.json?.shared_system_prompt || '';\n\nif (!sharedPrompt) {\n  console.warn('⚠️ No shared prompt found - Template 2 missing critical rules!');\n}\n\n// ═══════════════════════════════════════════════════════════════\n// GET GUIDANCE RULES OVERRIDE (goes at END)\n// ═══════════════════════════════════════════════════════════════\n\nconst guidanceRulesOverride = config.guidanceRulesOverride || '';\n\n// ═══════════════════════════════════════════════════════════════\n// WORD LIMITS (from timing_guidance)\n// ═══════════════════════════════════════════════════════════════\n\nconst hookWords = parseInt(timing.hook) || 10;\nconst ctaWords = parseInt(timing.cta) || 12;\nconst totalWords = timing.maxWords || 75;\n\n// Calculate per-segment limit dynamically based on photo count\n// Hero counts as a segment too, so we divide by total photos\nconst segmentBudget = totalWords - hookWords - ctaWords;\nconst perSegmentLimit = Math.floor(segmentBudget / featureCount);\n\nconsole.log(`📏 Word budget: ${totalWords} total - ${hookWords} hook - ${ctaWords} cta = ${segmentBudget} for segments`);\nconsole.log(`📏 Per-segment limit: ${segmentBudget} / ${featureCount} features = ${perSegmentLimit} words each`);\n\n// ═══════════════════════════════════════════════════════════════\n// TEMPLATE 2 SPECIFIC ADDITIONS\n// ═══════════════════════════════════════════════════════════════\n\nconst template2Additions = `\n\n═══════════════════════════════════════════════════════════════\n🚗 SINGLE-CAR SPOTLIGHT RULES\n═══════════════════════════════════════════════════════════════\n\nThis is a FEATURE WALKTHROUGH for ONE vehicle.\nEach segment matches a specific photo shown on screen.\n\n⚠️ HARD WORD LIMITS (COUNT THEM - EXCEEDING = FAIL):\n- Total script: MAX ${totalWords} WORDS\n- Hook: MAX ${hookWords} words\n- Each feature segment: MAX ${perSegmentLimit} words\n- CTA: MAX ${ctaWords} words\n\nSTRUCTURE:\n1. HOOK/HERO: Introduce vehicle (exterior shot) (${hookWords} words max)\n2-${finalPhotos.length}. FEATURE SEGMENTS: One feature per photo (${perSegmentLimit} words max each)\nFINAL: CTA with contact + financing (${ctaWords} words max)\n\nSEGMENT RULES:\n- Each segment = ONE sentence about ONE feature\n- Max ${perSegmentLimit} words per segment\n- Match the feature to what's visible in that photo\n- Keep it punchy, no fluff\n\nSEGMENT PATTERN:\n✅ \"Heated leather seats — stay warm all winter.\"\n✅ \"Three-sixty camera for easy parking.\"\n✅ \"Moonroof — enjoy the open sky.\"\n❌ \"And check out these amazing heated leather seats that will keep you warm during those cold Illinois winters!\" (TOO WORDY)\n❌ \"Next up we have the interior where you'll find...\" (FILLER)\n`;\n\n// ═══════════════════════════════════════════════════════════════\n// FINAL SYSTEM PROMPT: shared + template + override LAST\n// ═══════════════════════════════════════════════════════════════\n\nconst systemPrompt = sharedPrompt + template2Additions + guidanceRulesOverride;\n\n// ═══════════════════════════════════════════════════════════════\n// BUILD FEATURE LIST FOR USER PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst featureSegments = finalPhotos\n  .filter(p => p.category !== 'exterior_hero')\n  .map((photo, index) => `${index + 2}. \"${photo.feature_callout}\" (${perSegmentLimit} words max)`)\n  .join('\\n');\n\n// ═══════════════════════════════════════════════════════════════\n// USER PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst userPrompt = `Write a ${scriptLength.toUpperCase()} single-car spotlight script.\n\nVEHICLE: ${vehicle.year} ${vehicle.make} ${vehicle.model}\nTHEME: ${theme === 'none' ? 'None (generic hook)' : theme}\n\nSEGMENTS (${finalPhotos.length} total — one per photo):\n\n1. HOOK/HERO: Introduce the ${vehicle.year} ${vehicle.make} ${vehicle.model}${theme !== 'none' ? ` with \"${theme}\" theme` : ''} (${hookWords} words max)\n\nFEATURES:\n${featureSegments}\n\nCTA: ONE contact method + financing mention (${ctaWords} words max)\n\nWORD LIMITS (CRITICAL):\n- Hook: ${hookWords} words max\n- Each segment: ${perSegmentLimit} words max\n- CTA: ${ctaWords} words max\n- TOTAL: ${totalWords} words max\n\nOUTPUT JSON:\n{\n  \"hook\": \"Vehicle intro${theme !== 'none' ? ' + theme' : ''} (${hookWords} words max)\",\n  \"segments\": [\n    \"Segment 1: Hero intro\",\n    ${finalPhotos.slice(1).map((p, i) => `\"Segment ${i + 2}: ${p.feature_callout} (${perSegmentLimit} words max)\"`).join(',\\n    ')}\n  ],\n  \"cta\": \"Contact + financing (${ctaWords} words max)\",\n  \"full_script\": \"Complete script ending with ...\",\n  \"notes\": \"Brief notes\"\n}`;\n\n// ═══════════════════════════════════════════════════════════════\n// RETURN\n// ═══════════════════════════════════════════════════════════════\n\nconsole.log(`✅ Template 2 prompt built for ${vehicle.year} ${vehicle.make} ${vehicle.model}`);\nconsole.log(`📸 ${finalPhotos.length} photos selected (1 hero + ${featureCount} features)`);\nconsole.log(`📏 Per-segment limit: ${perSegmentLimit} words`);\n\nreturn [{\n  json: {\n    ...config,\n    selected_photos: finalPhotos,\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    word_limits: {\n      total: totalWords,\n      hook: hookWords,\n      perSegment: perSegmentLimit,\n      cta: ctaWords\n    },\n    photos_selected: finalPhotos.length,\n    total_photos_analyzed: config.total_photos || 0,\n    rationale: `Selected ${featureCount} features: ${finalPhotos.slice(1).map(p => p.category).join(', ')}.`\n  }\n}];"
+        "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\nconst verifiedFeatures = config.verified_features || {};\nconst selectedPhotosObject = config.selected_photos || {};\nconst theme = config.theme || 'none';\nconst scriptLength = config.script_length || 'standard';\nconst timing = config.timing_guidance || {};\n\n// Helper function to remove /thumb/ suffix\nconst getFullResUrl = (url) => {\n  return url.replace('/thumb/', '/');\n};\n\n// ═══════════════════════════════════════════════════════════════\n// TRANSFORM SELECTED PHOTOS TO ARRAY FORMAT\n// ═══════════════════════════════════════════════════════════════\n\nconst selectedPhotosArray = [];\n\n// Add hero first\nif (selectedPhotosObject.hero_exterior) {\n  selectedPhotosArray.push({\n    photo_url: getFullResUrl(selectedPhotosObject.hero_exterior.photo_url),\n    photo_index: selectedPhotosObject.hero_exterior.photo_index,\n    category: \"exterior_hero\",\n    feature_callout: \"\",\n    display_order: 1\n  });\n}\n\n// Priority order for features (most important first)\nconst priorityOrder = [\n  'engine_bay',\n  'moonroof',\n  'infotainment_360_camera',\n  'infotainment_carplay',\n  'front_seats',\n  'steering_wheel',\n  'instrument_cluster',\n  'cargo_area',\n  'second_row_seats',\n  'third_row_seats',\n  'special_feature',\n  'infotainment_other'\n];\n\n// Add features in priority order\nlet displayOrder = 2;\npriorityOrder.forEach(category => {\n  const featureData = verifiedFeatures[category];\n  const photoData = selectedPhotosObject[category];\n  \n  if (featureData?.script_features && photoData) {\n    selectedPhotosArray.push({\n      photo_url: getFullResUrl(photoData.photo_url),\n      photo_index: photoData.photo_index,\n      category: category,\n      feature_callout: featureData.script_features,\n      display_order: displayOrder++\n    });\n  }\n});\n\n// Limit to top 5 features (plus hero = 6 total)\nconst finalPhotos = selectedPhotosArray.slice(0, 6);\nconst featureCount = finalPhotos.length - 1; // minus hero\n\n// ═══════════════════════════════════════════════════════════════\n// GET SHARED BASE PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst sharedPrompt = $('Build Shared Base Prompt').first()?.json?.shared_system_prompt || '';\n\nif (!sharedPrompt) {\n  console.warn('⚠️ No shared prompt found - Template 2 missing critical rules!');\n}\n\n// ═══════════════════════════════════════════════════════════════\n// GET GUIDANCE RULES OVERRIDE (goes at END)\n// ═══════════════════════════════════════════════════════════════\n\nconst guidanceRulesOverride = config.guidanceRulesOverride || '';\n\n// ═══════════════════════════════════════════════════════════════\n// WORD LIMITS (from timing_guidance)\n// ═══════════════════════════════════════════════════════════════\n\nconst hookWords = parseInt(timing.hook) || 10;\nconst ctaWords = parseInt(timing.cta) || 12;\nconst totalWords = timing.maxWords || 75;\n\n// Calculate per-segment limit dynamically based on photo count\n// Hero counts as a segment too, so we divide by total photos\nconst segmentBudget = totalWords - hookWords - ctaWords;\nconst perSegmentLimit = Math.floor(segmentBudget / featureCount);\n\nconsole.log(`📏 Word budget: ${totalWords} total - ${hookWords} hook - ${ctaWords} cta = ${segmentBudget} for segments`);\nconsole.log(`📏 Per-segment limit: ${segmentBudget} / ${featureCount} features = ${perSegmentLimit} words each`);\n\n// ═══════════════════════════════════════════════════════════════\n// TEMPLATE 2 SPECIFIC ADDITIONS\n// ═══════════════════════════════════════════════════════════════\n\nconst template2Additions = `\n\n═══════════════════════════════════════════════════════════════\n🚗 SINGLE-CAR SPOTLIGHT RULES\n═══════════════════════════════════════════════════════════════\n\nThis is a FEATURE WALKTHROUGH for ONE vehicle.\nEach segment matches a specific photo shown on screen.\n\n⚠️ HARD WORD LIMITS (COUNT THEM - EXCEEDING = FAIL):\n- Total script: MAX ${totalWords} WORDS\n- Hook: MAX ${hookWords} words\n- Hero: MAX ${perSegmentLimit} words\n- Each feature segment: MAX ${perSegmentLimit} words\n- CTA: MAX ${ctaWords} words\n\nSTRUCTURE:\n1. HOOK: Stop the scroll — curiosity, urgency, or surprise (${hookWords} words max)\n   → Spoken over exterior car shot\n2. HERO: Year, make, model, one standout detail (${perSegmentLimit} words max)\n   → Same exterior shot, immediately after hook\n3-${finalPhotos.length + 1}. FEATURE SEGMENTS: One feature per photo (${perSegmentLimit} words max each)\n   → Car/avatar shrink, feature photos take focus\nFINAL: CTA with contact + financing (${ctaWords} words max)\n   → Outro card with dealership info\n\n═══════════════════════════════════════════════════════════════\n🪝 HOOK RULES (STOP THE SCROLL)\n═══════════════════════════════════════════════════════════════\n\nThe hook's job: Make someone STOP scrolling in 2 seconds.\n\nIF THEME PROVIDED: Work it into the hook naturally\nIF NO THEME: Generic attention-grabber about value/features\n\nGOOD HOOKS (create curiosity, urgency, or surprise):\n✅ \"This Kia has features you won't believe.\" (no theme)\n✅ \"New year, new ride — check out this Forte.\" (theme: new year)\n✅ \"Beat the winter in heated leather seats.\" (theme: winter)\n✅ \"Wait til you see what's inside.\"\n\nBAD HOOKS (boring descriptions):\n❌ \"Twenty-three Kia Forte — sleek, reliable, loaded with features.\"\n❌ \"Check out this vehicle we have available.\"\n\nHOOK PATTERNS THAT WORK:\n- Tease a surprising feature: \"This one has a three-sixty camera.\"\n- Tie to theme/season: \"Summer's here — time for a convertible.\"\n- Imply scarcity: \"Just landed on the lot.\"\n- Create intrigue: \"Wait til you see the inside.\"\n\nSEGMENT RULES:\n- Each segment = ONE sentence about ONE feature\n- Max ${perSegmentLimit} words per segment\n- Match the feature to what's visible in that photo\n- Keep it punchy, no fluff\n\nSEGMENT PATTERN:\n✅ \"Heated leather seats — stay warm all winter.\"\n✅ \"Three-sixty camera for easy parking.\"\n✅ \"Moonroof — enjoy the open sky.\"\n❌ \"And check out these amazing heated leather seats that will keep you warm during those cold Illinois winters!\" (TOO WORDY)\n❌ \"Next up we have the interior where you'll find...\" (FILLER)\n`;\n\n// ═══════════════════════════════════════════════════════════════\n// FINAL SYSTEM PROMPT: shared + template + override LAST\n// ═══════════════════════════════════════════════════════════════\n\nconst systemPrompt = sharedPrompt + template2Additions + guidanceRulesOverride;\n\n// ═══════════════════════════════════════════════════════════════\n// BUILD FEATURE LIST FOR USER PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst featureSegments = finalPhotos\n  .filter(p => p.category !== 'exterior_hero')\n  .map((photo, index) => `${index + 2}. \"${photo.feature_callout}\" (${perSegmentLimit} words max)`)\n  .join('\\n');\n\n// ═══════════════════════════════════════════════════════════════\n// USER PROMPT\n// ═══════════════════════════════════════════════════════════════\n\nconst userPrompt = `Write a ${scriptLength.toUpperCase()} single-car spotlight script.\n\nVEHICLE: ${vehicle.year} ${vehicle.make} ${vehicle.model}\nTHEME: ${theme === 'none' ? 'None (generic hook)' : theme}\n\nSEGMENTS (${finalPhotos.length + 2} spoken parts):\n\n1. HOOK: Stop the scroll${theme !== 'none' ? ` — work in \"${theme}\" theme` : ''} (${hookWords} words max)\n2. HERO: Introduce the ${vehicle.year} ${vehicle.make} ${vehicle.model} + one standout detail (${perSegmentLimit} words max)\n\nFEATURES:\n${featureSegments}\n\nFINAL: CTA with ONE contact method + financing mention (${ctaWords} words max)\n\nWORD LIMITS (CRITICAL):\n- Hook: ${hookWords} words max\n- Hero: ${perSegmentLimit} words max\n- Each feature: ${perSegmentLimit} words max\n- CTA: ${ctaWords} words max\n- TOTAL: ${totalWords} words max\n\nOUTPUT JSON:\n{\n  \"hook\": \"Scroll-stopping opener (${hookWords} words max)\",\n  \"segments\": [\n    \"Segment 1 (Hero): Year make model + one standout detail (${perSegmentLimit} words max)\",\n    ${finalPhotos.slice(1).map((p, i) => `\"Segment ${i + 2}: ${p.feature_callout} (${perSegmentLimit} words max)\"`).join(',\\n    ')}\n  ],\n  \"cta\": \"Contact + financing (${ctaWords} words max)\",\n  \"full_script\": \"Hook + hero + all segments + cta, ending with ...\",\n  \"notes\": \"Brief notes\"\n}`;\n\n// ═══════════════════════════════════════════════════════════════\n// RETURN\n// ═══════════════════════════════════════════════════════════════\n\nconsole.log(`✅ Template 2 prompt built for ${vehicle.year} ${vehicle.make} ${vehicle.model}`);\nconsole.log(`📸 ${finalPhotos.length} photos selected (1 hero + ${featureCount} features)`);\nconsole.log(`📏 Per-segment limit: ${perSegmentLimit} words`);\n\nreturn [{\n  json: {\n    ...config,\n    selected_photos: finalPhotos,\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    word_limits: {\n      total: totalWords,\n      hook: hookWords,\n      perSegment: perSegmentLimit,\n      cta: ctaWords\n    },\n    photos_selected: finalPhotos.length,\n    total_photos_analyzed: config.total_photos || 0,\n    rationale: `Selected ${featureCount} features: ${finalPhotos.slice(1).map(p => p.category).join(', ')}.`\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -117,8 +117,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1616,
-        400
+        1760,
+        320
       ],
       "id": "336bf8bd-795b-4072-8928-7cd0cbf88e62",
       "name": "Build Script Prompt TEMP_003"
@@ -138,12 +138,12 @@
       "parameters": {
         "content": "# #1 Script Generation\n\nUse Claude API to generate scripts for Avatar videos based\non the Template chosen by the user.",
         "height": 800,
-        "width": 5152,
+        "width": 5504,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -240,
+        -208,
         -240
       ],
       "typeVersion": 1,
@@ -166,14 +166,14 @@
     {
       "parameters": {
         "content": "## Error Path",
-        "height": 208,
+        "height": 80,
         "width": 448,
         "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3920,
-        336
+        4128,
+        288
       ],
       "typeVersion": 1,
       "id": "b0c08557-ed72-45bb-9dc7-addbbd10892d",
@@ -195,14 +195,14 @@
     {
       "parameters": {
         "content": "## Success Path",
-        "height": 192,
+        "height": 80,
         "width": 192,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        4656,
-        -160
+        4928,
+        -208
       ],
       "typeVersion": 1,
       "id": "3584c832-f7dc-43c3-9671-4513f4c3e371",
@@ -584,8 +584,7 @@
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const vin = $json.VIN;\n\n// Rename the binary file if it exists\nif ($binary.data) {\n  $binary.data.fileName = `${vin}.png`;\n}\n\nreturn {\n  json: $json,\n  binary: $binary\n};"
+        "jsCode": "// Get all items at once\nconst result = $input.all();\n\nfor (const item of result) {\n\n  const vin = item.json.vins?.[0] || 'unknown'; \n\n  if (item.binary && item.binary.data) {\n    item.binary.data.fileName = `${vin}.png`;\n  }\n}\n\nreturn result;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -904,7 +903,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $json;\nconst script = config.script;\n\nif (!script) {\n  return [{ json: config }];\n}\n\n// Brand pronunciations to normal\nconst brandMap = {\n  'hunday': 'Hyundai',\n  'neesawn': 'Nissan',\n  'shevra-lay': 'Chevrolet',\n  'por-shuh': 'Porsche',\n  'b m w': 'BMW',\n  'mer-say-deez benz': 'Mercedes-Benz',\n  'moz-duh': 'Mazda',\n  'fortay': 'Forte'\n};\n\n// Location/contact conversions (for Whisper matching)\nconst locationMap = {\n  'ran-tool': 'Rantoul',\n  'rantool': 'Rantoul',\n  'capitol': 'Capital',\n  'c c rantool dot com': 'ccrantoul.com',\n  'c c rantool': 'CC Rantoul'\n};\n\n// Number word mappings\nconst teensMap = {\n  'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',\n  'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',\n  'eighteen': '18', 'nineteen': '19'\n};\nconst tensMap = {\n  'twenty': '20', 'thirty': '30', 'forty': '40', 'fifty': '50',\n  'sixty': '60', 'seventy': '70', 'eighty': '80', 'ninety': '90'\n};\nconst onesMap = {\n  'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',\n  'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'\n};\n\nfunction convertPhoneticToNormal(text) {\n  if (!text) return text;\n  let result = text;\n  \n  // Convert brands (case-insensitive)\n  for (const [phonetic, normal] of Object.entries(brandMap)) {\n    const regex = new RegExp(phonetic, 'gi');\n    result = result.replace(regex, normal);\n  }\n  \n  // Convert locations (case-insensitive)\n  for (const [phonetic, normal] of Object.entries(locationMap)) {\n    const regex = new RegExp(phonetic, 'gi');\n    result = result.replace(regex, normal);\n  }\n  \n  // Convert years: \"twenty twenty-three\" -> \"2023\"\n  result = result.replace(/twenty[- ]twenty[- ]?(one|two|three|four|five|six|seven|eight|nine)/gi, (match, digit) => {\n    return '202' + onesMap[digit.toLowerCase()];\n  });\n  \n  // Convert years: \"twenty sixteen\", \"twenty eighteen\" etc -> \"2016\", \"2018\"\n  // Pattern: twenty + teen number\n  result = result.replace(/twenty[- ](ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)/gi, (match, teen) => {\n    return '20' + teensMap[teen.toLowerCase()];\n  });\n  \n  // Convert years: \"twenty fifteen\" etc won't match above, handle \"twenty\" + ones differently\n  // Actually \"fifteen\" is a teen, so it's covered. But \"twenty ten\" would be \"2010\"\n  \n  // Convert cylinder: \"four cylinder\" or \"four-cylinder\" -> \"4-cylinder\"\n  result = result.replace(/(one|two|three|four|five|six|seven|eight|nine|ten|twelve)[- ]?cylinder/gi, (match, num) => {\n    const numVal = onesMap[num.toLowerCase()] || teensMap[num.toLowerCase()];\n    return numVal + '-cylinder';\n  });\n  \n  // Convert decimals: \"two point five\" -> \"2.5\"\n  result = result.replace(/(one|two|three|four|five|six|seven|eight|nine)[- ]point[- ](one|two|three|four|five|six|seven|eight|nine|zero)/gi, (match, whole, decimal) => {\n    return onesMap[whole.toLowerCase()] + '.' + onesMap[decimal.toLowerCase()];\n  });\n  \n  // Convert prices: \"fourteen nine nine five\" -> \"$14,995\"\n  result = result.replace(/\\b(ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)[- ](nine|eight|seven|six|five|four|three|two|one|zero)[- ](nine|eight|seven|six|five|four|three|two|one|zero)[- ](nine|eight|seven|six|five|four|three|two|one|zero)/gi, (match, d1, d2, d3, d4) => {\n    const price = teensMap[d1.toLowerCase()] + onesMap[d2.toLowerCase()] + onesMap[d3.toLowerCase()] + onesMap[d4.toLowerCase()];\n    return '$' + parseInt(price).toLocaleString();\n  });\n  \n  // Convert \"X thousand\" prices: \"twenty-one thousand\" -> \"$21,000\"\n  result = result.replace(/(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[- ]?(one|two|three|four|five|six|seven|eight|nine)?[- ]?thousand/gi, (match, tens, ones) => {\n    let num = parseInt(tensMap[tens.toLowerCase()]);\n    if (ones) num += parseInt(onesMap[ones.toLowerCase()]);\n    return '$' + (num * 1000).toLocaleString();\n  });\n  \n  // Convert remaining standalone number words that might be years: \"nineteen ninety-five\" -> \"1995\" etc\n  // (Less common but just in case)\n  \n  return result;\n}\n\n// Create normal version of script\nconst scriptNormal = {\n  hook: convertPhoneticToNormal(script.hook),\n  segments: (script.segments || []).map(seg => convertPhoneticToNormal(seg)),\n  cta: convertPhoneticToNormal(script.cta),\n  full_script: convertPhoneticToNormal(script.full_script)\n};\n\nconsole.log('=== Phonetic to Normal Conversion ===');\nconsole.log('Phonetic hook:', script.hook);\nconsole.log('Normal hook:', scriptNormal.hook);\nif (script.segments && script.segments.length > 0) {\n  console.log('Phonetic seg[0]:', script.segments[0]);\n  console.log('Normal seg[0]:', scriptNormal.segments[0]);\n}\n\nreturn [{\n  json: {\n    ...config,\n    script_normal: scriptNormal\n  }\n}];"
+        "jsCode": "const config = $json;\nconst script = config.script;\n\nif (!script) {\n  return [{ json: { ...config, script_normal: null } }];\n}\n\nconst phoneticText = JSON.stringify(script, null, 2);\n\nconst systemPrompt = `You are a text normalizer. Convert phonetic TTS scripts back to normal written text.\n\nCONVERSIONS TO MAKE:\n- Spelled-out numbers → digits: \"twenty twenty-four\" → \"2024\"\n- Phonetic brand names → correct spellings:\n  - \"Hunday\" → \"Hyundai\"\n  - \"Neesawn\" → \"Nissan\"  \n  - \"Shevra-lay\" → \"Chevrolet\"\n  - \"Moz-duh\" → \"Mazda\"\n  - \"Fortay\" → \"Forte\"\n  - \"Por-shuh\" → \"Porsche\"\n  - \"Mer-say-deez\" → \"Mercedes\"\n- Engine specs: \"two point oh liter\" → \"2.0L\", \"v six\" → \"V6\"\n- Numbers: \"three-sixty\" → \"360\", \"four wheel drive\" → \"4WD\"\n- Locations: \"Ran-tool\" → \"Rantoul\", \"Capitol\" → \"Capital\"\n- Prices: \"fourteen nine nine five\" → \"$14,995\"\n- Measurements: \"fifty thousand miles\" → \"50,000 miles\"\n\nKeep the same JSON structure. Only change the text content.`;\n\nconst userPrompt = `Convert this phonetic TTS script to normal written text:\n\n${phoneticText}\n\nReturn ONLY valid JSON with the same structure (hook, segments, cta, full_script). No markdown, no backticks.`;\n\nreturn [{\n  json: {\n    ...config,\n    _conversion_system_prompt: systemPrompt,\n    _conversion_user_prompt: userPrompt\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -912,8 +911,80 @@
         5120,
         -112
       ],
-      "id": "convert-phonetic",
-      "name": "Convert Phonetic to Normal"
+      "id": "prepare-conversion-prompt",
+      "name": "Prepare Conversion Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-sonnet-4-20250514"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{2000}}"
+            },
+            {
+              "name": "system",
+              "value": "={{$json._conversion_system_prompt}}"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [{\"role\": \"user\", \"content\": $json._conversion_user_prompt}] }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5320,
+        -112
+      ],
+      "id": "claude-convert-phonetic",
+      "name": "API: Claude, Convert to Normal",
+      "credentials": {
+        "anthropicApi": {
+          "id": "lw8bFQVznfoHFIjD",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Prepare Conversion Prompt').first().json;\nconst response = $json;\n\n// Extract text from Claude response\nlet normalText = '';\nif (response.content && response.content[0]) {\n  normalText = response.content[0].text;\n}\n\n// Parse the JSON response\nlet scriptNormal;\ntry {\n  // Clean up any markdown formatting\n  normalText = normalText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  scriptNormal = JSON.parse(normalText);\n} catch (e) {\n  console.log('Failed to parse Claude response, using original script');\n  console.log('Response was:', normalText);\n  scriptNormal = config.script;\n}\n\n// Clean up temp fields\nconst { _conversion_system_prompt, _conversion_user_prompt, ...cleanConfig } = config;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    script_normal: scriptNormal\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5520,
+        -112
+      ],
+      "id": "parse-conversion-response",
+      "name": "Parse Conversion Response"
     }
   ],
   "connections": {
@@ -1337,7 +1408,7 @@
       "main": [
         [
           {
-            "node": "Convert Phonetic to Normal",
+            "node": "Prepare Conversion Prompt",
             "type": "main",
             "index": 0
           }
@@ -1421,7 +1492,29 @@
         ]
       ]
     },
-    "Convert Phonetic to Normal": {
+    "Prepare Conversion Prompt": {
+      "main": [
+        [
+          {
+            "node": "API: Claude, Convert to Normal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Claude, Convert to Normal": {
+      "main": [
+        [
+          {
+            "node": "Parse Conversion Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Conversion Response": {
       "main": [
         []
       ]
@@ -1435,7 +1528,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "454ffb03-f8d7-4b07-a302-43795447a501",
+  "versionId": "7018a217-af8f-4ab9-a318-6c503dd1903b",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
