@@ -1,0 +1,232 @@
+{
+  "updatedAt": "2026-01-12T16:20:38.427Z",
+  "createdAt": "2026-01-12T16:20:38.427Z",
+  "id": "8ZyzyiNt134ONYni",
+  "name": "Template Preview Proxy",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "template-preview",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "template-preview"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://creatomate.com/files/previews/{{ $json.query.id }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "fetch-image",
+      "name": "Fetch Preview",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "image/jpeg"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "public, max-age=86400"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        690,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Preview": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "c6e04686-c437-49bf-bb0c-3200a0a6cfd1",
+  "activeVersionId": "c6e04686-c437-49bf-bb0c-3200a0a6cfd1",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-12T16:20:38.427Z",
+      "createdAt": "2026-01-12T16:20:38.427Z",
+      "role": "workflow:owner",
+      "workflowId": "8ZyzyiNt134ONYni",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-12T16:20:38.458Z",
+    "createdAt": "2026-01-12T16:20:38.458Z",
+    "versionId": "c6e04686-c437-49bf-bb0c-3200a0a6cfd1",
+    "workflowId": "8ZyzyiNt134ONYni",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "template-preview",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          250,
+          300
+        ],
+        "webhookId": "template-preview"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://creatomate.com/files/previews/{{ $json.query.id }}",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "id": "fetch-image",
+        "name": "Fetch Preview",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          470,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "binary",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Content-Type",
+                  "value": "image/jpeg"
+                },
+                {
+                  "name": "Cache-Control",
+                  "value": "public, max-age=86400"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          690,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Preview",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Preview": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
+  "tags": []
+}
