@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-01-12T20:06:52.449Z",
+  "updatedAt": "2026-01-13T22:31:42.801Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -123,7 +123,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
+        "jsCode": "// Prepare voice config - include voice settings\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\n// Get voice settings - use from config if provided, otherwise defaults\n// Default: Balanced settings (stability: 0.5, similarity_boost: 0.75)\nconst voiceSettings = config.voice_settings || {\n  stability: 0.5,\n  similarity_boost: 0.75\n};\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\nconsole.log(`Voice settings: stability=${voiceSettings.stability}, similarity=${voiceSettings.similarity_boost}`);\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id,\n    voice_settings: voiceSettings\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -560,7 +560,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -574,7 +574,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\",\n  \"voice_settings\": {\n    \"stability\": {{ $json.voice_settings.stability }},\n    \"similarity_boost\": {{ $json.voice_settings.similarity_boost }},\n    \"style\": 0,\n    \"use_speaker_boost\": true\n  }\n}",
         "options": {
           "response": {
             "response": {
@@ -986,8 +986,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "47eca433-c124-4bcb-8beb-dc9ef045ed6b",
-  "activeVersionId": null,
+  "versionId": "69e16a9b-ab8d-4f7a-9597-28ce6839fe58",
+  "activeVersionId": "69e16a9b-ab8d-4f7a-9597-28ce6839fe58",
   "triggerCount": 0,
   "shared": [
     {
@@ -998,6 +998,987 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": null,
+  "activeVersion": {
+    "updatedAt": "2026-01-13T22:31:42.804Z",
+    "createdAt": "2026-01-13T22:31:42.804Z",
+    "versionId": "69e16a9b-ab8d-4f7a-9597-28ce6839fe58",
+    "workflowId": "h2iTCTTGjddXykMu",
+    "nodes": [
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2512,
+          1744
+        ],
+        "id": "wait-node",
+        "name": "Wait",
+        "webhookId": "c9b371fc-a76f-46c6-b1c3-84bce69ffb63"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\nconst error = config.error || $json.statusText || 'Unknown error';\nconst errorDetails = JSON.stringify(config, null, 2);\nreturn [{ json: { error: error, details: errorDetails, config: config } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3632,
+          1312
+        ],
+        "id": "format-errors",
+        "name": "Format Errors"
+      },
+      {
+        "parameters": {
+          "errorMessage": "={{ $json.id }}"
+        },
+        "type": "n8n-nodes-base.stopAndError",
+        "typeVersion": 1,
+        "position": [
+          4080,
+          1488
+        ],
+        "id": "stop-error",
+        "name": "Stop and Error"
+      },
+      {
+        "parameters": {
+          "content": "# [03] Generate Avatar\n\nGenerates HeyGen talking head video from script,\nthen creates transparent background version via Replicate RVM.\n\nOutputs:\n- avatar_video_url (with background)\n- avatar_video_alpha_url (transparent)\n- _section_timings (from Whisper)",
+          "height": 240,
+          "width": 360,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -656,
+          1456
+        ],
+        "typeVersion": 1,
+        "id": "sticky-info",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "content": "## Error Handling\nCapture and format errors from any step",
+          "height": 116,
+          "width": 360
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3824,
+          1696
+        ],
+        "typeVersion": 1,
+        "id": "sticky-errors",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -80,
+          1968
+        ],
+        "id": "trigger",
+        "name": "When Executed by Orchestrate Video Creation"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "completed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2064,
+          1680
+        ],
+        "id": "if-complete",
+        "name": "If: Avatar Complete"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare voice config - include voice settings\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\n// Get voice settings - use from config if provided, otherwise defaults\n// Default: Balanced settings (stability: 0.5, similarity_boost: 0.75)\nconst voiceSettings = config.voice_settings || {\n  stability: 0.5,\n  similarity_boost: 0.75\n};\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\nconsole.log(`Voice settings: stability=${voiceSettings.stability}, similarity=${voiceSettings.similarity_boost}`);\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id,\n    voice_settings: voiceSettings\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          80,
+          1968
+        ],
+        "id": "prep-voice",
+        "name": "Prepare Voice Config"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.heygen.com/v2/video/generate",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "[BASE64_KEY_REDACTED]"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              },
+              {
+                "name": "content-type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"title\": \"Ad Pilot Video\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{ $json.audio_url }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1280 }\n}",
+          "options": {
+            "timeout": 900000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1168,
+          1824
+        ],
+        "id": "heygen-create",
+        "name": "API: HeyGen, Create Avatar",
+        "alwaysOutputData": true,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL with Config').item.json;\nconst heygenResponse = $json;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: heygenResponse.data.video_id,\n    status: 'pending'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1392,
+          1744
+        ],
+        "id": "store-config",
+        "name": "Store Config + Video ID"
+      },
+      {
+        "parameters": {
+          "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $json.video_id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "[BASE64_KEY_REDACTED]"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1616,
+          1744
+        ],
+        "id": "check-status",
+        "name": "API: Check Avatar Status",
+        "alwaysOutputData": true,
+        "retryOnFail": true
+      },
+      {
+        "parameters": {
+          "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = $('Preserve Config for Loop').item.json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_id: videoData.id,\n    avatar_video_duration: result.avatar_video_duration\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2288,
+          1456
+        ],
+        "id": "parse-avatar",
+        "name": "Parse Avatar Response"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.config.email || 'kelly@ad-pilot.ai' }}\",\n  \"subject\": \"[03] Avatar Generation Failed\",\n  \"html\": {{ JSON.stringify(\"<h2>Avatar generation failed</h2><pre>\" + JSON.stringify($json.details, null, 2) + \"</pre>\") }}\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3856,
+          1488
+        ],
+        "id": "email-errors",
+        "name": "Email Errors",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2288,
+          1824
+        ],
+        "id": "if-failed",
+        "name": "If: Failed?"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.openai.com/v1/audio/transcriptions",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "openAiApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "parameterType": "formBinaryData",
+                "name": "file",
+                "inputDataFieldName": "data"
+              },
+              {
+                "name": "model",
+                "value": "whisper-1"
+              },
+              {
+                "name": "response_format",
+                "value": "verbose_json"
+              },
+              {
+                "name": "timestamp_granularities[]",
+                "value": "word"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2736,
+          1456
+        ],
+        "id": "transcribe",
+        "name": "API: Transcribe Video (Whisper)",
+        "credentials": {
+          "openAiApi": {
+            "id": "P8itnQQ6xPN2EGDH",
+            "name": "OpenAi account"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $('Preserve Config for Loop').item.json;\nconst whisper = $json;\n\n// Get script sections\n// Use script_normal for Whisper matching (has normal spellings/numbers)\n// Falls back to phonetic script if script_normal not available\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\n\n// Get word timestamps from Whisper\nconst words = whisper.words || [];\n\nif (words.length === 0) {\n  console.log('No word timestamps from Whisper, skipping timing calculation');\n  return [{\n    json: {\n      ...config,\n      _section_timings: null,\n      whisper_text: whisper.text || ''\n    }\n  }];\n}\n\n// Normalize for comparison\nfunction normalize(text) {\n  return (text || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\n// Get first and last words from text\nfunction getFirstLastWords(text) {\n  const words = (text || '').split(/\\s+/).filter(w => w);\n  if (words.length === 0) return { first: '', last: '' };\n  return {\n    first: normalize(words[0]),\n    last: normalize(words[words.length - 1])\n  };\n}\n\n// Find word index by matching (with fuzzy fallback)\nfunction findWord(whisperWords, target, startIdx, direction = 1) {\n  if (!target) return -1;\n  \n  const endIdx = direction > 0 ? whisperWords.length : -1;\n  \n  for (let i = startIdx; direction > 0 ? i < endIdx : i > endIdx; i += direction) {\n    const whisperWord = normalize(whisperWords[i].word);\n    \n    // Exact match\n    if (whisperWord === target) return i;\n    \n    // Fuzzy: one contains the other (for partial matches)\n    if (whisperWord.includes(target) || target.includes(whisperWord)) return i;\n    \n    // Fuzzy: same first 5+ chars (for phonetic spellings like neesawn/nissan)\n    // Using 5 chars to avoid false positives like capability/capital (both start with 'cap')\n    if (target.length >= 5 && whisperWord.length >= 5) {\n      if (whisperWord.slice(0, 5) === target.slice(0, 5)) return i;\n    }\n  }\n  \n  return -1;\n}\n\n// Build sections\n// Use 1-based segment numbering (segment_1, segment_2, etc.)\n// This aligns with template expectations where multi-car uses segment_1-5\n// and spotlight uses segment_1 for hero extended, segment_2+ for features\nconst sections = [];\nsections.push({ name: 'hook', ...getFirstLastWords(hook) });\nsegments.forEach((seg, idx) => {\n  sections.push({ name: 'segment_' + (idx + 1), ...getFirstLastWords(seg) });\n});\nsections.push({ name: 'cta', ...getFirstLastWords(cta) });\n\nconsole.log('Sections to find:', sections.map(s => s.name + ': \"' + s.first + '\"...\"' + s.last + '\"').join(', '));\n\n// Find timings for each section\nconst sectionTimings = [];\nlet searchStart = 0;\n\nsections.forEach((section, idx) => {\n  // Find first word (start of section)\n  let startWordIdx = findWord(words, section.first, searchStart, 1);\n  \n  // If not found, use end of previous section + 1\n  if (startWordIdx === -1) {\n    startWordIdx = searchStart;\n    console.log(section.name + ': first word \"' + section.first + '\" not found, using idx ' + startWordIdx);\n  }\n  \n  // Determine the search boundary for this section's end word\n  let searchBoundary;\n  const nextSection = sections[idx + 1];\n  if (nextSection) {\n    // Find where next section starts\n    const nextStart = findWord(words, nextSection.first, startWordIdx + 1, 1);\n    searchBoundary = nextStart > 0 ? nextStart - 1 : words.length - 1;\n  } else {\n    searchBoundary = words.length - 1; // Last section goes to end\n  }\n  \n  // Find last word (end of section) - search BACKWARD from boundary to find last occurrence\n  let endWordIdx = findWord(words, section.last, searchBoundary, -1);\n  \n  // If not found or found before start, fall back to the boundary itself\n  if (endWordIdx === -1 || endWordIdx < startWordIdx) {\n    endWordIdx = searchBoundary;\n    console.log(section.name + ': last word \"' + section.last + '\" not found, using boundary idx ' + endWordIdx);\n  }\n  \n  // Ensure valid range\n  startWordIdx = Math.max(0, Math.min(startWordIdx, words.length - 1));\n  endWordIdx = Math.max(startWordIdx, Math.min(endWordIdx, words.length - 1));\n  \n  const timing = {\n    name: section.name,\n    start: words[startWordIdx].start,\n    end: words[endWordIdx].end,\n    duration: words[endWordIdx].end - words[startWordIdx].start\n  };\n  \n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + timing.start.toFixed(2) + 's - ' + timing.end.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n  \n  // Next section starts after this one\n  searchStart = endWordIdx + 1;\n});\n\n// Note: avatar_video_duration comes from Preserve Config for Loop (HeyGen's duration, not Whisper's)\nreturn [{\n  json: {\n    ...config,\n    _section_timings: sectionTimings,\n    whisper_text: whisper.text || ''\n  }\n}];\n\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2960,
+          1312
+        ],
+        "id": "calc-timings",
+        "name": "Calculate Timings from Whisper"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.replicate.com/v1/predictions",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer [REPLICATE_KEY_REDACTED]"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "respond-async"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.avatar_video_url }}\",\n  \"output_type\": \"alpha-mask\"\n  }\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3184,
+          1312
+        ],
+        "id": "rvm-create",
+        "name": "API: Replicate, Create RVM",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "amount": 10
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          3856,
+          1296
+        ],
+        "id": "wait-rvm",
+        "name": "Wait for RVM",
+        "webhookId": "6a301e7f-cd62-4a9e-b35f-71b49f2020ae"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.urls.get }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer [REPLICATE_KEY_REDACTED]"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3408,
+          1168
+        ],
+        "id": "rvm-status",
+        "name": "API: Replicate, Check RVM Status",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3632,
+          1024
+        ],
+        "id": "if-rvm-complete",
+        "name": "If: RVM Complete"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $('Calculate Timings from Whisper').item.json;\nconst rvm = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_alpha_url: rvm.output\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3856,
+          976
+        ],
+        "id": "parse-rvm",
+        "name": "Parse RVM Response"
+      },
+      {
+        "parameters": {
+          "content": "## HeyGen Avatar\nGenerate talking head video",
+          "height": 80,
+          "width": 200,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1120,
+          1696
+        ],
+        "typeVersion": 1,
+        "id": "sticky-avatar",
+        "name": "Sticky Note Avatar"
+      },
+      {
+        "parameters": {
+          "content": "## Whisper Transcription\nGet word-level timestamps for section timings",
+          "height": 100,
+          "width": 280,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2848,
+          1168
+        ],
+        "typeVersion": 1,
+        "id": "sticky-whisper",
+        "name": "Sticky Note Whisper"
+      },
+      {
+        "parameters": {
+          "content": "## Replicate RVM\nRemove background for transparent overlay",
+          "height": 100,
+          "width": 280,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3136,
+          992
+        ],
+        "typeVersion": 1,
+        "id": "sticky-rvm",
+        "name": "Sticky Note RVM"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst statusResult = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_duration: statusResult.data?.duration,\n    avatar_video_url: statusResult.data?.video_url,\n    status: statusResult.data?.status || 'pending',\n    data: statusResult.data\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1840,
+          1680
+        ],
+        "id": "preserve-for-loop",
+        "name": "Preserve Config for Loop"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.avatar_video_url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            },
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2512,
+          1456
+        ],
+        "id": "download_video",
+        "name": "Download Avatar Video"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "audio/mpeg"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\",\n  \"voice_settings\": {\n    \"stability\": {{ $json.voice_settings.stability }},\n    \"similarity_boost\": {{ $json.voice_settings.similarity_boost }},\n    \"style\": 0,\n    \"use_speaker_boost\": true\n  }\n}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            },
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          272,
+          1968
+        ],
+        "id": "elevenlabs-tts",
+        "name": "API: 11Labs, Generate TTS",
+        "alwaysOutputData": true,
+        "credentials": {
+          "elevenLabsApi": {
+            "id": "WDYpIJCq1WHnTddq",
+            "name": "Eleven Labs"
+          },
+          "httpHeaderAuth": {
+            "id": "kEy8iNc3ETi8bhkP",
+            "name": "Eleven Labs"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Convert binary audio to base64 data URL for Cloudinary\n// Get stored config from the Store Config for TTS node\nconst config = $('Prepare Voice Config').first().json;\n\n// Access binary from the input item\nconst binary = $input.item.binary;\nif (!binary) {\n  throw new Error('No binary data found in input. Check if 11Labs node is returning binary.');\n}\n\n// Get the first binary key (usually \"data\")\nconst binaryKey = Object.keys(binary)[0];\nconst binaryItem = binary[binaryKey];\n\nconst base64Audio = binaryItem.data;\nconst mimeType = binaryItem.mimeType || 'audio/mpeg';\n\nconst dataUrl = 'data:' + mimeType + ';base64,' + base64Audio;\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64_url: dataUrl\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          496,
+          1888
+        ],
+        "id": "convert-audio-base64",
+        "name": "Convert Audio to Base64"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/auto/upload",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"file\": {{ JSON.stringify($json.audio_base64_url) }},\n  \"upload_preset\": \"ad-pilot-tts\",\n  \"public_id\": \"tts_{{ Date.now() }}\",\n  \"resource_type\": \"auto\"\n}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          720,
+          1888
+        ],
+        "id": "cloudinary-upload-audio",
+        "name": "API: Cloudinary, Upload Audio",
+        "alwaysOutputData": true,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Merge Cloudinary response with original config\nconst cloudinaryResponse = $json;\nconst stored = $('Convert Audio to Base64').first().json;\n\n// Remove the base64 data (no longer needed)\nconst { audio_base64_url, ...config } = stored;\n\nreturn [{\n  json: {\n    ...config,\n    audio_url: cloudinaryResponse.secure_url\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          944,
+          1824
+        ],
+        "id": "merge-audio-url",
+        "name": "Merge Audio URL with Config"
+      }
+    ],
+    "connections": {
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "API: Check Avatar Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Errors": {
+        "main": [
+          [
+            {
+              "node": "Email Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Executed by Orchestrate Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Prepare Voice Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Voice Config": {
+        "main": [
+          [
+            {
+              "node": "API: 11Labs, Generate TTS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HeyGen, Create Avatar": {
+        "main": [
+          [
+            {
+              "node": "Store Config + Video ID",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Config + Video ID": {
+        "main": [
+          [
+            {
+              "node": "API: Check Avatar Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Check Avatar Status": {
+        "main": [
+          [
+            {
+              "node": "Preserve Config for Loop",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Preserve Config for Loop": {
+        "main": [
+          [
+            {
+              "node": "If: Avatar Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Avatar Complete": {
+        "main": [
+          [
+            {
+              "node": "Parse Avatar Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If: Failed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Avatar Response": {
+        "main": [
+          [
+            {
+              "node": "Download Avatar Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Errors": {
+        "main": [
+          [
+            {
+              "node": "Stop and Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Failed?": {
+        "main": [
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Transcribe Video (Whisper)": {
+        "main": [
+          [
+            {
+              "node": "Calculate Timings from Whisper",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculate Timings from Whisper": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate, Create RVM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Replicate, Create RVM": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate, Check RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Replicate, Check RVM Status": {
+        "main": [
+          [
+            {
+              "node": "If: RVM Complete",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: RVM Complete": {
+        "main": [
+          [
+            {
+              "node": "Parse RVM Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait for RVM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for RVM": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate, Check RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse RVM Response": {
+        "main": [
+          []
+        ]
+      },
+      "Download Avatar Video": {
+        "main": [
+          [
+            {
+              "node": "API: Transcribe Video (Whisper)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: 11Labs, Generate TTS": {
+        "main": [
+          [
+            {
+              "node": "Convert Audio to Base64",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert Audio to Base64": {
+        "main": [
+          [
+            {
+              "node": "API: Cloudinary, Upload Audio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Cloudinary, Upload Audio": {
+        "main": [
+          [
+            {
+              "node": "Merge Audio URL with Config",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Audio URL with Config": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen, Create Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
   "tags": []
 }
