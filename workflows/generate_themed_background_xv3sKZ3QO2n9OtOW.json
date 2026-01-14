@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-14T00:37:07.007Z",
+  "updatedAt": "2026-01-14T10:24:30.885Z",
   "createdAt": "2026-01-14T00:37:07.007Z",
   "id": "xv3sKZ3QO2n9OtOW",
   "name": "Generate Themed Background",
@@ -34,7 +34,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        200
+        208
       ],
       "id": "webhook",
       "name": "Webhook",
@@ -47,8 +47,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        200,
-        200
+        208,
+        208
       ],
       "id": "build-prompt",
       "name": "Build Prompt"
@@ -57,15 +57,9 @@
       "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
         "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "key",
-              "value": "AIzaSyBbUtssGao3QA-GgKAf2dJPKbfSoZxNo_Y"
-            }
-          ]
-        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
@@ -77,10 +71,16 @@
       "typeVersion": 4.2,
       "position": [
         400,
-        200
+        208
       ],
       "id": "gemini-api",
-      "name": "Gemini Image Gen"
+      "name": "Gemini Image Gen",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prVNksIVEgzVrhKB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     },
     {
       "parameters": {
@@ -89,8 +89,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        600,
-        200
+        608,
+        208
       ],
       "id": "extract-image",
       "name": "Extract Image"
@@ -110,7 +110,7 @@
       "typeVersion": 4.2,
       "position": [
         800,
-        200
+        208
       ],
       "id": "cloudinary-upload",
       "name": "Upload to Cloudinary"
@@ -122,8 +122,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        200
+        1008,
+        208
       ],
       "id": "format-response",
       "name": "Format Response"
@@ -138,7 +138,7 @@
       "typeVersion": 1.1,
       "position": [
         1200,
-        200
+        208
       ],
       "id": "respond",
       "name": "Respond"
@@ -219,9 +219,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "ef1f179c-0806-44e1-ac1a-ff046fa24eb2",
-  "activeVersionId": "ef1f179c-0806-44e1-ac1a-ff046fa24eb2",
+  "pinData": {},
+  "versionId": "59ff5b51-3688-4c26-bbb3-66baf7f9e76b",
+  "activeVersionId": "59ff5b51-3688-4c26-bbb3-66baf7f9e76b",
   "triggerCount": 1,
   "shared": [
     {
@@ -233,9 +233,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-14T00:37:07.024Z",
-    "createdAt": "2026-01-14T00:37:07.024Z",
-    "versionId": "ef1f179c-0806-44e1-ac1a-ff046fa24eb2",
+    "updatedAt": "2026-01-14T10:24:30.888Z",
+    "createdAt": "2026-01-14T10:24:30.888Z",
+    "versionId": "59ff5b51-3688-4c26-bbb3-66baf7f9e76b",
     "workflowId": "xv3sKZ3QO2n9OtOW",
     "nodes": [
       {
@@ -266,7 +266,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          200
+          208
         ],
         "id": "webhook",
         "name": "Webhook",
@@ -279,8 +279,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          200,
-          200
+          208,
+          208
         ],
         "id": "build-prompt",
         "name": "Build Prompt"
@@ -289,15 +289,9 @@
         "parameters": {
           "method": "POST",
           "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googlePalmApi",
           "sendQuery": true,
-          "queryParameters": {
-            "parameters": [
-              {
-                "name": "key",
-                "value": "AIzaSyBbUtssGao3QA-GgKAf2dJPKbfSoZxNo_Y"
-              }
-            ]
-          },
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
@@ -309,10 +303,16 @@
         "typeVersion": 4.2,
         "position": [
           400,
-          200
+          208
         ],
         "id": "gemini-api",
-        "name": "Gemini Image Gen"
+        "name": "Gemini Image Gen",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "prVNksIVEgzVrhKB",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
       },
       {
         "parameters": {
@@ -321,8 +321,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          600,
-          200
+          608,
+          208
         ],
         "id": "extract-image",
         "name": "Extract Image"
@@ -342,7 +342,7 @@
         "typeVersion": 4.2,
         "position": [
           800,
-          200
+          208
         ],
         "id": "cloudinary-upload",
         "name": "Upload to Cloudinary"
@@ -354,8 +354,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1000,
-          200
+          1008,
+          208
         ],
         "id": "format-response",
         "name": "Format Response"
@@ -370,7 +370,7 @@
         "typeVersion": 1.1,
         "position": [
           1200,
-          200
+          208
         ],
         "id": "respond",
         "name": "Respond"
