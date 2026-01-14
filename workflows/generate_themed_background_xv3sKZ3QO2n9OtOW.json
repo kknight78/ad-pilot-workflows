@@ -1,0 +1,452 @@
+{
+  "updatedAt": "2026-01-14T00:37:07.007Z",
+  "createdAt": "2026-01-14T00:37:07.007Z",
+  "id": "xv3sKZ3QO2n9OtOW",
+  "name": "Generate Themed Background",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-background",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "id": "webhook",
+      "name": "Webhook",
+      "webhookId": "generate-background"
+    },
+    {
+      "parameters": {
+        "jsCode": "const theme = $input.first().json.body.theme || 'abstract gradient';\nconst clientId = $input.first().json.body.client_id;\n\nconst prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\nTHEME: \"${theme}\"\n\nSTYLE: Abstract gradients, bokeh effects, flowing shapes. NOT photorealistic.\nCOMPOSITION: Keep left side (40%) simple for a person silhouette. Right side can have more detail.\nCOLORS: Professional palette matching the theme.\n\nDO NOT include: text, faces, logos, realistic locations, busy patterns.`;\n\n// Build the complete request body for Gemini\nconst requestBody = {\n  generationConfig: {\n    responseModalities: [\"IMAGE\"],\n    imageConfig: {\n      aspectRatio: \"9:16\"\n    }\n  },\n  contents: [{\n    parts: [{\n      text: prompt\n    }]\n  }]\n};\n\nreturn [{ json: { requestBody, theme, clientId } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        200
+      ],
+      "id": "build-prompt",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyBbUtssGao3QA-GgKAf2dJPKbfSoZxNo_Y"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        200
+      ],
+      "id": "gemini-api",
+      "name": "Gemini Image Gen"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst theme = $('Build Prompt').first().json.theme;\nconst clientId = $('Build Prompt').first().json.clientId;\n\nlet imageData = null;\nlet mimeType = 'image/png';\n\nif (response.candidates && response.candidates[0]) {\n  const parts = response.candidates[0].content?.parts || [];\n  for (const part of parts) {\n    if (part.inlineData) {\n      imageData = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nif (!imageData) {\n  throw new Error('No image in response: ' + JSON.stringify(response).substring(0, 500));\n}\n\nreturn [{ json: { imageData, mimeType, theme, clientId } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        200
+      ],
+      "id": "extract-image",
+      "name": "Extract Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file\": \"data:{{ $json.mimeType }};base64,{{ $json.imageData }}\",\n  \"upload_preset\": \"ad_pilot_backgrounds\",\n  \"folder\": \"backgrounds/themed\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        200
+      ],
+      "id": "cloudinary-upload",
+      "name": "Upload to Cloudinary"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cloudinaryResponse = $input.first().json;\nconst theme = $('Extract Image').first().json.theme;\nconst clientId = $('Extract Image').first().json.clientId;\n\nif (cloudinaryResponse.error) {\n  throw new Error('Cloudinary failed: ' + cloudinaryResponse.error.message);\n}\n\nreturn [{ json: {\n  success: true,\n  theme: theme,\n  client_id: clientId,\n  cloudinary_url: cloudinaryResponse.secure_url,\n  cloudinary_public_id: cloudinaryResponse.public_id,\n  width: cloudinaryResponse.width,\n  height: cloudinaryResponse.height\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        200
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        200
+      ],
+      "id": "respond",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Image Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Image Gen": {
+      "main": [
+        [
+          {
+            "node": "Extract Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "ef1f179c-0806-44e1-ac1a-ff046fa24eb2",
+  "activeVersionId": "ef1f179c-0806-44e1-ac1a-ff046fa24eb2",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-14T00:37:07.007Z",
+      "createdAt": "2026-01-14T00:37:07.007Z",
+      "role": "workflow:owner",
+      "workflowId": "xv3sKZ3QO2n9OtOW",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-14T00:37:07.024Z",
+    "createdAt": "2026-01-14T00:37:07.024Z",
+    "versionId": "ef1f179c-0806-44e1-ac1a-ff046fa24eb2",
+    "workflowId": "xv3sKZ3QO2n9OtOW",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "generate-background",
+          "responseMode": "responseNode",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "id": "webhook",
+        "name": "Webhook",
+        "webhookId": "generate-background"
+      },
+      {
+        "parameters": {
+          "jsCode": "const theme = $input.first().json.body.theme || 'abstract gradient';\nconst clientId = $input.first().json.body.client_id;\n\nconst prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\nTHEME: \"${theme}\"\n\nSTYLE: Abstract gradients, bokeh effects, flowing shapes. NOT photorealistic.\nCOMPOSITION: Keep left side (40%) simple for a person silhouette. Right side can have more detail.\nCOLORS: Professional palette matching the theme.\n\nDO NOT include: text, faces, logos, realistic locations, busy patterns.`;\n\n// Build the complete request body for Gemini\nconst requestBody = {\n  generationConfig: {\n    responseModalities: [\"IMAGE\"],\n    imageConfig: {\n      aspectRatio: \"9:16\"\n    }\n  },\n  contents: [{\n    parts: [{\n      text: prompt\n    }]\n  }]\n};\n\nreturn [{ json: { requestBody, theme, clientId } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          200
+        ],
+        "id": "build-prompt",
+        "name": "Build Prompt"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "AIzaSyBbUtssGao3QA-GgKAf2dJPKbfSoZxNo_Y"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          400,
+          200
+        ],
+        "id": "gemini-api",
+        "name": "Gemini Image Gen"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst theme = $('Build Prompt').first().json.theme;\nconst clientId = $('Build Prompt').first().json.clientId;\n\nlet imageData = null;\nlet mimeType = 'image/png';\n\nif (response.candidates && response.candidates[0]) {\n  const parts = response.candidates[0].content?.parts || [];\n  for (const part of parts) {\n    if (part.inlineData) {\n      imageData = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nif (!imageData) {\n  throw new Error('No image in response: ' + JSON.stringify(response).substring(0, 500));\n}\n\nreturn [{ json: { imageData, mimeType, theme, clientId } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          200
+        ],
+        "id": "extract-image",
+        "name": "Extract Image"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"file\": \"data:{{ $json.mimeType }};base64,{{ $json.imageData }}\",\n  \"upload_preset\": \"ad_pilot_backgrounds\",\n  \"folder\": \"backgrounds/themed\"\n}",
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          800,
+          200
+        ],
+        "id": "cloudinary-upload",
+        "name": "Upload to Cloudinary"
+      },
+      {
+        "parameters": {
+          "jsCode": "const cloudinaryResponse = $input.first().json;\nconst theme = $('Extract Image').first().json.theme;\nconst clientId = $('Extract Image').first().json.clientId;\n\nif (cloudinaryResponse.error) {\n  throw new Error('Cloudinary failed: ' + cloudinaryResponse.error.message);\n}\n\nreturn [{ json: {\n  success: true,\n  theme: theme,\n  client_id: clientId,\n  cloudinary_url: cloudinaryResponse.secure_url,\n  cloudinary_public_id: cloudinaryResponse.public_id,\n  width: cloudinaryResponse.width,\n  height: cloudinaryResponse.height\n}}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          200
+        ],
+        "id": "format-response",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          200
+        ],
+        "id": "respond",
+        "name": "Respond"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Prompt": {
+        "main": [
+          [
+            {
+              "node": "Gemini Image Gen",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Image Gen": {
+        "main": [
+          [
+            {
+              "node": "Extract Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Image": {
+        "main": [
+          [
+            {
+              "node": "Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null
+  },
+  "tags": []
+}
