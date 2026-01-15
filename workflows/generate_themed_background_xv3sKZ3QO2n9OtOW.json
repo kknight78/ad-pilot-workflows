@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-14T10:24:30.885Z",
+  "updatedAt": "2026-01-14T22:55:24.048Z",
   "createdAt": "2026-01-14T00:37:07.007Z",
   "id": "xv3sKZ3QO2n9OtOW",
   "name": "Generate Themed Background",
@@ -42,7 +42,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const theme = $input.first().json.body.theme || 'abstract gradient';\nconst clientId = $input.first().json.body.client_id;\n\nconst prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\nTHEME: \"${theme}\"\n\nSTYLE: Abstract gradients, bokeh effects, flowing shapes. NOT photorealistic.\nCOMPOSITION: Keep left side (40%) simple for a person silhouette. Right side can have more detail.\nCOLORS: Professional palette matching the theme.\n\nDO NOT include: text, faces, logos, realistic locations, busy patterns.`;\n\n// Build the complete request body for Gemini\nconst requestBody = {\n  generationConfig: {\n    responseModalities: [\"IMAGE\"],\n    imageConfig: {\n      aspectRatio: \"9:16\"\n    }\n  },\n  contents: [{\n    parts: [{\n      text: prompt\n    }]\n  }]\n};\n\nreturn [{ json: { requestBody, theme, clientId } }];"
+        "jsCode": "  const body = $input.first().json.body;\n  const theme = body.theme || 'abstract gradient';\n  const clientId = body.client_id;\n  const style = body.style || 'hybrid';\n  const clarity = body.clarity || 'balanced';\n  const headline = body.headline || '';\n  const subtext = body.subtext || '';\n\n  // Clarity instructions\n  const clarityMap = {\n    subtle: 'Include 1 faint symbolic motif related to the theme, subtly integrated into the design.',\n    balanced: 'Include 1-2 clear theme objects that are recognizable but not overwhelming.',\n    bold: 'Include 2-4 prominent, instantly recognizable theme objects.'\n  };\n  const clarityInstruction = clarityMap[clarity] || clarityMap.balanced;\n\n  // Universal safe zone - visible in all aspect ratios (9:16, 4:5, 16:9)\n  const safeZoneRules = `CRITICAL PLACEMENT - UNIVERSAL SAFE ZONE:\n  All text, focal elements, and key theme objects MUST be placed in the CENTER-RIGHT area:\n  - Horizontally: Right 50-60% of the image\n  - Vertically: Middle 35% of the image (not too high, not too low)\n  This ensures visibility when cropped to any aspect ratio (9:16, 4:5, or 16:9).\n  Do NOT place important elements near the top or bottom edges.`;\n\n  // Base composition rules (shared across styles)\n  const compositionRules = `COMPOSITION:\n  - Create a SEAMLESS, CONTINUOUS background that flows naturally across the entire image\n  - NO panels, sections, dividers, frames, or distinct left/right areas\n  - Use a GRADIENT OF COMPLEXITY: subtle/minimal on the left, more detailed toward the right\n  - The left side should have the SAME style, texture, and colors as the rest, just softer/simpler\n  - A person will be composited on the left later, so avoid placing focal elements there\n  - Think of it like a single cohesive scene, not a split layout`;\n\n  const doNotInclude = `DO NOT INCLUDE:\n  - Any text, words, letters, symbols or numbers (unless Typography style)\n  - Recognizable faces or people\n  - Logos, brand marks, or trademarked imagery\n  - Busy patterns that would compete with a speaker\n  - Any frames, boxes, panels, UI elements, or placeholder shapes\n  - Gray or colored rectangles, dividers, or solid color sections\n  - Distinct left/right split layouts or panels`;\n\n  let prompt = '';\n\n  switch (style) {\n    case 'abstract':\n      prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients, bokeh effects, flowing shapes, painterly. NOT photorealistic.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching the theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'hybrid':\n      prompt = `Create a vertical background for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients + bokeh + flowing shapes, combined with recognizable theme elements.\n  ${clarityInstruction}\n  Make theme objects large enough to recognize at a glance, with soft depth-of-field and glow accents.\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'illustration':\n      prompt = `Create a bold, clean, illustrated vertical background.\n\n  THEME: \"${theme}\"\n\n  STYLE: Modern vector/flat illustration, crisp shapes, limited color palette, soft grain.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Cluster iconic objects in the center-right safe zone - big, readable, not busy.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'photorealistic':\n      prompt = `Create a photorealistic vertical background image for a video ad.\n\n  THEME: \"${theme}\"\n\n  STYLE: Cinematic photography look, shallow depth-of-field, professional lighting.\n  ${clarityInstruction}\n  Include theme-relevant objects (large, recognizable).\n  Use generic/non-identifiable environment (no real landmarks, no readable signage).\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  ${doNotInclude}\n  - No identifiable locations, license plates, or readable signage`;\n      break;\n\n    case 'texture':\n      prompt = `Create a minimal vertical background with premium texture and subtle theme cues.\n\n  THEME: \"${theme}\"\n\n  STYLE: Material/texture focus (paper, brushed metal, linen, concrete, wood grain), soft lighting, gentle bokeh.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Place subtle theme object in the center-right safe zone.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'typography':\n      prompt = `Create a bold typographic vertical background poster for a video ad.\n\n  CRITICAL - TEXT POSITIONING:\n  A person will be standing on the LEFT side of this image later.\n  Place ALL text on the OPPOSITE side from where the person will stand.\n  The person takes up the left 40-50%, so put text in the remaining space.\n\n  TEXT LAYOUT (IMPORTANT):\n  - Keep headline COMPACT - use 2-3 lines maximum, NOT one word per line\n  - Group multiple words on each line (e.g., \"IT'S TAX\" on line 1, \"RETURN TIME!!\" on line 2)\n  - Subtext must appear DIRECTLY BELOW the headline, not separated\n  - Keep headline and subtext together as ONE text block, vertically centered\n  - Do NOT spread text across the full height of the image\n\n  HEADLINE TEXT (render exactly): \"${headline}\"\n  ${subtext ? `SUBTEXT directly below headline (render exactly): \"${subtext}\"` : ''}\n  THEME: \"${theme}\"\n\n  TEXT STYLE:\n  - Bold, condensed sans-serif font\n  - High contrast for readability\n  - Headline and subtext grouped tightly together\n\n  BACKGROUND:\n  - Seamless, continuous background across entire image\n  - Beautiful bokeh, gradients, or theme-appropriate imagery\n  - Professional color palette matching the theme\n  - NO panels, frames, dividers, or split layouts\n\n  DO NOT:\n  - Put one word per line (too tall)\n  - Separate subtext from headline\n  - Place text where a person would stand (left side)\n  - Place text near top or bottom edges`;\n      break;\n\n\n    default:\n      prompt = `Create an abstract vertical background for: \"${theme}\"`;\n  }\n\n  // Build the complete request body for Gemini\n  const requestBody = {\n    generationConfig: {\n      responseModalities: [\"IMAGE\"],\n      imageConfig: {\n        aspectRatio: \"9:16\"\n      }\n    },\n    contents: [{\n      parts: [{\n        text: prompt\n      }]\n    }]\n  };\n\n  return [{ json: { requestBody, theme, clientId, style, clarity } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -57,9 +57,8 @@
       "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googlePalmApi",
-        "sendQuery": true,
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
@@ -79,6 +78,10 @@
         "googlePalmApi": {
           "id": "prVNksIVEgzVrhKB",
           "name": "Google Gemini(PaLM) Api account"
+        },
+        "httpHeaderAuth": {
+          "id": "QCuQqEVYErTsDfHL",
+          "name": "Google API Header auth"
         }
       }
     },
@@ -220,8 +223,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "59ff5b51-3688-4c26-bbb3-66baf7f9e76b",
-  "activeVersionId": "59ff5b51-3688-4c26-bbb3-66baf7f9e76b",
+  "versionId": "886db44c-656f-43e3-9487-c521ec7c7518",
+  "activeVersionId": "886db44c-656f-43e3-9487-c521ec7c7518",
   "triggerCount": 1,
   "shared": [
     {
@@ -233,9 +236,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-14T10:24:30.888Z",
-    "createdAt": "2026-01-14T10:24:30.888Z",
-    "versionId": "59ff5b51-3688-4c26-bbb3-66baf7f9e76b",
+    "updatedAt": "2026-01-14T22:55:24.051Z",
+    "createdAt": "2026-01-14T22:55:24.051Z",
+    "versionId": "886db44c-656f-43e3-9487-c521ec7c7518",
     "workflowId": "xv3sKZ3QO2n9OtOW",
     "nodes": [
       {
@@ -274,7 +277,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const theme = $input.first().json.body.theme || 'abstract gradient';\nconst clientId = $input.first().json.body.client_id;\n\nconst prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\nTHEME: \"${theme}\"\n\nSTYLE: Abstract gradients, bokeh effects, flowing shapes. NOT photorealistic.\nCOMPOSITION: Keep left side (40%) simple for a person silhouette. Right side can have more detail.\nCOLORS: Professional palette matching the theme.\n\nDO NOT include: text, faces, logos, realistic locations, busy patterns.`;\n\n// Build the complete request body for Gemini\nconst requestBody = {\n  generationConfig: {\n    responseModalities: [\"IMAGE\"],\n    imageConfig: {\n      aspectRatio: \"9:16\"\n    }\n  },\n  contents: [{\n    parts: [{\n      text: prompt\n    }]\n  }]\n};\n\nreturn [{ json: { requestBody, theme, clientId } }];"
+          "jsCode": "  const body = $input.first().json.body;\n  const theme = body.theme || 'abstract gradient';\n  const clientId = body.client_id;\n  const style = body.style || 'hybrid';\n  const clarity = body.clarity || 'balanced';\n  const headline = body.headline || '';\n  const subtext = body.subtext || '';\n\n  // Clarity instructions\n  const clarityMap = {\n    subtle: 'Include 1 faint symbolic motif related to the theme, subtly integrated into the design.',\n    balanced: 'Include 1-2 clear theme objects that are recognizable but not overwhelming.',\n    bold: 'Include 2-4 prominent, instantly recognizable theme objects.'\n  };\n  const clarityInstruction = clarityMap[clarity] || clarityMap.balanced;\n\n  // Universal safe zone - visible in all aspect ratios (9:16, 4:5, 16:9)\n  const safeZoneRules = `CRITICAL PLACEMENT - UNIVERSAL SAFE ZONE:\n  All text, focal elements, and key theme objects MUST be placed in the CENTER-RIGHT area:\n  - Horizontally: Right 50-60% of the image\n  - Vertically: Middle 35% of the image (not too high, not too low)\n  This ensures visibility when cropped to any aspect ratio (9:16, 4:5, or 16:9).\n  Do NOT place important elements near the top or bottom edges.`;\n\n  // Base composition rules (shared across styles)\n  const compositionRules = `COMPOSITION:\n  - Create a SEAMLESS, CONTINUOUS background that flows naturally across the entire image\n  - NO panels, sections, dividers, frames, or distinct left/right areas\n  - Use a GRADIENT OF COMPLEXITY: subtle/minimal on the left, more detailed toward the right\n  - The left side should have the SAME style, texture, and colors as the rest, just softer/simpler\n  - A person will be composited on the left later, so avoid placing focal elements there\n  - Think of it like a single cohesive scene, not a split layout`;\n\n  const doNotInclude = `DO NOT INCLUDE:\n  - Any text, words, letters, symbols or numbers (unless Typography style)\n  - Recognizable faces or people\n  - Logos, brand marks, or trademarked imagery\n  - Busy patterns that would compete with a speaker\n  - Any frames, boxes, panels, UI elements, or placeholder shapes\n  - Gray or colored rectangles, dividers, or solid color sections\n  - Distinct left/right split layouts or panels`;\n\n  let prompt = '';\n\n  switch (style) {\n    case 'abstract':\n      prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients, bokeh effects, flowing shapes, painterly. NOT photorealistic.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching the theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'hybrid':\n      prompt = `Create a vertical background for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients + bokeh + flowing shapes, combined with recognizable theme elements.\n  ${clarityInstruction}\n  Make theme objects large enough to recognize at a glance, with soft depth-of-field and glow accents.\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'illustration':\n      prompt = `Create a bold, clean, illustrated vertical background.\n\n  THEME: \"${theme}\"\n\n  STYLE: Modern vector/flat illustration, crisp shapes, limited color palette, soft grain.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Cluster iconic objects in the center-right safe zone - big, readable, not busy.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'photorealistic':\n      prompt = `Create a photorealistic vertical background image for a video ad.\n\n  THEME: \"${theme}\"\n\n  STYLE: Cinematic photography look, shallow depth-of-field, professional lighting.\n  ${clarityInstruction}\n  Include theme-relevant objects (large, recognizable).\n  Use generic/non-identifiable environment (no real landmarks, no readable signage).\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  ${doNotInclude}\n  - No identifiable locations, license plates, or readable signage`;\n      break;\n\n    case 'texture':\n      prompt = `Create a minimal vertical background with premium texture and subtle theme cues.\n\n  THEME: \"${theme}\"\n\n  STYLE: Material/texture focus (paper, brushed metal, linen, concrete, wood grain), soft lighting, gentle bokeh.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Place subtle theme object in the center-right safe zone.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'typography':\n      prompt = `Create a bold typographic vertical background poster for a video ad.\n\n  CRITICAL - TEXT POSITIONING:\n  A person will be standing on the LEFT side of this image later.\n  Place ALL text on the OPPOSITE side from where the person will stand.\n  The person takes up the left 40-50%, so put text in the remaining space.\n\n  TEXT LAYOUT (IMPORTANT):\n  - Keep headline COMPACT - use 2-3 lines maximum, NOT one word per line\n  - Group multiple words on each line (e.g., \"IT'S TAX\" on line 1, \"RETURN TIME!!\" on line 2)\n  - Subtext must appear DIRECTLY BELOW the headline, not separated\n  - Keep headline and subtext together as ONE text block, vertically centered\n  - Do NOT spread text across the full height of the image\n\n  HEADLINE TEXT (render exactly): \"${headline}\"\n  ${subtext ? `SUBTEXT directly below headline (render exactly): \"${subtext}\"` : ''}\n  THEME: \"${theme}\"\n\n  TEXT STYLE:\n  - Bold, condensed sans-serif font\n  - High contrast for readability\n  - Headline and subtext grouped tightly together\n\n  BACKGROUND:\n  - Seamless, continuous background across entire image\n  - Beautiful bokeh, gradients, or theme-appropriate imagery\n  - Professional color palette matching the theme\n  - NO panels, frames, dividers, or split layouts\n\n  DO NOT:\n  - Put one word per line (too tall)\n  - Separate subtext from headline\n  - Place text where a person would stand (left side)\n  - Place text near top or bottom edges`;\n      break;\n\n\n    default:\n      prompt = `Create an abstract vertical background for: \"${theme}\"`;\n  }\n\n  // Build the complete request body for Gemini\n  const requestBody = {\n    generationConfig: {\n      responseModalities: [\"IMAGE\"],\n      imageConfig: {\n        aspectRatio: \"9:16\"\n      }\n    },\n    contents: [{\n      parts: [{\n        text: prompt\n      }]\n    }]\n  };\n\n  return [{ json: { requestBody, theme, clientId, style, clarity } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -289,9 +292,8 @@
         "parameters": {
           "method": "POST",
           "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "googlePalmApi",
-          "sendQuery": true,
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
@@ -311,6 +313,10 @@
           "googlePalmApi": {
             "id": "prVNksIVEgzVrhKB",
             "name": "Google Gemini(PaLM) Api account"
+          },
+          "httpHeaderAuth": {
+            "id": "QCuQqEVYErTsDfHL",
+            "name": "Google API Header auth"
           }
         }
       },
