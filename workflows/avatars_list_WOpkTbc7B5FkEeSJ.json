@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-13T23:58:21.874Z",
+  "updatedAt": "2026-01-14T21:31:04.427Z",
   "createdAt": "2026-01-13T23:16:34.512Z",
   "id": "WOpkTbc7B5FkEeSJ",
   "name": "Avatars List",
@@ -43,7 +43,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  a.id as avatar_id,\n  p.display_name,\n  p.full_name,\n  a.style_name,\n  a.preview_image_url\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nJOIN client_avatars ca ON ca.avatar_id = a.id\nJOIN clients c ON c.id = ca.client_id\nWHERE ca.is_active = true\n  AND ca.is_deleted = false\nORDER BY p.display_name, a.style_name",
+        "query": "SELECT\n  a.id as avatar_id,\n  p.display_name,\n  p.full_name,\n  a.style_name,\n  a.motion_preset,\n  a.preview_image_url\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nJOIN client_avatars ca ON ca.avatar_id = a.id\nJOIN clients c ON c.id = ca.client_id\nWHERE ca.is_active = true\n  AND ca.is_deleted = false\nORDER BY p.display_name, a.style_name",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -63,7 +63,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const avatars = $input.all().map(item => ({\n  avatar_id: item.json.avatar_id,\n  display_name: item.json.display_name,\n  full_name: item.json.full_name,\n  style_name: item.json.style_name,\n  preview_image_url: item.json.preview_image_url,\n  label: item.json.style_name \n    ? `${item.json.display_name} (${item.json.style_name})`\n    : item.json.display_name\n}));\n\nreturn [{ json: { success: true, avatars } }];"
+        "jsCode": "const avatars = $input.all().map(item => ({\n  avatar_id: item.json.avatar_id,\n  display_name: item.json.display_name,\n  full_name: item.json.full_name,\n  style_name: item.json.style_name,\n  motion_preset: item.json.motion_preset,\n  preview_image_url: item.json.preview_image_url,\n  label: item.json.style_name \n    ? `${item.json.display_name} (${item.json.style_name})`\n    : item.json.display_name\n}));\n\nreturn [{ json: { success: true, avatars } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -133,8 +133,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "833905fc-e300-43d9-967f-6963aa2a7387",
-  "activeVersionId": "833905fc-e300-43d9-967f-6963aa2a7387",
+  "versionId": "dd1e05fb-4883-4915-aa4d-c5df4f2baf9c",
+  "activeVersionId": "dd1e05fb-4883-4915-aa4d-c5df4f2baf9c",
   "triggerCount": 1,
   "shared": [
     {
@@ -146,9 +146,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-13T23:58:21.875Z",
-    "createdAt": "2026-01-13T23:58:21.875Z",
-    "versionId": "833905fc-e300-43d9-967f-6963aa2a7387",
+    "updatedAt": "2026-01-14T21:31:04.429Z",
+    "createdAt": "2026-01-14T21:31:04.429Z",
+    "versionId": "dd1e05fb-4883-4915-aa4d-c5df4f2baf9c",
     "workflowId": "WOpkTbc7B5FkEeSJ",
     "nodes": [
       {
@@ -188,7 +188,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  a.id as avatar_id,\n  p.display_name,\n  p.full_name,\n  a.style_name,\n  a.preview_image_url\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nJOIN client_avatars ca ON ca.avatar_id = a.id\nJOIN clients c ON c.id = ca.client_id\nWHERE ca.is_active = true\n  AND ca.is_deleted = false\nORDER BY p.display_name, a.style_name",
+          "query": "SELECT\n  a.id as avatar_id,\n  p.display_name,\n  p.full_name,\n  a.style_name,\n  a.motion_preset,\n  a.preview_image_url\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nJOIN client_avatars ca ON ca.avatar_id = a.id\nJOIN clients c ON c.id = ca.client_id\nWHERE ca.is_active = true\n  AND ca.is_deleted = false\nORDER BY p.display_name, a.style_name",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
@@ -208,7 +208,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const avatars = $input.all().map(item => ({\n  avatar_id: item.json.avatar_id,\n  display_name: item.json.display_name,\n  full_name: item.json.full_name,\n  style_name: item.json.style_name,\n  preview_image_url: item.json.preview_image_url,\n  label: item.json.style_name \n    ? `${item.json.display_name} (${item.json.style_name})`\n    : item.json.display_name\n}));\n\nreturn [{ json: { success: true, avatars } }];"
+          "jsCode": "const avatars = $input.all().map(item => ({\n  avatar_id: item.json.avatar_id,\n  display_name: item.json.display_name,\n  full_name: item.json.full_name,\n  style_name: item.json.style_name,\n  motion_preset: item.json.motion_preset,\n  preview_image_url: item.json.preview_image_url,\n  label: item.json.style_name \n    ? `${item.json.display_name} (${item.json.style_name})`\n    : item.json.display_name\n}));\n\nreturn [{ json: { success: true, avatars } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
