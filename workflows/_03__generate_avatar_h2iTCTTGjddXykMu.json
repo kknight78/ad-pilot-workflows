@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-13T22:31:42.801Z",
+  "updatedAt": "2026-01-16T01:51:23.798Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -46,7 +46,7 @@
     },
     {
       "parameters": {
-        "content": "# [03] Generate Avatar\n\nGenerates HeyGen talking head video from script,\nthen creates transparent background version via Replicate RVM.\n\nOutputs:\n- avatar_video_url (with background)\n- avatar_video_alpha_url (transparent)\n- _section_timings (from Whisper)",
+        "content": "# [03] Generate Avatar\n\nGenerates HeyGen talking head video from script,\nthen creates transparent background version via Replicate RVM.\n\n**Optimized TTS Pipeline (Jan 2026):**\n- Uses 11Labs with-timestamps endpoint (audio + timing in one call)\n- Uses temp-audio-service for temporary audio URL (10 min TTL)\n- Eliminated Cloudinary and Whisper API calls\n\nOutputs:\n- avatar_video_url (with background)\n- avatar_video_alpha_url (transparent)\n- _section_timings (from 11Labs alignment)",
         "height": 240,
         "width": 360,
         "color": 5
@@ -123,7 +123,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare voice config - include voice settings\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\n// Get voice settings - use from config if provided, otherwise defaults\n// Default: Balanced settings (stability: 0.5, similarity_boost: 0.75)\nconst voiceSettings = config.voice_settings || {\n  stability: 0.5,\n  similarity_boost: 0.75\n};\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\nconsole.log(`Voice settings: stability=${voiceSettings.stability}, similarity=${voiceSettings.similarity_boost}`);\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id,\n    voice_settings: voiceSettings\n  }\n}];"
+        "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -175,7 +175,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL with Config').item.json;\nconst heygenResponse = $json;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: heygenResponse.data.video_id,\n    status: 'pending'\n  }\n}];"
+        "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst heygenResponse = $json;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: heygenResponse.data.video_id,\n    status: 'pending'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -290,74 +290,6 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.openai.com/v1/audio/transcriptions",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "openAiApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {}
-          ]
-        },
-        "sendBody": true,
-        "contentType": "multipart-form-data",
-        "bodyParameters": {
-          "parameters": [
-            {
-              "parameterType": "formBinaryData",
-              "name": "file",
-              "inputDataFieldName": "data"
-            },
-            {
-              "name": "model",
-              "value": "whisper-1"
-            },
-            {
-              "name": "response_format",
-              "value": "verbose_json"
-            },
-            {
-              "name": "timestamp_granularities[]",
-              "value": "word"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 120000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2736,
-        1456
-      ],
-      "id": "transcribe",
-      "name": "API: Transcribe Video (Whisper)",
-      "credentials": {
-        "openAiApi": {
-          "id": "P8itnQQ6xPN2EGDH",
-          "name": "OpenAi account"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const config = $('Preserve Config for Loop').item.json;\nconst whisper = $json;\n\n// Get script sections\n// Use script_normal for Whisper matching (has normal spellings/numbers)\n// Falls back to phonetic script if script_normal not available\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\n\n// Get word timestamps from Whisper\nconst words = whisper.words || [];\n\nif (words.length === 0) {\n  console.log('No word timestamps from Whisper, skipping timing calculation');\n  return [{\n    json: {\n      ...config,\n      _section_timings: null,\n      whisper_text: whisper.text || ''\n    }\n  }];\n}\n\n// Normalize for comparison\nfunction normalize(text) {\n  return (text || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\n// Get first and last words from text\nfunction getFirstLastWords(text) {\n  const words = (text || '').split(/\\s+/).filter(w => w);\n  if (words.length === 0) return { first: '', last: '' };\n  return {\n    first: normalize(words[0]),\n    last: normalize(words[words.length - 1])\n  };\n}\n\n// Find word index by matching (with fuzzy fallback)\nfunction findWord(whisperWords, target, startIdx, direction = 1) {\n  if (!target) return -1;\n  \n  const endIdx = direction > 0 ? whisperWords.length : -1;\n  \n  for (let i = startIdx; direction > 0 ? i < endIdx : i > endIdx; i += direction) {\n    const whisperWord = normalize(whisperWords[i].word);\n    \n    // Exact match\n    if (whisperWord === target) return i;\n    \n    // Fuzzy: one contains the other (for partial matches)\n    if (whisperWord.includes(target) || target.includes(whisperWord)) return i;\n    \n    // Fuzzy: same first 5+ chars (for phonetic spellings like neesawn/nissan)\n    // Using 5 chars to avoid false positives like capability/capital (both start with 'cap')\n    if (target.length >= 5 && whisperWord.length >= 5) {\n      if (whisperWord.slice(0, 5) === target.slice(0, 5)) return i;\n    }\n  }\n  \n  return -1;\n}\n\n// Build sections\n// Use 1-based segment numbering (segment_1, segment_2, etc.)\n// This aligns with template expectations where multi-car uses segment_1-5\n// and spotlight uses segment_1 for hero extended, segment_2+ for features\nconst sections = [];\nsections.push({ name: 'hook', ...getFirstLastWords(hook) });\nsegments.forEach((seg, idx) => {\n  sections.push({ name: 'segment_' + (idx + 1), ...getFirstLastWords(seg) });\n});\nsections.push({ name: 'cta', ...getFirstLastWords(cta) });\n\nconsole.log('Sections to find:', sections.map(s => s.name + ': \"' + s.first + '\"...\"' + s.last + '\"').join(', '));\n\n// Find timings for each section\nconst sectionTimings = [];\nlet searchStart = 0;\n\nsections.forEach((section, idx) => {\n  // Find first word (start of section)\n  let startWordIdx = findWord(words, section.first, searchStart, 1);\n  \n  // If not found, use end of previous section + 1\n  if (startWordIdx === -1) {\n    startWordIdx = searchStart;\n    console.log(section.name + ': first word \"' + section.first + '\" not found, using idx ' + startWordIdx);\n  }\n  \n  // Determine the search boundary for this section's end word\n  let searchBoundary;\n  const nextSection = sections[idx + 1];\n  if (nextSection) {\n    // Find where next section starts\n    const nextStart = findWord(words, nextSection.first, startWordIdx + 1, 1);\n    searchBoundary = nextStart > 0 ? nextStart - 1 : words.length - 1;\n  } else {\n    searchBoundary = words.length - 1; // Last section goes to end\n  }\n  \n  // Find last word (end of section) - search BACKWARD from boundary to find last occurrence\n  let endWordIdx = findWord(words, section.last, searchBoundary, -1);\n  \n  // If not found or found before start, fall back to the boundary itself\n  if (endWordIdx === -1 || endWordIdx < startWordIdx) {\n    endWordIdx = searchBoundary;\n    console.log(section.name + ': last word \"' + section.last + '\" not found, using boundary idx ' + endWordIdx);\n  }\n  \n  // Ensure valid range\n  startWordIdx = Math.max(0, Math.min(startWordIdx, words.length - 1));\n  endWordIdx = Math.max(startWordIdx, Math.min(endWordIdx, words.length - 1));\n  \n  const timing = {\n    name: section.name,\n    start: words[startWordIdx].start,\n    end: words[endWordIdx].end,\n    duration: words[endWordIdx].end - words[startWordIdx].start\n  };\n  \n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + timing.start.toFixed(2) + 's - ' + timing.end.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n  \n  // Next section starts after this one\n  searchStart = endWordIdx + 1;\n});\n\n// Note: avatar_video_duration comes from Preserve Config for Loop (HeyGen's duration, not Whisper's)\nreturn [{\n  json: {\n    ...config,\n    _section_timings: sectionTimings,\n    whisper_text: whisper.text || ''\n  }\n}];\n\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2960,
-        1312
-      ],
-      "id": "calc-timings",
-      "name": "Calculate Timings from Whisper"
-    },
-    {
-      "parameters": {
-        "method": "POST",
         "url": "https://api.replicate.com/v1/predictions",
         "sendHeaders": true,
         "headerParameters": {
@@ -464,7 +396,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $('Calculate Timings from Whisper').item.json;\nconst rvm = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_alpha_url: rvm.output\n  }\n}];"
+        "jsCode": "// Get config with timings from earlier in the flow\nconst config = $('Parse Avatar Response').item.json;\nconst rvm = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_alpha_url: rvm.output\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -493,22 +425,6 @@
     },
     {
       "parameters": {
-        "content": "## Whisper Transcription\nGet word-level timestamps for section timings",
-        "height": 100,
-        "width": 280,
-        "color": 6
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        2848,
-        1168
-      ],
-      "typeVersion": 1,
-      "id": "sticky-whisper",
-      "name": "Sticky Note Whisper"
-    },
-    {
-      "parameters": {
         "content": "## Replicate RVM\nRemove background for transparent overlay",
         "height": 100,
         "width": 280,
@@ -525,7 +441,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst statusResult = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_duration: statusResult.data?.duration,\n    avatar_video_url: statusResult.data?.video_url,\n    status: statusResult.data?.status || 'pending',\n    data: statusResult.data\n  }\n}];"
+        "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_duration: result.data?.duration,\n    status: result.data?.status || 'pending',\n    data: result.data\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -560,27 +476,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}/with-timestamps",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "audio/mpeg"
-            }
-          ]
+          "parameters": []
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\",\n  \"voice_settings\": {\n    \"stability\": {{ $json.voice_settings.stability }},\n    \"similarity_boost\": {{ $json.voice_settings.similarity_boost }},\n    \"style\": 0,\n    \"use_speaker_boost\": true\n  }\n}",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
         "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
-            }
-          },
           "timeout": 120000
         }
       },
@@ -591,7 +497,7 @@
         1968
       ],
       "id": "elevenlabs-tts",
-      "name": "API: 11Labs, Generate TTS",
+      "name": "API: 11Labs, Generate TTS with Timestamps",
       "alwaysOutputData": true,
       "credentials": {
         "elevenLabsApi": {
@@ -607,42 +513,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Convert binary audio to base64 data URL for Cloudinary\n// Get stored config from the Store Config for TTS node\nconst config = $('Prepare Voice Config').first().json;\n\n// Access binary from the input item\nconst binary = $input.item.binary;\nif (!binary) {\n  throw new Error('No binary data found in input. Check if 11Labs node is returning binary.');\n}\n\n// Get the first binary key (usually \"data\")\nconst binaryKey = Object.keys(binary)[0];\nconst binaryItem = binary[binaryKey];\n\nconst base64Audio = binaryItem.data;\nconst mimeType = binaryItem.mimeType || 'audio/mpeg';\n\nconst dataUrl = 'data:' + mimeType + ';base64,' + base64Audio;\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64_url: dataUrl\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        496,
-        1888
-      ],
-      "id": "convert-audio-base64",
-      "name": "Convert Audio to Base64"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/auto/upload",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"file\": {{ JSON.stringify($json.audio_base64_url) }},\n  \"upload_preset\": \"ad-pilot-tts\",\n  \"public_id\": \"tts_{{ Date.now() }}\",\n  \"resource_type\": \"auto\"\n}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        720,
-        1888
-      ],
-      "id": "cloudinary-upload-audio",
-      "name": "API: Cloudinary, Upload Audio",
-      "alwaysOutputData": true,
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Merge Cloudinary response with original config\nconst cloudinaryResponse = $json;\nconst stored = $('Convert Audio to Base64').first().json;\n\n// Remove the base64 data (no longer needed)\nconst { audio_base64_url, ...config } = stored;\n\nreturn [{\n  json: {\n    ...config,\n    audio_url: cloudinaryResponse.secure_url\n  }\n}];"
+        "jsCode": "// Merge temp audio URL with config and section timings\nconst tempAudioResponse = $json;\nconst response = $('Parse 11Labs Response').first().json;\n\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\n\nreturn [{\n  json: {\n    ...config,\n    audio_url: tempAudioResponse.url\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -651,7 +522,42 @@
         1824
       ],
       "id": "merge-audio-url",
-      "name": "Merge Audio URL with Config"
+      "name": "Merge Audio URL + Timings with Config"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        1888
+      ],
+      "id": "parse-elevenlabs",
+      "name": "Parse 11Labs Response"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://temp-audio-service-production.up.railway.app/audio",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"audio_base64\": {{ JSON.stringify($json.audio_base64) }},\n  \"format\": \"mp3\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        1888
+      ],
+      "id": "temp-audio-service",
+      "name": "API: Temp Audio Service",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
     }
   ],
   "connections": {
@@ -692,7 +598,65 @@
       "main": [
         [
           {
-            "node": "API: 11Labs, Generate TTS",
+            "node": "API: 11Labs, Generate TTS with Timestamps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: 11Labs, Generate TTS with Timestamps": {
+      "main": [
+        [
+          {
+            "node": "Parse 11Labs Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse 11Labs Response": {
+      "main": [
+        [
+          {
+            "node": "API: Temp Audio Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Temp Audio Service": {
+      "main": [
+        [
+          {
+            "node": "Merge Audio URL + Timings with Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Audio URL + Timings with Config": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen, Create Avatar",
             "type": "main",
             "index": 0
           }
@@ -809,25 +773,7 @@
         ]
       ]
     },
-    "API: Transcribe Video (Whisper)": {
-      "main": [
-        [
-          {
-            "node": "Calculate Timings from Whisper",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Format Errors",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Calculate Timings from Whisper": {
+    "Download Avatar Video": {
       "main": [
         [
           {
@@ -907,75 +853,6 @@
       "main": [
         []
       ]
-    },
-    "Download Avatar Video": {
-      "main": [
-        [
-          {
-            "node": "API: Transcribe Video (Whisper)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "API: 11Labs, Generate TTS": {
-      "main": [
-        [
-          {
-            "node": "Convert Audio to Base64",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Format Errors",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Convert Audio to Base64": {
-      "main": [
-        [
-          {
-            "node": "API: Cloudinary, Upload Audio",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "API: Cloudinary, Upload Audio": {
-      "main": [
-        [
-          {
-            "node": "Merge Audio URL with Config",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Format Errors",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge Audio URL with Config": {
-      "main": [
-        [
-          {
-            "node": "API: HeyGen, Create Avatar",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "settings": {
@@ -986,8 +863,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "69e16a9b-ab8d-4f7a-9597-28ce6839fe58",
-  "activeVersionId": "69e16a9b-ab8d-4f7a-9597-28ce6839fe58",
+  "versionId": "3ffad402-8fbf-44a7-bed7-02d8f0d42891",
+  "activeVersionId": "3ffad402-8fbf-44a7-bed7-02d8f0d42891",
   "triggerCount": 0,
   "shared": [
     {
@@ -999,9 +876,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-13T22:31:42.804Z",
-    "createdAt": "2026-01-13T22:31:42.804Z",
-    "versionId": "69e16a9b-ab8d-4f7a-9597-28ce6839fe58",
+    "updatedAt": "2026-01-16T01:51:28.397Z",
+    "createdAt": "2026-01-16T01:51:23.802Z",
+    "versionId": "3ffad402-8fbf-44a7-bed7-02d8f0d42891",
     "workflowId": "h2iTCTTGjddXykMu",
     "nodes": [
       {
@@ -1044,7 +921,7 @@
       },
       {
         "parameters": {
-          "content": "# [03] Generate Avatar\n\nGenerates HeyGen talking head video from script,\nthen creates transparent background version via Replicate RVM.\n\nOutputs:\n- avatar_video_url (with background)\n- avatar_video_alpha_url (transparent)\n- _section_timings (from Whisper)",
+          "content": "# [03] Generate Avatar\n\nGenerates HeyGen talking head video from script,\nthen creates transparent background version via Replicate RVM.\n\n**Optimized TTS Pipeline (Jan 2026):**\n- Uses 11Labs with-timestamps endpoint (audio + timing in one call)\n- Uses temp-audio-service for temporary audio URL (10 min TTL)\n- Eliminated Cloudinary and Whisper API calls\n\nOutputs:\n- avatar_video_url (with background)\n- avatar_video_alpha_url (transparent)\n- _section_timings (from 11Labs alignment)",
           "height": 240,
           "width": 360,
           "color": 5
@@ -1121,7 +998,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Prepare voice config - include voice settings\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\n// Get voice settings - use from config if provided, otherwise defaults\n// Default: Balanced settings (stability: 0.5, similarity_boost: 0.75)\nconst voiceSettings = config.voice_settings || {\n  stability: 0.5,\n  similarity_boost: 0.75\n};\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\nconsole.log(`Voice settings: stability=${voiceSettings.stability}, similarity=${voiceSettings.similarity_boost}`);\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id,\n    voice_settings: voiceSettings\n  }\n}];"
+          "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1173,7 +1050,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL with Config').item.json;\nconst heygenResponse = $json;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: heygenResponse.data.video_id,\n    status: 'pending'\n  }\n}];"
+          "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst heygenResponse = $json;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: heygenResponse.data.video_id,\n    status: 'pending'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1288,74 +1165,6 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://api.openai.com/v1/audio/transcriptions",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "openAiApi",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "sendBody": true,
-          "contentType": "multipart-form-data",
-          "bodyParameters": {
-            "parameters": [
-              {
-                "parameterType": "formBinaryData",
-                "name": "file",
-                "inputDataFieldName": "data"
-              },
-              {
-                "name": "model",
-                "value": "whisper-1"
-              },
-              {
-                "name": "response_format",
-                "value": "verbose_json"
-              },
-              {
-                "name": "timestamp_granularities[]",
-                "value": "word"
-              }
-            ]
-          },
-          "options": {
-            "timeout": 120000
-          }
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          2736,
-          1456
-        ],
-        "id": "transcribe",
-        "name": "API: Transcribe Video (Whisper)",
-        "credentials": {
-          "openAiApi": {
-            "id": "P8itnQQ6xPN2EGDH",
-            "name": "OpenAi account"
-          }
-        },
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
-          "jsCode": "const config = $('Preserve Config for Loop').item.json;\nconst whisper = $json;\n\n// Get script sections\n// Use script_normal for Whisper matching (has normal spellings/numbers)\n// Falls back to phonetic script if script_normal not available\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\n\n// Get word timestamps from Whisper\nconst words = whisper.words || [];\n\nif (words.length === 0) {\n  console.log('No word timestamps from Whisper, skipping timing calculation');\n  return [{\n    json: {\n      ...config,\n      _section_timings: null,\n      whisper_text: whisper.text || ''\n    }\n  }];\n}\n\n// Normalize for comparison\nfunction normalize(text) {\n  return (text || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\n// Get first and last words from text\nfunction getFirstLastWords(text) {\n  const words = (text || '').split(/\\s+/).filter(w => w);\n  if (words.length === 0) return { first: '', last: '' };\n  return {\n    first: normalize(words[0]),\n    last: normalize(words[words.length - 1])\n  };\n}\n\n// Find word index by matching (with fuzzy fallback)\nfunction findWord(whisperWords, target, startIdx, direction = 1) {\n  if (!target) return -1;\n  \n  const endIdx = direction > 0 ? whisperWords.length : -1;\n  \n  for (let i = startIdx; direction > 0 ? i < endIdx : i > endIdx; i += direction) {\n    const whisperWord = normalize(whisperWords[i].word);\n    \n    // Exact match\n    if (whisperWord === target) return i;\n    \n    // Fuzzy: one contains the other (for partial matches)\n    if (whisperWord.includes(target) || target.includes(whisperWord)) return i;\n    \n    // Fuzzy: same first 5+ chars (for phonetic spellings like neesawn/nissan)\n    // Using 5 chars to avoid false positives like capability/capital (both start with 'cap')\n    if (target.length >= 5 && whisperWord.length >= 5) {\n      if (whisperWord.slice(0, 5) === target.slice(0, 5)) return i;\n    }\n  }\n  \n  return -1;\n}\n\n// Build sections\n// Use 1-based segment numbering (segment_1, segment_2, etc.)\n// This aligns with template expectations where multi-car uses segment_1-5\n// and spotlight uses segment_1 for hero extended, segment_2+ for features\nconst sections = [];\nsections.push({ name: 'hook', ...getFirstLastWords(hook) });\nsegments.forEach((seg, idx) => {\n  sections.push({ name: 'segment_' + (idx + 1), ...getFirstLastWords(seg) });\n});\nsections.push({ name: 'cta', ...getFirstLastWords(cta) });\n\nconsole.log('Sections to find:', sections.map(s => s.name + ': \"' + s.first + '\"...\"' + s.last + '\"').join(', '));\n\n// Find timings for each section\nconst sectionTimings = [];\nlet searchStart = 0;\n\nsections.forEach((section, idx) => {\n  // Find first word (start of section)\n  let startWordIdx = findWord(words, section.first, searchStart, 1);\n  \n  // If not found, use end of previous section + 1\n  if (startWordIdx === -1) {\n    startWordIdx = searchStart;\n    console.log(section.name + ': first word \"' + section.first + '\" not found, using idx ' + startWordIdx);\n  }\n  \n  // Determine the search boundary for this section's end word\n  let searchBoundary;\n  const nextSection = sections[idx + 1];\n  if (nextSection) {\n    // Find where next section starts\n    const nextStart = findWord(words, nextSection.first, startWordIdx + 1, 1);\n    searchBoundary = nextStart > 0 ? nextStart - 1 : words.length - 1;\n  } else {\n    searchBoundary = words.length - 1; // Last section goes to end\n  }\n  \n  // Find last word (end of section) - search BACKWARD from boundary to find last occurrence\n  let endWordIdx = findWord(words, section.last, searchBoundary, -1);\n  \n  // If not found or found before start, fall back to the boundary itself\n  if (endWordIdx === -1 || endWordIdx < startWordIdx) {\n    endWordIdx = searchBoundary;\n    console.log(section.name + ': last word \"' + section.last + '\" not found, using boundary idx ' + endWordIdx);\n  }\n  \n  // Ensure valid range\n  startWordIdx = Math.max(0, Math.min(startWordIdx, words.length - 1));\n  endWordIdx = Math.max(startWordIdx, Math.min(endWordIdx, words.length - 1));\n  \n  const timing = {\n    name: section.name,\n    start: words[startWordIdx].start,\n    end: words[endWordIdx].end,\n    duration: words[endWordIdx].end - words[startWordIdx].start\n  };\n  \n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + timing.start.toFixed(2) + 's - ' + timing.end.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n  \n  // Next section starts after this one\n  searchStart = endWordIdx + 1;\n});\n\n// Note: avatar_video_duration comes from Preserve Config for Loop (HeyGen's duration, not Whisper's)\nreturn [{\n  json: {\n    ...config,\n    _section_timings: sectionTimings,\n    whisper_text: whisper.text || ''\n  }\n}];\n\n"
-        },
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2960,
-          1312
-        ],
-        "id": "calc-timings",
-        "name": "Calculate Timings from Whisper"
-      },
-      {
-        "parameters": {
-          "method": "POST",
           "url": "https://api.replicate.com/v1/predictions",
           "sendHeaders": true,
           "headerParameters": {
@@ -1462,7 +1271,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const config = $('Calculate Timings from Whisper').item.json;\nconst rvm = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_alpha_url: rvm.output\n  }\n}];"
+          "jsCode": "// Get config with timings from earlier in the flow\nconst config = $('Parse Avatar Response').item.json;\nconst rvm = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_alpha_url: rvm.output\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1491,22 +1300,6 @@
       },
       {
         "parameters": {
-          "content": "## Whisper Transcription\nGet word-level timestamps for section timings",
-          "height": 100,
-          "width": 280,
-          "color": 6
-        },
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          2848,
-          1168
-        ],
-        "typeVersion": 1,
-        "id": "sticky-whisper",
-        "name": "Sticky Note Whisper"
-      },
-      {
-        "parameters": {
           "content": "## Replicate RVM\nRemove background for transparent overlay",
           "height": 100,
           "width": 280,
@@ -1523,7 +1316,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst statusResult = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_duration: statusResult.data?.duration,\n    avatar_video_url: statusResult.data?.video_url,\n    status: statusResult.data?.status || 'pending',\n    data: statusResult.data\n  }\n}];"
+          "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_duration: result.data?.duration,\n    status: result.data?.status || 'pending',\n    data: result.data\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1558,27 +1351,17 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}",
+          "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}/with-timestamps",
           "authentication": "genericCredentialType",
           "genericAuthType": "httpHeaderAuth",
           "sendHeaders": true,
           "headerParameters": {
-            "parameters": [
-              {
-                "name": "Accept",
-                "value": "audio/mpeg"
-              }
-            ]
+            "parameters": []
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\",\n  \"voice_settings\": {\n    \"stability\": {{ $json.voice_settings.stability }},\n    \"similarity_boost\": {{ $json.voice_settings.similarity_boost }},\n    \"style\": 0,\n    \"use_speaker_boost\": true\n  }\n}",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
           "options": {
-            "response": {
-              "response": {
-                "responseFormat": "file"
-              }
-            },
             "timeout": 120000
           }
         },
@@ -1589,7 +1372,7 @@
           1968
         ],
         "id": "elevenlabs-tts",
-        "name": "API: 11Labs, Generate TTS",
+        "name": "API: 11Labs, Generate TTS with Timestamps",
         "alwaysOutputData": true,
         "credentials": {
           "elevenLabsApi": {
@@ -1605,42 +1388,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Convert binary audio to base64 data URL for Cloudinary\n// Get stored config from the Store Config for TTS node\nconst config = $('Prepare Voice Config').first().json;\n\n// Access binary from the input item\nconst binary = $input.item.binary;\nif (!binary) {\n  throw new Error('No binary data found in input. Check if 11Labs node is returning binary.');\n}\n\n// Get the first binary key (usually \"data\")\nconst binaryKey = Object.keys(binary)[0];\nconst binaryItem = binary[binaryKey];\n\nconst base64Audio = binaryItem.data;\nconst mimeType = binaryItem.mimeType || 'audio/mpeg';\n\nconst dataUrl = 'data:' + mimeType + ';base64,' + base64Audio;\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64_url: dataUrl\n  }\n}];"
-        },
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          496,
-          1888
-        ],
-        "id": "convert-audio-base64",
-        "name": "Convert Audio to Base64"
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/auto/upload",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"file\": {{ JSON.stringify($json.audio_base64_url) }},\n  \"upload_preset\": \"ad-pilot-tts\",\n  \"public_id\": \"tts_{{ Date.now() }}\",\n  \"resource_type\": \"auto\"\n}",
-          "options": {
-            "timeout": 60000
-          }
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          720,
-          1888
-        ],
-        "id": "cloudinary-upload-audio",
-        "name": "API: Cloudinary, Upload Audio",
-        "alwaysOutputData": true,
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
-          "jsCode": "// Merge Cloudinary response with original config\nconst cloudinaryResponse = $json;\nconst stored = $('Convert Audio to Base64').first().json;\n\n// Remove the base64 data (no longer needed)\nconst { audio_base64_url, ...config } = stored;\n\nreturn [{\n  json: {\n    ...config,\n    audio_url: cloudinaryResponse.secure_url\n  }\n}];"
+          "jsCode": "// Merge temp audio URL with config and section timings\nconst tempAudioResponse = $json;\nconst response = $('Parse 11Labs Response').first().json;\n\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\n\nreturn [{\n  json: {\n    ...config,\n    audio_url: tempAudioResponse.url\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1649,7 +1397,42 @@
           1824
         ],
         "id": "merge-audio-url",
-        "name": "Merge Audio URL with Config"
+        "name": "Merge Audio URL + Timings with Config"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          496,
+          1888
+        ],
+        "id": "parse-elevenlabs",
+        "name": "Parse 11Labs Response"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://temp-audio-service-production.up.railway.app/audio",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"audio_base64\": {{ JSON.stringify($json.audio_base64) }},\n  \"format\": \"mp3\"\n}",
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          720,
+          1888
+        ],
+        "id": "temp-audio-service",
+        "name": "API: Temp Audio Service",
+        "alwaysOutputData": true,
+        "onError": "continueErrorOutput"
       }
     ],
     "connections": {
@@ -1690,7 +1473,65 @@
         "main": [
           [
             {
-              "node": "API: 11Labs, Generate TTS",
+              "node": "API: 11Labs, Generate TTS with Timestamps",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: 11Labs, Generate TTS with Timestamps": {
+        "main": [
+          [
+            {
+              "node": "Parse 11Labs Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse 11Labs Response": {
+        "main": [
+          [
+            {
+              "node": "API: Temp Audio Service",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Temp Audio Service": {
+        "main": [
+          [
+            {
+              "node": "Merge Audio URL + Timings with Config",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Audio URL + Timings with Config": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen, Create Avatar",
               "type": "main",
               "index": 0
             }
@@ -1807,25 +1648,7 @@
           ]
         ]
       },
-      "API: Transcribe Video (Whisper)": {
-        "main": [
-          [
-            {
-              "node": "Calculate Timings from Whisper",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Format Errors",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Calculate Timings from Whisper": {
+      "Download Avatar Video": {
         "main": [
           [
             {
@@ -1905,80 +1728,12 @@
         "main": [
           []
         ]
-      },
-      "Download Avatar Video": {
-        "main": [
-          [
-            {
-              "node": "API: Transcribe Video (Whisper)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "API: 11Labs, Generate TTS": {
-        "main": [
-          [
-            {
-              "node": "Convert Audio to Base64",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Format Errors",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Convert Audio to Base64": {
-        "main": [
-          [
-            {
-              "node": "API: Cloudinary, Upload Audio",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "API: Cloudinary, Upload Audio": {
-        "main": [
-          [
-            {
-              "node": "Merge Audio URL with Config",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Format Errors",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Merge Audio URL with Config": {
-        "main": [
-          [
-            {
-              "node": "API: HeyGen, Create Avatar",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null
+    "name": "Version 3ffad402",
+    "description": "",
+    "autosaved": false
   },
   "tags": []
 }
