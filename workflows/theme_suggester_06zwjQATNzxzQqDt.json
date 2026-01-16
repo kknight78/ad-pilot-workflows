@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T22:10:14.200Z",
+  "updatedAt": "2026-01-15T14:53:50.781Z",
   "createdAt": "2025-12-13T13:57:35.713Z",
   "id": "06zwjQATNzxzQqDt",
   "name": "Theme Suggester",
@@ -91,49 +91,6 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "key",
-              "value": "AIzaSyBFB8rHuBXVA3xPyWat-_vOoq30EP3-0io"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "contents[0].parts[0].text",
-              "value": "={{ $json.prompt }}"
-            },
-            {
-              "name": "generationConfig.temperature",
-              "value": "0.9"
-            },
-            {
-              "name": "generationConfig.maxOutputTokens",
-              "value": "1024"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 30000
-        }
-      },
-      "id": "gemini-api",
-      "name": "Gemini API",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        800,
-        208
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON\nlet themes;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  const parsed = JSON.parse(cleanedResponse);\n  themes = parsed.themes || parsed;\n  \n  // Validate structure\n  if (!Array.isArray(themes)) {\n    throw new Error('Response is not an array');\n  }\n  \n  // Ensure each theme has required fields\n  themes = themes.map((theme, index) => ({\n    name: theme.name || `Theme ${index + 1}`,\n    emoji: theme.emoji || '🚗',\n    hook_example: theme.hook_example || theme.hook || 'Check out our latest deals!',\n    why: theme.why || theme.reason || 'Great for engagement'\n  }));\n  \n} catch (error) {\n  // Fallback themes if parsing fails\n  themes = [\n    {\n      name: \"Winter Weather Ready\",\n      emoji: \"❄️\",\n      hook_example: \"Is your car ready for winter? Here's what you need to know!\",\n      why: \"Seasonal relevance - winter driving concerns\"\n    },\n    {\n      name: \"Year-End Savings\",\n      emoji: \"💰\",\n      hook_example: \"Don't miss our year-end deals before they're gone!\",\n      why: \"End of year is prime time for car buying\"\n    },\n    {\n      name: \"Reliable Family Vehicles\",\n      emoji: \"👨‍👩‍👧‍👦\",\n      hook_example: \"Looking for a car the whole family will love?\",\n      why: \"Evergreen theme - families always need reliable vehicles\"\n    },\n    {\n      name: \"Easy Financing Options\",\n      emoji: \"✅\",\n      hook_example: \"Bad credit? No credit? No problem - here's how we can help.\",\n      why: \"Financing is a top concern for car buyers\"\n    },\n    {\n      name: \"Trade-In Value\",\n      emoji: \"🔄\",\n      hook_example: \"Your old car might be worth more than you think!\",\n      why: \"Trade-ins are a key part of the car buying process\"\n    }\n  ];\n}\n\nreturn { themes };"
       },
       "id": "parse-response",
@@ -180,6 +137,48 @@
         1200,
         208
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "1024"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "ee55006c-68a6-4fc7-933f-f39a9ae4bda0",
+      "name": "Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        208
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prVNksIVEgzVrhKB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     }
   ],
   "connections": {
@@ -216,17 +215,6 @@
         ]
       ]
     },
-    "Gemini API": {
-      "main": [
-        [
-          {
-            "node": "Parse Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Parse Response": {
       "main": [
         [
@@ -237,18 +225,29 @@
           }
         ]
       ]
+    },
+    "Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": true
+    "availableInMCP": false
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "ae32bc51-23c4-4fcb-8ea3-5c6a834d4497",
-  "activeVersionId": "ae32bc51-23c4-4fcb-8ea3-5c6a834d4497",
+  "pinData": {},
+  "versionId": "b22bd562-48aa-436c-88d2-8a9c6e442f6e",
+  "activeVersionId": "b22bd562-48aa-436c-88d2-8a9c6e442f6e",
   "triggerCount": 1,
   "shared": [
     {
@@ -260,9 +259,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-13T13:57:35.733Z",
-    "createdAt": "2025-12-13T13:57:35.733Z",
-    "versionId": "ae32bc51-23c4-4fcb-8ea3-5c6a834d4497",
+    "updatedAt": "2026-01-15T14:49:34.144Z",
+    "createdAt": "2026-01-15T14:49:34.144Z",
+    "versionId": "b22bd562-48aa-436c-88d2-8a9c6e442f6e",
     "workflowId": "06zwjQATNzxzQqDt",
     "nodes": [
       {
@@ -350,49 +349,6 @@
       },
       {
         "parameters": {
-          "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
-          "sendQuery": true,
-          "queryParameters": {
-            "parameters": [
-              {
-                "name": "key",
-                "value": "AIzaSyBFB8rHuBXVA3xPyWat-_vOoq30EP3-0io"
-              }
-            ]
-          },
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {
-                "name": "contents[0].parts[0].text",
-                "value": "={{ $json.prompt }}"
-              },
-              {
-                "name": "generationConfig.temperature",
-                "value": "0.9"
-              },
-              {
-                "name": "generationConfig.maxOutputTokens",
-                "value": "1024"
-              }
-            ]
-          },
-          "options": {
-            "timeout": 30000
-          }
-        },
-        "id": "gemini-api",
-        "name": "Gemini API",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          800,
-          208
-        ]
-      },
-      {
-        "parameters": {
           "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON\nlet themes;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  const parsed = JSON.parse(cleanedResponse);\n  themes = parsed.themes || parsed;\n  \n  // Validate structure\n  if (!Array.isArray(themes)) {\n    throw new Error('Response is not an array');\n  }\n  \n  // Ensure each theme has required fields\n  themes = themes.map((theme, index) => ({\n    name: theme.name || `Theme ${index + 1}`,\n    emoji: theme.emoji || '🚗',\n    hook_example: theme.hook_example || theme.hook || 'Check out our latest deals!',\n    why: theme.why || theme.reason || 'Great for engagement'\n  }));\n  \n} catch (error) {\n  // Fallback themes if parsing fails\n  themes = [\n    {\n      name: \"Winter Weather Ready\",\n      emoji: \"❄️\",\n      hook_example: \"Is your car ready for winter? Here's what you need to know!\",\n      why: \"Seasonal relevance - winter driving concerns\"\n    },\n    {\n      name: \"Year-End Savings\",\n      emoji: \"💰\",\n      hook_example: \"Don't miss our year-end deals before they're gone!\",\n      why: \"End of year is prime time for car buying\"\n    },\n    {\n      name: \"Reliable Family Vehicles\",\n      emoji: \"👨‍👩‍👧‍👦\",\n      hook_example: \"Looking for a car the whole family will love?\",\n      why: \"Evergreen theme - families always need reliable vehicles\"\n    },\n    {\n      name: \"Easy Financing Options\",\n      emoji: \"✅\",\n      hook_example: \"Bad credit? No credit? No problem - here's how we can help.\",\n      why: \"Financing is a top concern for car buyers\"\n    },\n    {\n      name: \"Trade-In Value\",\n      emoji: \"🔄\",\n      hook_example: \"Your old car might be worth more than you think!\",\n      why: \"Trade-ins are a key part of the car buying process\"\n    }\n  ];\n}\n\nreturn { themes };"
         },
         "id": "parse-response",
@@ -439,6 +395,48 @@
           1200,
           208
         ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googlePalmApi",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "contents[0].parts[0].text",
+                "value": "={{ $json.prompt }}"
+              },
+              {
+                "name": "generationConfig.temperature",
+                "value": "0.9"
+              },
+              {
+                "name": "generationConfig.maxOutputTokens",
+                "value": "1024"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "ee55006c-68a6-4fc7-933f-f39a9ae4bda0",
+        "name": "Gemini API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          800,
+          208
+        ],
+        "credentials": {
+          "googlePalmApi": {
+            "id": "prVNksIVEgzVrhKB",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
       }
     ],
     "connections": {
@@ -475,17 +473,6 @@
           ]
         ]
       },
-      "Gemini API": {
-        "main": [
-          [
-            {
-              "node": "Parse Response",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Parse Response": {
         "main": [
           [
@@ -496,11 +483,23 @@
             }
           ]
         ]
+      },
+      "Gemini API": {
+        "main": [
+          [
+            {
+              "node": "Parse Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Kelly Knight",
     "name": null,
-    "description": null
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
