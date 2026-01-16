@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-14T00:29:00.861Z",
+  "updatedAt": "2026-01-15T22:19:48.198Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -59,6 +59,7 @@
           "__rl": true,
           "value": "gM6DTZfNbcSofqQO",
           "mode": "list",
+          "cachedResultUrl": "/workflow/gM6DTZfNbcSofqQO",
           "cachedResultName": "[02] Generate Script"
         },
         "workflowInputs": {
@@ -768,8 +769,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "e86311fa-0c63-4c73-b7c9-69e5da5a20aa",
-  "activeVersionId": "e86311fa-0c63-4c73-b7c9-69e5da5a20aa",
+  "versionId": "761c5a51-0eb3-44a7-9c29-7b6b23d07604",
+  "activeVersionId": "761c5a51-0eb3-44a7-9c29-7b6b23d07604",
   "triggerCount": 1,
   "shared": [
     {
@@ -781,9 +782,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-14T00:29:00.862Z",
-    "createdAt": "2026-01-14T00:29:00.862Z",
-    "versionId": "e86311fa-0c63-4c73-b7c9-69e5da5a20aa",
+    "updatedAt": "2026-01-15T22:19:51.390Z",
+    "createdAt": "2026-01-15T22:19:48.202Z",
+    "versionId": "761c5a51-0eb3-44a7-9c29-7b6b23d07604",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -839,6 +840,7 @@
             "__rl": true,
             "value": "gM6DTZfNbcSofqQO",
             "mode": "list",
+            "cachedResultUrl": "/workflow/gM6DTZfNbcSofqQO",
             "cachedResultName": "[02] Generate Script"
           },
           "workflowInputs": {
@@ -1541,8 +1543,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null
+    "name": "Version 761c5a51",
+    "description": "",
+    "autosaved": false
   },
   "tags": []
 }
