@@ -3,7 +3,7 @@
   "createdAt": "2026-01-15T00:20:04.485Z",
   "id": "pAizNLUoZZ83v1Lx",
   "name": "Intel Source Collector",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -386,7 +386,7 @@
   "meta": null,
   "pinData": null,
   "versionId": "40945160-e275-42cd-bdee-af80159e41b2",
-  "activeVersionId": null,
+  "activeVersionId": "40945160-e275-42cd-bdee-af80159e41b2",
   "triggerCount": 0,
   "shared": [
     {
@@ -397,6 +397,387 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": null,
+  "activeVersion": {
+    "updatedAt": "2026-01-15T00:20:04.514Z",
+    "createdAt": "2026-01-15T00:20:04.514Z",
+    "versionId": "40945160-e275-42cd-bdee-af80159e41b2",
+    "workflowId": "pAizNLUoZZ83v1Lx",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "trigger",
+        "name": "When Called By Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "sources",
+                "name": "sources",
+                "value": "={{ $json.sources }}",
+                "type": "array"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "set-sources",
+        "name": "Set Sources",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          220,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem"
+        },
+        "id": "loop-sources",
+        "name": "Loop Over Sources",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          440,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "rss-check",
+                "leftValue": "={{ $json.type }}",
+                "rightValue": "rss",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "check-type",
+        "name": "RSS or Scrape?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          660,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "text"
+              }
+            },
+            "timeout": 30000
+          }
+        },
+        "id": "fetch-rss",
+        "name": "Fetch RSS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          880,
+          -100
+        ],
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "text"
+              }
+            },
+            "timeout": 30000
+          }
+        },
+        "id": "fetch-html",
+        "name": "Fetch HTML",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          880,
+          100
+        ],
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse RSS/Atom XML to extract recent items\nconst xml = $input.first().json.data;\nconst sourceName = $input.first().json.name;\nconst sourceUrl = $input.first().json.url;\n\ntry {\n  // Simple regex-based parsing for RSS/Atom feeds\n  const items = [];\n  \n  // Match <item> (RSS) or <entry> (Atom) blocks\n  const itemMatches = xml.match(/<(item|entry)[^>]*>[\\s\\S]*?<\\/\\1>/gi) || [];\n  \n  for (const item of itemMatches.slice(0, 10)) {\n    // Extract title\n    const titleMatch = item.match(/<title[^>]*>(?:<\\!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i);\n    const title = titleMatch ? titleMatch[1].trim().replace(/<[^>]+>/g, '') : 'No title';\n    \n    // Extract link (RSS uses <link>, Atom uses <link href=\"\">)\n    let link = '';\n    const linkHrefMatch = item.match(/<link[^>]*href=[\"']([^\"']+)[\"']/i);\n    const linkTextMatch = item.match(/<link[^>]*>([^<]+)<\\/link>/i);\n    link = linkHrefMatch ? linkHrefMatch[1] : (linkTextMatch ? linkTextMatch[1] : '');\n    \n    // Extract date (pubDate for RSS, updated/published for Atom)\n    const dateMatch = item.match(/<(pubDate|updated|published)[^>]*>([^<]+)<\\/\\1>/i);\n    const date = dateMatch ? dateMatch[2].trim() : '';\n    \n    // Extract description/summary\n    const descMatch = item.match(/<(description|summary|content)[^>]*>(?:<\\!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/\\1>/i);\n    let description = descMatch ? descMatch[2].trim() : '';\n    // Strip HTML tags and limit length\n    description = description.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 500);\n    \n    items.push({ title, link, date, description });\n  }\n  \n  return [{\n    json: {\n      source: sourceName,\n      sourceUrl: sourceUrl,\n      status: 'success',\n      itemCount: items.length,\n      items: items\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      source: sourceName,\n      sourceUrl: sourceUrl,\n      status: 'error',\n      error: error.message,\n      items: []\n    }\n  }];\n}"
+        },
+        "id": "parse-rss",
+        "name": "Parse RSS",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse HTML page to extract recent content\nconst html = $input.first().json.data;\nconst sourceName = $input.first().json.name;\nconst sourceUrl = $input.first().json.url;\nconst selector = $input.first().json.selector || '';\n\ntry {\n  const items = [];\n  \n  // Different parsing strategies based on source\n  if (sourceUrl.includes('heygen.com/changelog')) {\n    // HeyGen changelog - look for dated entries\n    const entryMatches = html.match(/<article[^>]*>[\\s\\S]*?<\\/article>/gi) || \n                         html.match(/<div[^>]*class=\"[^\"]*changelog[^\"]*\"[^>]*>[\\s\\S]*?<\\/div>/gi) || [];\n    \n    // Fallback: look for headings with dates\n    const headingMatches = html.match(/<h[23][^>]*>[^<]*(?:January|February|March|April|May|June|July|August|September|October|November|December)[^<]*<\\/h[23]>[\\s\\S]*?(?=<h[23]|$)/gi) || [];\n    \n    for (const entry of [...entryMatches, ...headingMatches].slice(0, 10)) {\n      const titleMatch = entry.match(/<h[23][^>]*>([^<]+)<\\/h[23]>/i);\n      const title = titleMatch ? titleMatch[1].trim() : 'Update';\n      const text = entry.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 500);\n      items.push({ title, description: text, link: sourceUrl, date: '' });\n    }\n  } else if (sourceUrl.includes('elevenlabs.io/changelog')) {\n    // ElevenLabs changelog - look for date links\n    const linkMatches = html.match(/<a[^>]*href=\"[^\"]*changelog[^\"]*\"[^>]*>[^<]*<\\/a>/gi) || [];\n    for (const link of linkMatches.slice(0, 10)) {\n      const hrefMatch = link.match(/href=\"([^\"]+)\"/i);\n      const textMatch = link.match(/>([^<]+)</i);\n      if (hrefMatch && textMatch) {\n        items.push({\n          title: `Changelog: ${textMatch[1].trim()}`,\n          link: hrefMatch[1].startsWith('http') ? hrefMatch[1] : `https://elevenlabs.io${hrefMatch[1]}`,\n          date: textMatch[1].trim(),\n          description: 'ElevenLabs changelog entry'\n        });\n      }\n    }\n  } else if (sourceUrl.includes('anthropic.com/news')) {\n    // Anthropic news - look for article links\n    const articleMatches = html.match(/<a[^>]*href=\"\\/news\\/[^\"]+\"[^>]*>[\\s\\S]*?<\\/a>/gi) || [];\n    for (const article of articleMatches.slice(0, 10)) {\n      const hrefMatch = article.match(/href=\"([^\"]+)\"/i);\n      const text = article.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n      if (hrefMatch && text.length > 10) {\n        items.push({\n          title: text.slice(0, 200),\n          link: `https://www.anthropic.com${hrefMatch[1]}`,\n          date: '',\n          description: text.slice(0, 500)\n        });\n      }\n    }\n  } else {\n    // Generic fallback - extract any article-like content\n    const text = html.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 2000);\n    items.push({\n      title: 'Page content',\n      link: sourceUrl,\n      date: '',\n      description: text\n    });\n  }\n  \n  return [{\n    json: {\n      source: sourceName,\n      sourceUrl: sourceUrl,\n      status: items.length > 0 ? 'success' : 'empty',\n      itemCount: items.length,\n      items: items\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      source: sourceName,\n      sourceUrl: sourceUrl,\n      status: 'error',\n      error: error.message,\n      items: []\n    }\n  }];\n}"
+        },
+        "id": "parse-html",
+        "name": "Parse HTML",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          100
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "error-result",
+                "name": "result",
+                "value": "={{ { source: $json.name, sourceUrl: $json.url, status: 'failed', error: 'HTTP request failed', items: [] } }}",
+                "type": "object"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "handle-rss-error",
+        "name": "Handle RSS Error",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1100,
+          -200
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "error-result",
+                "name": "result",
+                "value": "={{ { source: $json.name, sourceUrl: $json.url, status: 'failed', error: 'HTTP request failed', items: [] } }}",
+                "type": "object"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "handle-html-error",
+        "name": "Handle HTML Error",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1100,
+          200
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "merge-results",
+        "name": "Merge Results",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          1320,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Aggregate all collected results\nconst allItems = $input.all();\nconst results = [];\n\nfor (const item of allItems) {\n  if (item.json.source) {\n    results.push(item.json);\n  } else if (item.json.result) {\n    results.push(item.json.result);\n  }\n}\n\nreturn [{ json: { collectedSources: results } }];"
+        },
+        "id": "aggregate",
+        "name": "Aggregate Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1540,
+          0
+        ]
+      }
+    ],
+    "connections": {
+      "When Called By Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Set Sources",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Sources": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sources",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Sources": {
+        "main": [
+          [
+            {
+              "node": "RSS or Scrape?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "RSS or Scrape?": {
+        "main": [
+          [
+            {
+              "node": "Fetch RSS",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Fetch HTML",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch RSS": {
+        "main": [
+          [
+            {
+              "node": "Parse RSS",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Handle RSS Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch HTML": {
+        "main": [
+          [
+            {
+              "node": "Parse HTML",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Handle HTML Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse RSS": {
+        "main": [
+          [
+            {
+              "node": "Merge Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse HTML": {
+        "main": [
+          [
+            {
+              "node": "Merge Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Handle RSS Error": {
+        "main": [
+          [
+            {
+              "node": "Merge Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Handle HTML Error": {
+        "main": [
+          [
+            {
+              "node": "Merge Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Results": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sources",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
   "tags": []
 }
