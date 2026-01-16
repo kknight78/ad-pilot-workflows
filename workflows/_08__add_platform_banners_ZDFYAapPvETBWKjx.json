@@ -3,7 +3,7 @@
   "createdAt": "2026-01-07T19:48:03.949Z",
   "id": "ZDFYAapPvETBWKjx",
   "name": "[08] Add Platform Banners",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -285,7 +285,7 @@
   "meta": null,
   "pinData": {},
   "versionId": "e90c7f36-2c83-4140-9530-292bf8eeed84",
-  "activeVersionId": null,
+  "activeVersionId": "e90c7f36-2c83-4140-9530-292bf8eeed84",
   "triggerCount": 0,
   "shared": [
     {
@@ -296,6 +296,286 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": null,
+  "activeVersion": {
+    "updatedAt": "2026-01-12T00:52:41.432Z",
+    "createdAt": "2026-01-12T00:52:41.432Z",
+    "versionId": "e90c7f36-2c83-4140-9530-292bf8eeed84",
+    "workflowId": "ZDFYAapPvETBWKjx",
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -400,
+          208
+        ],
+        "id": "trigger-node",
+        "name": "When Called"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Input: { video_url, avatar_name, platforms: ['YOUTUBE', 'TIKTOK', ...], ratio, _original_config }\nconst config = $json;\nconst platforms = config.platforms || [];\n\nif (platforms.length === 0) {\n  // No platforms = no banners needed, return original video\n  return [{\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.video_url\n      }]\n    }\n  }];\n}\n\n// Split into one item per platform, passing banner_config from template\n// Note: _banner_config is inside _original_config (from [04])\nreturn platforms.map(platform => ({\n  json: {\n    video_url: config.video_url,\n    avatar_name: config.avatar_name,\n    platform: platform,\n    ratio: config.ratio,\n    banner_config: config._banner_config || config._original_config?._banner_config,\n    _original_config: config._original_config\n  }\n}));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -208,
+          208
+        ],
+        "id": "split-platforms",
+        "name": "Split by Platforms"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-platforms",
+                "leftValue": "={{ $json.platform }}",
+                "rightValue": "none",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          0,
+          208
+        ],
+        "id": "if-has-platforms",
+        "name": "If: Has Platforms"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ffmpeg-banner-api-production.up.railway.app/add-banner",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"video_url\": \"{{ $json.video_url }}\",\n  \"avatar_name\": \"{{ $json.avatar_name }}\",\n  \"platform\": \"{{ $json.platform }}\",\n  \"banner_config\": {{ $json.banner_config ? JSON.stringify($json.banner_config) : 'null' }}\n}",
+          "options": {
+            "timeout": 300000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          208,
+          128
+        ],
+        "id": "call-ffmpeg-api",
+        "name": "API: ffmpeg Banner",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const response = $json;\nconst originalConfig = $('Split by Platforms').item.json._original_config;\n\nreturn {\n  json: {\n    platform: response.platform,\n    ratio: originalConfig.ratio,\n    video_url: response.video_url,\n    avatar_name: response.avatar_name\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          112
+        ],
+        "id": "parse-ffmpeg-response",
+        "name": "Parse ffmpeg Response"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "platform_videos",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          608,
+          208
+        ],
+        "id": "aggregate-results",
+        "name": "Aggregate Platform Videos"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Combine aggregated results with original config\nconst platformVideos = $json.platform_videos || [];\nconst firstItem = $('Split by Platforms').first().json._original_config;\n\nreturn [{\n  json: {\n    ...firstItem,\n    platform_videos: platformVideos\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          208
+        ],
+        "id": "format-output",
+        "name": "Format Output"
+      },
+      {
+        "parameters": {
+          "content": "# [08] Add Platform Banners\n\nTakes a Creatomate video URL and adds scrolling platform banners using ffmpeg.\n\n**Input:**\n- video_url: Creatomate render URL\n- avatar_name: Name for banner text\n- platforms: Array of platforms ['YOUTUBE', 'TIKTOK', ...]\n- ratio: Video ratio for reference\n\n**Output:**\n- platform_videos: Array of {platform, ratio, video_url}",
+          "height": 280,
+          "width": 400,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -400,
+          -80
+        ],
+        "typeVersion": 1,
+        "id": "sticky-info",
+        "name": "Info"
+      },
+      {
+        "parameters": {
+          "jsCode": "// No platforms case - just pass through\nconst config = $json._original_config || $json;\nreturn [{\n  json: {\n    platform: 'none',\n    ratio: config.ratio,\n    video_url: config.video_url,\n    avatar_name: config.avatar_name\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          208,
+          288
+        ],
+        "id": "no-platforms-passthrough",
+        "name": "No Platforms - Passthrough"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Handle ffmpeg API error\nconst error = $json;\nconsole.error('ffmpeg API error:', error);\n\n// Return error info but don't fail the workflow\nreturn [{\n  json: {\n    platform: $('Split by Platforms').item.json.platform,\n    ratio: $('Split by Platforms').item.json.ratio,\n    video_url: null,\n    error: error.message || 'ffmpeg processing failed'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          224
+        ],
+        "id": "handle-ffmpeg-error",
+        "name": "Handle ffmpeg Error"
+      }
+    ],
+    "connections": {
+      "When Called": {
+        "main": [
+          [
+            {
+              "node": "Split by Platforms",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split by Platforms": {
+        "main": [
+          [
+            {
+              "node": "If: Has Platforms",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Has Platforms": {
+        "main": [
+          [
+            {
+              "node": "API: ffmpeg Banner",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Platforms - Passthrough",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: ffmpeg Banner": {
+        "main": [
+          [
+            {
+              "node": "Parse ffmpeg Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Handle ffmpeg Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse ffmpeg Response": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Platform Videos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "No Platforms - Passthrough": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Platform Videos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Handle ffmpeg Error": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Platform Videos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Platform Videos": {
+        "main": [
+          [
+            {
+              "node": "Format Output",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
   "tags": []
 }
