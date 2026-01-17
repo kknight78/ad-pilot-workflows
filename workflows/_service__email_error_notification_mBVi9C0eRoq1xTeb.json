@@ -1,0 +1,243 @@
+{
+  "updatedAt": "2026-01-16T15:41:32.379Z",
+  "createdAt": "2026-01-16T15:41:32.379Z",
+  "id": "mBVi9C0eRoq1xTeb",
+  "name": "[Service] Email Error Notification",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger",
+      "name": "When Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.error) {\n  throw new Error('error message is required');\n}\nif (!input.workflow_name) {\n  throw new Error('workflow_name is required');\n}\n\n// Format details as string if object\nlet detailsStr = input.details || '';\nif (typeof detailsStr === 'object') {\n  detailsStr = JSON.stringify(detailsStr, null, 2);\n}\n\nreturn [{\n  json: {\n    to_email: input.to_email || 'kelly@ad-pilot.ai',\n    workflow_name: input.workflow_name,\n    error: input.error,\n    details: detailsStr,\n    job_id: input.job_id || null\n  }\n}];"
+      },
+      "id": "format-input",
+      "name": "Format Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.to_email }}\",\n  \"subject\": \"{{ $json.workflow_name }} Failed{{ $json.job_id ? ' - Job ' + $json.job_id : '' }}\",\n  \"html\": {{ JSON.stringify('<h2>' + $json.workflow_name + ' Failed</h2><p><strong>Error:</strong> ' + $json.error + '</p>' + ($json.details ? '<h3>Details:</h3><pre>' + $json.details + '</pre>' : '')) }}\n}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\n\nreturn [{\n  json: {\n    success: !!response.id,\n    email_id: response.id || null,\n    error: response.error || null\n  }\n}];"
+      },
+      "id": "return-result",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When Called by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Format Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Input": {
+      "main": [
+        [
+          {
+            "node": "Send Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Error Email": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "1be6698b-76c9-48e1-bfac-a69ced9efbe7",
+  "activeVersionId": "1be6698b-76c9-48e1-bfac-a69ced9efbe7",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T15:41:32.379Z",
+      "createdAt": "2026-01-16T15:41:32.379Z",
+      "role": "workflow:owner",
+      "workflowId": "mBVi9C0eRoq1xTeb",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T15:41:32.418Z",
+    "createdAt": "2026-01-16T15:41:32.418Z",
+    "versionId": "1be6698b-76c9-48e1-bfac-a69ced9efbe7",
+    "workflowId": "mBVi9C0eRoq1xTeb",
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "trigger",
+        "name": "When Called by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.error) {\n  throw new Error('error message is required');\n}\nif (!input.workflow_name) {\n  throw new Error('workflow_name is required');\n}\n\n// Format details as string if object\nlet detailsStr = input.details || '';\nif (typeof detailsStr === 'object') {\n  detailsStr = JSON.stringify(detailsStr, null, 2);\n}\n\nreturn [{\n  json: {\n    to_email: input.to_email || 'kelly@ad-pilot.ai',\n    workflow_name: input.workflow_name,\n    error: input.error,\n    details: detailsStr,\n    job_id: input.job_id || null\n  }\n}];"
+        },
+        "id": "format-input",
+        "name": "Format Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.to_email }}\",\n  \"subject\": \"{{ $json.workflow_name }} Failed{{ $json.job_id ? ' - Job ' + $json.job_id : '' }}\",\n  \"html\": {{ JSON.stringify('<h2>' + $json.workflow_name + ' Failed</h2><p><strong>Error:</strong> ' + $json.error + '</p>' + ($json.details ? '<h3>Details:</h3><pre>' + $json.details + '</pre>' : '')) }}\n}",
+          "options": {}
+        },
+        "id": "send-email",
+        "name": "Send Error Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          440,
+          0
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\n\nreturn [{\n  json: {\n    success: !!response.id,\n    email_id: response.id || null,\n    error: response.error || null\n  }\n}];"
+        },
+        "id": "return-result",
+        "name": "Return Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          0
+        ]
+      }
+    ],
+    "connections": {
+      "When Called by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Format Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Input": {
+        "main": [
+          [
+            {
+              "node": "Send Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Error Email": {
+        "main": [
+          [
+            {
+              "node": "Return Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
