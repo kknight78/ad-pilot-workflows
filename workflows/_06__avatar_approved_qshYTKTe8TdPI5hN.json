@@ -1,0 +1,683 @@
+{
+  "updatedAt": "2026-01-16T16:14:59.990Z",
+  "createdAt": "2026-01-16T16:14:59.990Z",
+  "id": "qshYTKTe8TdPI5hN",
+  "name": "[06] Avatar Approved",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "avatar-approved",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook: Avatar Approved",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "avatar-approved"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json.body;\n\n// Validate required fields\nif (!input.avatar_id) {\n  throw new Error('avatar_id is required');\n}\nif (!input.preview_video_url) {\n  throw new Error('preview_video_url is required');\n}\n\nreturn [{\n  json: {\n    avatar_id: input.avatar_id,\n    motion_avatar_id: input.motion_avatar_id,\n    person_id: input.person_id,\n    style_name: input.style_name || 'avatar',\n    preview_video_url: input.preview_video_url\n  }\n}];"
+      },
+      "id": "parse-input",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"Alpha video generation started\", \"avatar_id\": \"{{ $json.avatar_id }}\" }",
+        "options": {}
+      },
+      "id": "respond-accepted",
+      "name": "Respond Accepted",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare input for Replicate Alpha Video service\nconst input = $json;\n\nreturn [{\n  json: {\n    video_url: input.preview_video_url,\n    _context: {\n      avatar_id: input.avatar_id,\n      person_id: input.person_id,\n      style_name: input.style_name\n    }\n  }\n}];"
+      },
+      "id": "prep-replicate",
+      "name": "Prep: Replicate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "tooZ45SwuoZvHk00",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "call-replicate",
+      "name": "Call: Replicate Alpha Video",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $('Prep: Replicate Input').item.json._context;\nconst replicateResult = $json;\n\nif (!replicateResult.alpha_video_url) {\n  throw new Error('Replicate did not return alpha_video_url');\n}\n\nreturn [{\n  json: {\n    file_url: replicateResult.alpha_video_url,\n    upload_preset: 'avatar_preview_alpha_video',\n    public_id: `avatar-alpha/${context.avatar_id}`,\n    resource_type: 'video',\n    _context: context\n  }\n}];"
+      },
+      "id": "prep-cloudinary",
+      "name": "Prep: Cloudinary Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "qJSlTqiK4tKREfGf",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "call-cloudinary",
+      "name": "Call: Upload to Cloudinary",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $('Prep: Cloudinary Input').item.json._context;\nconst cloudinaryResult = $json;\n\nif (!cloudinaryResult.secure_url) {\n  throw new Error('Cloudinary did not return secure_url');\n}\n\nreturn [{\n  json: {\n    avatar_id: context.avatar_id,\n    person_id: context.person_id,\n    style_name: context.style_name,\n    preview_video_alpha_url: cloudinaryResult.secure_url,\n    cloudinary_public_id: cloudinaryResult.public_id\n  }\n}];"
+      },
+      "id": "extract-url",
+      "name": "Extract Cloudinary URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE avatars SET preview_video_alpha_url = '{{ $json.preview_video_alpha_url }}', updated_at = NOW() WHERE id = '{{ $json.avatar_id }}'::uuid RETURNING id, preview_video_alpha_url",
+        "options": {}
+      },
+      "id": "update-db",
+      "name": "DB: Update Avatar",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1540,
+        -100
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Extract Cloudinary URL').item.json;\n\nconsole.log('Alpha video generated and saved:', {\n  avatar_id: input.avatar_id,\n  preview_video_alpha_url: input.preview_video_alpha_url\n});\n\nreturn [{\n  json: {\n    success: true,\n    avatar_id: input.avatar_id,\n    preview_video_alpha_url: input.preview_video_alpha_url\n  }\n}];"
+      },
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## [06] Avatar Approved\n\nTriggered when user approves an avatar from the UI.\n\n**Flow:**\n1. Receive avatar data from approve API\n2. Respond immediately (async processing)\n3. Generate alpha video via Replicate\n4. Upload to Cloudinary for permanent storage\n5. Update database with alpha URL\n\n**Services Used:**\n- [Service] Replicate Alpha Video\n- [Service] Upload to Cloudinary (Unsigned)\n- [Service] Email Error Notification (on failure)",
+        "height": 360,
+        "width": 340
+      },
+      "id": "sticky-note",
+      "name": "Intro Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $('Parse Input').item.json;\nlet errorMsg = 'Unknown error';\n\n// Try to get error from previous node\ntry {\n  const prevJson = $json;\n  errorMsg = prevJson.message || prevJson.error || JSON.stringify(prevJson);\n} catch (e) {\n  errorMsg = 'Error during alpha video processing';\n}\n\nreturn [{\n  json: {\n    workflow_name: '[06] Avatar Approved',\n    error: errorMsg,\n    details: {\n      avatar_id: context.avatar_id,\n      style_name: context.style_name,\n      preview_video_url: context.preview_video_url\n    },\n    job_id: context.avatar_id\n  }\n}];"
+      },
+      "id": "format-error",
+      "name": "Format Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mBVi9C0eRoq1xTeb",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "call-error-email",
+      "name": "Call: Email Error",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Avatar Approved": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Respond Accepted",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prep: Replicate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Replicate Input": {
+      "main": [
+        [
+          {
+            "node": "Call: Replicate Alpha Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Replicate Alpha Video": {
+      "main": [
+        [
+          {
+            "node": "Prep: Cloudinary Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Cloudinary Input": {
+      "main": [
+        [
+          {
+            "node": "Call: Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Extract Cloudinary URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Cloudinary URL": {
+      "main": [
+        [
+          {
+            "node": "DB: Update Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Update Avatar": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "3fe13a3d-5938-44cd-8df4-73e19a7d209f",
+  "activeVersionId": "3fe13a3d-5938-44cd-8df4-73e19a7d209f",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T16:14:59.990Z",
+      "createdAt": "2026-01-16T16:14:59.990Z",
+      "role": "workflow:owner",
+      "workflowId": "qshYTKTe8TdPI5hN",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-16T16:28:49.979Z",
+    "createdAt": "2026-01-16T16:15:00.062Z",
+    "versionId": "3fe13a3d-5938-44cd-8df4-73e19a7d209f",
+    "workflowId": "qshYTKTe8TdPI5hN",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "avatar-approved",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook",
+        "name": "Webhook: Avatar Approved",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "avatar-approved"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $json.body;\n\n// Validate required fields\nif (!input.avatar_id) {\n  throw new Error('avatar_id is required');\n}\nif (!input.preview_video_url) {\n  throw new Error('preview_video_url is required');\n}\n\nreturn [{\n  json: {\n    avatar_id: input.avatar_id,\n    motion_avatar_id: input.motion_avatar_id,\n    person_id: input.person_id,\n    style_name: input.style_name || 'avatar',\n    preview_video_url: input.preview_video_url\n  }\n}];"
+        },
+        "id": "parse-input",
+        "name": "Parse Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={ \"success\": true, \"message\": \"Alpha video generation started\", \"avatar_id\": \"{{ $json.avatar_id }}\" }",
+          "options": {}
+        },
+        "id": "respond-accepted",
+        "name": "Respond Accepted",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          440,
+          100
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare input for Replicate Alpha Video service\nconst input = $json;\n\nreturn [{\n  json: {\n    video_url: input.preview_video_url,\n    _context: {\n      avatar_id: input.avatar_id,\n      person_id: input.person_id,\n      style_name: input.style_name\n    }\n  }\n}];"
+        },
+        "id": "prep-replicate",
+        "name": "Prep: Replicate Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "tooZ45SwuoZvHk00",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "id": "call-replicate",
+        "name": "Call: Replicate Alpha Video",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          660,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const context = $('Prep: Replicate Input').item.json._context;\nconst replicateResult = $json;\n\nif (!replicateResult.alpha_video_url) {\n  throw new Error('Replicate did not return alpha_video_url');\n}\n\nreturn [{\n  json: {\n    file_url: replicateResult.alpha_video_url,\n    upload_preset: 'avatar_preview_alpha_video',\n    public_id: `avatar-alpha/${context.avatar_id}`,\n    resource_type: 'video',\n    _context: context\n  }\n}];"
+        },
+        "id": "prep-cloudinary",
+        "name": "Prep: Cloudinary Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "qJSlTqiK4tKREfGf",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "id": "call-cloudinary",
+        "name": "Call: Upload to Cloudinary",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1100,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const context = $('Prep: Cloudinary Input').item.json._context;\nconst cloudinaryResult = $json;\n\nif (!cloudinaryResult.secure_url) {\n  throw new Error('Cloudinary did not return secure_url');\n}\n\nreturn [{\n  json: {\n    avatar_id: context.avatar_id,\n    person_id: context.person_id,\n    style_name: context.style_name,\n    preview_video_alpha_url: cloudinaryResult.secure_url,\n    cloudinary_public_id: cloudinaryResult.public_id\n  }\n}];"
+        },
+        "id": "extract-url",
+        "name": "Extract Cloudinary URL",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE avatars SET preview_video_alpha_url = '{{ $json.preview_video_alpha_url }}', updated_at = NOW() WHERE id = '{{ $json.avatar_id }}'::uuid RETURNING id, preview_video_alpha_url",
+          "options": {}
+        },
+        "id": "update-db",
+        "name": "DB: Update Avatar",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1540,
+          -100
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $('Extract Cloudinary URL').item.json;\n\nconsole.log('Alpha video generated and saved:', {\n  avatar_id: input.avatar_id,\n  preview_video_alpha_url: input.preview_video_alpha_url\n});\n\nreturn [{\n  json: {\n    success: true,\n    avatar_id: input.avatar_id,\n    preview_video_alpha_url: input.preview_video_alpha_url\n  }\n}];"
+        },
+        "id": "log-success",
+        "name": "Log Success",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1760,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## [06] Avatar Approved\n\nTriggered when user approves an avatar from the UI.\n\n**Flow:**\n1. Receive avatar data from approve API\n2. Respond immediately (async processing)\n3. Generate alpha video via Replicate\n4. Upload to Cloudinary for permanent storage\n5. Update database with alpha URL\n\n**Services Used:**\n- [Service] Replicate Alpha Video\n- [Service] Upload to Cloudinary (Unsigned)\n- [Service] Email Error Notification (on failure)",
+          "height": 360,
+          "width": 340
+        },
+        "id": "sticky-note",
+        "name": "Intro Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -300,
+          -200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const context = $('Parse Input').item.json;\nlet errorMsg = 'Unknown error';\n\n// Try to get error from previous node\ntry {\n  const prevJson = $json;\n  errorMsg = prevJson.message || prevJson.error || JSON.stringify(prevJson);\n} catch (e) {\n  errorMsg = 'Error during alpha video processing';\n}\n\nreturn [{\n  json: {\n    workflow_name: '[06] Avatar Approved',\n    error: errorMsg,\n    details: {\n      avatar_id: context.avatar_id,\n      style_name: context.style_name,\n      preview_video_url: context.preview_video_url\n    },\n    job_id: context.avatar_id\n  }\n}];"
+        },
+        "id": "format-error",
+        "name": "Format Error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "mBVi9C0eRoq1xTeb",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "id": "call-error-email",
+        "name": "Call: Email Error",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1100,
+          200
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook: Avatar Approved": {
+        "main": [
+          [
+            {
+              "node": "Parse Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Input": {
+        "main": [
+          [
+            {
+              "node": "Respond Accepted",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Prep: Replicate Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Replicate Input": {
+        "main": [
+          [
+            {
+              "node": "Call: Replicate Alpha Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Replicate Alpha Video": {
+        "main": [
+          [
+            {
+              "node": "Prep: Cloudinary Input",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Cloudinary Input": {
+        "main": [
+          [
+            {
+              "node": "Call: Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Extract Cloudinary URL",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Cloudinary URL": {
+        "main": [
+          [
+            {
+              "node": "DB: Update Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Update Avatar": {
+        "main": [
+          [
+            {
+              "node": "Log Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Error": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": "Version 3fe13a3d",
+    "description": "",
+    "autosaved": false
+  },
+  "tags": []
+}
