@@ -1,0 +1,247 @@
+{
+  "updatedAt": "2026-01-19T01:41:04.662Z",
+  "createdAt": "2026-01-18T18:04:01.423Z",
+  "id": "K7iWJEHGfVRpIzSg",
+  "name": "Inventory API v2",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "inventory-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-inventory",
+      "name": "Webhook: Inventory v2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "inventory-v2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  i.id,\n  i.external_id,\n  i.item_type,\n  i.status,\n  i.title,\n  i.description,\n  i.price,\n  i.currency,\n  i.url,\n  i.is_featured,\n  i.priority,\n  i.tags,\n  i.first_seen_at,\n  i.last_seen_at,\n  v.vin,\n  v.stock_number,\n  v.year,\n  v.make,\n  v.model,\n  v.trim,\n  v.body_style,\n  v.exterior_color,\n  v.interior_color,\n  v.mileage,\n  v.mileage_unit,\n  v.transmission,\n  v.drivetrain,\n  v.fuel_type,\n  v.engine,\n  v.doors,\n  v.condition,\n  v.days_on_lot,\n  v.features,\n  c.name as client_name,\n  c.slug as client_slug,\n  (SELECT json_agg(json_build_object('url', img.url, 'is_primary', img.is_primary) ORDER BY img.sort_order)\n   FROM inventory_images img WHERE img.item_id = i.id) as images\nFROM inventory_items i\nJOIN clients c ON c.id = i.client_id\nLEFT JOIN inventory_vehicles v ON v.item_id = i.id\nWHERE (c.slug = '{{ $json.query.client }}' OR i.client_id::text = '{{ $json.query.client }}')\n  AND i.status = '{{ $json.query.status || \"active\" }}'\nORDER BY i.priority DESC, i.last_seen_at DESC\nLIMIT {{ parseInt($json.query.limit) || 100 }}\nOFFSET {{ parseInt($json.query.offset) || 0 }}",
+        "options": {}
+      },
+      "id": "postgres-query",
+      "name": "Query Inventory",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get items from Query Inventory (may be empty or have empty objects)\nconst queryNode = $('Query Inventory');\nlet items = [];\ntry {\n  items = queryNode.all()\n    .map(i => i.json)\n    .filter(item => item && Object.keys(item).length > 0 && item.id); // Filter out empty objects\n} catch (e) {\n  items = [];\n}\n\n// Get query params from webhook\nconst webhookData = $('Webhook: Inventory v2').first().json;\nconst query = webhookData.query || {};\n\nconst response = {\n  success: true,\n  data: items,\n  count: items.length,\n  pagination: {\n    limit: parseInt(query.limit) || 100,\n    offset: parseInt(query.offset) || 0\n  },\n  filters: {\n    client: query.client || null,\n    status: query.status || 'active'\n  }\n};\n\nreturn [{ json: response }];"
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Inventory v2": {
+      "main": [
+        [
+          {
+            "node": "Query Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Inventory": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "908a4123-8844-40cb-9cf0-886d5d7f64aa",
+  "activeVersionId": "908a4123-8844-40cb-9cf0-886d5d7f64aa",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-18T18:04:01.423Z",
+      "createdAt": "2026-01-18T18:04:01.423Z",
+      "role": "workflow:owner",
+      "workflowId": "K7iWJEHGfVRpIzSg",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-19T01:41:04.666Z",
+    "createdAt": "2026-01-19T01:41:04.666Z",
+    "versionId": "908a4123-8844-40cb-9cf0-886d5d7f64aa",
+    "workflowId": "K7iWJEHGfVRpIzSg",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "inventory-v2",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook-inventory",
+        "name": "Webhook: Inventory v2",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "inventory-v2"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT \n  i.id,\n  i.external_id,\n  i.item_type,\n  i.status,\n  i.title,\n  i.description,\n  i.price,\n  i.currency,\n  i.url,\n  i.is_featured,\n  i.priority,\n  i.tags,\n  i.first_seen_at,\n  i.last_seen_at,\n  v.vin,\n  v.stock_number,\n  v.year,\n  v.make,\n  v.model,\n  v.trim,\n  v.body_style,\n  v.exterior_color,\n  v.interior_color,\n  v.mileage,\n  v.mileage_unit,\n  v.transmission,\n  v.drivetrain,\n  v.fuel_type,\n  v.engine,\n  v.doors,\n  v.condition,\n  v.days_on_lot,\n  v.features,\n  c.name as client_name,\n  c.slug as client_slug,\n  (SELECT json_agg(json_build_object('url', img.url, 'is_primary', img.is_primary) ORDER BY img.sort_order)\n   FROM inventory_images img WHERE img.item_id = i.id) as images\nFROM inventory_items i\nJOIN clients c ON c.id = i.client_id\nLEFT JOIN inventory_vehicles v ON v.item_id = i.id\nWHERE (c.slug = '{{ $json.query.client }}' OR i.client_id::text = '{{ $json.query.client }}')\n  AND i.status = '{{ $json.query.status || \"active\" }}'\nORDER BY i.priority DESC, i.last_seen_at DESC\nLIMIT {{ parseInt($json.query.limit) || 100 }}\nOFFSET {{ parseInt($json.query.offset) || 0 }}",
+          "options": {}
+        },
+        "id": "postgres-query",
+        "name": "Query Inventory",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get items from Query Inventory (may be empty or have empty objects)\nconst queryNode = $('Query Inventory');\nlet items = [];\ntry {\n  items = queryNode.all()\n    .map(i => i.json)\n    .filter(item => item && Object.keys(item).length > 0 && item.id); // Filter out empty objects\n} catch (e) {\n  items = [];\n}\n\n// Get query params from webhook\nconst webhookData = $('Webhook: Inventory v2').first().json;\nconst query = webhookData.query || {};\n\nconst response = {\n  success: true,\n  data: items,\n  count: items.length,\n  pagination: {\n    limit: parseInt(query.limit) || 100,\n    offset: parseInt(query.offset) || 0\n  },\n  filters: {\n    client: query.client || null,\n    status: query.status || 'active'\n  }\n};\n\nreturn [{ json: response }];"
+        },
+        "id": "format-response",
+        "name": "Format Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {}
+        },
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          900,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook: Inventory v2": {
+        "main": [
+          [
+            {
+              "node": "Query Inventory",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Inventory": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
