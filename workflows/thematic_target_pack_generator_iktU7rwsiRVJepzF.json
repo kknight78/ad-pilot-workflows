@@ -1,0 +1,517 @@
+{
+  "updatedAt": "2026-01-19T22:00:35.293Z",
+  "createdAt": "2026-01-19T20:01:58.634Z",
+  "id": "iktU7rwsiRVJepzF",
+  "name": "Thematic Target Pack Generator",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "thematic-pack-generate",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "90b3c65b-14b3-46ec-85a9-64591da75f9f",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        208
+      ],
+      "webhookId": "thematic-pack-generate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "client_id",
+              "name": "client_id",
+              "value": "={{ $json.body.client_id || 'ccc' }}",
+              "type": "string"
+            },
+            {
+              "id": "location",
+              "name": "location",
+              "value": "={{ $json.body.location || 'Rantoul, IL' }}",
+              "type": "string"
+            },
+            {
+              "id": "local_event_override",
+              "name": "local_event_override",
+              "value": "={{ $json.body.local_event_override || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "current_date",
+              "name": "current_date",
+              "value": "={{ $now.format('MMMM d, yyyy') }}",
+              "type": "string"
+            },
+            {
+              "id": "current_month",
+              "name": "current_month",
+              "value": "={{ $now.format('MMMM') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d60bd59c-d2c5-43d4-b61a-1e42bddb0cae",
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        368,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE\n═══════════════════════════════════════════════════════════════\nAd Pilot creates video ads for Capitol Car Credit, a local dealership serving Central Illinois (Rantoul, Champaign-Urbana, Danville area).\nWe REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community authentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK\n═══════════════════════════════════════════════════════════════\nGenerate ONE \"THEME PACK\" for this week.\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}{{ $json.local_event_override ? '\\n- LOCAL EVENT OVERRIDE: ' + $json.local_event_override : '' }}\n\nA great Theme Pack:\n- Feels timely and local (season, routines, weather, community life)\n- Has an \"everyday tension\" (mistake, myth, pain point, frustration, decision)\n- Can power BOTH:\n  - inventory-style car ads (hook → handoff into specific cars)\n  - educational \"Capitol Smarts\" advice (ownership/maintenance + decision making)\n\n═══════════════════════════════════════════════════════════════\n🎪 LOCAL EVENT RULE\n═══════════════════════════════════════════════════════════════\nIf a LOCAL EVENT OVERRIDE is provided above, the Theme Pack MUST:\n- Be built entirely around that event\n- Include at least 3 micro-moments specific to that event\n- Connect the event naturally to car ownership/reliability (parking, traffic, road trips, etc.)\n\n═══════════════════════════════════════════════════════════════\n🧠 ANTI-BORING RULES\n═══════════════════════════════════════════════════════════════\n- Do NOT output generic holiday/season titles without a twist.\n- Must include at least 6 concrete \"local micro-moments/objects\" relevant to Central Illinois driving life (examples: road salt, foggy windows, dead battery, ice scraper, potholes, defroster, remote start, school pickup line, grocery run, check-engine light).\n- Must include a crisp \"core tension\" that can become a hook.\n- Include a short list of banned phrases to prevent cliché outputs.\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL)\n═══════════════════════════════════════════════════════════════\n❌ NEVER include any direction that implies guaranteed financing approval (e.g., \"Guaranteed approval\", \"Anyone can get financed\", \"Bad credit no problem\").\n\n═══════════════════════════════════════════════════════════════\n📦 OUTPUT FORMAT (JSON ONLY)\n═══════════════════════════════════════════════════════════════\nReturn ONLY valid JSON. No markdown, no extra text.\n\n{\n  \"theme_name\": \"2–5 words, non-generic\",\n  \"emoji\": \"ONE emoji that fits\",\n  \"why\": \"One sentence: why this works this week in this location\",\n  \"core_tension\": \"One sentence describing the relatable problem/myth/mistake\",\n  \"ad_angle\": \"One sentence: how this naturally frames shopping/upgrading (non-salesy)\",\n  \"education_angle\": \"One sentence: what helpful advice this theme should teach\",\n  \"local_micro_moments\": [\"6–10 short items, concrete objects/moments\"],\n  \"banned_phrases\": [\"5–12 phrases to avoid (clichés + filler)\"]\n}\n\nGenerate now.\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8306cb02-4551-4099-8741-ac9ab7a31936",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        528,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "4096"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "236d3278-a184-485f-8a40-ae0214924941",
+      "name": "Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        704,
+        208
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prVNksIVEgzVrhKB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the Gemini response\nconst geminiResponse = $input.item.json.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst finishReason = $input.item.json.candidates?.[0]?.finishReason || 'unknown';\n\nlet themePack;\nlet parseError = null;\n\ntry {\n  let cleaned = geminiResponse.trim();\n  \n  // Remove markdown code blocks if present\n  if (cleaned.startsWith('```json')) {\n    cleaned = cleaned.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleaned.startsWith('```')) {\n    cleaned = cleaned.replace(/```\\n?/g, '').trim();\n  }\n  \n  themePack = JSON.parse(cleaned);\n} catch (error) {\n  parseError = error.message;\n  \n  // Try to extract partial data from truncated JSON\n  const themeMatch = geminiResponse.match(/\"theme_name\"\\s*:\\s*\"([^\"]+)\"/);\n  const emojiMatch = geminiResponse.match(/\"emoji\"\\s*:\\s*\"([^\"]+)\"/);\n  const whyMatch = geminiResponse.match(/\"why\"\\s*:\\s*\"([^\"]+)\"/);\n  const tensionMatch = geminiResponse.match(/\"core_tension\"\\s*:\\s*\"([^\"]+)\"/);\n  const adAngleMatch = geminiResponse.match(/\"ad_angle\"\\s*:\\s*\"([^\"]+)\"/);\n  const eduAngleMatch = geminiResponse.match(/\"education_angle\"\\s*:\\s*\"([^\"]+)\"/);\n  \n  themePack = {\n    theme_name: themeMatch ? themeMatch[1] : null,\n    emoji: emojiMatch ? emojiMatch[1] : null,\n    why: whyMatch ? whyMatch[1] : null,\n    core_tension: tensionMatch ? tensionMatch[1] : null,\n    ad_angle: adAngleMatch ? adAngleMatch[1] : null,\n    education_angle: eduAngleMatch ? eduAngleMatch[1] : null,\n    local_micro_moments: [],\n    banned_phrases: [],\n    _warning: 'Partial parse - response may have been truncated',\n    _finish_reason: finishReason,\n    _parse_error: parseError\n  };\n}\n\n// Include local_event_override in response if it was provided\nconst localEventOverride = $('Parse Request').item.json.local_event_override;\n\n// Return with success flag based on whether we got a theme_name\nreturn {\n  success: !!themePack.theme_name,\n  client_id: $('Parse Request').item.json.client_id,\n  local_event_override: localEventOverride || null,\n  ...themePack\n};"
+      },
+      "id": "941e4461-3351-4b55-aea8-cced5e710aa1",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache, no-store, must-revalidate"
+              }
+            ]
+          }
+        }
+      },
+      "id": "315a7341-7e7c-4e64-8a54-3e7ccc799124",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        208
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Request": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "3cead23c-f55b-44b6-b589-99c9455367cf",
+  "activeVersionId": "3cead23c-f55b-44b6-b589-99c9455367cf",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-19T20:01:58.634Z",
+      "createdAt": "2026-01-19T20:01:58.634Z",
+      "role": "workflow:owner",
+      "workflowId": "iktU7rwsiRVJepzF",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-19T22:00:35.296Z",
+    "createdAt": "2026-01-19T22:00:35.296Z",
+    "versionId": "3cead23c-f55b-44b6-b589-99c9455367cf",
+    "workflowId": "iktU7rwsiRVJepzF",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "thematic-pack-generate",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "90b3c65b-14b3-46ec-85a9-64591da75f9f",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1.1,
+        "position": [
+          208,
+          208
+        ],
+        "webhookId": "thematic-pack-generate"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "client_id",
+                "name": "client_id",
+                "value": "={{ $json.body.client_id || 'ccc' }}",
+                "type": "string"
+              },
+              {
+                "id": "location",
+                "name": "location",
+                "value": "={{ $json.body.location || 'Rantoul, IL' }}",
+                "type": "string"
+              },
+              {
+                "id": "local_event_override",
+                "name": "local_event_override",
+                "value": "={{ $json.body.local_event_override || '' }}",
+                "type": "string"
+              },
+              {
+                "id": "current_date",
+                "name": "current_date",
+                "value": "={{ $now.format('MMMM d, yyyy') }}",
+                "type": "string"
+              },
+              {
+                "id": "current_month",
+                "name": "current_month",
+                "value": "={{ $now.format('MMMM') }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "d60bd59c-d2c5-43d4-b61a-1e42bddb0cae",
+        "name": "Parse Request",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.3,
+        "position": [
+          368,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "prompt",
+                "name": "prompt",
+                "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE\n═══════════════════════════════════════════════════════════════\nAd Pilot creates video ads for Capitol Car Credit, a local dealership serving Central Illinois (Rantoul, Champaign-Urbana, Danville area).\nWe REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community authentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK\n═══════════════════════════════════════════════════════════════\nGenerate ONE \"THEME PACK\" for this week.\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}{{ $json.local_event_override ? '\\n- LOCAL EVENT OVERRIDE: ' + $json.local_event_override : '' }}\n\nA great Theme Pack:\n- Feels timely and local (season, routines, weather, community life)\n- Has an \"everyday tension\" (mistake, myth, pain point, frustration, decision)\n- Can power BOTH:\n  - inventory-style car ads (hook → handoff into specific cars)\n  - educational \"Capitol Smarts\" advice (ownership/maintenance + decision making)\n\n═══════════════════════════════════════════════════════════════\n🎪 LOCAL EVENT RULE\n═══════════════════════════════════════════════════════════════\nIf a LOCAL EVENT OVERRIDE is provided above, the Theme Pack MUST:\n- Be built entirely around that event\n- Include at least 3 micro-moments specific to that event\n- Connect the event naturally to car ownership/reliability (parking, traffic, road trips, etc.)\n\n═══════════════════════════════════════════════════════════════\n🧠 ANTI-BORING RULES\n═══════════════════════════════════════════════════════════════\n- Do NOT output generic holiday/season titles without a twist.\n- Must include at least 6 concrete \"local micro-moments/objects\" relevant to Central Illinois driving life (examples: road salt, foggy windows, dead battery, ice scraper, potholes, defroster, remote start, school pickup line, grocery run, check-engine light).\n- Must include a crisp \"core tension\" that can become a hook.\n- Include a short list of banned phrases to prevent cliché outputs.\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL)\n═══════════════════════════════════════════════════════════════\n❌ NEVER include any direction that implies guaranteed financing approval (e.g., \"Guaranteed approval\", \"Anyone can get financed\", \"Bad credit no problem\").\n\n═══════════════════════════════════════════════════════════════\n📦 OUTPUT FORMAT (JSON ONLY)\n═══════════════════════════════════════════════════════════════\nReturn ONLY valid JSON. No markdown, no extra text.\n\n{\n  \"theme_name\": \"2–5 words, non-generic\",\n  \"emoji\": \"ONE emoji that fits\",\n  \"why\": \"One sentence: why this works this week in this location\",\n  \"core_tension\": \"One sentence describing the relatable problem/myth/mistake\",\n  \"ad_angle\": \"One sentence: how this naturally frames shopping/upgrading (non-salesy)\",\n  \"education_angle\": \"One sentence: what helpful advice this theme should teach\",\n  \"local_micro_moments\": [\"6–10 short items, concrete objects/moments\"],\n  \"banned_phrases\": [\"5–12 phrases to avoid (clichés + filler)\"]\n}\n\nGenerate now.\n",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "8306cb02-4551-4099-8741-ac9ab7a31936",
+        "name": "Build Prompt",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.3,
+        "position": [
+          528,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googlePalmApi",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "contents[0].parts[0].text",
+                "value": "={{ $json.prompt }}"
+              },
+              {
+                "name": "generationConfig.temperature",
+                "value": "0.9"
+              },
+              {
+                "name": "generationConfig.maxOutputTokens",
+                "value": "4096"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "236d3278-a184-485f-8a40-ae0214924941",
+        "name": "Gemini",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          704,
+          208
+        ],
+        "credentials": {
+          "googlePalmApi": {
+            "id": "prVNksIVEgzVrhKB",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract the Gemini response\nconst geminiResponse = $input.item.json.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst finishReason = $input.item.json.candidates?.[0]?.finishReason || 'unknown';\n\nlet themePack;\nlet parseError = null;\n\ntry {\n  let cleaned = geminiResponse.trim();\n  \n  // Remove markdown code blocks if present\n  if (cleaned.startsWith('```json')) {\n    cleaned = cleaned.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleaned.startsWith('```')) {\n    cleaned = cleaned.replace(/```\\n?/g, '').trim();\n  }\n  \n  themePack = JSON.parse(cleaned);\n} catch (error) {\n  parseError = error.message;\n  \n  // Try to extract partial data from truncated JSON\n  const themeMatch = geminiResponse.match(/\"theme_name\"\\s*:\\s*\"([^\"]+)\"/);\n  const emojiMatch = geminiResponse.match(/\"emoji\"\\s*:\\s*\"([^\"]+)\"/);\n  const whyMatch = geminiResponse.match(/\"why\"\\s*:\\s*\"([^\"]+)\"/);\n  const tensionMatch = geminiResponse.match(/\"core_tension\"\\s*:\\s*\"([^\"]+)\"/);\n  const adAngleMatch = geminiResponse.match(/\"ad_angle\"\\s*:\\s*\"([^\"]+)\"/);\n  const eduAngleMatch = geminiResponse.match(/\"education_angle\"\\s*:\\s*\"([^\"]+)\"/);\n  \n  themePack = {\n    theme_name: themeMatch ? themeMatch[1] : null,\n    emoji: emojiMatch ? emojiMatch[1] : null,\n    why: whyMatch ? whyMatch[1] : null,\n    core_tension: tensionMatch ? tensionMatch[1] : null,\n    ad_angle: adAngleMatch ? adAngleMatch[1] : null,\n    education_angle: eduAngleMatch ? eduAngleMatch[1] : null,\n    local_micro_moments: [],\n    banned_phrases: [],\n    _warning: 'Partial parse - response may have been truncated',\n    _finish_reason: finishReason,\n    _parse_error: parseError\n  };\n}\n\n// Include local_event_override in response if it was provided\nconst localEventOverride = $('Parse Request').item.json.local_event_override;\n\n// Return with success flag based on whether we got a theme_name\nreturn {\n  success: !!themePack.theme_name,\n  client_id: $('Parse Request').item.json.client_id,\n  local_event_override: localEventOverride || null,\n  ...themePack\n};"
+        },
+        "id": "941e4461-3351-4b55-aea8-cced5e710aa1",
+        "name": "Parse Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          864,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                },
+                {
+                  "name": "Cache-Control",
+                  "value": "no-cache, no-store, must-revalidate"
+                }
+              ]
+            }
+          }
+        },
+        "id": "315a7341-7e7c-4e64-8a54-3e7ccc799124",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1024,
+          208
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Parse Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Request": {
+        "main": [
+          [
+            {
+              "node": "Build Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Prompt": {
+        "main": [
+          [
+            {
+              "node": "Gemini",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini": {
+        "main": [
+          [
+            {
+              "node": "Parse Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
