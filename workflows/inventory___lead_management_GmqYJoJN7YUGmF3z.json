@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-21T23:05:14.659Z",
+  "updatedAt": "2026-01-19T01:48:57.735Z",
   "createdAt": "2025-12-13T13:57:23.566Z",
   "id": "GmqYJoJN7YUGmF3z",
   "name": "Inventory & Lead Management",
@@ -13,8 +13,8 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        1088,
-        192
+        1216,
+        160
       ],
       "id": "f692c97d-1e57-4408-b7a8-4b40145a8ae8",
       "name": "Stop and Error"
@@ -25,7 +25,7 @@
       "typeVersion": 1,
       "position": [
         688,
-        192
+        160
       ],
       "id": "f26962cc-33aa-4545-9344-643f63230ef7",
       "name": "Limit"
@@ -453,32 +453,6 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"onboarding@resend.dev\",\n  \"to\": \"kellyraeknight78@gmail.com\", \n  \"subject\": \"AdPilot Alerts\",\n  \"html\": \"The inventory sync failed - FTP data didn't pass validation.<br><br>Issue: Either no data received or fewer than 20 vehicles<br>Time: {{ $now.toISO() }}<br>Rows received: {{ $('Extract from File').all().length }}<br><br>Check Promax FTP: ftp.dealermarketingservices.com<br><br>---<br>Automated alert from n8n\"\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        896,
-        192
-      ],
-      "id": "a4420d69-678f-4e1b-bfe2-7a520027a403",
-      "name": "Send Error Email",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "vdxOfyrKMfWKSmAH",
-          "name": "Resend"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
         "url": "https://sheets.googleapis.com/v4/spreadsheets/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4:batchUpdate",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api",
@@ -502,6 +476,110 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map inventory sync error to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"Inventory & Lead Management\",\n    error: \"FTP data validation failed - either no data received or fewer than 20 vehicles\",\n    details: \"Rows received: \" + ($input.all().length || 0) + \"\\nTime: \" + new Date().toISOString() + \"\\nCheck Promax FTP: ftp.dealermarketingservices.com\",\n    job_id: null,\n    to_email: \"kelly@ad-pilot.ai\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        160
+      ],
+      "id": "prep-error-email",
+      "name": "Prep: Error Email"
+    },
+    {
+      "parameters": {
+        "workflowId": "mBVi9C0eRoq1xTeb",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        160
+      ],
+      "id": "call-email-error",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sync inventory to database\n// Input: parsed CSV rows from Extract from File\nconst items = $input.all().map(i => i.json);\n\n// CCC client and source IDs (hardcoded for now - will parameterize later)\nconst CLIENT_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';\nconst SOURCE_ID = '169ef0af-516c-4d76-8c2e-db059fcd060e';\n\n// Track VINs for marking inactive later\nconst processedVINs = [];\nconst results = {\n  processed: 0,\n  added: 0,\n  updated: 0,\n  errors: []\n};\n\n// Build upsert data for each item\nconst upsertData = items.map(item => {\n  const vin = item.VIN || item.Vin || '';\n  if (!vin) return null;\n\n  processedVINs.push(vin);\n\n  // Parse price\n  const price = parseFloat(String(item.SellingPrice || item.InternetPrice || item.Price || '0').replace(/[^0-9.]/g, '')) || null;\n\n  // Build title\n  const year = item.Year || '';\n  const make = item.Make || '';\n  const model = item.Model || '';\n  const trim = item.Style || item.Trim || '';\n  const title = [year, make, model, trim].filter(Boolean).join(' ');\n\n  // VDP URL\n  const stockNum = item.StockNumber || item.Stock_Number || '';\n  const url = stockNum ? 'https://www.ccrantoul.com/vehicle/' + stockNum : '';\n\n  // Parse mileage\n  const mileage = parseInt(String(item.Mileage || '0').replace(/[^0-9]/g, '')) || null;\n\n  // Calculate days on lot from DateReceived\n  let daysOnLot = null;\n  if (item.DateReceived) {\n    try {\n      const dateReceived = new Date(item.DateReceived);\n      const today = new Date();\n      daysOnLot = Math.floor((today - dateReceived) / (1000 * 60 * 60 * 24));\n    } catch (e) {\n      // Invalid date, leave as null\n    }\n  }\n\n  // Get all images\n  const imageField = item.ImageUrlsDelimited || item.ImageURLsDelimited || item.ImageUrls_PipeDelimited || '';\n  const images = imageField ? imageField.split('|').map(u => u.trim().replace('/thumb/', '/')).filter(Boolean) : [];\n\n  return {\n    // inventory_items fields\n    client_id: CLIENT_ID,\n    source_id: SOURCE_ID,\n    external_id: vin,\n    item_type: 'vehicle',\n    status: 'active',\n    title: title,\n    description: item.Comments || item.Description || '',\n    price: price,\n    currency: 'USD',\n    url: url,\n\n    // inventory_vehicles fields\n    vin: vin,\n    stock_number: stockNum,\n    year: parseInt(year) || null,\n    make: make,\n    model: model,\n    trim: trim,\n    body_style: (item.BodyStyle || item.Body || 'sedan').toLowerCase(),\n    exterior_color: item.ExteriorColor || item.Color || '',\n    interior_color: item.InteriorColor || '',\n    mileage: mileage,\n    transmission: item.Transmission || '',\n    drivetrain: item.Drivetrain || '',\n    fuel_type: item.FuelType || 'Gasoline',\n    engine: item.Engine || '',\n    doors: parseInt(item.Doors) || null,\n    condition: 'used',\n    days_on_lot: daysOnLot,\n    features: item.Equipment ? item.Equipment.split(',').map(s => s.trim()) : [],\n\n    // Images\n    images: images,\n\n    // Raw data for debugging\n    raw_data: item\n  };\n}).filter(Boolean);\n\nreturn [{\n  json: {\n    upsertData,\n    processedVINs,\n    itemCount: upsertData.length,\n    clientId: CLIENT_ID,\n    sourceId: SOURCE_ID\n  }\n}];\n"
+      },
+      "id": "sync-to-db-prep",
+      "name": "Prep DB Sync",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=-- Upsert inventory items and vehicles\nWITH input_data AS (\n  SELECT * FROM json_to_recordset('{{ JSON.stringify($json.upsertData) }}'::json) AS x(\n    client_id uuid, source_id uuid, external_id text, item_type text, status text,\n    title text, description text, price numeric, currency text, url text,\n    vin text, stock_number text, year int, make text, model text, trim text,\n    body_style text, exterior_color text, interior_color text, mileage int,\n    transmission text, drivetrain text, fuel_type text, engine text,\n    doors int, condition text, days_on_lot int, features jsonb, raw_data jsonb\n  )\n),\nupserted_items AS (\n  INSERT INTO inventory_items (client_id, source_id, external_id, item_type, status, title, description, price, currency, url, last_seen_at)\n  SELECT client_id, source_id, external_id, item_type, status, title, description, price, currency, url, NOW()\n  FROM input_data\n  ON CONFLICT (client_id, external_id) DO UPDATE SET\n    status = 'active',\n    title = EXCLUDED.title,\n    description = EXCLUDED.description,\n    price = EXCLUDED.price,\n    url = EXCLUDED.url,\n    last_seen_at = NOW(),\n    updated_at = NOW()\n  RETURNING id, external_id\n),\nupserted_vehicles AS (\n  INSERT INTO inventory_vehicles (item_id, vin, stock_number, year, make, model, trim, body_style, exterior_color, interior_color, mileage, transmission, drivetrain, fuel_type, engine, doors, condition, days_on_lot, features, raw_data)\n  SELECT ui.id, d.vin, d.stock_number, d.year, d.make, d.model, d.trim, d.body_style, d.exterior_color, d.interior_color, d.mileage, d.transmission, d.drivetrain, d.fuel_type, d.engine, d.doors, d.condition, d.days_on_lot, d.features, d.raw_data\n  FROM input_data d\n  JOIN upserted_items ui ON ui.external_id = d.external_id\n  ON CONFLICT (item_id) DO UPDATE SET\n    stock_number = EXCLUDED.stock_number,\n    year = EXCLUDED.year,\n    make = EXCLUDED.make,\n    model = EXCLUDED.model,\n    trim = EXCLUDED.trim,\n    body_style = EXCLUDED.body_style,\n    exterior_color = EXCLUDED.exterior_color,\n    interior_color = EXCLUDED.interior_color,\n    mileage = EXCLUDED.mileage,\n    transmission = EXCLUDED.transmission,\n    drivetrain = EXCLUDED.drivetrain,\n    fuel_type = EXCLUDED.fuel_type,\n    engine = EXCLUDED.engine,\n    doors = EXCLUDED.doors,\n    days_on_lot = EXCLUDED.days_on_lot,\n    features = EXCLUDED.features,\n    raw_data = EXCLUDED.raw_data,\n    updated_at = NOW()\n  RETURNING item_id\n)\nSELECT \n  (SELECT COUNT(*) FROM upserted_items) as items_upserted,\n  (SELECT COUNT(*) FROM upserted_vehicles) as vehicles_upserted;",
+        "options": {}
+      },
+      "id": "upsert-inventory",
+      "name": "Upsert Inventory",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        896,
+        304
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=-- Mark items not in today's pull as inactive\nUPDATE inventory_items \nSET status = 'inactive', updated_at = NOW()\nWHERE client_id = '{{ $('Prep DB Sync').item.json.clientId }}'::uuid\n  AND status = 'active'\n  AND external_id NOT IN (SELECT unnest(ARRAY[{{ $('Prep DB Sync').item.json.processedVINs.map(v => \"'\" + v + \"'\").join(',') }}]))\nRETURNING id, external_id;",
+        "options": {}
+      },
+      "id": "mark-inactive",
+      "name": "Mark Inactive",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1104,
+        304
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO inventory_sync_log (source_id, status, items_processed, items_added, items_updated, items_deactivated, completed_at, details)\nVALUES (\n  '{{ $('Prep DB Sync').item.json.sourceId }}'::uuid,\n  'success',\n  {{ $('Prep DB Sync').item.json.itemCount }},\n  COALESCE({{ $('Upsert Inventory').item.json.items_upserted }}, 0),\n  COALESCE({{ $('Upsert Inventory').item.json.vehicles_upserted }}, 0),\n  {{ $('Mark Inactive').all().length }},\n  NOW(),\n  '{{ JSON.stringify({ processedVINs: $('Prep DB Sync').item.json.processedVINs.length }) }}'\n)\nRETURNING id;",
+        "options": {}
+      },
+      "id": "log-sync",
+      "name": "Log Sync",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1328,
+        304
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
     }
   ],
   "connections": {
@@ -509,7 +587,7 @@
       "main": [
         [
           {
-            "node": "Send Error Email",
+            "node": "Prep: Error Email",
             "type": "main",
             "index": 0
           }
@@ -531,6 +609,11 @@
           },
           {
             "node": "Transform csv to TikTok format",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prep DB Sync",
             "type": "main",
             "index": 0
           }
@@ -720,7 +803,29 @@
         ]
       ]
     },
-    "Send Error Email": {
+    "Update Meta_Feed_Staging": {
+      "main": [
+        [
+          {
+            "node": "Prepare API Request 2 Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Error Email": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Email Error": {
       "main": [
         [
           {
@@ -731,11 +836,33 @@
         ]
       ]
     },
-    "Update Meta_Feed_Staging": {
+    "Prep DB Sync": {
       "main": [
         [
           {
-            "node": "Prepare API Request 2 Meta",
+            "node": "Upsert Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Inventory": {
+      "main": [
+        [
+          {
+            "node": "Mark Inactive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Inactive": {
+      "main": [
+        [
+          {
+            "node": "Log Sync",
             "type": "main",
             "index": 0
           }
@@ -758,8 +885,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "593776d6-88df-471f-bf64-eb09bcaa242f",
-  "activeVersionId": "593776d6-88df-471f-bf64-eb09bcaa242f",
+  "versionId": "575cb6d4-fe7e-44a9-aa2f-f4ecb66459c7",
+  "activeVersionId": "575cb6d4-fe7e-44a9-aa2f-f4ecb66459c7",
   "triggerCount": 1,
   "shared": [
     {
@@ -771,9 +898,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-21T23:05:14.661Z",
-    "createdAt": "2025-12-21T23:05:14.661Z",
-    "versionId": "593776d6-88df-471f-bf64-eb09bcaa242f",
+    "updatedAt": "2026-01-19T01:48:12.157Z",
+    "createdAt": "2026-01-19T01:48:12.157Z",
+    "versionId": "575cb6d4-fe7e-44a9-aa2f-f4ecb66459c7",
     "workflowId": "GmqYJoJN7YUGmF3z",
     "nodes": [
       {
@@ -783,8 +910,8 @@
         "type": "n8n-nodes-base.stopAndError",
         "typeVersion": 1,
         "position": [
-          1088,
-          192
+          1216,
+          160
         ],
         "id": "f692c97d-1e57-4408-b7a8-4b40145a8ae8",
         "name": "Stop and Error"
@@ -795,7 +922,7 @@
         "typeVersion": 1,
         "position": [
           688,
-          192
+          160
         ],
         "id": "f26962cc-33aa-4545-9344-643f63230ef7",
         "name": "Limit"
@@ -1223,32 +1350,6 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://api.resend.com/emails",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpBearerAuth",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"onboarding@resend.dev\",\n  \"to\": \"kellyraeknight78@gmail.com\", \n  \"subject\": \"AdPilot Alerts\",\n  \"html\": \"The inventory sync failed - FTP data didn't pass validation.<br><br>Issue: Either no data received or fewer than 20 vehicles<br>Time: {{ $now.toISO() }}<br>Rows received: {{ $('Extract from File').all().length }}<br><br>Check Promax FTP: ftp.dealermarketingservices.com<br><br>---<br>Automated alert from n8n\"\n}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.3,
-        "position": [
-          896,
-          192
-        ],
-        "id": "a4420d69-678f-4e1b-bfe2-7a520027a403",
-        "name": "Send Error Email",
-        "credentials": {
-          "httpBearerAuth": {
-            "id": "vdxOfyrKMfWKSmAH",
-            "name": "Resend"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
           "url": "https://sheets.googleapis.com/v4/spreadsheets/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4:batchUpdate",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "googleSheetsOAuth2Api",
@@ -1272,6 +1373,110 @@
             "name": "Google Sheets account"
           }
         }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Map inventory sync error to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"Inventory & Lead Management\",\n    error: \"FTP data validation failed - either no data received or fewer than 20 vehicles\",\n    details: \"Rows received: \" + ($input.all().length || 0) + \"\\nTime: \" + new Date().toISOString() + \"\\nCheck Promax FTP: ftp.dealermarketingservices.com\",\n    job_id: null,\n    to_email: \"kelly@ad-pilot.ai\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          160
+        ],
+        "id": "prep-error-email",
+        "name": "Prep: Error Email"
+      },
+      {
+        "parameters": {
+          "workflowId": "mBVi9C0eRoq1xTeb",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1072,
+          160
+        ],
+        "id": "call-email-error",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Sync inventory to database\n// Input: parsed CSV rows from Extract from File\nconst items = $input.all().map(i => i.json);\n\n// CCC client and source IDs (hardcoded for now - will parameterize later)\nconst CLIENT_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';\nconst SOURCE_ID = '169ef0af-516c-4d76-8c2e-db059fcd060e';\n\n// Track VINs for marking inactive later\nconst processedVINs = [];\nconst results = {\n  processed: 0,\n  added: 0,\n  updated: 0,\n  errors: []\n};\n\n// Build upsert data for each item\nconst upsertData = items.map(item => {\n  const vin = item.VIN || item.Vin || '';\n  if (!vin) return null;\n\n  processedVINs.push(vin);\n\n  // Parse price\n  const price = parseFloat(String(item.SellingPrice || item.InternetPrice || item.Price || '0').replace(/[^0-9.]/g, '')) || null;\n\n  // Build title\n  const year = item.Year || '';\n  const make = item.Make || '';\n  const model = item.Model || '';\n  const trim = item.Style || item.Trim || '';\n  const title = [year, make, model, trim].filter(Boolean).join(' ');\n\n  // VDP URL\n  const stockNum = item.StockNumber || item.Stock_Number || '';\n  const url = stockNum ? 'https://www.ccrantoul.com/vehicle/' + stockNum : '';\n\n  // Parse mileage\n  const mileage = parseInt(String(item.Mileage || '0').replace(/[^0-9]/g, '')) || null;\n\n  // Calculate days on lot from DateReceived\n  let daysOnLot = null;\n  if (item.DateReceived) {\n    try {\n      const dateReceived = new Date(item.DateReceived);\n      const today = new Date();\n      daysOnLot = Math.floor((today - dateReceived) / (1000 * 60 * 60 * 24));\n    } catch (e) {\n      // Invalid date, leave as null\n    }\n  }\n\n  // Get all images\n  const imageField = item.ImageUrlsDelimited || item.ImageURLsDelimited || item.ImageUrls_PipeDelimited || '';\n  const images = imageField ? imageField.split('|').map(u => u.trim().replace('/thumb/', '/')).filter(Boolean) : [];\n\n  return {\n    // inventory_items fields\n    client_id: CLIENT_ID,\n    source_id: SOURCE_ID,\n    external_id: vin,\n    item_type: 'vehicle',\n    status: 'active',\n    title: title,\n    description: item.Comments || item.Description || '',\n    price: price,\n    currency: 'USD',\n    url: url,\n\n    // inventory_vehicles fields\n    vin: vin,\n    stock_number: stockNum,\n    year: parseInt(year) || null,\n    make: make,\n    model: model,\n    trim: trim,\n    body_style: (item.BodyStyle || item.Body || 'sedan').toLowerCase(),\n    exterior_color: item.ExteriorColor || item.Color || '',\n    interior_color: item.InteriorColor || '',\n    mileage: mileage,\n    transmission: item.Transmission || '',\n    drivetrain: item.Drivetrain || '',\n    fuel_type: item.FuelType || 'Gasoline',\n    engine: item.Engine || '',\n    doors: parseInt(item.Doors) || null,\n    condition: 'used',\n    days_on_lot: daysOnLot,\n    features: item.Equipment ? item.Equipment.split(',').map(s => s.trim()) : [],\n\n    // Images\n    images: images,\n\n    // Raw data for debugging\n    raw_data: item\n  };\n}).filter(Boolean);\n\nreturn [{\n  json: {\n    upsertData,\n    processedVINs,\n    itemCount: upsertData.length,\n    clientId: CLIENT_ID,\n    sourceId: SOURCE_ID\n  }\n}];\n"
+        },
+        "id": "sync-to-db-prep",
+        "name": "Prep DB Sync",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=-- Upsert inventory items and vehicles\nWITH input_data AS (\n  SELECT * FROM json_to_recordset('{{ JSON.stringify($json.upsertData) }}'::json) AS x(\n    client_id uuid, source_id uuid, external_id text, item_type text, status text,\n    title text, description text, price numeric, currency text, url text,\n    vin text, stock_number text, year int, make text, model text, trim text,\n    body_style text, exterior_color text, interior_color text, mileage int,\n    transmission text, drivetrain text, fuel_type text, engine text,\n    doors int, condition text, days_on_lot int, features jsonb, raw_data jsonb\n  )\n),\nupserted_items AS (\n  INSERT INTO inventory_items (client_id, source_id, external_id, item_type, status, title, description, price, currency, url, last_seen_at)\n  SELECT client_id, source_id, external_id, item_type, status, title, description, price, currency, url, NOW()\n  FROM input_data\n  ON CONFLICT (client_id, external_id) DO UPDATE SET\n    status = 'active',\n    title = EXCLUDED.title,\n    description = EXCLUDED.description,\n    price = EXCLUDED.price,\n    url = EXCLUDED.url,\n    last_seen_at = NOW(),\n    updated_at = NOW()\n  RETURNING id, external_id\n),\nupserted_vehicles AS (\n  INSERT INTO inventory_vehicles (item_id, vin, stock_number, year, make, model, trim, body_style, exterior_color, interior_color, mileage, transmission, drivetrain, fuel_type, engine, doors, condition, days_on_lot, features, raw_data)\n  SELECT ui.id, d.vin, d.stock_number, d.year, d.make, d.model, d.trim, d.body_style, d.exterior_color, d.interior_color, d.mileage, d.transmission, d.drivetrain, d.fuel_type, d.engine, d.doors, d.condition, d.days_on_lot, d.features, d.raw_data\n  FROM input_data d\n  JOIN upserted_items ui ON ui.external_id = d.external_id\n  ON CONFLICT (item_id) DO UPDATE SET\n    stock_number = EXCLUDED.stock_number,\n    year = EXCLUDED.year,\n    make = EXCLUDED.make,\n    model = EXCLUDED.model,\n    trim = EXCLUDED.trim,\n    body_style = EXCLUDED.body_style,\n    exterior_color = EXCLUDED.exterior_color,\n    interior_color = EXCLUDED.interior_color,\n    mileage = EXCLUDED.mileage,\n    transmission = EXCLUDED.transmission,\n    drivetrain = EXCLUDED.drivetrain,\n    fuel_type = EXCLUDED.fuel_type,\n    engine = EXCLUDED.engine,\n    doors = EXCLUDED.doors,\n    days_on_lot = EXCLUDED.days_on_lot,\n    features = EXCLUDED.features,\n    raw_data = EXCLUDED.raw_data,\n    updated_at = NOW()\n  RETURNING item_id\n)\nSELECT \n  (SELECT COUNT(*) FROM upserted_items) as items_upserted,\n  (SELECT COUNT(*) FROM upserted_vehicles) as vehicles_upserted;",
+          "options": {}
+        },
+        "id": "upsert-inventory",
+        "name": "Upsert Inventory",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          896,
+          304
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=-- Mark items not in today's pull as inactive\nUPDATE inventory_items \nSET status = 'inactive', updated_at = NOW()\nWHERE client_id = '{{ $('Prep DB Sync').item.json.clientId }}'::uuid\n  AND status = 'active'\n  AND external_id NOT IN (SELECT unnest(ARRAY[{{ $('Prep DB Sync').item.json.processedVINs.map(v => \"'\" + v + \"'\").join(',') }}]))\nRETURNING id, external_id;",
+          "options": {}
+        },
+        "id": "mark-inactive",
+        "name": "Mark Inactive",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1104,
+          304
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=INSERT INTO inventory_sync_log (source_id, status, items_processed, items_added, items_updated, items_deactivated, completed_at, details)\nVALUES (\n  '{{ $('Prep DB Sync').item.json.sourceId }}'::uuid,\n  'success',\n  {{ $('Prep DB Sync').item.json.itemCount }},\n  COALESCE({{ $('Upsert Inventory').item.json.items_upserted }}, 0),\n  COALESCE({{ $('Upsert Inventory').item.json.vehicles_upserted }}, 0),\n  {{ $('Mark Inactive').all().length }},\n  NOW(),\n  '{{ JSON.stringify({ processedVINs: $('Prep DB Sync').item.json.processedVINs.length }) }}'\n)\nRETURNING id;",
+          "options": {}
+        },
+        "id": "log-sync",
+        "name": "Log Sync",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1328,
+          304
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
       }
     ],
     "connections": {
@@ -1279,7 +1484,7 @@
         "main": [
           [
             {
-              "node": "Send Error Email",
+              "node": "Prep: Error Email",
               "type": "main",
               "index": 0
             }
@@ -1301,6 +1506,11 @@
             },
             {
               "node": "Transform csv to TikTok format",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Prep DB Sync",
               "type": "main",
               "index": 0
             }
@@ -1490,7 +1700,29 @@
           ]
         ]
       },
-      "Send Error Email": {
+      "Update Meta_Feed_Staging": {
+        "main": [
+          [
+            {
+              "node": "Prepare API Request 2 Meta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Error Email": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Email Error": {
         "main": [
           [
             {
@@ -1501,11 +1733,33 @@
           ]
         ]
       },
-      "Update Meta_Feed_Staging": {
+      "Prep DB Sync": {
         "main": [
           [
             {
-              "node": "Prepare API Request 2 Meta",
+              "node": "Upsert Inventory",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Inventory": {
+        "main": [
+          [
+            {
+              "node": "Mark Inactive",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Inactive": {
+        "main": [
+          [
+            {
+              "node": "Log Sync",
               "type": "main",
               "index": 0
             }
