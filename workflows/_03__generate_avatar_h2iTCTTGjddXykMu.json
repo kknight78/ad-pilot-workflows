@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-16T01:51:23.798Z",
+  "updatedAt": "2026-01-20T01:42:50.982Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -11,8 +11,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2512,
-        1744
+        2608,
+        1936
       ],
       "id": "wait-node",
       "name": "Wait",
@@ -25,8 +25,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3632,
-        1312
+        3280,
+        976
       ],
       "id": "format-errors",
       "name": "Format Errors"
@@ -38,8 +38,8 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        4080,
-        1488
+        3952,
+        976
       ],
       "id": "stop-error",
       "name": "Stop and Error"
@@ -68,8 +68,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3824,
-        1696
+        3728,
+        1136
       ],
       "typeVersion": 1,
       "id": "sticky-errors",
@@ -83,7 +83,7 @@
       "typeVersion": 1.1,
       "position": [
         -80,
-        1968
+        1392
       ],
       "id": "trigger",
       "name": "When Executed by Orchestrate Video Creation"
@@ -115,8 +115,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2064,
-        1680
+        2160,
+        1600
       ],
       "id": "if-complete",
       "name": "If: Avatar Complete"
@@ -128,8 +128,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        80,
-        1968
+        144,
+        1392
       ],
       "id": "prep-voice",
       "name": "Prepare Voice Config"
@@ -165,8 +165,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1168,
-        1824
+        1264,
+        1536
       ],
       "id": "heygen-create",
       "name": "API: HeyGen, Create Avatar",
@@ -175,13 +175,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst heygenResponse = $json;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: heygenResponse.data.video_id,\n    status: 'pending'\n  }\n}];"
+        "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst response = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: response.video_id,\n    status: 'pending'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1392,
-        1744
+        1488,
+        1680
       ],
       "id": "store-config",
       "name": "Store Config + Video ID"
@@ -207,8 +207,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1616,
-        1744
+        1712,
+        1680
       ],
       "id": "check-status",
       "name": "API: Check Avatar Status",
@@ -217,42 +217,16 @@
     },
     {
       "parameters": {
-        "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = $('Preserve Config for Loop').item.json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_id: videoData.id,\n    avatar_video_duration: result.avatar_video_duration\n  }\n}];"
+        "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = $('Preserve Config for Loop').item.json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_duration: videoData.duration\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2288,
-        1456
+        2384,
+        1488
       ],
       "id": "parse-avatar",
       "name": "Parse Avatar Response"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.config.email || 'kelly@ad-pilot.ai' }}\",\n  \"subject\": \"[03] Avatar Generation Failed\",\n  \"html\": {{ JSON.stringify(\"<h2>Avatar generation failed</h2><pre>\" + JSON.stringify($json.details, null, 2) + \"</pre>\") }}\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3856,
-        1488
-      ],
-      "id": "email-errors",
-      "name": "Email Errors",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "vdxOfyrKMfWKSmAH",
-          "name": "Resend"
-        }
-      }
     },
     {
       "parameters": {
@@ -281,8 +255,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2288,
-        1824
+        2384,
+        1792
       ],
       "id": "if-failed",
       "name": "If: Failed?"
@@ -316,8 +290,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3184,
-        1312
+        2832,
+        1488
       ],
       "id": "rvm-create",
       "name": "API: Replicate, Create RVM",
@@ -330,8 +304,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3856,
-        1296
+        3504,
+        1440
       ],
       "id": "wait-rvm",
       "name": "Wait for RVM",
@@ -354,8 +328,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3408,
-        1168
+        3056,
+        1360
       ],
       "id": "rvm-status",
       "name": "API: Replicate, Check RVM Status",
@@ -388,8 +362,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3632,
-        1024
+        3280,
+        1264
       ],
       "id": "if-rvm-complete",
       "name": "If: RVM Complete"
@@ -401,8 +375,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3856,
-        976
+        3504,
+        1216
       ],
       "id": "parse-rvm",
       "name": "Parse RVM Response"
@@ -426,14 +400,14 @@
     {
       "parameters": {
         "content": "## Replicate RVM\nRemove background for transparent overlay",
-        "height": 100,
+        "height": 116,
         "width": 280,
         "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3136,
-        992
+        3168,
+        1488
       ],
       "typeVersion": 1,
       "id": "sticky-rvm",
@@ -441,13 +415,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_duration: result.data?.duration,\n    status: result.data?.status || 'pending',\n    data: result.data\n  }\n}];"
+        "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    status: result.status || 'pending',\n    data: result\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1840,
-        1680
+        1936,
+        1600
       ],
       "id": "preserve-for-loop",
       "name": "Preserve Config for Loop"
@@ -467,8 +441,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2512,
-        1456
+        2608,
+        1488
       ],
       "id": "download_video",
       "name": "Download Avatar Video"
@@ -485,7 +459,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + ' <break time=\"1.0s\" />') }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
         "options": {
           "timeout": 120000
         }
@@ -493,8 +467,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        272,
-        1968
+        368,
+        1392
       ],
       "id": "elevenlabs-tts",
       "name": "API: 11Labs, Generate TTS with Timestamps",
@@ -518,21 +492,21 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        944,
-        1824
+        1040,
+        1536
       ],
       "id": "merge-audio-url",
       "name": "Merge Audio URL + Timings with Config"
     },
     {
       "parameters": {
-        "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
+        "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        496,
-        1888
+        592,
+        1456
       ],
       "id": "parse-elevenlabs",
       "name": "Parse 11Labs Response"
@@ -551,13 +525,54 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        720,
-        1888
+        816,
+        1456
       ],
       "id": "temp-audio-service",
       "name": "API: Temp Audio Service",
       "alwaysOutputData": true,
       "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[03] Generate Avatar\",\n    error: input.error || input.errorMessage || \"Unknown error\",\n    details: input.details || JSON.stringify(input.config || input, null, 2),\n    job_id: null,\n    to_email: \"kelly@ad-pilot.ai\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3504,
+        976
+      ],
+      "id": "prep-error-email",
+      "name": "Prep: Error Email"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mBVi9C0eRoq1xTeb",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+          "cachedResultName": "[Service] Email Error Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3728,
+        976
+      ],
+      "id": "call-email-error",
+      "name": "Call: Email Error"
     }
   ],
   "connections": {
@@ -576,7 +591,7 @@
       "main": [
         [
           {
-            "node": "Email Errors",
+            "node": "Prep: Error Email",
             "type": "main",
             "index": 0
           }
@@ -744,17 +759,6 @@
         ]
       ]
     },
-    "Email Errors": {
-      "main": [
-        [
-          {
-            "node": "Stop and Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "If: Failed?": {
       "main": [
         [
@@ -853,6 +857,28 @@
       "main": [
         []
       ]
+    },
+    "Prep: Error Email": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Email Error": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -863,8 +889,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "3ffad402-8fbf-44a7-bed7-02d8f0d42891",
-  "activeVersionId": "3ffad402-8fbf-44a7-bed7-02d8f0d42891",
+  "versionId": "ec56c97a-dd7b-4421-963c-3dfbda96167a",
+  "activeVersionId": "ec56c97a-dd7b-4421-963c-3dfbda96167a",
   "triggerCount": 0,
   "shared": [
     {
@@ -876,9 +902,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-16T01:51:28.397Z",
-    "createdAt": "2026-01-16T01:51:23.802Z",
-    "versionId": "3ffad402-8fbf-44a7-bed7-02d8f0d42891",
+    "updatedAt": "2026-01-20T01:42:56.896Z",
+    "createdAt": "2026-01-20T01:42:50.985Z",
+    "versionId": "ec56c97a-dd7b-4421-963c-3dfbda96167a",
     "workflowId": "h2iTCTTGjddXykMu",
     "nodes": [
       {
@@ -886,8 +912,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          2512,
-          1744
+          2608,
+          1936
         ],
         "id": "wait-node",
         "name": "Wait",
@@ -900,8 +926,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3632,
-          1312
+          3280,
+          976
         ],
         "id": "format-errors",
         "name": "Format Errors"
@@ -913,8 +939,8 @@
         "type": "n8n-nodes-base.stopAndError",
         "typeVersion": 1,
         "position": [
-          4080,
-          1488
+          3952,
+          976
         ],
         "id": "stop-error",
         "name": "Stop and Error"
@@ -943,8 +969,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3824,
-          1696
+          3728,
+          1136
         ],
         "typeVersion": 1,
         "id": "sticky-errors",
@@ -958,7 +984,7 @@
         "typeVersion": 1.1,
         "position": [
           -80,
-          1968
+          1392
         ],
         "id": "trigger",
         "name": "When Executed by Orchestrate Video Creation"
@@ -990,8 +1016,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2064,
-          1680
+          2160,
+          1600
         ],
         "id": "if-complete",
         "name": "If: Avatar Complete"
@@ -1003,8 +1029,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          80,
-          1968
+          144,
+          1392
         ],
         "id": "prep-voice",
         "name": "Prepare Voice Config"
@@ -1040,8 +1066,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1168,
-          1824
+          1264,
+          1536
         ],
         "id": "heygen-create",
         "name": "API: HeyGen, Create Avatar",
@@ -1050,13 +1076,13 @@
       },
       {
         "parameters": {
-          "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst heygenResponse = $json;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: heygenResponse.data.video_id,\n    status: 'pending'\n  }\n}];"
+          "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst response = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: response.video_id,\n    status: 'pending'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1392,
-          1744
+          1488,
+          1680
         ],
         "id": "store-config",
         "name": "Store Config + Video ID"
@@ -1082,8 +1108,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1616,
-          1744
+          1712,
+          1680
         ],
         "id": "check-status",
         "name": "API: Check Avatar Status",
@@ -1092,42 +1118,16 @@
       },
       {
         "parameters": {
-          "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = $('Preserve Config for Loop').item.json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_id: videoData.id,\n    avatar_video_duration: result.avatar_video_duration\n  }\n}];"
+          "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = $('Preserve Config for Loop').item.json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_duration: videoData.duration\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2288,
-          1456
+          2384,
+          1488
         ],
         "id": "parse-avatar",
         "name": "Parse Avatar Response"
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.resend.com/emails",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpBearerAuth",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.config.email || 'kelly@ad-pilot.ai' }}\",\n  \"subject\": \"[03] Avatar Generation Failed\",\n  \"html\": {{ JSON.stringify(\"<h2>Avatar generation failed</h2><pre>\" + JSON.stringify($json.details, null, 2) + \"</pre>\") }}\n}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          3856,
-          1488
-        ],
-        "id": "email-errors",
-        "name": "Email Errors",
-        "credentials": {
-          "httpBearerAuth": {
-            "id": "vdxOfyrKMfWKSmAH",
-            "name": "Resend"
-          }
-        }
       },
       {
         "parameters": {
@@ -1156,8 +1156,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2288,
-          1824
+          2384,
+          1792
         ],
         "id": "if-failed",
         "name": "If: Failed?"
@@ -1191,8 +1191,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3184,
-          1312
+          2832,
+          1488
         ],
         "id": "rvm-create",
         "name": "API: Replicate, Create RVM",
@@ -1205,8 +1205,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          3856,
-          1296
+          3504,
+          1440
         ],
         "id": "wait-rvm",
         "name": "Wait for RVM",
@@ -1229,8 +1229,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3408,
-          1168
+          3056,
+          1360
         ],
         "id": "rvm-status",
         "name": "API: Replicate, Check RVM Status",
@@ -1263,8 +1263,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          3632,
-          1024
+          3280,
+          1264
         ],
         "id": "if-rvm-complete",
         "name": "If: RVM Complete"
@@ -1276,8 +1276,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3856,
-          976
+          3504,
+          1216
         ],
         "id": "parse-rvm",
         "name": "Parse RVM Response"
@@ -1301,14 +1301,14 @@
       {
         "parameters": {
           "content": "## Replicate RVM\nRemove background for transparent overlay",
-          "height": 100,
+          "height": 116,
           "width": 280,
           "color": 3
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3136,
-          992
+          3168,
+          1488
         ],
         "typeVersion": 1,
         "id": "sticky-rvm",
@@ -1316,13 +1316,13 @@
       },
       {
         "parameters": {
-          "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_duration: result.data?.duration,\n    status: result.data?.status || 'pending',\n    data: result.data\n  }\n}];"
+          "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    status: result.status || 'pending',\n    data: result\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1840,
-          1680
+          1936,
+          1600
         ],
         "id": "preserve-for-loop",
         "name": "Preserve Config for Loop"
@@ -1342,8 +1342,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2512,
-          1456
+          2608,
+          1488
         ],
         "id": "download_video",
         "name": "Download Avatar Video"
@@ -1360,7 +1360,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + ' <break time=\"1.0s\" />') }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
           "options": {
             "timeout": 120000
           }
@@ -1368,8 +1368,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          272,
-          1968
+          368,
+          1392
         ],
         "id": "elevenlabs-tts",
         "name": "API: 11Labs, Generate TTS with Timestamps",
@@ -1393,21 +1393,21 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          944,
-          1824
+          1040,
+          1536
         ],
         "id": "merge-audio-url",
         "name": "Merge Audio URL + Timings with Config"
       },
       {
         "parameters": {
-          "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script_normal || config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
+          "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          496,
-          1888
+          592,
+          1456
         ],
         "id": "parse-elevenlabs",
         "name": "Parse 11Labs Response"
@@ -1426,13 +1426,54 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          720,
-          1888
+          816,
+          1456
         ],
         "id": "temp-audio-service",
         "name": "API: Temp Audio Service",
         "alwaysOutputData": true,
         "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[03] Generate Avatar\",\n    error: input.error || input.errorMessage || \"Unknown error\",\n    details: input.details || JSON.stringify(input.config || input, null, 2),\n    job_id: null,\n    to_email: \"kelly@ad-pilot.ai\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3504,
+          976
+        ],
+        "id": "prep-error-email",
+        "name": "Prep: Error Email"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "mBVi9C0eRoq1xTeb",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+            "cachedResultName": "[Service] Email Error Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          3728,
+          976
+        ],
+        "id": "call-email-error",
+        "name": "Call: Email Error"
       }
     ],
     "connections": {
@@ -1451,7 +1492,7 @@
         "main": [
           [
             {
-              "node": "Email Errors",
+              "node": "Prep: Error Email",
               "type": "main",
               "index": 0
             }
@@ -1619,17 +1660,6 @@
           ]
         ]
       },
-      "Email Errors": {
-        "main": [
-          [
-            {
-              "node": "Stop and Error",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "If: Failed?": {
         "main": [
           [
@@ -1728,10 +1758,32 @@
         "main": [
           []
         ]
+      },
+      "Prep: Error Email": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Email Error": {
+        "main": [
+          [
+            {
+              "node": "Stop and Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 3ffad402",
+    "name": "break tag",
     "description": "",
     "autosaved": false
   },
