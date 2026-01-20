@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-16T15:34:28.507Z",
+  "updatedAt": "2026-01-17T20:10:23.671Z",
   "createdAt": "2026-01-16T15:25:20.443Z",
   "id": "tooZ45SwuoZvHk00",
   "name": "[Service] Replicate Alpha Video",
@@ -126,7 +126,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\n\nif (response.status === 'failed') {\n  throw new Error(`RVM failed: ${response.error || 'Unknown error'}`);\n}\n\nif (response.status === 'canceled') {\n  throw new Error('RVM prediction was canceled');\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: response.urls.get,\n    status: response.status\n  }\n}];"
+        "jsCode": "const response = $json;\nconst input = $(\"Store Prediction ID\").first().json;\n\nif (response.status === \"failed\") {\n  throw new Error(`RVM failed: ${response.error || \"Unknown error\"}`);\n}\n\nif (response.status === \"canceled\") {\n  throw new Error(\"RVM prediction was canceled\");\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: input.status_url,\n    status: response.status\n  }\n}];"
       },
       "id": "preserve-for-loop",
       "name": "Preserve for Loop",
@@ -261,8 +261,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "f9e4768c-ff9a-46e8-972d-0ced82be7b46",
-  "activeVersionId": "f9e4768c-ff9a-46e8-972d-0ced82be7b46",
+  "versionId": "7535bd87-dc62-418b-b1f5-859bec0256af",
+  "activeVersionId": "7535bd87-dc62-418b-b1f5-859bec0256af",
   "triggerCount": 0,
   "shared": [
     {
@@ -274,9 +274,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-16T15:34:28.512Z",
-    "createdAt": "2026-01-16T15:34:28.512Z",
-    "versionId": "f9e4768c-ff9a-46e8-972d-0ced82be7b46",
+    "updatedAt": "2026-01-17T20:10:23.674Z",
+    "createdAt": "2026-01-17T20:10:23.674Z",
+    "versionId": "7535bd87-dc62-418b-b1f5-859bec0256af",
     "workflowId": "tooZ45SwuoZvHk00",
     "nodes": [
       {
@@ -399,7 +399,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const response = $json;\n\nif (response.status === 'failed') {\n  throw new Error(`RVM failed: ${response.error || 'Unknown error'}`);\n}\n\nif (response.status === 'canceled') {\n  throw new Error('RVM prediction was canceled');\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: response.urls.get,\n    status: response.status\n  }\n}];"
+          "jsCode": "const response = $json;\nconst input = $(\"Store Prediction ID\").first().json;\n\nif (response.status === \"failed\") {\n  throw new Error(`RVM failed: ${response.error || \"Unknown error\"}`);\n}\n\nif (response.status === \"canceled\") {\n  throw new Error(\"RVM prediction was canceled\");\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: input.status_url,\n    status: response.status\n  }\n}];"
         },
         "id": "preserve-for-loop",
         "name": "Preserve for Loop",
