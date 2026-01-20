@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-22T00:45:49.236Z",
+  "updatedAt": "2026-01-16T12:15:10.785Z",
   "createdAt": "2025-12-13T13:57:20.492Z",
   "id": "kvUtPMGwe1cr8dl1",
   "name": "Backup n8n Workflows to GitHub",
@@ -377,6 +377,17 @@
           "name": "Resend"
         }
       }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        -64
+      ],
+      "id": "068778e4-cca2-4540-b1a2-b250eac5f73f",
+      "name": "No Operation, do nothing1"
     }
   ],
   "connections": {
@@ -415,7 +426,13 @@
     },
     "Try Create File": {
       "main": [
-        [],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Check Result",
@@ -558,8 +575,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "dd212677-beed-420e-aec7-20f19d560246",
-  "activeVersionId": "dd212677-beed-420e-aec7-20f19d560246",
+  "versionId": "63900cad-b92e-4f9b-8dff-475578e39a34",
+  "activeVersionId": "63900cad-b92e-4f9b-8dff-475578e39a34",
   "triggerCount": 1,
   "shared": [
     {
@@ -571,9 +588,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-22T00:45:49.239Z",
-    "createdAt": "2025-12-22T00:45:49.239Z",
-    "versionId": "dd212677-beed-420e-aec7-20f19d560246",
+    "updatedAt": "2026-01-16T12:15:14.869Z",
+    "createdAt": "2026-01-16T12:15:10.788Z",
+    "versionId": "63900cad-b92e-4f9b-8dff-475578e39a34",
     "workflowId": "kvUtPMGwe1cr8dl1",
     "nodes": [
       {
@@ -947,6 +964,17 @@
             "name": "Resend"
           }
         }
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -432,
+          -64
+        ],
+        "id": "068778e4-cca2-4540-b1a2-b250eac5f73f",
+        "name": "No Operation, do nothing1"
       }
     ],
     "connections": {
@@ -985,7 +1013,13 @@
       },
       "Try Create File": {
         "main": [
-          [],
+          [
+            {
+              "node": "No Operation, do nothing1",
+              "type": "main",
+              "index": 0
+            }
+          ],
           [
             {
               "node": "Check Result",
@@ -1117,8 +1151,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
+    "name": "Version 63900cad",
+    "description": "",
     "autosaved": false
   },
   "tags": []
