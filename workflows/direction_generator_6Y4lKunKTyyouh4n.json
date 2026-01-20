@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-18T17:42:32.664Z",
+  "updatedAt": "2026-01-19T19:30:35.150Z",
   "createdAt": "2026-01-18T16:43:38.898Z",
   "id": "6Y4lKunKTyyouh4n",
   "name": "Direction Generator",
@@ -237,7 +237,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googlePalmApi",
         "sendBody": true,
@@ -468,7 +468,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googlePalmApi",
         "sendBody": true,
@@ -510,7 +510,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googlePalmApi",
         "sendBody": true,
@@ -586,7 +586,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        2100,
+        2112,
         304
       ]
     },
@@ -599,7 +599,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2300,
+        2304,
         304
       ]
     },
@@ -612,7 +612,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2100,
+        2112,
         112
       ]
     },
@@ -625,7 +625,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2100,
+        2112,
         512
       ]
     },
@@ -661,7 +661,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2500,
+        2512,
         304
       ]
     },
@@ -697,7 +697,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2300,
+        2304,
         112
       ]
     },
@@ -733,7 +733,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2300,
+        2304,
         512
       ]
     },
@@ -774,7 +774,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        1950,
+        1952,
         208
       ]
     },
@@ -815,7 +815,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        1950,
+        1952,
         400
       ]
     },
@@ -875,7 +875,7 @@
       "typeVersion": 3.3,
       "position": [
         800,
-        -50
+        -48
       ]
     }
   ],
@@ -1165,8 +1165,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "8937fad1-3f9e-4074-b50d-d6f5f5e2342a",
-  "activeVersionId": "8937fad1-3f9e-4074-b50d-d6f5f5e2342a",
+  "versionId": "f4b1b8c5-bff5-47df-85a1-80b3d1ebab07",
+  "activeVersionId": "b15bb4ca-0836-4f6b-a044-1091bd0e7d31",
   "triggerCount": 1,
   "shared": [
     {
@@ -1178,9 +1178,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-18T17:42:32.666Z",
-    "createdAt": "2026-01-18T17:42:32.666Z",
-    "versionId": "8937fad1-3f9e-4074-b50d-d6f5f5e2342a",
+    "updatedAt": "2026-01-19T19:21:54.389Z",
+    "createdAt": "2026-01-19T19:21:41.850Z",
+    "versionId": "b15bb4ca-0836-4f6b-a044-1091bd0e7d31",
     "workflowId": "6Y4lKunKTyyouh4n",
     "nodes": [
       {
@@ -1414,7 +1414,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "googlePalmApi",
           "sendBody": true,
@@ -1763,7 +1763,7 @@
         "type": "n8n-nodes-base.merge",
         "typeVersion": 3,
         "position": [
-          2100,
+          2112,
           304
         ]
       },
@@ -1776,7 +1776,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2300,
+          2304,
           304
         ]
       },
@@ -1789,7 +1789,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2100,
+          2112,
           112
         ]
       },
@@ -1802,7 +1802,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2100,
+          2112,
           512
         ]
       },
@@ -1838,7 +1838,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          2500,
+          2512,
           304
         ]
       },
@@ -1874,7 +1874,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          2300,
+          2304,
           112
         ]
       },
@@ -1910,7 +1910,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          2300,
+          2304,
           512
         ]
       },
@@ -1951,7 +1951,7 @@
         "type": "n8n-nodes-base.switch",
         "typeVersion": 3,
         "position": [
-          1950,
+          1952,
           208
         ]
       },
@@ -1992,7 +1992,7 @@
         "type": "n8n-nodes-base.switch",
         "typeVersion": 3,
         "position": [
-          1950,
+          1952,
           400
         ]
       },
@@ -2052,7 +2052,7 @@
         "typeVersion": 3.3,
         "position": [
           800,
-          -50
+          -48
         ]
       }
     ],
@@ -2335,8 +2335,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
+    "name": "added gemini 3 flash preview",
+    "description": "",
     "autosaved": false
   },
   "tags": []
