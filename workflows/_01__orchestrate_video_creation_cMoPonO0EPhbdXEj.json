@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-15T22:19:48.198Z",
+  "updatedAt": "2026-01-19T15:43:46.581Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -33,7 +33,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -400,
+        -416,
         208
       ],
       "id": "webhook-node",
@@ -47,7 +47,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        80,
+        336,
         208
       ],
       "id": "filter-emails",
@@ -75,7 +75,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        288,
+        496,
         208
       ],
       "id": "call-script",
@@ -108,8 +108,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        496,
-        0
+        672,
+        208
       ],
       "id": "if-preview",
       "name": "If: Script Preview Mode"
@@ -121,8 +121,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        688,
-        -96
+        896,
+        144
       ],
       "id": "delete-preview",
       "name": "Delete Preview Mode"
@@ -136,8 +136,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        896,
-        -96
+        1088,
+        144
       ],
       "id": "respond-preview",
       "name": "Respond - Script Preview"
@@ -153,8 +153,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        688,
-        112
+        896,
+        288
       ],
       "id": "respond-started",
       "name": "Respond - Generation Started"
@@ -180,8 +180,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        896,
-        208
+        1072,
+        288
       ],
       "id": "call-avatar",
       "name": "Call '[03] Generate Avatar'"
@@ -193,8 +193,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1088,
-        208
+        1232,
+        288
       ],
       "id": "split-ratios",
       "name": "Split by Ratios"
@@ -223,8 +223,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1296,
-        208
+        1392,
+        288
       ],
       "id": "call-video",
       "name": "Call '[04] Generate Video'",
@@ -257,8 +257,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1488,
-        208
+        1568,
+        288
       ],
       "id": "if-needs-banners",
       "name": "If: Needs Platform Banners"
@@ -270,8 +270,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1696,
-        128
+        1744,
+        208
       ],
       "id": "prep-banners",
       "name": "Prepare for Banners"
@@ -300,8 +300,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1888,
-        128
+        1920,
+        208
       ],
       "id": "call-banners",
       "name": "Call '[08] Add Platform Banners'"
@@ -313,8 +313,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1696,
-        288
+        1744,
+        352
       ],
       "id": "no-banners",
       "name": "No Banners - Passthrough"
@@ -326,8 +326,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2096,
-        128
+        2112,
+        208
       ],
       "id": "merge-banner-results",
       "name": "Merge Banner Results"
@@ -342,7 +342,7 @@
       "typeVersion": 1,
       "position": [
         2288,
-        208
+        352
       ],
       "id": "aggregate-all",
       "name": "Aggregate All Videos"
@@ -354,8 +354,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2496,
-        208
+        2448,
+        352
       ],
       "id": "format-response",
       "name": "Format Response"
@@ -374,8 +374,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2688,
-        208
+        2592,
+        352
       ],
       "id": "send-email",
       "name": "Send Video Email",
@@ -384,7 +384,8 @@
           "id": "vdxOfyrKMfWKSmAH",
           "name": "Resend"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -442,8 +443,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2896,
-        208
+        2752,
+        256
       ],
       "id": "update-job",
       "name": "Update Job Complete",
@@ -462,8 +463,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -400,
-        -96
+        -416,
+        16
       ],
       "typeVersion": 1,
       "id": "sticky-main",
@@ -478,8 +479,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        784,
-        80
+        1168,
+        496
       ],
       "typeVersion": 1,
       "id": "sticky-ratios",
@@ -494,8 +495,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1392,
-        0
+        1792,
+        48
       ],
       "typeVersion": 1,
       "id": "sticky-banners",
@@ -510,7 +511,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        -304,
+        -288,
         208
       ],
       "id": "lookup-avatar-config",
@@ -524,16 +525,101 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get webhook body from earlier node and DB results from current input\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst dbResult = $json; // Query results from Postgres\n\n// Merge DB config into webhook body\nconst config = {\n  ...webhookBody,\n  // Override with DB values (fallback to webhook values for backwards compatibility)\n  avatar_name: dbResult.display_name || webhookBody.avatar_name,\n  voice_id: dbResult.voice_id || webhookBody.voice_id,\n  voice_settings: dbResult.voice_settings || { stability: 0.5, similarity_boost: 0.75 },\n  photo_avatar_id: dbResult.photo_avatar_id,\n  motion_avatar_id: dbResult.motion_avatar_id,\n  // IMPORTANT: avatar_id should be the HeyGen motion_avatar_id, not database UUID\n  avatar_id: dbResult.motion_avatar_id,\n  person_full_name: dbResult.full_name,\n  person_display_name: dbResult.display_name\n};\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
+        "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || { stability: 0.5, similarity_boost: 0.75 },\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -112,
+        192,
         208
       ],
       "id": "build-config",
       "name": "Build Config"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT rendered_urls \nFROM client_backgrounds \nWHERE id = '{{ $(\"Webhook\").first().json.body.background_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -128,
+        208
+      ],
+      "id": "lookup-background",
+      "name": "Lookup Background",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const formatResponse = $(\"Format Response\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[01] Orchestrate Video Creation\",\n    error: \"Failed to send video completion email\",\n    details: {\n      email: formatResponse.email,\n      video_count: formatResponse.video_count,\n      template_id: formatResponse.template_id\n    },\n    job_id: formatResponse.job_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2752,
+        432
+      ],
+      "id": "format-email-error",
+      "name": "Format Email Error"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mBVi9C0eRoq1xTeb",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+          "cachedResultName": "[Service] Email Error Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2912,
+        432
+      ],
+      "id": "call-error-email-orch",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT cb.rendered_urls\nFROM templates t\nLEFT JOIN client_backgrounds cb\n  ON cb.client_id = '{{ $(\"Webhook\").first().json.body.client_id }}'\n  AND cb.category = t.bg_wide_override\n  AND cb.is_default = true\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $(\"Webhook\").first().json.body.template_id }}', 'ad-', ''), 'organic-', ''))\nAND t.bg_wide_override IS NOT NULL",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        208
+      ],
+      "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
+      "name": "Lookup Wide Override Default",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
     }
   ],
   "connections": {
@@ -552,7 +638,7 @@
       "main": [
         [
           {
-            "node": "Build Config",
+            "node": "Lookup Background",
             "type": "main",
             "index": 0
           }
@@ -757,6 +843,46 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Format Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Background": {
+      "main": [
+        [
+          {
+            "node": "Lookup Wide Override Default",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email Error": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Wide Override Default": {
+      "main": [
+        [
+          {
+            "node": "Build Config",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }
@@ -767,10 +893,12 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "staticData": null,
-  "meta": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
   "pinData": {},
-  "versionId": "761c5a51-0eb3-44a7-9c29-7b6b23d07604",
-  "activeVersionId": "761c5a51-0eb3-44a7-9c29-7b6b23d07604",
+  "versionId": "4df32218-fc1a-4452-a868-6a4436cc13d1",
+  "activeVersionId": "4df32218-fc1a-4452-a868-6a4436cc13d1",
   "triggerCount": 1,
   "shared": [
     {
@@ -782,9 +910,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-15T22:19:51.390Z",
-    "createdAt": "2026-01-15T22:19:48.202Z",
-    "versionId": "761c5a51-0eb3-44a7-9c29-7b6b23d07604",
+    "updatedAt": "2026-01-19T15:43:49.685Z",
+    "createdAt": "2026-01-19T15:43:46.585Z",
+    "versionId": "4df32218-fc1a-4452-a868-6a4436cc13d1",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -814,7 +942,7 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
         "position": [
-          -400,
+          -416,
           208
         ],
         "id": "webhook-node",
@@ -828,7 +956,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          80,
+          336,
           208
         ],
         "id": "filter-emails",
@@ -856,7 +984,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          288,
+          496,
           208
         ],
         "id": "call-script",
@@ -889,8 +1017,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          496,
-          0
+          672,
+          208
         ],
         "id": "if-preview",
         "name": "If: Script Preview Mode"
@@ -902,8 +1030,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          688,
-          -96
+          896,
+          144
         ],
         "id": "delete-preview",
         "name": "Delete Preview Mode"
@@ -917,8 +1045,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.4,
         "position": [
-          896,
-          -96
+          1088,
+          144
         ],
         "id": "respond-preview",
         "name": "Respond - Script Preview"
@@ -934,8 +1062,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.4,
         "position": [
-          688,
-          112
+          896,
+          288
         ],
         "id": "respond-started",
         "name": "Respond - Generation Started"
@@ -961,8 +1089,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          896,
-          208
+          1072,
+          288
         ],
         "id": "call-avatar",
         "name": "Call '[03] Generate Avatar'"
@@ -974,8 +1102,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1088,
-          208
+          1232,
+          288
         ],
         "id": "split-ratios",
         "name": "Split by Ratios"
@@ -1004,8 +1132,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1296,
-          208
+          1392,
+          288
         ],
         "id": "call-video",
         "name": "Call '[04] Generate Video'",
@@ -1038,8 +1166,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1488,
-          208
+          1568,
+          288
         ],
         "id": "if-needs-banners",
         "name": "If: Needs Platform Banners"
@@ -1051,8 +1179,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1696,
-          128
+          1744,
+          208
         ],
         "id": "prep-banners",
         "name": "Prepare for Banners"
@@ -1081,8 +1209,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1888,
-          128
+          1920,
+          208
         ],
         "id": "call-banners",
         "name": "Call '[08] Add Platform Banners'"
@@ -1094,8 +1222,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1696,
-          288
+          1744,
+          352
         ],
         "id": "no-banners",
         "name": "No Banners - Passthrough"
@@ -1107,8 +1235,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2096,
-          128
+          2112,
+          208
         ],
         "id": "merge-banner-results",
         "name": "Merge Banner Results"
@@ -1123,7 +1251,7 @@
         "typeVersion": 1,
         "position": [
           2288,
-          208
+          352
         ],
         "id": "aggregate-all",
         "name": "Aggregate All Videos"
@@ -1135,8 +1263,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2496,
-          208
+          2448,
+          352
         ],
         "id": "format-response",
         "name": "Format Response"
@@ -1155,8 +1283,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          2688,
-          208
+          2592,
+          352
         ],
         "id": "send-email",
         "name": "Send Video Email",
@@ -1165,7 +1293,8 @@
             "id": "vdxOfyrKMfWKSmAH",
             "name": "Resend"
           }
-        }
+        },
+        "onError": "continueErrorOutput"
       },
       {
         "parameters": {
@@ -1223,8 +1352,8 @@
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
         "position": [
-          2896,
-          208
+          2752,
+          256
         ],
         "id": "update-job",
         "name": "Update Job Complete",
@@ -1243,8 +1372,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          -400,
-          -96
+          -416,
+          16
         ],
         "typeVersion": 1,
         "id": "sticky-main",
@@ -1259,8 +1388,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          784,
-          80
+          1168,
+          496
         ],
         "typeVersion": 1,
         "id": "sticky-ratios",
@@ -1275,8 +1404,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          1392,
-          0
+          1792,
+          48
         ],
         "typeVersion": 1,
         "id": "sticky-banners",
@@ -1291,7 +1420,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          -304,
+          -288,
           208
         ],
         "id": "lookup-avatar-config",
@@ -1305,16 +1434,101 @@
       },
       {
         "parameters": {
-          "jsCode": "// Get webhook body from earlier node and DB results from current input\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst dbResult = $json; // Query results from Postgres\n\n// Merge DB config into webhook body\nconst config = {\n  ...webhookBody,\n  // Override with DB values (fallback to webhook values for backwards compatibility)\n  avatar_name: dbResult.display_name || webhookBody.avatar_name,\n  voice_id: dbResult.voice_id || webhookBody.voice_id,\n  voice_settings: dbResult.voice_settings || { stability: 0.5, similarity_boost: 0.75 },\n  photo_avatar_id: dbResult.photo_avatar_id,\n  motion_avatar_id: dbResult.motion_avatar_id,\n  // IMPORTANT: avatar_id should be the HeyGen motion_avatar_id, not database UUID\n  avatar_id: dbResult.motion_avatar_id,\n  person_full_name: dbResult.full_name,\n  person_display_name: dbResult.display_name\n};\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
+          "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || { stability: 0.5, similarity_boost: 0.75 },\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -112,
+          192,
           208
         ],
         "id": "build-config",
         "name": "Build Config"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT rendered_urls \nFROM client_backgrounds \nWHERE id = '{{ $(\"Webhook\").first().json.body.background_id }}'",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          -128,
+          208
+        ],
+        "id": "lookup-background",
+        "name": "Lookup Background",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "jsCode": "const formatResponse = $(\"Format Response\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[01] Orchestrate Video Creation\",\n    error: \"Failed to send video completion email\",\n    details: {\n      email: formatResponse.email,\n      video_count: formatResponse.video_count,\n      template_id: formatResponse.template_id\n    },\n    job_id: formatResponse.job_id\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2752,
+          432
+        ],
+        "id": "format-email-error",
+        "name": "Format Email Error"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "mBVi9C0eRoq1xTeb",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+            "cachedResultName": "[Service] Email Error Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          2912,
+          432
+        ],
+        "id": "call-error-email-orch",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT cb.rendered_urls\nFROM templates t\nLEFT JOIN client_backgrounds cb\n  ON cb.client_id = '{{ $(\"Webhook\").first().json.body.client_id }}'\n  AND cb.category = t.bg_wide_override\n  AND cb.is_default = true\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $(\"Webhook\").first().json.body.template_id }}', 'ad-', ''), 'organic-', ''))\nAND t.bg_wide_override IS NOT NULL",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          48,
+          208
+        ],
+        "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
+        "name": "Lookup Wide Override Default",
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
       }
     ],
     "connections": {
@@ -1333,7 +1547,7 @@
         "main": [
           [
             {
-              "node": "Build Config",
+              "node": "Lookup Background",
               "type": "main",
               "index": 0
             }
@@ -1538,12 +1752,52 @@
               "type": "main",
               "index": 0
             }
+          ],
+          [
+            {
+              "node": "Format Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Background": {
+        "main": [
+          [
+            {
+              "node": "Lookup Wide Override Default",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Email Error": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Wide Override Default": {
+        "main": [
+          [
+            {
+              "node": "Build Config",
+              "type": "main",
+              "index": 0
+            }
           ]
         ]
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 761c5a51",
+    "name": "Version 4df32218",
     "description": "",
     "autosaved": false
   },
