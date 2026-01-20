@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-07T03:31:17.297Z",
+  "updatedAt": "2026-01-17T23:46:16.296Z",
   "createdAt": "2025-12-19T01:37:49.969Z",
   "id": "3MLAcpvKTlDN5g9m",
   "name": "[06] HeyGen Webhook Receiver",
@@ -58,7 +58,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nconsole.log('HeyGen Webhook received:', eventType, JSON.stringify(eventData));\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -124,7 +124,8 @@
         144
       ],
       "id": "get-avatar-details",
-      "name": "API: Get Avatar Details"
+      "name": "API: Get Avatar Details",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -133,7 +134,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
+        896,
         144
       ],
       "id": "extract-avatar-info",
@@ -142,13 +143,13 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id, motion_preview_url: $json.motion_preview_url }) }}",
+        "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id }) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1104,
+        1344,
         144
       ],
       "id": "respond-success",
@@ -164,16 +165,16 @@
       "typeVersion": 1.1,
       "position": [
         672,
-        352
+        400
       ],
       "id": "respond-unhandled",
       "name": "Respond Unhandled"
     },
     {
       "parameters": {
-        "content": "# HeyGen Webhook Receiver\\n\\nReceives webhook events from HeyGen:\\n- photo_avatar_add_motion.success\\n\\nWhen motion completes, fetches avatar details\\nto get the motion_preview_url that HeyGen\\nautomatically generates.",
-        "height": 180,
-        "width": 300,
+        "content": "# HeyGen Webhook Receiver\n\nNow uses service workflows:\n- [Service] Send User Notification\n- [Service] Email Error Notification",
+        "height": 160,
+        "width": 280,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -194,8 +195,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1056,
-        -48
+        1120,
+        144
       ],
       "id": "postgres-update-avatar",
       "name": "DB: Update Avatar Complete",
@@ -204,35 +205,92 @@
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://ccc.ad-pilot.ai/api/avatars/notify",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "motion_avatar_id",
-              "value": "={{ $(\"Extract Avatar Info\").first().json.avatar_id }}"
-            },
-            {
-              "name": "preview_video_url",
-              "value": "={{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}"
-            }
-          ]
+        "operation": "executeQuery",
+        "query": "SELECT p.id as person_id, p.full_name, p.email, p.phone, p.notification_preference, a.style_name\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1344,
+        -48
+      ],
+      "id": "get-person-info",
+      "name": "DB: Get Person Info",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const person = $json;\nconst avatarInfo = $(\"Extract Avatar Info\").first().json;\n\nreturn [{\n  json: {\n    person_id: person.person_id,\n    email: person.email,\n    phone: person.phone,\n    notification_pref: person.notification_preference || 'email',\n    subject: 'Your Avatar is Ready for Review',\n    message: 'Great news! Your ' + (person.style_name || 'new') + ' avatar motion has been generated and is ready for your review.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        -48
+      ],
+      "id": "prep-notification",
+      "name": "Prep: Notification"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "kd7uDJETbUifZeNK",
+          "mode": "list"
         },
         "options": {}
       },
-      "name": "API: Send Notification",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
       "position": [
-        1306,
+        1792,
         -48
       ],
-      "id": "563ee9e4-c795-4b1d-a8e6-48ae2a3e65c0"
+      "id": "call-notification",
+      "name": "Call: Send User Notification"
+    },
+    {
+      "parameters": {
+        "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        352
+      ],
+      "id": "format-error",
+      "name": "Format Error"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mBVi9C0eRoq1xTeb",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        352
+      ],
+      "id": "call-error-email",
+      "name": "Call: Email Error"
     }
   ],
   "connections": {
@@ -295,6 +353,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -318,7 +383,54 @@
             "index": 0
           },
           {
-            "node": "API: Send Notification",
+            "node": "DB: Get Person Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Get Person Info": {
+      "main": [
+        [
+          {
+            "node": "Prep: Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Notification": {
+      "main": [
+        [
+          {
+            "node": "Call: Send User Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
             "type": "main",
             "index": 0
           }
@@ -334,8 +446,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "2428b1fc-0c8e-4e14-a977-807fff9c5707",
-  "activeVersionId": "2428b1fc-0c8e-4e14-a977-807fff9c5707",
+  "versionId": "c06769f5-c4a8-43de-a4d1-584057fb2a69",
+  "activeVersionId": "c06769f5-c4a8-43de-a4d1-584057fb2a69",
   "triggerCount": 2,
   "shared": [
     {
@@ -347,9 +459,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-07T03:31:17.302Z",
-    "createdAt": "2026-01-07T03:31:17.302Z",
-    "versionId": "2428b1fc-0c8e-4e14-a977-807fff9c5707",
+    "updatedAt": "2026-01-17T23:44:13.546Z",
+    "createdAt": "2026-01-17T23:44:13.546Z",
+    "versionId": "c06769f5-c4a8-43de-a4d1-584057fb2a69",
     "workflowId": "3MLAcpvKTlDN5g9m",
     "nodes": [
       {
@@ -404,7 +516,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nconsole.log('HeyGen Webhook received:', eventType, JSON.stringify(eventData));\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
+          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -470,7 +582,8 @@
           144
         ],
         "id": "get-avatar-details",
-        "name": "API: Get Avatar Details"
+        "name": "API: Get Avatar Details",
+        "onError": "continueErrorOutput"
       },
       {
         "parameters": {
@@ -479,7 +592,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          880,
+          896,
           144
         ],
         "id": "extract-avatar-info",
@@ -488,13 +601,13 @@
       {
         "parameters": {
           "respondWith": "json",
-          "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id, motion_preview_url: $json.motion_preview_url }) }}",
+          "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id }) }}",
           "options": {}
         },
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1104,
+          1344,
           144
         ],
         "id": "respond-success",
@@ -510,16 +623,16 @@
         "typeVersion": 1.1,
         "position": [
           672,
-          352
+          400
         ],
         "id": "respond-unhandled",
         "name": "Respond Unhandled"
       },
       {
         "parameters": {
-          "content": "# HeyGen Webhook Receiver\\n\\nReceives webhook events from HeyGen:\\n- photo_avatar_add_motion.success\\n\\nWhen motion completes, fetches avatar details\\nto get the motion_preview_url that HeyGen\\nautomatically generates.",
-          "height": 180,
-          "width": 300,
+          "content": "# HeyGen Webhook Receiver\n\nNow uses service workflows:\n- [Service] Send User Notification\n- [Service] Email Error Notification",
+          "height": 160,
+          "width": 280,
           "color": 5
         },
         "type": "n8n-nodes-base.stickyNote",
@@ -540,8 +653,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1056,
-          -48
+          1120,
+          144
         ],
         "id": "postgres-update-avatar",
         "name": "DB: Update Avatar Complete",
@@ -550,35 +663,92 @@
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
           }
-        }
+        },
+        "onError": "continueErrorOutput"
       },
       {
         "parameters": {
-          "method": "POST",
-          "url": "https://ccc.ad-pilot.ai/api/avatars/notify",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {
-                "name": "motion_avatar_id",
-                "value": "={{ $(\"Extract Avatar Info\").first().json.avatar_id }}"
-              },
-              {
-                "name": "preview_video_url",
-                "value": "={{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}"
-              }
-            ]
+          "operation": "executeQuery",
+          "query": "SELECT p.id as person_id, p.full_name, p.email, p.phone, p.notification_preference, a.style_name\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}'",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1344,
+          -48
+        ],
+        "id": "get-person-info",
+        "name": "DB: Get Person Info",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const person = $json;\nconst avatarInfo = $(\"Extract Avatar Info\").first().json;\n\nreturn [{\n  json: {\n    person_id: person.person_id,\n    email: person.email,\n    phone: person.phone,\n    notification_pref: person.notification_preference || 'email',\n    subject: 'Your Avatar is Ready for Review',\n    message: 'Great news! Your ' + (person.style_name || 'new') + ' avatar motion has been generated and is ready for your review.'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1568,
+          -48
+        ],
+        "id": "prep-notification",
+        "name": "Prep: Notification"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "kd7uDJETbUifZeNK",
+            "mode": "list"
           },
           "options": {}
         },
-        "name": "API: Send Notification",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
         "position": [
-          1306,
+          1792,
           -48
         ],
-        "id": "563ee9e4-c795-4b1d-a8e6-48ae2a3e65c0"
+        "id": "call-notification",
+        "name": "Call: Send User Notification"
+      },
+      {
+        "parameters": {
+          "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1344,
+          352
+        ],
+        "id": "format-error",
+        "name": "Format Error"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "mBVi9C0eRoq1xTeb",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1568,
+          352
+        ],
+        "id": "call-error-email",
+        "name": "Call: Email Error"
       }
     ],
     "connections": {
@@ -641,6 +811,13 @@
               "type": "main",
               "index": 0
             }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
           ]
         ]
       },
@@ -664,7 +841,54 @@
               "index": 0
             },
             {
-              "node": "API: Send Notification",
+              "node": "DB: Get Person Info",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Get Person Info": {
+        "main": [
+          [
+            {
+              "node": "Prep: Notification",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Notification": {
+        "main": [
+          [
+            {
+              "node": "Call: Send User Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Error": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
               "type": "main",
               "index": 0
             }
