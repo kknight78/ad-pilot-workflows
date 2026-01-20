@@ -1,0 +1,1091 @@
+{
+  "updatedAt": "2026-01-20T12:30:44.863Z",
+  "createdAt": "2026-01-16T16:05:47.665Z",
+  "id": "kd7uDJETbUifZeNK",
+  "name": "[Service] Send User Notification",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger",
+      "name": "When Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.subject) {\n  throw new Error('subject is required');\n}\nif (!input.message) {\n  throw new Error('message is required');\n}\n\n// Must have either person_id or direct contact info\nif (!input.person_id && !input.email && !input.phone) {\n  throw new Error('person_id or email/phone is required');\n}\n\nreturn [{\n  json: {\n    person_id: input.person_id || null,\n    email: input.email || null,\n    phone: input.phone || null,\n    notification_type: input.notification_type || 'preference',\n    subject: input.subject,\n    message: input.message,\n    link: input.link || null\n  }\n}];"
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-person-id",
+              "leftValue": "={{ $json.person_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-person-id",
+      "name": "If: Has Person ID",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, email, phone, notification_preference FROM persons WHERE id = '{{ $json.person_id }}'::uuid",
+        "options": {}
+      },
+      "id": "lookup-person",
+      "name": "DB: Lookup Person",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        672,
+        -32
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Validate Input').item.json;\nconst person = $json;\n\nreturn [{\n  json: {\n    email: person.email || input.email,\n    phone: person.phone || input.phone,\n    notification_type: input.notification_type === 'preference' \n      ? (person.notification_preference || 'email')\n      : input.notification_type,\n    subject: input.subject,\n    message: input.message,\n    link: input.link\n  }\n}];"
+      },
+      "id": "merge-person-data",
+      "name": "Merge Person Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\nreturn [{\n  json: {\n    email: input.email,\n    phone: input.phone,\n    notification_type: input.notification_type === 'preference' ? 'email' : input.notification_type,\n    subject: input.subject,\n    message: input.message,\n    link: input.link\n  }\n}];"
+      },
+      "id": "use-direct-contact",
+      "name": "Use Direct Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "empty"
+      },
+      "id": "merge-paths",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1120,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody\n  }\n}];"
+      },
+      "id": "prepare-messages",
+      "name": "Prepare Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "should-email",
+              "leftValue": "={{ $json.should_send_email }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-send-email",
+      "name": "If: Send Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Ad Pilot <notification@ad-pilot.ai>\",\n  \"to\": \"{{ $json.email }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html_body) }}\n}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1792,
+        -224
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "should-sms",
+              "leftValue": "={{ $json.should_send_sms }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-send-sms",
+      "name": "If: Send SMS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const preparedData = $('Prepare Messages').item.json;\nconst emailResult = $('Send Email (Resend)').item?.json;\nconst smsResult = $('Send SMS (Twilio)').item?.json;\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
+      },
+      "id": "return-result",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through for merge\nreturn [$json];"
+      },
+      "id": "email-skip",
+      "name": "Email Skip",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through for merge\nreturn [$json];"
+      },
+      "id": "sms-skip",
+      "name": "SMS Skip",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "empty"
+      },
+      "id": "merge-email",
+      "name": "Merge Email",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2016,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "empty"
+      },
+      "id": "merge-sms",
+      "name": "Merge SMS",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2016,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "from": "+13095031120",
+        "to": "={{ $json.phone }}",
+        "message": "={{ $json.sms_body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        160
+      ],
+      "id": "5dee5642-9ada-41a2-b075-2ecf74538afb",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "3DZv7lkyYiIyT4Nf",
+          "name": "Twilio Basic Auth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When Called by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "If: Has Person ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Has Person ID": {
+      "main": [
+        [
+          {
+            "node": "DB: Lookup Person",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use Direct Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Lookup Person": {
+      "main": [
+        [
+          {
+            "node": "Merge Person Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Person Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Direct Contact": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        [
+          {
+            "node": "Prepare Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Messages": {
+      "main": [
+        [
+          {
+            "node": "If: Send Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If: Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Send Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email (Resend)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email (Resend)": {
+      "main": [
+        [
+          {
+            "node": "Merge Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Skip": {
+      "main": [
+        [
+          {
+            "node": "Merge Email",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "If: Send SMS": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SMS Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS Skip": {
+      "main": [
+        [
+          {
+            "node": "Merge SMS",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Email": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge SMS": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message": {
+      "main": [
+        [
+          {
+            "node": "Merge SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "29220c2e-0741-41f7-8b3f-9a1127cd7a59",
+  "activeVersionId": "29220c2e-0741-41f7-8b3f-9a1127cd7a59",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-16T16:05:47.665Z",
+      "createdAt": "2026-01-16T16:05:47.665Z",
+      "role": "workflow:owner",
+      "workflowId": "kd7uDJETbUifZeNK",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-20T12:30:58.396Z",
+    "createdAt": "2026-01-20T12:30:44.868Z",
+    "versionId": "29220c2e-0741-41f7-8b3f-9a1127cd7a59",
+    "workflowId": "kd7uDJETbUifZeNK",
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "trigger",
+        "name": "When Called by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          0,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.subject) {\n  throw new Error('subject is required');\n}\nif (!input.message) {\n  throw new Error('message is required');\n}\n\n// Must have either person_id or direct contact info\nif (!input.person_id && !input.email && !input.phone) {\n  throw new Error('person_id or email/phone is required');\n}\n\nreturn [{\n  json: {\n    person_id: input.person_id || null,\n    email: input.email || null,\n    phone: input.phone || null,\n    notification_type: input.notification_type || 'preference',\n    subject: input.subject,\n    message: input.message,\n    link: input.link || null\n  }\n}];"
+        },
+        "id": "validate-input",
+        "name": "Validate Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "has-person-id",
+                "leftValue": "={{ $json.person_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-has-person-id",
+        "name": "If: Has Person ID",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          448,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id, email, phone, notification_preference FROM persons WHERE id = '{{ $json.person_id }}'::uuid",
+          "options": {}
+        },
+        "id": "lookup-person",
+        "name": "DB: Lookup Person",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          672,
+          -32
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $('Validate Input').item.json;\nconst person = $json;\n\nreturn [{\n  json: {\n    email: person.email || input.email,\n    phone: person.phone || input.phone,\n    notification_type: input.notification_type === 'preference' \n      ? (person.notification_preference || 'email')\n      : input.notification_type,\n    subject: input.subject,\n    message: input.message,\n    link: input.link\n  }\n}];"
+        },
+        "id": "merge-person-data",
+        "name": "Merge Person Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          -32
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $json;\n\nreturn [{\n  json: {\n    email: input.email,\n    phone: input.phone,\n    notification_type: input.notification_type === 'preference' ? 'email' : input.notification_type,\n    subject: input.subject,\n    message: input.message,\n    link: input.link\n  }\n}];"
+        },
+        "id": "use-direct-contact",
+        "name": "Use Direct Contact",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          160
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "chooseBranch",
+          "output": "empty"
+        },
+        "id": "merge-paths",
+        "name": "Merge Paths",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.1,
+        "position": [
+          1120,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody\n  }\n}];"
+        },
+        "id": "prepare-messages",
+        "name": "Prepare Messages",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1344,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "should-email",
+                "leftValue": "={{ $json.should_send_email }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-send-email",
+        "name": "If: Send Email",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1568,
+          -128
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"Ad Pilot <notification@ad-pilot.ai>\",\n  \"to\": \"{{ $json.email }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html_body) }}\n}",
+          "options": {}
+        },
+        "id": "send-email",
+        "name": "Send Email (Resend)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1792,
+          -224
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "should-sms",
+                "leftValue": "={{ $json.should_send_sms }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-send-sms",
+        "name": "If: Send SMS",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1568,
+          256
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const preparedData = $('Prepare Messages').item.json;\nconst emailResult = $('Send Email (Resend)').item?.json;\nconst smsResult = $('Send SMS (Twilio)').item?.json;\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
+        },
+        "id": "return-result",
+        "name": "Return Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2240,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pass through for merge\nreturn [$json];"
+        },
+        "id": "email-skip",
+        "name": "Email Skip",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1792,
+          -32
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pass through for merge\nreturn [$json];"
+        },
+        "id": "sms-skip",
+        "name": "SMS Skip",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1792,
+          352
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "chooseBranch",
+          "output": "empty"
+        },
+        "id": "merge-email",
+        "name": "Merge Email",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.1,
+        "position": [
+          2016,
+          -128
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "chooseBranch",
+          "output": "empty"
+        },
+        "id": "merge-sms",
+        "name": "Merge SMS",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.1,
+        "position": [
+          2016,
+          256
+        ]
+      },
+      {
+        "parameters": {
+          "from": "+13095031120",
+          "to": "={{ $json.phone }}",
+          "message": "={{ $json.sms_body }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.twilio",
+        "typeVersion": 1,
+        "position": [
+          1792,
+          160
+        ],
+        "id": "5dee5642-9ada-41a2-b075-2ecf74538afb",
+        "name": "Send an SMS/MMS/WhatsApp message",
+        "credentials": {
+          "twilioApi": {
+            "id": "3DZv7lkyYiIyT4Nf",
+            "name": "Twilio Basic Auth"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "When Called by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Validate Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Input": {
+        "main": [
+          [
+            {
+              "node": "If: Has Person ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Has Person ID": {
+        "main": [
+          [
+            {
+              "node": "DB: Lookup Person",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Use Direct Contact",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Lookup Person": {
+        "main": [
+          [
+            {
+              "node": "Merge Person Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Person Data": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Use Direct Contact": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge Paths": {
+        "main": [
+          [
+            {
+              "node": "Prepare Messages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Messages": {
+        "main": [
+          [
+            {
+              "node": "If: Send Email",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "If: Send SMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Send Email": {
+        "main": [
+          [
+            {
+              "node": "Send Email (Resend)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Email Skip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Email (Resend)": {
+        "main": [
+          [
+            {
+              "node": "Merge Email",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Merge Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Skip": {
+        "main": [
+          [
+            {
+              "node": "Merge Email",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "If: Send SMS": {
+        "main": [
+          [
+            {
+              "node": "Send an SMS/MMS/WhatsApp message",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "SMS Skip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SMS Skip": {
+        "main": [
+          [
+            {
+              "node": "Merge SMS",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge Email": {
+        "main": [
+          [
+            {
+              "node": "Return Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge SMS": {
+        "main": [
+          [
+            {
+              "node": "Return Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send an SMS/MMS/WhatsApp message": {
+        "main": [
+          [
+            {
+              "node": "Merge SMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": "update to twilio node",
+    "description": "",
+    "autosaved": false
+  },
+  "tags": []
+}
