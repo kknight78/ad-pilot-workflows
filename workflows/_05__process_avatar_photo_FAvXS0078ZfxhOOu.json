@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-06T22:18:42.010Z",
+  "updatedAt": "2026-01-18T00:35:51.967Z",
   "createdAt": "2025-12-17T14:15:04.048Z",
   "id": "FAvXS0078ZfxhOOu",
   "name": "[05] Process Avatar Photo",
@@ -751,6 +751,89 @@
           "name": "Railway Postgres"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active, is_deleted)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',\n  '{{ $json.id }}',\n  true,\n  false\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        5048,
+        48
+      ],
+      "id": "postgres-insert-client-avatar",
+      "name": "DB: Insert Client Avatar",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $(\"Parse Input\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[05] Process Avatar Photo\",\n    error: \"BiRefNet background removal failed or timed out\",\n    details: {\n      person_name: input.person_name,\n      style_name: input.style_name\n    },\n    job_id: input.request_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        560
+      ],
+      "id": "format-birefnet-error",
+      "name": "Format BiRefNet Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $(\"Parse Input\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[05] Process Avatar Photo\",\n    error: \"HeyGen photo avatar creation failed or timed out\",\n    details: {\n      person_name: input.person_name,\n      style_name: input.style_name\n    },\n    job_id: input.request_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4384,
+        512
+      ],
+      "id": "format-photo-error",
+      "name": "Format Photo Avatar Error"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mBVi9C0eRoq1xTeb",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2864,
+        560
+      ],
+      "id": "call-error-birefnet",
+      "name": "Call: Email Error (BiRefNet)"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mBVi9C0eRoq1xTeb",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        4608,
+        512
+      ],
+      "id": "call-error-photo",
+      "name": "Call: Email Error (Photo)"
     }
   ],
   "connections": {
@@ -901,6 +984,11 @@
         [
           {
             "node": "Respond BiRefNet Error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format BiRefNet Error",
             "type": "main",
             "index": 0
           }
@@ -1082,6 +1170,11 @@
             "node": "Respond Photo Avatar Error",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Format Photo Avatar Error",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -1145,7 +1238,40 @@
       "main": [
         [
           {
+            "node": "DB: Insert Client Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Insert Client Avatar": {
+      "main": [
+        [
+          {
             "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format BiRefNet Error": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error (BiRefNet)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Photo Avatar Error": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error (Photo)",
             "type": "main",
             "index": 0
           }
@@ -1161,8 +1287,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "fde34753-5828-431f-b58c-941905931e07",
-  "activeVersionId": "fde34753-5828-431f-b58c-941905931e07",
+  "versionId": "d71fa51c-05d6-46f2-b047-265d2c4f0716",
+  "activeVersionId": "d71fa51c-05d6-46f2-b047-265d2c4f0716",
   "triggerCount": 1,
   "shared": [
     {
@@ -1174,9 +1300,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-06T22:18:42.014Z",
-    "createdAt": "2026-01-06T22:18:42.014Z",
-    "versionId": "fde34753-5828-431f-b58c-941905931e07",
+    "updatedAt": "2026-01-18T00:35:51.971Z",
+    "createdAt": "2026-01-18T00:35:51.971Z",
+    "versionId": "d71fa51c-05d6-46f2-b047-265d2c4f0716",
     "workflowId": "FAvXS0078ZfxhOOu",
     "nodes": [
       {
@@ -1924,6 +2050,89 @@
             "name": "Railway Postgres"
           }
         }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active, is_deleted)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',\n  '{{ $json.id }}',\n  true,\n  false\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n);",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          5048,
+          48
+        ],
+        "id": "postgres-insert-client-avatar",
+        "name": "DB: Insert Client Avatar",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $(\"Parse Input\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[05] Process Avatar Photo\",\n    error: \"BiRefNet background removal failed or timed out\",\n    details: {\n      person_name: input.person_name,\n      style_name: input.style_name\n    },\n    job_id: input.request_id\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2640,
+          560
+        ],
+        "id": "format-birefnet-error",
+        "name": "Format BiRefNet Error"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $(\"Parse Input\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[05] Process Avatar Photo\",\n    error: \"HeyGen photo avatar creation failed or timed out\",\n    details: {\n      person_name: input.person_name,\n      style_name: input.style_name\n    },\n    job_id: input.request_id\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4384,
+          512
+        ],
+        "id": "format-photo-error",
+        "name": "Format Photo Avatar Error"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "mBVi9C0eRoq1xTeb",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          2864,
+          560
+        ],
+        "id": "call-error-birefnet",
+        "name": "Call: Email Error (BiRefNet)"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "mBVi9C0eRoq1xTeb",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          4608,
+          512
+        ],
+        "id": "call-error-photo",
+        "name": "Call: Email Error (Photo)"
       }
     ],
     "connections": {
@@ -2074,6 +2283,11 @@
           [
             {
               "node": "Respond BiRefNet Error",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Format BiRefNet Error",
               "type": "main",
               "index": 0
             }
@@ -2255,6 +2469,11 @@
               "node": "Respond Photo Avatar Error",
               "type": "main",
               "index": 0
+            },
+            {
+              "node": "Format Photo Avatar Error",
+              "type": "main",
+              "index": 0
             }
           ]
         ]
@@ -2318,7 +2537,40 @@
         "main": [
           [
             {
+              "node": "DB: Insert Client Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Insert Client Avatar": {
+        "main": [
+          [
+            {
               "node": "Format Success Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format BiRefNet Error": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error (BiRefNet)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Photo Avatar Error": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error (Photo)",
               "type": "main",
               "index": 0
             }
