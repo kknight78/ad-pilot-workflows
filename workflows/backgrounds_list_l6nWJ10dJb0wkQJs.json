@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-13T23:24:30.926Z",
+  "updatedAt": "2026-01-19T15:14:36.334Z",
   "createdAt": "2026-01-13T23:24:30.926Z",
   "id": "l6nWJ10dJb0wkQJs",
   "name": "Backgrounds List",
@@ -8,7 +8,6 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "GET",
         "path": "backgrounds",
         "responseMode": "responseNode",
         "options": {
@@ -34,7 +33,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        200
+        208
       ],
       "id": "webhook-backgrounds",
       "name": "Webhook",
@@ -43,14 +42,14 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, client_id, label, background_type, category, cloudinary_url, is_default, active, sort_order, crop_data FROM client_backgrounds WHERE active = true ORDER BY category, is_default DESC, sort_order, created_at DESC",
+        "query": "SELECT id, client_id, label, category, cloudinary_url, is_default, active, sort_order, crop_data, text_overlay FROM client_backgrounds WHERE active = true ORDER BY category, is_default DESC, sort_order, created_at DESC",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        200,
-        200
+        208,
+        208
       ],
       "id": "query-backgrounds",
       "name": "Query Backgrounds",
@@ -63,13 +62,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const backgrounds = $input.all().map(item => ({\n  id: item.json.id,\n  client_id: item.json.client_id,\n  label: item.json.label,\n  name: item.json.label,\n  background_type: item.json.background_type,\n  category: item.json.category,\n  cloudinary_url: item.json.cloudinary_url,\n  is_default: item.json.is_default,\n  crop_data: item.json.crop_data\n}));\n\nreturn [{ json: { success: true, backgrounds } }];"
+        "jsCode": "const backgrounds = $input.all().map(item => ({\n  id: item.json.id,\n  client_id: item.json.client_id,\n  label: item.json.label,\n  name: item.json.label,\n  category: item.json.category,\n  cloudinary_url: item.json.cloudinary_url,\n  is_default: item.json.is_default,\n  crop_data: item.json.crop_data,\n  text_overlay: item.json.text_overlay\n}));\n\nreturn [{ json: { success: true, backgrounds } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         400,
-        200
+        208
       ],
       "id": "format-response",
       "name": "Format Response"
@@ -83,8 +82,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        600,
-        200
+        608,
+        208
       ],
       "id": "respond",
       "name": "Respond"
@@ -132,9 +131,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "3b36ac6b-f9d0-4a03-9e4d-73f448ebdfad",
-  "activeVersionId": "3b36ac6b-f9d0-4a03-9e4d-73f448ebdfad",
+  "pinData": {},
+  "versionId": "dce1870e-5785-4d42-baab-e66fb5fc0100",
+  "activeVersionId": "dce1870e-5785-4d42-baab-e66fb5fc0100",
   "triggerCount": 1,
   "shared": [
     {
@@ -146,14 +145,13 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-13T23:24:30.938Z",
-    "createdAt": "2026-01-13T23:24:30.938Z",
-    "versionId": "3b36ac6b-f9d0-4a03-9e4d-73f448ebdfad",
+    "updatedAt": "2026-01-19T15:14:48.655Z",
+    "createdAt": "2026-01-19T15:14:36.338Z",
+    "versionId": "dce1870e-5785-4d42-baab-e66fb5fc0100",
     "workflowId": "l6nWJ10dJb0wkQJs",
     "nodes": [
       {
         "parameters": {
-          "httpMethod": "GET",
           "path": "backgrounds",
           "responseMode": "responseNode",
           "options": {
@@ -179,7 +177,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          200
+          208
         ],
         "id": "webhook-backgrounds",
         "name": "Webhook",
@@ -188,14 +186,14 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT id, client_id, label, background_type, category, cloudinary_url, is_default, active, sort_order, crop_data FROM client_backgrounds WHERE active = true ORDER BY category, is_default DESC, sort_order, created_at DESC",
+          "query": "SELECT id, client_id, label, category, cloudinary_url, is_default, active, sort_order, crop_data, text_overlay FROM client_backgrounds WHERE active = true ORDER BY category, is_default DESC, sort_order, created_at DESC",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          200,
-          200
+          208,
+          208
         ],
         "id": "query-backgrounds",
         "name": "Query Backgrounds",
@@ -208,13 +206,13 @@
       },
       {
         "parameters": {
-          "jsCode": "const backgrounds = $input.all().map(item => ({\n  id: item.json.id,\n  client_id: item.json.client_id,\n  label: item.json.label,\n  name: item.json.label,\n  background_type: item.json.background_type,\n  category: item.json.category,\n  cloudinary_url: item.json.cloudinary_url,\n  is_default: item.json.is_default,\n  crop_data: item.json.crop_data\n}));\n\nreturn [{ json: { success: true, backgrounds } }];"
+          "jsCode": "const backgrounds = $input.all().map(item => ({\n  id: item.json.id,\n  client_id: item.json.client_id,\n  label: item.json.label,\n  name: item.json.label,\n  category: item.json.category,\n  cloudinary_url: item.json.cloudinary_url,\n  is_default: item.json.is_default,\n  crop_data: item.json.crop_data,\n  text_overlay: item.json.text_overlay\n}));\n\nreturn [{ json: { success: true, backgrounds } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           400,
-          200
+          208
         ],
         "id": "format-response",
         "name": "Format Response"
@@ -228,8 +226,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          600,
-          200
+          608,
+          208
         ],
         "id": "respond",
         "name": "Respond"
@@ -271,8 +269,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
+    "name": "remove background_type",
+    "description": "",
     "autosaved": false
   },
   "tags": []
