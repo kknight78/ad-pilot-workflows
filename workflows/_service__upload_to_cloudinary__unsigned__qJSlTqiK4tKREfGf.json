@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-16T15:36:15.416Z",
+  "updatedAt": "2026-01-17T20:55:00.689Z",
   "createdAt": "2026-01-16T15:25:41.700Z",
   "id": "qJSlTqiK4tKREfGf",
   "name": "[Service] Upload to Cloudinary (Unsigned)",
@@ -21,7 +21,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.file_url) {\n  throw new Error('file_url is required');\n}\nif (!input.upload_preset) {\n  throw new Error('upload_preset is required');\n}\n\n// Default resource_type to 'video' if not specified\nconst resourceType = input.resource_type || 'video';\n\nreturn [{\n  json: {\n    file_url: input.file_url,\n    upload_preset: input.upload_preset,\n    resource_type: resourceType,\n    public_id: input.public_id || null\n  }\n}];"
+        "jsCode": "const input = $json;\n\nif (!input.file_url) {\n  throw new Error('file_url is required');\n}\nif (!input.upload_preset) {\n  throw new Error('upload_preset is required');\n}\n\nconst resourceType = input.resource_type || 'video';\n\nreturn [{\n  json: {\n    file_url: input.file_url,\n    upload_preset: input.upload_preset,\n    resource_type: resourceType,\n    public_id: input.public_id || null,\n    _context: input._context || {}\n  }\n}];"
       },
       "id": "validate-input",
       "name": "Validate Input",
@@ -34,14 +34,47 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $json;\nconst cloudName = 'dtpqxuwby';\nconst url = `https://api.cloudinary.com/v1_1/${cloudName}/${input.resource_type}/upload`;\n\n// Build form data\nconst formData = new FormData();\nformData.append('file', input.file_url);\nformData.append('upload_preset', input.upload_preset);\n\n// Only add public_id if provided\nif (input.public_id) {\n  formData.append('public_id', input.public_id);\n}\n\nconst response = await fetch(url, {\n  method: 'POST',\n  body: formData\n});\n\nconst result = await response.json();\n\nif (result.error) {\n  throw new Error(`Cloudinary error: ${result.error.message}`);\n}\n\nreturn [{\n  json: {\n    secure_url: result.secure_url,\n    public_id: result.public_id,\n    resource_type: result.resource_type,\n    format: result.format,\n    bytes: result.bytes,\n    width: result.width,\n    height: result.height,\n    duration: result.duration\n  }\n}];"
+        "method": "POST",
+        "url": "=https://api.cloudinary.com/v1_1/dtpqxuwby/{{ $json.resource_type }}/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json.file_url }}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "={{ $json.upload_preset }}"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.public_id }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "upload-and-return",
+      "id": "upload-cloudinary",
       "name": "Upload to Cloudinary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nconst context = $('Validate Input').first().json._context || {};\n\nif (result.error) {\n  throw new Error(`Cloudinary error: ${result.error.message}`);\n}\n\nreturn [{\n  json: {\n    secure_url: result.secure_url,\n    public_id: result.public_id,\n    resource_type: result.resource_type,\n    format: result.format,\n    bytes: result.bytes,\n    width: result.width,\n    height: result.height,\n    duration: result.duration,\n    _context: context\n  }\n}];"
+      },
+      "id": "format-result",
+      "name": "Format Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
+        672,
         0
       ]
     }
@@ -68,6 +101,17 @@
           }
         ]
       ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Format Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -78,8 +122,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "df9b766a-3b28-4204-b794-ce930214d902",
-  "activeVersionId": "df9b766a-3b28-4204-b794-ce930214d902",
+  "versionId": "3d0678b6-ac80-4c75-8caa-53433a8719bb",
+  "activeVersionId": "3d0678b6-ac80-4c75-8caa-53433a8719bb",
   "triggerCount": 0,
   "shared": [
     {
@@ -91,9 +135,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-16T15:36:15.420Z",
-    "createdAt": "2026-01-16T15:36:15.420Z",
-    "versionId": "df9b766a-3b28-4204-b794-ce930214d902",
+    "updatedAt": "2026-01-17T20:55:00.696Z",
+    "createdAt": "2026-01-17T20:55:00.696Z",
+    "versionId": "3d0678b6-ac80-4c75-8caa-53433a8719bb",
     "workflowId": "qJSlTqiK4tKREfGf",
     "nodes": [
       {
@@ -111,7 +155,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.file_url) {\n  throw new Error('file_url is required');\n}\nif (!input.upload_preset) {\n  throw new Error('upload_preset is required');\n}\n\n// Default resource_type to 'video' if not specified\nconst resourceType = input.resource_type || 'video';\n\nreturn [{\n  json: {\n    file_url: input.file_url,\n    upload_preset: input.upload_preset,\n    resource_type: resourceType,\n    public_id: input.public_id || null\n  }\n}];"
+          "jsCode": "const input = $json;\n\nif (!input.file_url) {\n  throw new Error('file_url is required');\n}\nif (!input.upload_preset) {\n  throw new Error('upload_preset is required');\n}\n\nconst resourceType = input.resource_type || 'video';\n\nreturn [{\n  json: {\n    file_url: input.file_url,\n    upload_preset: input.upload_preset,\n    resource_type: resourceType,\n    public_id: input.public_id || null,\n    _context: input._context || {}\n  }\n}];"
         },
         "id": "validate-input",
         "name": "Validate Input",
@@ -124,14 +168,47 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $json;\nconst cloudName = 'dtpqxuwby';\nconst url = `https://api.cloudinary.com/v1_1/${cloudName}/${input.resource_type}/upload`;\n\n// Build form data\nconst formData = new FormData();\nformData.append('file', input.file_url);\nformData.append('upload_preset', input.upload_preset);\n\n// Only add public_id if provided\nif (input.public_id) {\n  formData.append('public_id', input.public_id);\n}\n\nconst response = await fetch(url, {\n  method: 'POST',\n  body: formData\n});\n\nconst result = await response.json();\n\nif (result.error) {\n  throw new Error(`Cloudinary error: ${result.error.message}`);\n}\n\nreturn [{\n  json: {\n    secure_url: result.secure_url,\n    public_id: result.public_id,\n    resource_type: result.resource_type,\n    format: result.format,\n    bytes: result.bytes,\n    width: result.width,\n    height: result.height,\n    duration: result.duration\n  }\n}];"
+          "method": "POST",
+          "url": "=https://api.cloudinary.com/v1_1/dtpqxuwby/{{ $json.resource_type }}/upload",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "file",
+                "value": "={{ $json.file_url }}"
+              },
+              {
+                "name": "upload_preset",
+                "value": "={{ $json.upload_preset }}"
+              },
+              {
+                "name": "public_id",
+                "value": "={{ $json.public_id }}"
+              }
+            ]
+          },
+          "options": {}
         },
-        "id": "upload-and-return",
+        "id": "upload-cloudinary",
         "name": "Upload to Cloudinary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          448,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const result = $json;\nconst context = $('Validate Input').first().json._context || {};\n\nif (result.error) {\n  throw new Error(`Cloudinary error: ${result.error.message}`);\n}\n\nreturn [{\n  json: {\n    secure_url: result.secure_url,\n    public_id: result.public_id,\n    resource_type: result.resource_type,\n    format: result.format,\n    bytes: result.bytes,\n    width: result.width,\n    height: result.height,\n    duration: result.duration,\n    _context: context\n  }\n}];"
+        },
+        "id": "format-result",
+        "name": "Format Result",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          448,
+          672,
           0
         ]
       }
@@ -153,6 +230,17 @@
           [
             {
               "node": "Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Format Result",
               "type": "main",
               "index": 0
             }
