@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-13T13:35:48.564Z",
+  "updatedAt": "2026-01-20T01:19:19.849Z",
   "createdAt": "2025-12-13T13:57:28.375Z",
   "id": "FOQ8foX33kSuaZEJ",
   "name": "[04] Generate Video",
@@ -40,8 +40,8 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        1328,
-        -96
+        1424,
+        -64
       ],
       "id": "923bb706-0c19-45b1-a658-170d42b39318",
       "name": "Stop and Error"
@@ -79,8 +79,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1024,
-        -96
+        992,
+        -64
       ],
       "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
       "name": "Format Node Error"
@@ -164,40 +164,6 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.remove.bg/v1.0/removebg",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "x-api-key",
-              "value": "72rkEtm8QRzFpqEmjL42o89z"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"image_url\": \"{{ $json.photo_url || $json.image_url }}\",\n  \"size\": \"auto\",\n  \"format\": \"png\",\n  \"crop\": true,\n  \"crop_margin\": \"10%\"\n}",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
-            }
-          }
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        240,
-        -144
-      ],
-      "id": "d4ecef3b-4065-44b9-b76e-95c1be44b7ac",
-      "name": "API: Remove.bg",
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "method": "POST",
         "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
         "sendBody": true,
         "contentType": "multipart-form-data",
@@ -223,7 +189,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        544,
+        736,
         -160
       ],
       "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
@@ -380,12 +346,12 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Get the VIN from your JSON data\nconst vin = $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file - use $input.item.binary to preserve the actual data\nreturn {\n  json: $json,\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
+        "jsCode": "// Get the VIN from context (passed through service)\nconst vin = $json.context?.vin || $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file and original context data\nreturn {\n  json: {\n    ...$json.context,\n    vin: vin\n  },\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        384,
+        576,
         -160
       ],
       "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
@@ -394,7 +360,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Updated Build Template JSON node\n// Changes:\n// 1. Accepts single `ratio` from loop (not array)\n// 2. Hides platform-banner when `skipPlatformBanner: true`\n\nreturn (async () => {\n\nconst config = $json;\n\n// ============================================\n// STEP 1: Determine Template Tag\n// ============================================\nconst clientId = (config.client || 'ccc').toUpperCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\n\n// Convert template_id to tag format\n// \"ad-multi-item-1\" → \"AD_MULTI-ITEM-1\"\n// \"organic-educational-1\" → \"ORGANIC_EDUCATIONAL-1\"\nconst templateTag = templateId.toUpperCase().replace(/-/, '_');\nconst uniqueTag = `${clientId}_${templateTag}_${ratio}`;\n\n//console.log(`🏷️ Fetching template with tag: ${uniqueTag}`);\n\n// ============================================\n// STEP 2: Fetch Template from Creatomate\n// ============================================\nconst apiKey = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\n// Step 1: Find template by tag (returns id, name, tags - but NOT source)\nconst templateList = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates?tags=${encodeURIComponent(uniqueTag)}`,\n  headers: {\n    'Authorization': `Bearer ${apiKey}`\n  },\n  json: true\n});\n\nif (!templateList || !Array.isArray(templateList) || templateList.length === 0) {\n  throw new Error(`No template found with tag: ${uniqueTag}`);\n}\n\nconst templateInfo = templateList[0];\n//console.log(`📍 Found template: ${templateInfo.name} (ID: ${templateInfo.id})`);\n\n// Step 2: Fetch full template by ID (this returns the source)\nconst template = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates/${templateInfo.id}`,\n  headers: {\n    'Authorization': `Bearer ${apiKey}`\n  },\n  json: true\n});\n\nif (!template.source) {\n  throw new Error(`Template ${template.id} has no source property`);\n}\n\n// Deep clone the source\nconst source = JSON.parse(JSON.stringify(template.source));\n\n// Get template dimensions for percentage calculations\nconst templateWidth = source.width || 720;\nconst templateHeight = source.height || 1280;\n\n//console.log(`✅ Loaded template source (${Object.keys(template.source).length} top-level keys)`);\n\n// ============================================\n// STEP 3: Build Swap Config from Incoming Data\n// ============================================\n\n// Check if we should skip platform banner (ffmpeg will add it)\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'SHAD';\n\n// For platform text (only used if NOT skipping)\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  'tiktok': `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  'youtube': `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  'instagram': `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  'facebook': `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  'none': `Ask for ${avatarName} for a great deal!`\n};\nconst platformText = platformTexts[basePlatform] || platformTexts['none'];\n\n// Timing from _section_timings\n// Note: Calculate Timings now uses 1-based segment numbering (segment_1, segment_2, etc.)\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\n// For spotlight template: hero is on screen during hook AND segment_1 (hero description)\n// So use segment_1.end as the hero timing end instead of hookEnd\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\nconst hookEnd = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\n//console.log(`🎯 Template: ${templateId}, isSpotlight: ${isSpotlight}, hookEnd: ${hookEnd}`);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration || ctaSection?.end || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\n// Vehicles\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\n\n// Spotlight feature photos\nconst selectedPhotos = config.selected_photos || [];\nconst featurePhotos = selectedPhotos.slice(1, 6);\n\n// Price formatter\nfunction formatPrice(price) {\n  if (!price) return null;\n  let priceNum = price;\n  if (typeof price === 'string') {\n    priceNum = parseFloat(price.replace(/[^0-9.]/g, ''));\n  }\n  if (isNaN(priceNum)) return price;\n  return '$' + priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 });\n}\n\n// Build swap config\nconst swapConfig = {\n  hookEnd,\n  ctaStart,\n  videoDuration,\n  skipPlatformBanner,  // NEW: flag to hide banner\n  platformText,\n  bgMusicSource: config.media?.music_url,\n  bgImageSource: config.background_image_url,\n  avatar1Source: config.avatar_video_url,\n  avatar1MaskSource: config.avatar_video_alpha_url || config.avatar_mask_video_url,\n  item1Source: heroVehicle.photo_url,\n  item1Title: heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}` : null,\n  item1Price: formatPrice(heroVehicle.price),\n  videoThumbnailText: config.script?.hook || config.topic || '',\n};\n\n// Spotlight features\n// Note: segment_1 is hero extended description, so features start at segment_2\nfeaturePhotos.forEach((photo, index) => {\n  const featureNum = index + 1;  // Feature 1-5\n  const segmentNum = featureNum + 1;  // segment_2 through segment_6\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + segmentNum);\n  swapConfig[`item1Feature${featureNum}Source`] = photo?.photo_url;\n  swapConfig[`item1Feature${featureNum}Time`] = segmentTiming?.start;\n  swapConfig[`item1Feature${featureNum}Duration`] = segmentTiming?.duration;\n});\n\n// Multi-item vehicles\n// Note: segment numbering is 1-based (segment_1, segment_2, etc.)\n// itemNum already equals index + 1, so use itemNum for segment lookup\nvehicles.forEach((vehicle, index) => {\n  const itemNum = index + 1;\n  if (itemNum > 5) return;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + itemNum);\n  swapConfig[`item${itemNum}Source`] = vehicle.photo_url;\n  swapConfig[`item${itemNum}Title`] = vehicle.year && vehicle.make && vehicle.model\n    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;\n  swapConfig[`item${itemNum}Price`] = formatPrice(vehicle.price);\n  swapConfig[`item${itemNum}Mileage`] = vehicle.mileage\n    ? `${Number(vehicle.mileage).toLocaleString('en-US')} mi` : null;\n  // For spotlight, Item-1 (hero) should span full video, not just segment_1\n  // For multi-car, each item gets its segment timing\n  if (isSpotlight && itemNum === 1) {\n    swapConfig[`item${itemNum}Time`] = 0;\n    swapConfig[`item${itemNum}Duration`] = videoDuration;\n  } else {\n    swapConfig[`item${itemNum}Time`] = segmentTiming?.start;\n    swapConfig[`item${itemNum}Duration`] = segmentTiming?.duration;\n  }\n  swapConfig[`item${itemNum}Visible`] = true;\n});\n\n// Mark unused slots\nfor (let i = vehicles.length + 1; i <= 5; i++) {\n  swapConfig[`item${i}Visible`] = false;\n}\n\n//console.log(`📋 Config built for: ${templateId}`);\n//console.log(`🏷️ Skip platform banner: ${skipPlatformBanner}`);\n\n// ============================================\n// STEP 4: Apply Swaps to Source\n// ============================================\n\n// NEW: Store extracted banner config\nlet bannerConfig = null;\n\nfunction applyScaleAnimTiming(element, cfg) {\n  if (!element.animations) return;\n  const scaleAnims = element.animations.filter(a => a.type === 'scale');\n\n  if (scaleAnims.length === 1 && cfg.hookEnd !== undefined) {\n    scaleAnims[0].time = cfg.hookEnd;\n  } else if (scaleAnims.length === 2) {\n    if (cfg.hookEnd !== undefined) scaleAnims[0].time = cfg.hookEnd;\n    if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.ctaStart;\n  }\n}\n\nfunction applySwaps(element, cfg, parent = null) {\n  const name = element.name;\n\n  // Avatar\n  if (name?.match(/^avatar-(\\d+)$/i)) {\n    const n = RegExp.$1;\n    \n    // Source only applies to non-compositions\n    if (element.type !== \"composition\" && cfg[`avatar${n}Source`]) {\n      element.source = cfg[`avatar${n}Source`];\n    }\n    \n    // Animation applies to compositions (the container)\n    if (element.type === \"composition\") {\n      applyScaleAnimTiming(element, cfg);\n    }\n  }\n\n  // Avatar Mask Layer (for RVM alpha mask compositing)\n  if (name?.match(/^avatar-(\\d+)-mask$/)) {\n    const n = RegExp.$1;\n    if (cfg[`avatar${n}MaskSource`]) {\n      element.source = cfg[`avatar${n}MaskSource`];\n    }\n  }\n\n  // Item-1 nested elements (hero for spotlight)\n  if (name === 'photo' && parent === 'Item-1') {\n    if (cfg.item1Source) element.source = cfg.item1Source;\n    applyScaleAnimTiming(element, cfg);\n  }\n  if (name === 'title' && parent === 'Item-1') {\n    if (cfg.item1Title) element.text = cfg.item1Title;\n  }\n  if (name === 'price' && parent === 'Item-1') {\n    if (cfg.item1Price) element.text = cfg.item1Price;\n  }\n\n  // Features inside Item-1 (for spotlight template)\n  const featureMatch = name?.match(/^feature-(\\d+)$/);\n  if (featureMatch && parent === 'Item-1') {\n    const n = featureMatch[1];\n    if (cfg[`item1Feature${n}Source`]) element.source = cfg[`item1Feature${n}Source`];\n    if (cfg[`item1Feature${n}Time`] !== undefined) element.time = cfg[`item1Feature${n}Time`];\n    if (cfg[`item1Feature${n}Duration`] !== undefined) element.duration = cfg[`item1Feature${n}Duration`];\n  }\n\n  // Multi-item Items (1-5)\n  const itemMatch = name?.match(/^Item-(\\d+)$/);\n  if (itemMatch && itemMatch[1] !== '0') {\n    const n = itemMatch[1];\n    if (cfg[`item${n}Time`] !== undefined) element.time = cfg[`item${n}Time`];\n    if (cfg[`item${n}Duration`] !== undefined) element.duration = cfg[`item${n}Duration`];\n    if (cfg[`item${n}Visible`] === false) element.visible = false;\n  }\n\n  // Multi-item nested elements\n  const parentItemMatch = parent?.match(/^Item-(\\d+)$/);\n  if (parentItemMatch && parentItemMatch[1] !== '0') {\n    const n = parentItemMatch[1];\n    if (name === 'photo' && cfg[`item${n}Source`]) element.source = cfg[`item${n}Source`];\n    if (name === 'title' && cfg[`item${n}Title`]) element.text = cfg[`item${n}Title`];\n    if (name === 'price' && cfg[`item${n}Price`]) element.text = cfg[`item${n}Price`];\n    if (name === 'mileage' && cfg[`item${n}Mileage`]) element.text = cfg[`item${n}Mileage`];\n  }\n\n  // Platform banner - extract position BEFORE hiding\n  if (name === 'platform-banner' || name === 'platform-text') {\n    // NEW: Extract banner config from template before any modifications\n    if (!bannerConfig && element.y !== undefined) {\n      // Parse Y value - Creatomate uses strings like \"6.7%\" or pixel values\n      let yPercent = null;\n      const yVal = element.y;\n      if (typeof yVal === 'string' && yVal.endsWith('%')) {\n        yPercent = parseFloat(yVal) / 100; // \"6.7%\" -> 0.067\n      } else if (typeof yVal === 'number') {\n        yPercent = yVal / templateHeight;\n      }\n      \n      // Parse font_size - Creatomate uses strings like \"4 vmin\" or pixel values\n      let fontSizePercent = null;\n      const fontSize = element.font_size;\n      if (typeof fontSize === 'string' && fontSize.includes('vmin')) {\n        fontSizePercent = parseFloat(fontSize) / 100; // \"4 vmin\" -> 0.04\n      } else if (typeof fontSize === 'number') {\n        fontSizePercent = fontSize / Math.min(templateWidth, templateHeight);\n      }\n      \n      bannerConfig = {\n        y: element.y,\n        y_percent: yPercent,\n        font_size: element.font_size,\n        font_size_percent: fontSizePercent,\n        font_family: element.font_family,\n        font_weight: element.font_weight,\n        fill_color: element.fill_color,\n        template_width: templateWidth,\n        template_height: templateHeight\n      };\n      //console.log(`📐 Extracted banner config: y=${bannerConfig.y} (${(bannerConfig.y_percent * 100).toFixed(2)}%), font_size=${bannerConfig.font_size}`);\n    }\n\n    if (cfg.skipPlatformBanner) {\n      // Hide the banner - ffmpeg will add it later\n      element.visible = false;\n      //console.log(`✓ Hidden platform banner (ffmpeg will add)`);\n    } else {\n      // Keep banner visible and set text\n      if (cfg.platformText) element.text = cfg.platformText;\n      if (element.animations?.[0] && cfg.videoDuration) {\n        element.animations[0].duration = cfg.videoDuration;\n      }\n    }\n  }\n\n  // Company intro - duration matches hook\n  if (name === 'Company-Intro' || name === 'Contact-Info-intro') {\n    if (cfg.hookEnd !== undefined) element.duration = cfg.hookEnd;\n  }\n\n  // Company outro\n  if (name === 'Company-Outro') {\n    if (cfg.ctaStart !== undefined) element.time = cfg.ctaStart;\n  }\n\n  // Background music/image\n  if (name === 'background-music' && cfg.bgMusicSource) {\n    element.source = cfg.bgMusicSource;\n  }\n  if (name === 'background-image' && cfg.bgImageSource) {\n    element.source = cfg.bgImageSource;\n  }\n\n  // Educational video thumbnail\n  if (name === 'video-thumbnail' && cfg.videoThumbnailText) {\n    element.text = cfg.videoThumbnailText;\n  }\n\n  // Recurse\n  if (element.elements && Array.isArray(element.elements)) {\n    element.elements.forEach(child => applySwaps(child, cfg, name));\n  }\n}\n\n// Set top-level duration\nif (swapConfig.videoDuration) {\n  source.duration = swapConfig.videoDuration;\n}\n\n// Apply swaps recursively\nif (source.elements && Array.isArray(source.elements)) {\n  source.elements.forEach(element => applySwaps(element, swapConfig, null));\n}\n\nconsole.log(`✅ Template modifications applied`);\n\n// ============================================\n// STEP 5: Return template_id + source for Creatomate\n// ============================================\n\n// Clean swapConfig - remove undefined values for cleaner output\nconst cleanSwapConfig = Object.fromEntries(\n  Object.entries(swapConfig).filter(([_, v]) => v !== undefined)\n);\n\nconst output = {\n  ...config,\n  creatomate: {\n        source: source\n  },\n  _template_tag: uniqueTag,\n  _swap_config: cleanSwapConfig,\n  // NEW: Include extracted banner config for ffmpeg\n  _banner_config: bannerConfig\n};\n\n// runOnceForEachItem mode: return single object, not array\nreturn {\n  json: JSON.parse(JSON.stringify(output))\n}\n\n})();\n"
+        "jsCode": "// Updated Build Template JSON node\n// v10: Removed text overlay support (feature disabled for now)\n\nreturn (async () => {\n\nconst config = $json;\n\n// ============================================\n// STEP 1: Determine Template Tag\n// ============================================\nconst clientId = (config.client || 'ccc').toUpperCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\n\nconst templateTag = templateId.toUpperCase().replace(/-/, '_');\nconst uniqueTag = `${clientId}_${templateTag}_${ratio}`;\n\n// ============================================\n// STEP 2: Fetch Template from Creatomate\n// ============================================\nconst apiKey = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\nconst templateList = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates?tags=${encodeURIComponent(uniqueTag)}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!templateList || templateList.length === 0) {\n  throw new Error(`No template found with tag: ${uniqueTag}`);\n}\n\nconst template = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates/${templateList[0].id}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!template.source) {\n  throw new Error(`Template ${template.id} has no source property`);\n}\n\nconst source = JSON.parse(JSON.stringify(template.source));\nconst templateWidth = source.width || 720;\nconst templateHeight = source.height || 1280;\n\nconsole.log(`📐 Template: ${templateWidth}x${templateHeight} for ${ratio}`);\n\n// ============================================\n// STEP 3: Build Swap Config\n// ============================================\n\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'the manager';\n\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  'tiktok': `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  'youtube': `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  'instagram': `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  'facebook': `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  'none': `Ask ${avatarName} for a great deal!`\n};\nconst platformText = platformTexts[basePlatform] || platformTexts['none'];\n\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\nconst hookEnd = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration || ctaSection?.end || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\nconst selectedPhotos = config.selected_photos || [];\nconst featurePhotos = selectedPhotos.slice(1, 6);\n\nfunction formatPrice(price) {\n  if (!price) return null;\n  let priceNum = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price;\n  if (isNaN(priceNum)) return price;\n  return '$' + priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 });\n}\n// ============================================\n// Background Image Configuration\n// ============================================\n\nlet bgImageUrl = null;\nlet avatarBgUrl = null;\n\n// Full-screen background (multi-car, edu, etc.)\nconst renderedUrls = config.background_rendered_urls || null;\nif (renderedUrls && renderedUrls[ratio]) {\n  bgImageUrl = renderedUrls[ratio];\n  console.log(`📐 Background ${ratio}: ${bgImageUrl}`);\n}\n\n// Avatar background for wide override (spotlight 16:9)\nif (config.avatar_background_url && ratio === '16:9') {\n  avatarBgUrl = config.avatar_background_url;\n  console.log(`📐 Avatar background (wide): ${avatarBgUrl}`);\n}\n\nconst swapConfig = {\n  hookEnd,\n  ctaStart,\n  videoDuration,\n  skipPlatformBanner,\n  platformText,\n  bgMusicSource: config.media?.music_url,\n  bgImageSource: bgImageUrl,\n  avatarBgSource: avatarBgUrl,\n  avatar1Source: config.avatar_video_url,\n  avatar1MaskSource: config.avatar_video_alpha_url || config.avatar_mask_video_url,\n  item1Source: heroVehicle.photo_url,\n  item1Title: heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}` : null,\n  item1Price: formatPrice(heroVehicle.price),\n  videoThumbnailText: config.script?.thumbnail_text || config.theme_pack?.theme_name || config.script?.hook || ''\n};\n  \n// Spotlight features\nfeaturePhotos.forEach((photo, index) => {\n  const featureNum = index + 1;\n  const segmentNum = featureNum + 1;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + segmentNum);\n  swapConfig[`item1Feature${featureNum}Source`] = photo?.photo_url;\n  swapConfig[`item1Feature${featureNum}Time`] = segmentTiming?.start;\n  swapConfig[`item1Feature${featureNum}Duration`] = segmentTiming?.duration;\n});\n\n// Multi-item vehicles\nvehicles.forEach((vehicle, index) => {\n  const itemNum = index + 1;\n  if (itemNum > 5) return;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + itemNum);\n  swapConfig[`item${itemNum}Source`] = vehicle.photo_url;\n  swapConfig[`item${itemNum}Title`] = vehicle.year && vehicle.make && vehicle.model\n    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;\n  swapConfig[`item${itemNum}Price`] = formatPrice(vehicle.price);\n  swapConfig[`item${itemNum}Mileage`] = vehicle.mileage\n    ? `${Number(vehicle.mileage).toLocaleString('en-US')} mi` : null;\n  if (isSpotlight && itemNum === 1) {\n    swapConfig[`item${itemNum}Time`] = 0;\n    swapConfig[`item${itemNum}Duration`] = videoDuration;\n  } else {\n    swapConfig[`item${itemNum}Time`] = segmentTiming?.start;\n    swapConfig[`item${itemNum}Duration`] = segmentTiming?.duration;\n  }\n  swapConfig[`item${itemNum}Visible`] = true;\n});\n\nfor (let i = vehicles.length + 1; i <= 5; i++) {\n  swapConfig[`item${i}Visible`] = false;\n}\n\n// ============================================\n// STEP 4: Apply Swaps to Source\n// ============================================\n\nlet bannerConfig = null;\n\nfunction applyScaleAnimTiming(element, cfg) {\n  if (!element.animations) return;\n  const scaleAnims = element.animations.filter(a => a.type === 'scale');\n  if (scaleAnims.length === 1 && cfg.hookEnd !== undefined) {\n    scaleAnims[0].time = cfg.hookEnd;\n  } else if (scaleAnims.length === 2) {\n    // Spotlight 16:9 scales in at start, out at hookEnd (which includes Seg1/Hero seg)\n    if (ratio === '16:9' && isSpotlight) {\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.hookEnd;\n    } else {\n      if (cfg.hookEnd !== undefined) scaleAnims[0].time = cfg.hookEnd;\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.ctaStart;\n    }\n  }\n}\n\nfunction applySwaps(element, cfg, parent = null) {\n  const name = element.name;\n\n  if (name?.match(/^avatar-(\\d+)$/i)) {\n    const n = RegExp.$1;\n    if (element.type !== \"composition\" && cfg[`avatar${n}Source`]) {\n      element.source = cfg[`avatar${n}Source`];\n    }\n    if (element.type === \"composition\") {\n      applyScaleAnimTiming(element, cfg);\n    }\n  }\n\n  if (name?.match(/^avatar-(\\d+)-mask$/)) {\n    const n = RegExp.$1;\n    if (cfg[`avatar${n}MaskSource`]) {\n      element.source = cfg[`avatar${n}MaskSource`];\n    }\n  }\n\n  if (name === 'photo' && parent === 'Item-1') {\n    if (cfg.item1Source) element.source = cfg.item1Source;\n    if (isSpotlight) applyScaleAnimTiming(element, cfg);\n  }\n  if (name === 'title' && parent === 'Item-1' && cfg.item1Title) element.text = cfg.item1Title;\n  if (name === 'price' && parent === 'Item-1' && cfg.item1Price) element.text = cfg.item1Price;\n\n  const featureMatch = name?.match(/^feature-(\\d+)$/);\n  if (featureMatch && parent === 'Item-1') {\n    const n = featureMatch[1];\n    if (cfg[`item1Feature${n}Source`]) element.source = cfg[`item1Feature${n}Source`];\n    if (cfg[`item1Feature${n}Time`] !== undefined) element.time = cfg[`item1Feature${n}Time`];\n    if (cfg[`item1Feature${n}Duration`] !== undefined) element.duration = cfg[`item1Feature${n}Duration`];\n  }\n\n  const itemMatch = name?.match(/^Item-(\\d+)$/);\n  if (itemMatch && itemMatch[1] !== '0') {\n    const n = itemMatch[1];\n    if (cfg[`item${n}Time`] !== undefined) element.time = cfg[`item${n}Time`];\n    if (cfg[`item${n}Duration`] !== undefined) element.duration = cfg[`item${n}Duration`];\n    if (cfg[`item${n}Visible`] === false) element.visible = false;\n  }\n\n  const parentItemMatch = parent?.match(/^Item-(\\d+)$/);\n  if (parentItemMatch && parentItemMatch[1] !== '0') {\n    const n = parentItemMatch[1];\n    if (name === 'photo' && cfg[`item${n}Source`]) element.source = cfg[`item${n}Source`];\n    if (name === 'title' && cfg[`item${n}Title`]) element.text = cfg[`item${n}Title`];\n    if (name === 'price' && cfg[`item${n}Price`]) element.text = cfg[`item${n}Price`];\n    if (name === 'mileage' && cfg[`item${n}Mileage`]) element.text = cfg[`item${n}Mileage`];\n  }\n\n  if (name === 'platform-banner' || name === 'platform-text') {\n    if (!bannerConfig && element.y !== undefined) {\n      bannerConfig = {\n        y: element.y,\n        font_size: element.font_size,\n        font_family: element.font_family,\n        font_weight: element.font_weight,\n        fill_color: element.fill_color\n      };\n    }\n    if (cfg.skipPlatformBanner) {\n      element.visible = false;\n    } else {\n      if (cfg.platformText) element.text = cfg.platformText;\n      if (element.animations?.[0] && cfg.videoDuration) {\n        element.animations[0].duration = cfg.videoDuration;\n      }\n    }\n  }\n\n  if (name === 'Company-Intro' || name === 'Contact-Info-intro') {\n    if (cfg.hookEnd !== undefined) element.duration = cfg.hookEnd;\n  }\n  if (name === 'Company-Outro') {\n    if (cfg.ctaStart !== undefined) element.time = cfg.ctaStart;\n  }\n\n  if (name === 'background-music' && cfg.bgMusicSource) {\n    element.source = cfg.bgMusicSource;\n  }\n\n  if (name === 'background-image') {\n    if (cfg.bgImageSource) element.source = cfg.bgImageSource;\n    if (cfg.bgConfig) {\n      element.x = cfg.bgConfig.x;\n      element.y = cfg.bgConfig.y;\n      element.width = cfg.bgConfig.width;\n      element.height = cfg.bgConfig.height;\n      element.fit = cfg.bgConfig.fit;\n    }\n  }\n\n  // Hide any text overlay elements (feature disabled)\n  if (name === 'background-headline' || name === 'text-overlay-headline' ||\n      name === 'background-subtext' || name === 'text-overlay-subtext') {\n    element.visible = false;\n  }\n\n  if (name === 'video-thumbnail' && cfg.videoThumbnailText) {\n    element.text = cfg.videoThumbnailText;\n  }\n\n  if (element.elements && Array.isArray(element.elements)) {\n    element.elements.forEach(child => applySwaps(child, cfg, name));\n  }\n}\n\nif (swapConfig.videoDuration) {\n  source.duration = swapConfig.videoDuration;\n}\n\nif (source.elements && Array.isArray(source.elements)) {\n  source.elements.forEach(element => applySwaps(element, swapConfig, null));\n}\n\nconsole.log(`✅ Done for ${ratio}`);\n\n// ============================================\n// STEP 5: Return\n// ============================================\n\nconst output = {\n  ...config,\n  creatomate: { source },\n  _template_tag: uniqueTag,\n  _swap_config: Object.fromEntries(Object.entries(swapConfig).filter(([_, v]) => v !== undefined)),\n  _banner_config: bannerConfig\n};\n\nreturn { json: JSON.parse(JSON.stringify(output)) };\n\n})();\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -404,32 +370,6 @@
       ],
       "id": "unified-build-template-json",
       "name": "Build Template JSON"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{\n  {\n    \"from\": \"errors@ad-pilot.ai\",\n    \"to\": \"kelly@ad-pilot.ai\",\n    \"subject\": \"🚨 Video Generation Failed - \" + $json.nodeName,\n    \"html\": \"⚠️ Video Creation Workflow Error<br/><br/>Failed Node: \" + $json.nodeName + \"<br/>Error: \" + $json.errorMessage + \"<br/><br/>Time: \" + $json.timestamp\n  }\n}}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        1184,
-        -96
-      ],
-      "id": "5806628c-bf99-4c78-b44e-e563d2f56a37",
-      "name": "Email Errors",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "vdxOfyrKMfWKSmAH",
-          "name": "Resend"
-        }
-      }
     },
     {
       "parameters": {
@@ -464,6 +404,90 @@
       ],
       "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
       "name": "If: Failed?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[04] Generate Video\",\n    error: input.errorMessage || \"Unknown error\",\n    details: input.rawError || JSON.stringify(input, null, 2),\n    job_id: null,\n    to_email: \"errors@ad-pilot.ai\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        -64
+      ],
+      "id": "prep-error-email",
+      "name": "Prep: Error Email"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mBVi9C0eRoq1xTeb",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+          "cachedResultName": "[Service] Email Error Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1296,
+        -64
+      ],
+      "id": "call-email-error",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn {\n  json: {\n    image_url: input.photo_url || input.image_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vin: input.vin,\n      // Pass through other fields needed by Parse Remove.bg\n      ...input\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -144
+      ],
+      "id": "prep-remove-bg",
+      "name": "Prep: Remove BG"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pbHuh1HdmZxbFX0M",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/pbHuh1HdmZxbFX0M",
+          "cachedResultName": "[Service] Remove Background"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        -144
+      ],
+      "id": "call-remove-bg",
+      "name": "Call: Remove Background",
+      "onError": "continueErrorOutput"
     }
   ],
   "connections": {
@@ -515,7 +539,7 @@
       "main": [
         [
           {
-            "node": "Email Errors",
+            "node": "Prep: Error Email",
             "type": "main",
             "index": 0
           }
@@ -555,25 +579,7 @@
       "main": [
         [
           {
-            "node": "API: Remove.bg",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "API: Remove.bg": {
-      "main": [
-        [
-          {
-            "node": "Parse Remove.bg",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Format Node Error",
+            "node": "Prep: Remove BG",
             "type": "main",
             "index": 0
           }
@@ -708,17 +714,6 @@
         ]
       ]
     },
-    "Email Errors": {
-      "main": [
-        [
-          {
-            "node": "Stop and Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "If: Failed?": {
       "main": [
         [
@@ -736,6 +731,57 @@
           }
         ]
       ]
+    },
+    "Prep: Error Email": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Email Error": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Remove BG": {
+      "main": [
+        [
+          {
+            "node": "Call: Remove Background",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Remove Background": {
+      "main": [
+        [
+          {
+            "node": "Parse Remove.bg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -746,8 +792,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "5918bced-6b4e-4206-80f5-d68c7cf9c399",
-  "activeVersionId": "5918bced-6b4e-4206-80f5-d68c7cf9c399",
+  "versionId": "960a4029-b3f1-40f3-9009-bc7ae859fc26",
+  "activeVersionId": "960a4029-b3f1-40f3-9009-bc7ae859fc26",
   "triggerCount": 0,
   "shared": [
     {
@@ -759,9 +805,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-13T13:35:48.567Z",
-    "createdAt": "2026-01-13T13:35:48.567Z",
-    "versionId": "5918bced-6b4e-4206-80f5-d68c7cf9c399",
+    "updatedAt": "2026-01-20T01:20:47.216Z",
+    "createdAt": "2026-01-20T01:19:19.853Z",
+    "versionId": "960a4029-b3f1-40f3-9009-bc7ae859fc26",
     "workflowId": "FOQ8foX33kSuaZEJ",
     "nodes": [
       {
@@ -798,8 +844,8 @@
         "type": "n8n-nodes-base.stopAndError",
         "typeVersion": 1,
         "position": [
-          1328,
-          -96
+          1424,
+          -64
         ],
         "id": "923bb706-0c19-45b1-a658-170d42b39318",
         "name": "Stop and Error"
@@ -837,8 +883,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1024,
-          -96
+          992,
+          -64
         ],
         "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
         "name": "Format Node Error"
@@ -922,40 +968,6 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://api.remove.bg/v1.0/removebg",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "x-api-key",
-                "value": "72rkEtm8QRzFpqEmjL42o89z"
-              }
-            ]
-          },
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"image_url\": \"{{ $json.photo_url || $json.image_url }}\",\n  \"size\": \"auto\",\n  \"format\": \"png\",\n  \"crop\": true,\n  \"crop_margin\": \"10%\"\n}",
-          "options": {
-            "response": {
-              "response": {
-                "responseFormat": "file"
-              }
-            }
-          }
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          240,
-          -144
-        ],
-        "id": "d4ecef3b-4065-44b9-b76e-95c1be44b7ac",
-        "name": "API: Remove.bg",
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
-          "method": "POST",
           "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
           "sendBody": true,
           "contentType": "multipart-form-data",
@@ -981,7 +993,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          544,
+          736,
           -160
         ],
         "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
@@ -1138,12 +1150,12 @@
       {
         "parameters": {
           "mode": "runOnceForEachItem",
-          "jsCode": "// Get the VIN from your JSON data\nconst vin = $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file - use $input.item.binary to preserve the actual data\nreturn {\n  json: $json,\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
+          "jsCode": "// Get the VIN from context (passed through service)\nconst vin = $json.context?.vin || $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file and original context data\nreturn {\n  json: {\n    ...$json.context,\n    vin: vin\n  },\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          384,
+          576,
           -160
         ],
         "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
@@ -1152,7 +1164,7 @@
       {
         "parameters": {
           "mode": "runOnceForEachItem",
-          "jsCode": "// Updated Build Template JSON node\n// Changes:\n// 1. Accepts single `ratio` from loop (not array)\n// 2. Hides platform-banner when `skipPlatformBanner: true`\n\nreturn (async () => {\n\nconst config = $json;\n\n// ============================================\n// STEP 1: Determine Template Tag\n// ============================================\nconst clientId = (config.client || 'ccc').toUpperCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\n\n// Convert template_id to tag format\n// \"ad-multi-item-1\" → \"AD_MULTI-ITEM-1\"\n// \"organic-educational-1\" → \"ORGANIC_EDUCATIONAL-1\"\nconst templateTag = templateId.toUpperCase().replace(/-/, '_');\nconst uniqueTag = `${clientId}_${templateTag}_${ratio}`;\n\n//console.log(`🏷️ Fetching template with tag: ${uniqueTag}`);\n\n// ============================================\n// STEP 2: Fetch Template from Creatomate\n// ============================================\nconst apiKey = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\n// Step 1: Find template by tag (returns id, name, tags - but NOT source)\nconst templateList = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates?tags=${encodeURIComponent(uniqueTag)}`,\n  headers: {\n    'Authorization': `Bearer ${apiKey}`\n  },\n  json: true\n});\n\nif (!templateList || !Array.isArray(templateList) || templateList.length === 0) {\n  throw new Error(`No template found with tag: ${uniqueTag}`);\n}\n\nconst templateInfo = templateList[0];\n//console.log(`📍 Found template: ${templateInfo.name} (ID: ${templateInfo.id})`);\n\n// Step 2: Fetch full template by ID (this returns the source)\nconst template = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates/${templateInfo.id}`,\n  headers: {\n    'Authorization': `Bearer ${apiKey}`\n  },\n  json: true\n});\n\nif (!template.source) {\n  throw new Error(`Template ${template.id} has no source property`);\n}\n\n// Deep clone the source\nconst source = JSON.parse(JSON.stringify(template.source));\n\n// Get template dimensions for percentage calculations\nconst templateWidth = source.width || 720;\nconst templateHeight = source.height || 1280;\n\n//console.log(`✅ Loaded template source (${Object.keys(template.source).length} top-level keys)`);\n\n// ============================================\n// STEP 3: Build Swap Config from Incoming Data\n// ============================================\n\n// Check if we should skip platform banner (ffmpeg will add it)\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'SHAD';\n\n// For platform text (only used if NOT skipping)\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  'tiktok': `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  'youtube': `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  'instagram': `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  'facebook': `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  'none': `Ask for ${avatarName} for a great deal!`\n};\nconst platformText = platformTexts[basePlatform] || platformTexts['none'];\n\n// Timing from _section_timings\n// Note: Calculate Timings now uses 1-based segment numbering (segment_1, segment_2, etc.)\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\n// For spotlight template: hero is on screen during hook AND segment_1 (hero description)\n// So use segment_1.end as the hero timing end instead of hookEnd\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\nconst hookEnd = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\n//console.log(`🎯 Template: ${templateId}, isSpotlight: ${isSpotlight}, hookEnd: ${hookEnd}`);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration || ctaSection?.end || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\n// Vehicles\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\n\n// Spotlight feature photos\nconst selectedPhotos = config.selected_photos || [];\nconst featurePhotos = selectedPhotos.slice(1, 6);\n\n// Price formatter\nfunction formatPrice(price) {\n  if (!price) return null;\n  let priceNum = price;\n  if (typeof price === 'string') {\n    priceNum = parseFloat(price.replace(/[^0-9.]/g, ''));\n  }\n  if (isNaN(priceNum)) return price;\n  return '$' + priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 });\n}\n\n// Build swap config\nconst swapConfig = {\n  hookEnd,\n  ctaStart,\n  videoDuration,\n  skipPlatformBanner,  // NEW: flag to hide banner\n  platformText,\n  bgMusicSource: config.media?.music_url,\n  bgImageSource: config.background_image_url,\n  avatar1Source: config.avatar_video_url,\n  avatar1MaskSource: config.avatar_video_alpha_url || config.avatar_mask_video_url,\n  item1Source: heroVehicle.photo_url,\n  item1Title: heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}` : null,\n  item1Price: formatPrice(heroVehicle.price),\n  videoThumbnailText: config.script?.hook || config.topic || '',\n};\n\n// Spotlight features\n// Note: segment_1 is hero extended description, so features start at segment_2\nfeaturePhotos.forEach((photo, index) => {\n  const featureNum = index + 1;  // Feature 1-5\n  const segmentNum = featureNum + 1;  // segment_2 through segment_6\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + segmentNum);\n  swapConfig[`item1Feature${featureNum}Source`] = photo?.photo_url;\n  swapConfig[`item1Feature${featureNum}Time`] = segmentTiming?.start;\n  swapConfig[`item1Feature${featureNum}Duration`] = segmentTiming?.duration;\n});\n\n// Multi-item vehicles\n// Note: segment numbering is 1-based (segment_1, segment_2, etc.)\n// itemNum already equals index + 1, so use itemNum for segment lookup\nvehicles.forEach((vehicle, index) => {\n  const itemNum = index + 1;\n  if (itemNum > 5) return;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + itemNum);\n  swapConfig[`item${itemNum}Source`] = vehicle.photo_url;\n  swapConfig[`item${itemNum}Title`] = vehicle.year && vehicle.make && vehicle.model\n    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;\n  swapConfig[`item${itemNum}Price`] = formatPrice(vehicle.price);\n  swapConfig[`item${itemNum}Mileage`] = vehicle.mileage\n    ? `${Number(vehicle.mileage).toLocaleString('en-US')} mi` : null;\n  // For spotlight, Item-1 (hero) should span full video, not just segment_1\n  // For multi-car, each item gets its segment timing\n  if (isSpotlight && itemNum === 1) {\n    swapConfig[`item${itemNum}Time`] = 0;\n    swapConfig[`item${itemNum}Duration`] = videoDuration;\n  } else {\n    swapConfig[`item${itemNum}Time`] = segmentTiming?.start;\n    swapConfig[`item${itemNum}Duration`] = segmentTiming?.duration;\n  }\n  swapConfig[`item${itemNum}Visible`] = true;\n});\n\n// Mark unused slots\nfor (let i = vehicles.length + 1; i <= 5; i++) {\n  swapConfig[`item${i}Visible`] = false;\n}\n\n//console.log(`📋 Config built for: ${templateId}`);\n//console.log(`🏷️ Skip platform banner: ${skipPlatformBanner}`);\n\n// ============================================\n// STEP 4: Apply Swaps to Source\n// ============================================\n\n// NEW: Store extracted banner config\nlet bannerConfig = null;\n\nfunction applyScaleAnimTiming(element, cfg) {\n  if (!element.animations) return;\n  const scaleAnims = element.animations.filter(a => a.type === 'scale');\n\n  if (scaleAnims.length === 1 && cfg.hookEnd !== undefined) {\n    scaleAnims[0].time = cfg.hookEnd;\n  } else if (scaleAnims.length === 2) {\n    if (cfg.hookEnd !== undefined) scaleAnims[0].time = cfg.hookEnd;\n    if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.ctaStart;\n  }\n}\n\nfunction applySwaps(element, cfg, parent = null) {\n  const name = element.name;\n\n  // Avatar\n  if (name?.match(/^avatar-(\\d+)$/i)) {\n    const n = RegExp.$1;\n    \n    // Source only applies to non-compositions\n    if (element.type !== \"composition\" && cfg[`avatar${n}Source`]) {\n      element.source = cfg[`avatar${n}Source`];\n    }\n    \n    // Animation applies to compositions (the container)\n    if (element.type === \"composition\") {\n      applyScaleAnimTiming(element, cfg);\n    }\n  }\n\n  // Avatar Mask Layer (for RVM alpha mask compositing)\n  if (name?.match(/^avatar-(\\d+)-mask$/)) {\n    const n = RegExp.$1;\n    if (cfg[`avatar${n}MaskSource`]) {\n      element.source = cfg[`avatar${n}MaskSource`];\n    }\n  }\n\n  // Item-1 nested elements (hero for spotlight)\n  if (name === 'photo' && parent === 'Item-1') {\n    if (cfg.item1Source) element.source = cfg.item1Source;\n    applyScaleAnimTiming(element, cfg);\n  }\n  if (name === 'title' && parent === 'Item-1') {\n    if (cfg.item1Title) element.text = cfg.item1Title;\n  }\n  if (name === 'price' && parent === 'Item-1') {\n    if (cfg.item1Price) element.text = cfg.item1Price;\n  }\n\n  // Features inside Item-1 (for spotlight template)\n  const featureMatch = name?.match(/^feature-(\\d+)$/);\n  if (featureMatch && parent === 'Item-1') {\n    const n = featureMatch[1];\n    if (cfg[`item1Feature${n}Source`]) element.source = cfg[`item1Feature${n}Source`];\n    if (cfg[`item1Feature${n}Time`] !== undefined) element.time = cfg[`item1Feature${n}Time`];\n    if (cfg[`item1Feature${n}Duration`] !== undefined) element.duration = cfg[`item1Feature${n}Duration`];\n  }\n\n  // Multi-item Items (1-5)\n  const itemMatch = name?.match(/^Item-(\\d+)$/);\n  if (itemMatch && itemMatch[1] !== '0') {\n    const n = itemMatch[1];\n    if (cfg[`item${n}Time`] !== undefined) element.time = cfg[`item${n}Time`];\n    if (cfg[`item${n}Duration`] !== undefined) element.duration = cfg[`item${n}Duration`];\n    if (cfg[`item${n}Visible`] === false) element.visible = false;\n  }\n\n  // Multi-item nested elements\n  const parentItemMatch = parent?.match(/^Item-(\\d+)$/);\n  if (parentItemMatch && parentItemMatch[1] !== '0') {\n    const n = parentItemMatch[1];\n    if (name === 'photo' && cfg[`item${n}Source`]) element.source = cfg[`item${n}Source`];\n    if (name === 'title' && cfg[`item${n}Title`]) element.text = cfg[`item${n}Title`];\n    if (name === 'price' && cfg[`item${n}Price`]) element.text = cfg[`item${n}Price`];\n    if (name === 'mileage' && cfg[`item${n}Mileage`]) element.text = cfg[`item${n}Mileage`];\n  }\n\n  // Platform banner - extract position BEFORE hiding\n  if (name === 'platform-banner' || name === 'platform-text') {\n    // NEW: Extract banner config from template before any modifications\n    if (!bannerConfig && element.y !== undefined) {\n      // Parse Y value - Creatomate uses strings like \"6.7%\" or pixel values\n      let yPercent = null;\n      const yVal = element.y;\n      if (typeof yVal === 'string' && yVal.endsWith('%')) {\n        yPercent = parseFloat(yVal) / 100; // \"6.7%\" -> 0.067\n      } else if (typeof yVal === 'number') {\n        yPercent = yVal / templateHeight;\n      }\n      \n      // Parse font_size - Creatomate uses strings like \"4 vmin\" or pixel values\n      let fontSizePercent = null;\n      const fontSize = element.font_size;\n      if (typeof fontSize === 'string' && fontSize.includes('vmin')) {\n        fontSizePercent = parseFloat(fontSize) / 100; // \"4 vmin\" -> 0.04\n      } else if (typeof fontSize === 'number') {\n        fontSizePercent = fontSize / Math.min(templateWidth, templateHeight);\n      }\n      \n      bannerConfig = {\n        y: element.y,\n        y_percent: yPercent,\n        font_size: element.font_size,\n        font_size_percent: fontSizePercent,\n        font_family: element.font_family,\n        font_weight: element.font_weight,\n        fill_color: element.fill_color,\n        template_width: templateWidth,\n        template_height: templateHeight\n      };\n      //console.log(`📐 Extracted banner config: y=${bannerConfig.y} (${(bannerConfig.y_percent * 100).toFixed(2)}%), font_size=${bannerConfig.font_size}`);\n    }\n\n    if (cfg.skipPlatformBanner) {\n      // Hide the banner - ffmpeg will add it later\n      element.visible = false;\n      //console.log(`✓ Hidden platform banner (ffmpeg will add)`);\n    } else {\n      // Keep banner visible and set text\n      if (cfg.platformText) element.text = cfg.platformText;\n      if (element.animations?.[0] && cfg.videoDuration) {\n        element.animations[0].duration = cfg.videoDuration;\n      }\n    }\n  }\n\n  // Company intro - duration matches hook\n  if (name === 'Company-Intro' || name === 'Contact-Info-intro') {\n    if (cfg.hookEnd !== undefined) element.duration = cfg.hookEnd;\n  }\n\n  // Company outro\n  if (name === 'Company-Outro') {\n    if (cfg.ctaStart !== undefined) element.time = cfg.ctaStart;\n  }\n\n  // Background music/image\n  if (name === 'background-music' && cfg.bgMusicSource) {\n    element.source = cfg.bgMusicSource;\n  }\n  if (name === 'background-image' && cfg.bgImageSource) {\n    element.source = cfg.bgImageSource;\n  }\n\n  // Educational video thumbnail\n  if (name === 'video-thumbnail' && cfg.videoThumbnailText) {\n    element.text = cfg.videoThumbnailText;\n  }\n\n  // Recurse\n  if (element.elements && Array.isArray(element.elements)) {\n    element.elements.forEach(child => applySwaps(child, cfg, name));\n  }\n}\n\n// Set top-level duration\nif (swapConfig.videoDuration) {\n  source.duration = swapConfig.videoDuration;\n}\n\n// Apply swaps recursively\nif (source.elements && Array.isArray(source.elements)) {\n  source.elements.forEach(element => applySwaps(element, swapConfig, null));\n}\n\nconsole.log(`✅ Template modifications applied`);\n\n// ============================================\n// STEP 5: Return template_id + source for Creatomate\n// ============================================\n\n// Clean swapConfig - remove undefined values for cleaner output\nconst cleanSwapConfig = Object.fromEntries(\n  Object.entries(swapConfig).filter(([_, v]) => v !== undefined)\n);\n\nconst output = {\n  ...config,\n  creatomate: {\n        source: source\n  },\n  _template_tag: uniqueTag,\n  _swap_config: cleanSwapConfig,\n  // NEW: Include extracted banner config for ffmpeg\n  _banner_config: bannerConfig\n};\n\n// runOnceForEachItem mode: return single object, not array\nreturn {\n  json: JSON.parse(JSON.stringify(output))\n}\n\n})();\n"
+          "jsCode": "// Updated Build Template JSON node\n// v10: Removed text overlay support (feature disabled for now)\n\nreturn (async () => {\n\nconst config = $json;\n\n// ============================================\n// STEP 1: Determine Template Tag\n// ============================================\nconst clientId = (config.client || 'ccc').toUpperCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\n\nconst templateTag = templateId.toUpperCase().replace(/-/, '_');\nconst uniqueTag = `${clientId}_${templateTag}_${ratio}`;\n\n// ============================================\n// STEP 2: Fetch Template from Creatomate\n// ============================================\nconst apiKey = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\nconst templateList = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates?tags=${encodeURIComponent(uniqueTag)}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!templateList || templateList.length === 0) {\n  throw new Error(`No template found with tag: ${uniqueTag}`);\n}\n\nconst template = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates/${templateList[0].id}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!template.source) {\n  throw new Error(`Template ${template.id} has no source property`);\n}\n\nconst source = JSON.parse(JSON.stringify(template.source));\nconst templateWidth = source.width || 720;\nconst templateHeight = source.height || 1280;\n\nconsole.log(`📐 Template: ${templateWidth}x${templateHeight} for ${ratio}`);\n\n// ============================================\n// STEP 3: Build Swap Config\n// ============================================\n\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'the manager';\n\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  'tiktok': `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  'youtube': `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  'instagram': `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  'facebook': `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  'none': `Ask ${avatarName} for a great deal!`\n};\nconst platformText = platformTexts[basePlatform] || platformTexts['none'];\n\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\nconst hookEnd = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration || ctaSection?.end || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\nconst selectedPhotos = config.selected_photos || [];\nconst featurePhotos = selectedPhotos.slice(1, 6);\n\nfunction formatPrice(price) {\n  if (!price) return null;\n  let priceNum = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price;\n  if (isNaN(priceNum)) return price;\n  return '$' + priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 });\n}\n// ============================================\n// Background Image Configuration\n// ============================================\n\nlet bgImageUrl = null;\nlet avatarBgUrl = null;\n\n// Full-screen background (multi-car, edu, etc.)\nconst renderedUrls = config.background_rendered_urls || null;\nif (renderedUrls && renderedUrls[ratio]) {\n  bgImageUrl = renderedUrls[ratio];\n  console.log(`📐 Background ${ratio}: ${bgImageUrl}`);\n}\n\n// Avatar background for wide override (spotlight 16:9)\nif (config.avatar_background_url && ratio === '16:9') {\n  avatarBgUrl = config.avatar_background_url;\n  console.log(`📐 Avatar background (wide): ${avatarBgUrl}`);\n}\n\nconst swapConfig = {\n  hookEnd,\n  ctaStart,\n  videoDuration,\n  skipPlatformBanner,\n  platformText,\n  bgMusicSource: config.media?.music_url,\n  bgImageSource: bgImageUrl,\n  avatarBgSource: avatarBgUrl,\n  avatar1Source: config.avatar_video_url,\n  avatar1MaskSource: config.avatar_video_alpha_url || config.avatar_mask_video_url,\n  item1Source: heroVehicle.photo_url,\n  item1Title: heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}` : null,\n  item1Price: formatPrice(heroVehicle.price),\n  videoThumbnailText: config.script?.thumbnail_text || config.theme_pack?.theme_name || config.script?.hook || ''\n};\n  \n// Spotlight features\nfeaturePhotos.forEach((photo, index) => {\n  const featureNum = index + 1;\n  const segmentNum = featureNum + 1;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + segmentNum);\n  swapConfig[`item1Feature${featureNum}Source`] = photo?.photo_url;\n  swapConfig[`item1Feature${featureNum}Time`] = segmentTiming?.start;\n  swapConfig[`item1Feature${featureNum}Duration`] = segmentTiming?.duration;\n});\n\n// Multi-item vehicles\nvehicles.forEach((vehicle, index) => {\n  const itemNum = index + 1;\n  if (itemNum > 5) return;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + itemNum);\n  swapConfig[`item${itemNum}Source`] = vehicle.photo_url;\n  swapConfig[`item${itemNum}Title`] = vehicle.year && vehicle.make && vehicle.model\n    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;\n  swapConfig[`item${itemNum}Price`] = formatPrice(vehicle.price);\n  swapConfig[`item${itemNum}Mileage`] = vehicle.mileage\n    ? `${Number(vehicle.mileage).toLocaleString('en-US')} mi` : null;\n  if (isSpotlight && itemNum === 1) {\n    swapConfig[`item${itemNum}Time`] = 0;\n    swapConfig[`item${itemNum}Duration`] = videoDuration;\n  } else {\n    swapConfig[`item${itemNum}Time`] = segmentTiming?.start;\n    swapConfig[`item${itemNum}Duration`] = segmentTiming?.duration;\n  }\n  swapConfig[`item${itemNum}Visible`] = true;\n});\n\nfor (let i = vehicles.length + 1; i <= 5; i++) {\n  swapConfig[`item${i}Visible`] = false;\n}\n\n// ============================================\n// STEP 4: Apply Swaps to Source\n// ============================================\n\nlet bannerConfig = null;\n\nfunction applyScaleAnimTiming(element, cfg) {\n  if (!element.animations) return;\n  const scaleAnims = element.animations.filter(a => a.type === 'scale');\n  if (scaleAnims.length === 1 && cfg.hookEnd !== undefined) {\n    scaleAnims[0].time = cfg.hookEnd;\n  } else if (scaleAnims.length === 2) {\n    // Spotlight 16:9 scales in at start, out at hookEnd (which includes Seg1/Hero seg)\n    if (ratio === '16:9' && isSpotlight) {\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.hookEnd;\n    } else {\n      if (cfg.hookEnd !== undefined) scaleAnims[0].time = cfg.hookEnd;\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.ctaStart;\n    }\n  }\n}\n\nfunction applySwaps(element, cfg, parent = null) {\n  const name = element.name;\n\n  if (name?.match(/^avatar-(\\d+)$/i)) {\n    const n = RegExp.$1;\n    if (element.type !== \"composition\" && cfg[`avatar${n}Source`]) {\n      element.source = cfg[`avatar${n}Source`];\n    }\n    if (element.type === \"composition\") {\n      applyScaleAnimTiming(element, cfg);\n    }\n  }\n\n  if (name?.match(/^avatar-(\\d+)-mask$/)) {\n    const n = RegExp.$1;\n    if (cfg[`avatar${n}MaskSource`]) {\n      element.source = cfg[`avatar${n}MaskSource`];\n    }\n  }\n\n  if (name === 'photo' && parent === 'Item-1') {\n    if (cfg.item1Source) element.source = cfg.item1Source;\n    if (isSpotlight) applyScaleAnimTiming(element, cfg);\n  }\n  if (name === 'title' && parent === 'Item-1' && cfg.item1Title) element.text = cfg.item1Title;\n  if (name === 'price' && parent === 'Item-1' && cfg.item1Price) element.text = cfg.item1Price;\n\n  const featureMatch = name?.match(/^feature-(\\d+)$/);\n  if (featureMatch && parent === 'Item-1') {\n    const n = featureMatch[1];\n    if (cfg[`item1Feature${n}Source`]) element.source = cfg[`item1Feature${n}Source`];\n    if (cfg[`item1Feature${n}Time`] !== undefined) element.time = cfg[`item1Feature${n}Time`];\n    if (cfg[`item1Feature${n}Duration`] !== undefined) element.duration = cfg[`item1Feature${n}Duration`];\n  }\n\n  const itemMatch = name?.match(/^Item-(\\d+)$/);\n  if (itemMatch && itemMatch[1] !== '0') {\n    const n = itemMatch[1];\n    if (cfg[`item${n}Time`] !== undefined) element.time = cfg[`item${n}Time`];\n    if (cfg[`item${n}Duration`] !== undefined) element.duration = cfg[`item${n}Duration`];\n    if (cfg[`item${n}Visible`] === false) element.visible = false;\n  }\n\n  const parentItemMatch = parent?.match(/^Item-(\\d+)$/);\n  if (parentItemMatch && parentItemMatch[1] !== '0') {\n    const n = parentItemMatch[1];\n    if (name === 'photo' && cfg[`item${n}Source`]) element.source = cfg[`item${n}Source`];\n    if (name === 'title' && cfg[`item${n}Title`]) element.text = cfg[`item${n}Title`];\n    if (name === 'price' && cfg[`item${n}Price`]) element.text = cfg[`item${n}Price`];\n    if (name === 'mileage' && cfg[`item${n}Mileage`]) element.text = cfg[`item${n}Mileage`];\n  }\n\n  if (name === 'platform-banner' || name === 'platform-text') {\n    if (!bannerConfig && element.y !== undefined) {\n      bannerConfig = {\n        y: element.y,\n        font_size: element.font_size,\n        font_family: element.font_family,\n        font_weight: element.font_weight,\n        fill_color: element.fill_color\n      };\n    }\n    if (cfg.skipPlatformBanner) {\n      element.visible = false;\n    } else {\n      if (cfg.platformText) element.text = cfg.platformText;\n      if (element.animations?.[0] && cfg.videoDuration) {\n        element.animations[0].duration = cfg.videoDuration;\n      }\n    }\n  }\n\n  if (name === 'Company-Intro' || name === 'Contact-Info-intro') {\n    if (cfg.hookEnd !== undefined) element.duration = cfg.hookEnd;\n  }\n  if (name === 'Company-Outro') {\n    if (cfg.ctaStart !== undefined) element.time = cfg.ctaStart;\n  }\n\n  if (name === 'background-music' && cfg.bgMusicSource) {\n    element.source = cfg.bgMusicSource;\n  }\n\n  if (name === 'background-image') {\n    if (cfg.bgImageSource) element.source = cfg.bgImageSource;\n    if (cfg.bgConfig) {\n      element.x = cfg.bgConfig.x;\n      element.y = cfg.bgConfig.y;\n      element.width = cfg.bgConfig.width;\n      element.height = cfg.bgConfig.height;\n      element.fit = cfg.bgConfig.fit;\n    }\n  }\n\n  // Hide any text overlay elements (feature disabled)\n  if (name === 'background-headline' || name === 'text-overlay-headline' ||\n      name === 'background-subtext' || name === 'text-overlay-subtext') {\n    element.visible = false;\n  }\n\n  if (name === 'video-thumbnail' && cfg.videoThumbnailText) {\n    element.text = cfg.videoThumbnailText;\n  }\n\n  if (element.elements && Array.isArray(element.elements)) {\n    element.elements.forEach(child => applySwaps(child, cfg, name));\n  }\n}\n\nif (swapConfig.videoDuration) {\n  source.duration = swapConfig.videoDuration;\n}\n\nif (source.elements && Array.isArray(source.elements)) {\n  source.elements.forEach(element => applySwaps(element, swapConfig, null));\n}\n\nconsole.log(`✅ Done for ${ratio}`);\n\n// ============================================\n// STEP 5: Return\n// ============================================\n\nconst output = {\n  ...config,\n  creatomate: { source },\n  _template_tag: uniqueTag,\n  _swap_config: Object.fromEntries(Object.entries(swapConfig).filter(([_, v]) => v !== undefined)),\n  _banner_config: bannerConfig\n};\n\nreturn { json: JSON.parse(JSON.stringify(output)) };\n\n})();\n"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1162,32 +1174,6 @@
         ],
         "id": "unified-build-template-json",
         "name": "Build Template JSON"
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.resend.com/emails",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpBearerAuth",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={{\n  {\n    \"from\": \"errors@ad-pilot.ai\",\n    \"to\": \"kelly@ad-pilot.ai\",\n    \"subject\": \"🚨 Video Generation Failed - \" + $json.nodeName,\n    \"html\": \"⚠️ Video Creation Workflow Error<br/><br/>Failed Node: \" + $json.nodeName + \"<br/>Error: \" + $json.errorMessage + \"<br/><br/>Time: \" + $json.timestamp\n  }\n}}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.3,
-        "position": [
-          1184,
-          -96
-        ],
-        "id": "5806628c-bf99-4c78-b44e-e563d2f56a37",
-        "name": "Email Errors",
-        "credentials": {
-          "httpBearerAuth": {
-            "id": "vdxOfyrKMfWKSmAH",
-            "name": "Resend"
-          }
-        }
       },
       {
         "parameters": {
@@ -1222,6 +1208,90 @@
         ],
         "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
         "name": "If: Failed?"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[04] Generate Video\",\n    error: input.errorMessage || \"Unknown error\",\n    details: input.rawError || JSON.stringify(input, null, 2),\n    job_id: null,\n    to_email: \"errors@ad-pilot.ai\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1152,
+          -64
+        ],
+        "id": "prep-error-email",
+        "name": "Prep: Error Email"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "mBVi9C0eRoq1xTeb",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+            "cachedResultName": "[Service] Email Error Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1296,
+          -64
+        ],
+        "id": "call-email-error",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn {\n  json: {\n    image_url: input.photo_url || input.image_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vin: input.vin,\n      // Pass through other fields needed by Parse Remove.bg\n      ...input\n    }\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          -144
+        ],
+        "id": "prep-remove-bg",
+        "name": "Prep: Remove BG"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "pbHuh1HdmZxbFX0M",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/pbHuh1HdmZxbFX0M",
+            "cachedResultName": "[Service] Remove Background"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          400,
+          -144
+        ],
+        "id": "call-remove-bg",
+        "name": "Call: Remove Background",
+        "onError": "continueErrorOutput"
       }
     ],
     "connections": {
@@ -1273,7 +1343,7 @@
         "main": [
           [
             {
-              "node": "Email Errors",
+              "node": "Prep: Error Email",
               "type": "main",
               "index": 0
             }
@@ -1313,25 +1383,7 @@
         "main": [
           [
             {
-              "node": "API: Remove.bg",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "API: Remove.bg": {
-        "main": [
-          [
-            {
-              "node": "Parse Remove.bg",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Format Node Error",
+              "node": "Prep: Remove BG",
               "type": "main",
               "index": 0
             }
@@ -1466,17 +1518,6 @@
           ]
         ]
       },
-      "Email Errors": {
-        "main": [
-          [
-            {
-              "node": "Stop and Error",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "If: Failed?": {
         "main": [
           [
@@ -1494,11 +1535,62 @@
             }
           ]
         ]
+      },
+      "Prep: Error Email": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Email Error": {
+        "main": [
+          [
+            {
+              "node": "Stop and Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Remove BG": {
+        "main": [
+          [
+            {
+              "node": "Call: Remove Background",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Remove Background": {
+        "main": [
+          [
+            {
+              "node": "Parse Remove.bg",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
+    "name": "Version 960a4029",
+    "description": "",
     "autosaved": false
   },
   "tags": []
