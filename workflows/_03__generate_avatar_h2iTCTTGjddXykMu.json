@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-20T01:42:50.982Z",
+  "updatedAt": "2026-01-20T14:53:53.186Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -123,7 +123,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
+        "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'CwhRBWXzGAHq8TQ4Fs17';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -459,7 +459,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + ' <break time=\"1.0s\" />') }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + ' <break time=\"1.0s\" />') }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
         "options": {
           "timeout": 120000
         }
@@ -889,8 +889,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "ec56c97a-dd7b-4421-963c-3dfbda96167a",
-  "activeVersionId": "ec56c97a-dd7b-4421-963c-3dfbda96167a",
+  "versionId": "843f3884-56b0-4ffc-8861-678dd11e3a80",
+  "activeVersionId": "843f3884-56b0-4ffc-8861-678dd11e3a80",
   "triggerCount": 0,
   "shared": [
     {
@@ -902,9 +902,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-20T01:42:56.896Z",
-    "createdAt": "2026-01-20T01:42:50.985Z",
-    "versionId": "ec56c97a-dd7b-4421-963c-3dfbda96167a",
+    "updatedAt": "2026-01-20T14:53:56.346Z",
+    "createdAt": "2026-01-20T14:53:53.189Z",
+    "versionId": "843f3884-56b0-4ffc-8861-678dd11e3a80",
     "workflowId": "h2iTCTTGjddXykMu",
     "nodes": [
       {
@@ -1024,7 +1024,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'fba616e37c3f4363844cc0be0721ddbd';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
+          "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'CwhRBWXzGAHq8TQ4Fs17';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1360,7 +1360,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + ' <break time=\"1.0s\" />') }},\n  \"model_id\": \"eleven_multilingual_v2\"\n}",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + ' <break time=\"1.0s\" />') }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
           "options": {
             "timeout": 120000
           }
@@ -1783,7 +1783,7 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "break tag",
+    "name": "Version 843f3884",
     "description": "",
     "autosaved": false
   },
