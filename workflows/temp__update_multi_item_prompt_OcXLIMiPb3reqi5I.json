@@ -1,0 +1,83 @@
+{
+  "updatedAt": "2026-01-21T01:27:14.628Z",
+  "createdAt": "2026-01-21T01:27:14.628Z",
+  "id": "OcXLIMiPb3reqi5I",
+  "name": "TEMP: Update Multi-Item Prompt",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "do-update-prompt",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "do-update-prompt"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE client_prompts SET prompt_content = '{\"examples\":{\"bad\":[\"This Silverado — V8 power, four-wheel drive, winter-ready.\",\"Ram fifteen hundred — HEMI, dependable.\",\"F-150 — towing, comfortable.\"],\"good\":[\"Check out this Silverado — V8 power and four-wheel drive, ready for anything.\",\"Here'\\''s a Ram fifteen hundred with a HEMI — built to last.\",\"And this F-150? Towing power meets everyday comfort.\",\"This Tacoma'\\''s got off-road chops and reliability to match.\"]},\"structure\":[\"HOOK: Aspirational question (12 words max)\",\"SEGMENTS: ONE feature per car (word limit per segment)\",\"CTA: Dealership + ONE contact method + financing\"],\"uses_base\":true,\"standalone\":false,\"description\":\"Multiple vehicles in one ad. One feature callout per car. Sounds like someone talking, not reading a list.\",\"natural_flow\":{\"principle\":\"This should sound like someone TALKING, not reading a list. Vary your lead-ins. Connect features naturally.\",\"lead_in_variety\":[\"Check out this...\",\"Here'\\''s a...\",\"And this...\",\"This [car]'\\''s got...\",\"How about this...\"],\"connect_features\":{\"bad\":[\"V8 power, four-wheel drive\",\"Leather seats, moonroof\",\"Reliable, fuel-efficient\"],\"good\":[\"V8 power and four-wheel drive\",\"Leather seats with a moonroof\",\"Reliable and fuel-efficient\"],\"principle\":\"Use '\\''and'\\'' or '\\''with'\\'' not commas\"}},\"respects_rules\":true,\"theme_pack_usage\":{\"rules\":[\"Draw inspiration from local_micro_moments to evoke core_tension\",\"Capture the FEELING — do not copy micro_moments verbatim\",\"Hook must naturally lead into first item\",\"At least one segment should answer the tension (reliability, AWD, etc.)\",\"NEVER use any phrase in banned_phrases\"],\"applies_to\":\"hook\",\"if_missing\":\"Write a generic value/deals hook\",\"internal_process\":\"Write 6 hook options within word budget, select best for clarity + scroll-stop + smooth handoff\"},\"feature_diversity\":\"Use DIFFERENT features for each car. If multiple cars share the same top feature, pick the NEXT BEST one.\",\"banned_phrase_check\":\"Before outputting JSON, scan hook/segments/cta for banned_phrases. If any appear, rewrite until none appear.\"}'::jsonb, updated_at = NOW() WHERE id = '31a102a8-ed5b-4f7f-bc06-836bcffe5069' RETURNING id, template_code, updated_at",
+        "options": {}
+      },
+      "id": "postgres",
+      "name": "Update",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "86d8aa67-c723-4481-8107-baef24abe9fd",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-21T01:27:14.628Z",
+      "createdAt": "2026-01-21T01:27:14.628Z",
+      "role": "workflow:owner",
+      "workflowId": "OcXLIMiPb3reqi5I",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
