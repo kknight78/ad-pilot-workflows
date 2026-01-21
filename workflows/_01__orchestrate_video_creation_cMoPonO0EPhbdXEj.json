@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-19T15:43:46.581Z",
+  "updatedAt": "2026-01-20T14:42:40.122Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -525,7 +525,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || { stability: 0.5, similarity_boost: 0.75 },\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
+        "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -897,8 +897,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "4df32218-fc1a-4452-a868-6a4436cc13d1",
-  "activeVersionId": "4df32218-fc1a-4452-a868-6a4436cc13d1",
+  "versionId": "9b9b63e6-e710-463b-81e2-3ee548b31f68",
+  "activeVersionId": "9b9b63e6-e710-463b-81e2-3ee548b31f68",
   "triggerCount": 1,
   "shared": [
     {
@@ -910,9 +910,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-19T15:43:49.685Z",
-    "createdAt": "2026-01-19T15:43:46.585Z",
-    "versionId": "4df32218-fc1a-4452-a868-6a4436cc13d1",
+    "updatedAt": "2026-01-20T14:42:40.127Z",
+    "createdAt": "2026-01-20T14:42:40.127Z",
+    "versionId": "9b9b63e6-e710-463b-81e2-3ee548b31f68",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -1434,7 +1434,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || { stability: 0.5, similarity_boost: 0.75 },\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
+          "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{ json: { body: config } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1797,8 +1797,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 4df32218",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false
   },
   "tags": []
