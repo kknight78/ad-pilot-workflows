@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-20T14:42:40.122Z",
+  "updatedAt": "2026-01-21T23:44:01.318Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -897,8 +897,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "9b9b63e6-e710-463b-81e2-3ee548b31f68",
-  "activeVersionId": "9b9b63e6-e710-463b-81e2-3ee548b31f68",
+  "versionId": "f2de8187-3704-4380-bd2f-355a3dbe3caa",
+  "activeVersionId": "f2de8187-3704-4380-bd2f-355a3dbe3caa",
   "triggerCount": 1,
   "shared": [
     {
@@ -910,9 +910,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-20T14:42:40.127Z",
-    "createdAt": "2026-01-20T14:42:40.127Z",
-    "versionId": "9b9b63e6-e710-463b-81e2-3ee548b31f68",
+    "updatedAt": "2026-01-21T23:44:01.321Z",
+    "createdAt": "2026-01-21T23:44:01.321Z",
+    "versionId": "f2de8187-3704-4380-bd2f-355a3dbe3caa",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
