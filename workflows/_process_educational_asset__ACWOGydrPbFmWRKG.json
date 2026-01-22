@@ -1,0 +1,413 @@
+{
+  "updatedAt": "2026-01-21T23:10:40.687Z",
+  "createdAt": "2026-01-21T22:11:40.503Z",
+  "id": "ACWOGydrPbFmWRKG",
+  "name": "[Process Educational Asset]",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-educational-asset",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "process-edu-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT\n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'",
+        "options": {}
+      },
+      "id": "fetch-asset-001",
+      "name": "Fetch Asset + Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const asset = $input.first().json;\n\n// Get current date info\nconst now = new Date();\nconst monthNames = ['January', 'February', 'March', 'April', 'May', 'June', \n                    'July', 'August', 'September', 'October', 'November', 'December'];\n\n// For educational, item_summary describes content type, not vehicles\nconst itemSummary = 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice that builds trust with viewers.';\n\nconsole.log('Asset ID:', asset.id);\nconsole.log('Theme seed:', asset.theme_seed);\nconsole.log('Building educational theme pack request...');\n\nreturn [{\n  json: {\n    asset,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed,\n      emoji: asset.theme_emoji,\n      direction: asset.theme_direction,\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      current_date: now.toISOString().split('T')[0],\n      current_month: monthNames[now.getMonth()],\n      item_summary: itemSummary\n    }\n  }\n}];"
+      },
+      "id": "prepare-request-001",
+      "name": "Prepare Theme Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.themePackRequest }}",
+        "options": {}
+      },
+      "id": "generate-theme-001",
+      "name": "Generate Theme Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prevData = $('Prepare Theme Request').first().json;\nconst themePackResponse = $input.first().json;\n\nconsole.log('Theme pack response:', JSON.stringify(themePackResponse));\n\n// Extract theme pack from response\nlet themePack = null;\nif (themePackResponse.success && themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else if (themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else {\n  // The response might BE the theme pack\n  themePack = themePackResponse;\n}\n\nreturn [{\n  json: {\n    asset_id: prevData.asset.id,\n    processed_items: [],\n    theme_pack: themePack\n  }\n}];"
+      },
+      "id": "prepare-save-001",
+      "name": "Prepare Save Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE assets SET\n  processed_items = '[]'::jsonb,\n  theme_pack = $${{ JSON.stringify($json.theme_pack) }}$$::jsonb,\n  processing_status = 'complete',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'\nRETURNING id, processing_status",
+        "options": {}
+      },
+      "id": "save-asset-001",
+      "name": "Save to Asset",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, asset_id: $('Prepare Save Data').first().json.asset_id, status: 'complete', items_processed: 0, theme_pack_generated: $('Prepare Save Data').first().json.theme_pack !== null } }}"
+      },
+      "id": "respond-001",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1560,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Asset + Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Asset + Plan": {
+      "main": [
+        [
+          {
+            "node": "Prepare Theme Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Theme Request": {
+      "main": [
+        [
+          {
+            "node": "Generate Theme Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Theme Pack": {
+      "main": [
+        [
+          {
+            "node": "Prepare Save Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Save Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Asset": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "ee2c8050-5a19-4baa-a578-63eb88831018",
+  "activeVersionId": "ee2c8050-5a19-4baa-a578-63eb88831018",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-21T22:11:40.503Z",
+      "createdAt": "2026-01-21T22:11:40.503Z",
+      "role": "workflow:owner",
+      "workflowId": "ACWOGydrPbFmWRKG",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-21T23:10:40.689Z",
+    "createdAt": "2026-01-21T23:10:40.689Z",
+    "versionId": "ee2c8050-5a19-4baa-a578-63eb88831018",
+    "workflowId": "ACWOGydrPbFmWRKG",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "process-educational-asset",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook-001",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "process-edu-001"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT\n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'",
+          "options": {}
+        },
+        "id": "fetch-asset-001",
+        "name": "Fetch Asset + Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const asset = $input.first().json;\n\n// Get current date info\nconst now = new Date();\nconst monthNames = ['January', 'February', 'March', 'April', 'May', 'June', \n                    'July', 'August', 'September', 'October', 'November', 'December'];\n\n// For educational, item_summary describes content type, not vehicles\nconst itemSummary = 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice that builds trust with viewers.';\n\nconsole.log('Asset ID:', asset.id);\nconsole.log('Theme seed:', asset.theme_seed);\nconsole.log('Building educational theme pack request...');\n\nreturn [{\n  json: {\n    asset,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed,\n      emoji: asset.theme_emoji,\n      direction: asset.theme_direction,\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      current_date: now.toISOString().split('T')[0],\n      current_month: monthNames[now.getMonth()],\n      item_summary: itemSummary\n    }\n  }\n}];"
+        },
+        "id": "prepare-request-001",
+        "name": "Prepare Theme Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.themePackRequest }}",
+          "options": {}
+        },
+        "id": "generate-theme-001",
+        "name": "Generate Theme Pack",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          900,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const prevData = $('Prepare Theme Request').first().json;\nconst themePackResponse = $input.first().json;\n\nconsole.log('Theme pack response:', JSON.stringify(themePackResponse));\n\n// Extract theme pack from response\nlet themePack = null;\nif (themePackResponse.success && themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else if (themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else {\n  // The response might BE the theme pack\n  themePack = themePackResponse;\n}\n\nreturn [{\n  json: {\n    asset_id: prevData.asset.id,\n    processed_items: [],\n    theme_pack: themePack\n  }\n}];"
+        },
+        "id": "prepare-save-001",
+        "name": "Prepare Save Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=UPDATE assets SET\n  processed_items = '[]'::jsonb,\n  theme_pack = $${{ JSON.stringify($json.theme_pack) }}$$::jsonb,\n  processing_status = 'complete',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'\nRETURNING id, processing_status",
+          "options": {}
+        },
+        "id": "save-asset-001",
+        "name": "Save to Asset",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1340,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { success: true, asset_id: $('Prepare Save Data').first().json.asset_id, status: 'complete', items_processed: 0, theme_pack_generated: $('Prepare Save Data').first().json.theme_pack !== null } }}"
+        },
+        "id": "respond-001",
+        "name": "Respond Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1560,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Asset + Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Asset + Plan": {
+        "main": [
+          [
+            {
+              "node": "Prepare Theme Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Theme Request": {
+        "main": [
+          [
+            {
+              "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Theme Pack": {
+        "main": [
+          [
+            {
+              "node": "Prepare Save Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Save Data": {
+        "main": [
+          [
+            {
+              "node": "Save to Asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save to Asset": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
