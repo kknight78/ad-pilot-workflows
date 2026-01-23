@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-01-15T02:23:39.423Z",
+  "updatedAt": "2026-01-22T21:50:21.627Z",
   "createdAt": "2026-01-15T00:38:38.014Z",
   "id": "LQ9tE8UtV9Afr5XQ",
   "name": "Weekly Intel Agent",
-  "active": true,
+  "active": false,
   "isArchived": false,
   "nodes": [
     {
@@ -23,7 +23,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        200
+        208
       ]
     },
     {
@@ -51,8 +51,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
-        100
+        224,
+        112
       ]
     },
     {
@@ -72,8 +72,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        440,
-        100
+        448,
+        112
       ],
       "onError": "continueErrorOutput"
     },
@@ -86,8 +86,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        660,
-        100
+        672,
+        112
       ]
     },
     {
@@ -99,8 +99,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        660,
-        200
+        672,
+        208
       ]
     },
     {
@@ -111,7 +111,7 @@
       "typeVersion": 3,
       "position": [
         880,
-        150
+        160
       ]
     },
     {
@@ -123,33 +123,26 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        150
+        1104,
+        160
       ]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.prompt }}",
-        "options": {}
+        "text": "={{ $json.prompt }}"
       },
       "id": "llm-chain",
       "name": "Basic LLM Chain",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.4,
       "position": [
-        1320,
-        150
+        1280,
+        160
       ]
     },
     {
       "parameters": {
-        "modelId": {
-          "__rl": true,
-          "value": "models/gemini-2.0-flash",
-          "mode": "list",
-          "cachedResultName": "models/gemini-2.0-flash"
-        },
         "options": {
           "temperature": 0.3
         }
@@ -159,8 +152,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        1320,
-        350
+        1328,
+        352
       ],
       "credentials": {
         "googlePalmApi": {
@@ -178,8 +171,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1540,
-        150
+        1552,
+        160
       ]
     },
     {
@@ -199,7 +192,7 @@
       "typeVersion": 4.2,
       "position": [
         1760,
-        150
+        160
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -234,8 +227,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1980,
-        50
+        1984,
+        64
       ]
     },
     {
@@ -247,8 +240,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1980,
-        250
+        1984,
+        256
       ]
     }
   ],
@@ -414,8 +407,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "4746111e-5eae-47af-a2c3-498ef3a27593",
-  "activeVersionId": "4746111e-5eae-47af-a2c3-498ef3a27593",
+  "versionId": "187616b2-d8c5-4d04-b688-c8aa22f6a96f",
+  "activeVersionId": null,
   "triggerCount": 2,
   "shared": [
     {
@@ -426,410 +419,6 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": {
-    "updatedAt": "2026-01-15T02:23:39.425Z",
-    "createdAt": "2026-01-15T02:23:39.425Z",
-    "versionId": "4746111e-5eae-47af-a2c3-498ef3a27593",
-    "workflowId": "LQ9tE8UtV9Afr5XQ",
-    "nodes": [
-      {
-        "parameters": {
-          "rule": {
-            "interval": [
-              {
-                "field": "cronExpression",
-                "expression": "0 20 * * 0"
-              }
-            ]
-          }
-        },
-        "id": "schedule-trigger",
-        "name": "Sunday 8pm Trigger",
-        "type": "n8n-nodes-base.scheduleTrigger",
-        "typeVersion": 1.2,
-        "position": [
-          0,
-          200
-        ]
-      },
-      {
-        "parameters": {
-          "httpMethod": "POST",
-          "path": "intel-agent-test",
-          "options": {}
-        },
-        "id": "manual-trigger",
-        "name": "Manual Test Trigger",
-        "type": "n8n-nodes-base.webhook",
-        "typeVersion": 2,
-        "position": [
-          0,
-          0
-        ],
-        "webhookId": "intel-agent-test"
-      },
-      {
-        "parameters": {
-          "jsCode": "// Source configuration\nconst sources = [\n  { name: 'OpenAI Blog', url: 'https://openai.com/blog/rss.xml', type: 'rss', category: 'llm' },\n  { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss', type: 'rss', category: 'llm' },\n  { name: 'Google Developers Blog', url: 'https://developers.googleblog.com/feeds/posts/default', type: 'rss', category: 'llm' },\n  { name: 'n8n GitHub Releases', url: 'https://github.com/n8n-io/n8n/releases.atom', type: 'rss', category: 'stack' },\n  { name: 'n8n Blog', url: 'https://blog.n8n.io/rss/', type: 'rss', category: 'stack' }\n];\n\nreturn sources.map(source => ({ json: source }));"
-        },
-        "id": "config-sources",
-        "name": "Config Sources",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          220,
-          100
-        ]
-      },
-      {
-        "parameters": {
-          "url": "={{ $json.url }}",
-          "options": {
-            "response": {
-              "response": {
-                "responseFormat": "text"
-              }
-            },
-            "timeout": 30000
-          }
-        },
-        "id": "fetch-sources",
-        "name": "Fetch Sources",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          440,
-          100
-        ],
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
-          "jsCode": "// Parse RSS/Atom feeds\nconst results = [];\nconst sourceConfigs = $('Config Sources').all();\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const item = $input.all()[i];\n  const xml = item.json.data || '';\n  const sourceConfig = sourceConfigs[i] ? sourceConfigs[i].json : {};\n  const sourceName = sourceConfig.name || 'Unknown';\n  const sourceUrl = sourceConfig.url || '';\n  \n  try {\n    const items = [];\n    const itemMatches = xml.match(/<(item|entry)[^>]*>[\\s\\S]*?<\\/\\1>/gi) || [];\n    \n    for (const entry of itemMatches.slice(0, 5)) {\n      const titleMatch = entry.match(/<title[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i);\n      let title = titleMatch ? titleMatch[1].trim().replace(/<[^>]+>/g, '') : 'No title';\n      \n      let link = '';\n      const linkHrefMatch = entry.match(/<link[^>]*href=[\"']([^\"']+)[\"']/i);\n      const linkTextMatch = entry.match(/<link[^>]*>([^<]+)<\\/link>/i);\n      link = linkHrefMatch ? linkHrefMatch[1] : (linkTextMatch ? linkTextMatch[1] : '');\n      \n      const dateMatch = entry.match(/<(pubDate|updated|published)[^>]*>([^<]+)<\\/\\1>/i);\n      const date = dateMatch ? dateMatch[2].trim() : '';\n      \n      const descMatch = entry.match(/<(description|summary|content)[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/\\1>/i);\n      let description = descMatch ? descMatch[2].trim() : '';\n      description = description.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 300);\n      \n      items.push({ title, link, date, description });\n    }\n    \n    results.push({ source: sourceName, sourceUrl, status: items.length > 0 ? 'success' : 'empty', itemCount: items.length, items });\n  } catch (error) {\n    results.push({ source: sourceName, sourceUrl, status: 'error', error: error.message, items: [] });\n  }\n}\n\nreturn [{ json: { collectedSources: results } }];"
-        },
-        "id": "parse-feeds",
-        "name": "Parse Feeds",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          660,
-          100
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "// Handle fetch errors\nconst results = [];\nconst sourceConfigs = $('Config Sources').all();\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const sourceConfig = sourceConfigs[i] ? sourceConfigs[i].json : {};\n  results.push({ source: sourceConfig.name || 'Unknown', sourceUrl: sourceConfig.url || '', status: 'failed', error: 'HTTP fetch failed', items: [] });\n}\n\nreturn [{ json: { collectedSources: results } }];"
-        },
-        "id": "handle-fetch-error",
-        "name": "Handle Fetch Error",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          660,
-          200
-        ]
-      },
-      {
-        "parameters": {},
-        "id": "merge-results",
-        "name": "Merge Results",
-        "type": "n8n-nodes-base.merge",
-        "typeVersion": 3,
-        "position": [
-          880,
-          150
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "// Prepare prompt for Gemini\nconst allItems = $input.all();\nconst allSources = [];\n\nfor (const item of allItems) {\n  if (item.json.collectedSources) {\n    allSources.push(...item.json.collectedSources);\n  }\n}\n\nconst today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\n\nlet sourcesSummary = '';\nlet failedSources = [];\n\nfor (const source of allSources) {\n  if (source.status === 'success' || source.status === 'empty') {\n    sourcesSummary += `\\n\\n## ${source.source}\\n`;\n    if (source.items && source.items.length > 0) {\n      for (const item of source.items.slice(0, 5)) {\n        sourcesSummary += `- **${item.title}**`;\n        if (item.date) sourcesSummary += ` (${item.date})`;\n        sourcesSummary += `\\n`;\n        if (item.description) sourcesSummary += `  ${item.description.slice(0, 200)}...\\n`;\n        if (item.link) sourcesSummary += `  Link: ${item.link}\\n`;\n      }\n    } else {\n      sourcesSummary += `- No recent updates found\\n`;\n    }\n  } else {\n    failedSources.push(source.source);\n  }\n}\n\nlet failedNote = failedSources.length > 0 ? `\\n\\n**Note:** The following sources were unavailable this week: ${failedSources.join(', ')}` : '';\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n\n## YOUR TASK\nAnalyze the following data and produce Kelly's Weekly Intel Brief.\n\n## AD PILOT'S TECH STACK\n- HeyGen: AI avatar video generation\n- ElevenLabs: Voice synthesis\n- Creatomate: Video template rendering\n- n8n: Workflow automation (self-hosted on Railway)\n- Cloudinary: Media management\n- Meta/TikTok: Ad publishing platforms\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\nProduce a concise, actionable brief:\n\n### 🔴 ACTION REQUIRED\nBreaking changes, security incidents, significantly better alternatives. Include links.\n\n### 🟡 INVESTIGATE THIS WEEK\nNew features worth testing, cost optimizations, emerging tools.\n\n### 🟢 AWARENESS\nIndustry news clients might ask about, competitor moves, 30/60/90 day horizon.\n\n## GUIDELINES\n- Be specific and actionable - no fluff\n- Include direct links\n- Focus on Ad Pilot's stack\n- If nothing relevant, say \"Nothing critical this week\"\n- Prioritize: security > breaking changes > cost savings > new features`;\n\nreturn [{ json: { prompt, today, emailTo: 'kelly@ad-pilot.ai', emailFrom: 'info@ad-pilot.ai' } }];"
-        },
-        "id": "prepare-prompt",
-        "name": "Prepare Prompt",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1100,
-          150
-        ]
-      },
-      {
-        "parameters": {
-          "promptType": "define",
-          "text": "={{ $json.prompt }}",
-          "options": {}
-        },
-        "id": "llm-chain",
-        "name": "Basic LLM Chain",
-        "type": "@n8n/n8n-nodes-langchain.chainLlm",
-        "typeVersion": 1.4,
-        "position": [
-          1320,
-          150
-        ]
-      },
-      {
-        "parameters": {
-          "modelId": {
-            "__rl": true,
-            "value": "models/gemini-2.0-flash",
-            "mode": "list",
-            "cachedResultName": "models/gemini-2.0-flash"
-          },
-          "options": {
-            "temperature": 0.3
-          }
-        },
-        "id": "gemini-model",
-        "name": "Gemini Model",
-        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-        "typeVersion": 1,
-        "position": [
-          1320,
-          350
-        ],
-        "credentials": {
-          "googlePalmApi": {
-            "id": "prVNksIVEgzVrhKB",
-            "name": "Google Gemini(PaLM) Api account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "// Format the LLM output as HTML email\nconst llmOutput = $input.first().json.text || $input.first().json.response || 'Analysis failed';\nconst today = new Date();\nconst dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });\n\nlet htmlContent = llmOutput\n  .replace(/### 🔴 ACTION REQUIRED/g, '<h2 style=\"color: #dc2626; margin-top: 24px;\">🔴 ACTION REQUIRED</h2>')\n  .replace(/### 🟡 INVESTIGATE THIS WEEK/g, '<h2 style=\"color: #ca8a04; margin-top: 24px;\">🟡 INVESTIGATE THIS WEEK</h2>')\n  .replace(/### 🟢 AWARENESS/g, '<h2 style=\"color: #16a34a; margin-top: 24px;\">🟢 AWARENESS</h2>')\n  .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')\n  .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href=\"$2\" style=\"color: #2563eb;\">$1</a>')\n  .replace(/^- /gm, '• ')\n  .replace(/\\n\\n/g, '</p><p style=\"margin: 12px 0;\">')\n  .replace(/\\n/g, '<br>');\n\nconst emailHtml = `<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"><style>\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 680px; margin: 0 auto; padding: 20px; }\n  h1 { color: #111827; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px; }\n  h2 { margin-top: 24px; margin-bottom: 12px; }\n  a { color: #2563eb; }\n  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n</style></head>\n<body>\n  <h1>🦅 Weekly Intel Brief</h1>\n  <p style=\"color: #6b7280; margin-bottom: 24px;\">${dateStr}</p>\n  <p style=\"margin: 12px 0;\">${htmlContent}</p>\n  <div class=\"footer\">\n    <p>Generated by Ad Pilot Intel Agent</p>\n    <p>Sources: OpenAI, Google AI, n8n</p>\n  </div>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    emailSubject: `🦅 Weekly Intel Brief — ${dateStr}`,\n    emailHtml,\n    rawOutput: llmOutput,\n    emailTo: $('Prepare Prompt').item.json.emailTo,\n    emailFrom: $('Prepare Prompt').item.json.emailFrom\n  }\n}];"
-        },
-        "id": "format-email",
-        "name": "Format Email",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1540,
-          150
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.resend.com/emails",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpBearerAuth",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"{{ $json.emailFrom }}\",\n  \"to\": \"{{ $json.emailTo }}\",\n  \"subject\": \"{{ $json.emailSubject }}\",\n  \"html\": {{ JSON.stringify($json.emailHtml) }}\n}",
-          "options": {}
-        },
-        "id": "send-email",
-        "name": "Send via Resend API",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1760,
-          150
-        ],
-        "credentials": {
-          "httpBearerAuth": {
-            "id": "vdxOfyrKMfWKSmAH",
-            "name": "Resend"
-          }
-        },
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "id": "success",
-                "name": "status",
-                "value": "success",
-                "type": "string"
-              },
-              {
-                "id": "message",
-                "name": "message",
-                "value": "Intel brief sent successfully",
-                "type": "string"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "success-response",
-        "name": "Success",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          1980,
-          50
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "console.error('Email failed:', JSON.stringify($input.first().json));\nreturn [{ json: { status: 'email_failed', message: 'Brief generated but email failed.', rawOutput: $('Format Email').item.json.rawOutput, emailHtml: $('Format Email').item.json.emailHtml } }];"
-        },
-        "id": "handle-email-error",
-        "name": "Log Email Error",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1980,
-          250
-        ]
-      }
-    ],
-    "connections": {
-      "Sunday 8pm Trigger": {
-        "main": [
-          [
-            {
-              "node": "Config Sources",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Manual Test Trigger": {
-        "main": [
-          [
-            {
-              "node": "Config Sources",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Config Sources": {
-        "main": [
-          [
-            {
-              "node": "Fetch Sources",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Fetch Sources": {
-        "main": [
-          [
-            {
-              "node": "Parse Feeds",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Handle Fetch Error",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Parse Feeds": {
-        "main": [
-          [
-            {
-              "node": "Merge Results",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Handle Fetch Error": {
-        "main": [
-          [
-            {
-              "node": "Merge Results",
-              "type": "main",
-              "index": 1
-            }
-          ]
-        ]
-      },
-      "Merge Results": {
-        "main": [
-          [
-            {
-              "node": "Prepare Prompt",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Prepare Prompt": {
-        "main": [
-          [
-            {
-              "node": "Basic LLM Chain",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Gemini Model": {
-        "ai_languageModel": [
-          [
-            {
-              "node": "Basic LLM Chain",
-              "type": "ai_languageModel",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Basic LLM Chain": {
-        "main": [
-          [
-            {
-              "node": "Format Email",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Format Email": {
-        "main": [
-          [
-            {
-              "node": "Send via Resend API",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Send via Resend API": {
-        "main": [
-          [
-            {
-              "node": "Success",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Log Email Error",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
-    "autosaved": false
-  },
+  "activeVersion": null,
   "tags": []
 }
