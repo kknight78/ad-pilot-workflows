@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-22T21:30:55.519Z",
+  "updatedAt": "2026-01-23T13:00:28.476Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -11,7 +11,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2608,
+        2816,
         1936
       ],
       "id": "wait-node",
@@ -25,7 +25,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3280,
+        3488,
         976
       ],
       "id": "format-errors",
@@ -38,7 +38,7 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        3952,
+        4160,
         976
       ],
       "id": "stop-error",
@@ -68,7 +68,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3728,
+        3936,
         1136
       ],
       "typeVersion": 1,
@@ -115,7 +115,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2160,
+        2368,
         1600
       ],
       "id": "if-complete",
@@ -165,7 +165,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1264,
+        1472,
         1536
       ],
       "id": "heygen-create",
@@ -180,7 +180,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1488,
+        1696,
         1680
       ],
       "id": "store-config",
@@ -207,7 +207,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1712,
+        1920,
         1680
       ],
       "id": "check-status",
@@ -222,7 +222,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2384,
+        2592,
         1488
       ],
       "id": "parse-avatar",
@@ -255,7 +255,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2384,
+        2592,
         1792
       ],
       "id": "if-failed",
@@ -290,7 +290,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2832,
+        3040,
         1488
       ],
       "id": "rvm-create",
@@ -304,7 +304,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3504,
+        3712,
         1440
       ],
       "id": "wait-rvm",
@@ -328,7 +328,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3056,
+        3264,
         1360
       ],
       "id": "rvm-status",
@@ -362,7 +362,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3280,
+        3488,
         1264
       ],
       "id": "if-rvm-complete",
@@ -375,7 +375,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3504,
+        3712,
         1216
       ],
       "id": "parse-rvm",
@@ -390,8 +390,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1120,
-        1696
+        1440,
+        1840
       ],
       "typeVersion": 1,
       "id": "sticky-avatar",
@@ -406,7 +406,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3168,
+        3376,
         1488
       ],
       "typeVersion": 1,
@@ -420,7 +420,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1936,
+        2144,
         1600
       ],
       "id": "preserve-for-loop",
@@ -441,7 +441,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2608,
+        2816,
         1488
       ],
       "id": "download_video",
@@ -459,7 +459,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + \" <break time='1.0s' />\") }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
         "options": {
           "timeout": 120000
         }
@@ -487,12 +487,12 @@
     },
     {
       "parameters": {
-        "jsCode": "// Merge temp audio URL with config and section timings\nconst tempAudioResponse = $json;\nconst response = $('Parse 11Labs Response').first().json;\n\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\n\nreturn [{\n  json: {\n    ...config,\n    audio_url: tempAudioResponse.url\n  }\n}];"
+        "jsCode": "// Merge temp audio URL with config and section timings\nconst silenceResponse = $('Add Silence for Rest Pose').first().json;\nconst response = $('Parse 11Labs Response').first().json;\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\nreturn [{\n  json: {\n    ...config,\n    audio_url: silenceResponse.audio_url\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1040,
+        1248,
         1536
       ],
       "id": "merge-audio-url",
@@ -540,7 +540,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3504,
+        3712,
         976
       ],
       "id": "prep-error-email",
@@ -568,11 +568,29 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        3728,
+        3936,
         976
       ],
       "id": "call-email-error",
       "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1024,
+        1440
+      ],
+      "id": "94c5f2ff-7f0f-4ae9-8fd7-ebbe7ba76e0a",
+      "name": "Add Silence for Rest Pose"
     }
   ],
   "connections": {
@@ -653,7 +671,7 @@
       "main": [
         [
           {
-            "node": "Merge Audio URL + Timings with Config",
+            "node": "Add Silence for Rest Pose",
             "type": "main",
             "index": 0
           }
@@ -879,6 +897,17 @@
           }
         ]
       ]
+    },
+    "Add Silence for Rest Pose": {
+      "main": [
+        [
+          {
+            "node": "Merge Audio URL + Timings with Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -889,8 +918,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "38f2ef3c-5dc7-431f-8756-b8c0f6e7b178",
-  "activeVersionId": "38f2ef3c-5dc7-431f-8756-b8c0f6e7b178",
+  "versionId": "895a5b45-3f97-4f5a-b26b-ab4eb03a34e2",
+  "activeVersionId": "895a5b45-3f97-4f5a-b26b-ab4eb03a34e2",
   "triggerCount": 0,
   "shared": [
     {
@@ -902,9 +931,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-22T21:31:00.810Z",
-    "createdAt": "2026-01-22T21:30:55.522Z",
-    "versionId": "38f2ef3c-5dc7-431f-8756-b8c0f6e7b178",
+    "updatedAt": "2026-01-23T13:00:36.060Z",
+    "createdAt": "2026-01-23T13:00:28.481Z",
+    "versionId": "895a5b45-3f97-4f5a-b26b-ab4eb03a34e2",
     "workflowId": "h2iTCTTGjddXykMu",
     "nodes": [
       {
@@ -912,7 +941,7 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          2608,
+          2816,
           1936
         ],
         "id": "wait-node",
@@ -926,7 +955,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3280,
+          3488,
           976
         ],
         "id": "format-errors",
@@ -939,7 +968,7 @@
         "type": "n8n-nodes-base.stopAndError",
         "typeVersion": 1,
         "position": [
-          3952,
+          4160,
           976
         ],
         "id": "stop-error",
@@ -969,7 +998,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3728,
+          3936,
           1136
         ],
         "typeVersion": 1,
@@ -1016,7 +1045,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2160,
+          2368,
           1600
         ],
         "id": "if-complete",
@@ -1066,7 +1095,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1264,
+          1472,
           1536
         ],
         "id": "heygen-create",
@@ -1081,7 +1110,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1488,
+          1696,
           1680
         ],
         "id": "store-config",
@@ -1108,7 +1137,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1712,
+          1920,
           1680
         ],
         "id": "check-status",
@@ -1123,7 +1152,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2384,
+          2592,
           1488
         ],
         "id": "parse-avatar",
@@ -1156,7 +1185,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2384,
+          2592,
           1792
         ],
         "id": "if-failed",
@@ -1191,7 +1220,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2832,
+          3040,
           1488
         ],
         "id": "rvm-create",
@@ -1205,7 +1234,7 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          3504,
+          3712,
           1440
         ],
         "id": "wait-rvm",
@@ -1229,7 +1258,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3056,
+          3264,
           1360
         ],
         "id": "rvm-status",
@@ -1263,7 +1292,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          3280,
+          3488,
           1264
         ],
         "id": "if-rvm-complete",
@@ -1276,7 +1305,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3504,
+          3712,
           1216
         ],
         "id": "parse-rvm",
@@ -1291,8 +1320,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          1120,
-          1696
+          1440,
+          1840
         ],
         "typeVersion": 1,
         "id": "sticky-avatar",
@@ -1307,7 +1336,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3168,
+          3376,
           1488
         ],
         "typeVersion": 1,
@@ -1321,7 +1350,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1936,
+          2144,
           1600
         ],
         "id": "preserve-for-loop",
@@ -1342,7 +1371,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2608,
+          2816,
           1488
         ],
         "id": "download_video",
@@ -1360,7 +1389,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script + \" <break time='1.0s' />\") }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
           "options": {
             "timeout": 120000
           }
@@ -1388,12 +1417,12 @@
       },
       {
         "parameters": {
-          "jsCode": "// Merge temp audio URL with config and section timings\nconst tempAudioResponse = $json;\nconst response = $('Parse 11Labs Response').first().json;\n\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\n\nreturn [{\n  json: {\n    ...config,\n    audio_url: tempAudioResponse.url\n  }\n}];"
+          "jsCode": "// Merge temp audio URL with config and section timings\nconst silenceResponse = $('Add Silence for Rest Pose').first().json;\nconst response = $('Parse 11Labs Response').first().json;\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\nreturn [{\n  json: {\n    ...config,\n    audio_url: silenceResponse.audio_url\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1040,
+          1248,
           1536
         ],
         "id": "merge-audio-url",
@@ -1441,7 +1470,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3504,
+          3712,
           976
         ],
         "id": "prep-error-email",
@@ -1469,11 +1498,29 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          3728,
+          3936,
           976
         ],
         "id": "call-email-error",
         "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1024,
+          1440
+        ],
+        "id": "94c5f2ff-7f0f-4ae9-8fd7-ebbe7ba76e0a",
+        "name": "Add Silence for Rest Pose"
       }
     ],
     "connections": {
@@ -1554,7 +1601,7 @@
         "main": [
           [
             {
-              "node": "Merge Audio URL + Timings with Config",
+              "node": "Add Silence for Rest Pose",
               "type": "main",
               "index": 0
             }
@@ -1780,12 +1827,23 @@
             }
           ]
         ]
+      },
+      "Add Silence for Rest Pose": {
+        "main": [
+          [
+            {
+              "node": "Merge Audio URL + Timings with Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 38f2ef3c",
+    "name": "Version 895a5b45",
     "description": "",
-    "autosaved": false
+    "autosaved": true
   },
   "tags": []
 }
