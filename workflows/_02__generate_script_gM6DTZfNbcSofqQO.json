@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-23T18:48:43.983Z",
+  "updatedAt": "2026-01-26T21:59:26.843Z",
   "createdAt": "2025-12-13T13:57:36.843Z",
   "id": "gM6DTZfNbcSofqQO",
   "name": "[02] Generate Script",
@@ -99,7 +99,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// BUILD SCRIPT PROMPT — TEMP_003 (educational)\n// Educational uses seconds, not words — different timing model\n// ═══════════════════════════════════════════════════════════════\n\nconst config = $json;\nconst timing = config.timing;\nconst themePack = config.theme_pack || null;\n\n// Get assembled system prompt (REQUIRED - no fallback)\nconst systemPrompt = $('Assemble System Prompt').first()?.json?.system_prompt;\n\nif (!systemPrompt) {\n  throw new Error('System prompt is required. Check Assemble System Prompt node.');\n}\n\n// ═══════════════════════════════════════════════════════════════\n// EDU-SPECIFIC TIMING (seconds, not words)\n// ═══════════════════════════════════════════════════════════════\n\nconst eduTimings = {\n  quick: { hook: 3, value: 25, authority: 7, cta: 5, total: 40 },\n  standard: { hook: 3, value: 35, authority: 7, cta: 10, total: 55 },\n  detailed: { hook: 3, value: 50, authority: 10, cta: 12, total: 75 }\n};\n\nconst scriptLength = config.script_length || 'standard';\nconst eduTiming = eduTimings[scriptLength];\n\n// ═══════════════════════════════════════════════════════════════\n// THEME SECTION WITH FALLBACKS\n// ═══════════════════════════════════════════════════════════════\n\nconst avatarName = config.avatar_name || config.person_display_name || 'Shad';\n\n// Normalize theme pack (handle both seed and pack formats)\nlet normalizedThemePack = null;\nif (themePack) {\n  normalizedThemePack = {\n    theme_name: themePack.theme_name || themePack.theme_seed || 'Car Buying Tips',\n    emoji: themePack.emoji || '🚗',\n    core_tension: themePack.core_tension || themePack.direction || 'Common car problems people ignore until they become expensive',\n    education_angle: themePack.education_angle || themePack.direction || 'Practical tips to save money and avoid costly mistakes',\n    lifestyle_moments: themePack.lifestyle_moments || themePack.local_micro_moments || ['Dashboard warning lights', 'Weird car noises', 'Unexpected repair bills'],\n    banned_phrases: themePack.banned_phrases || ['guaranteed approval', 'no credit no problem', 'your next chapter', 'fresh start']\n  };\n}\n\nlet topicSection = '';\nif (normalizedThemePack) {\n  topicSection = `THEME PACK:\n- Theme: ${normalizedThemePack.theme_name} ${normalizedThemePack.emoji}\n- Core tension: ${normalizedThemePack.core_tension}\n- Education angle: ${normalizedThemePack.education_angle}\n- Problem scenarios: ${JSON.stringify(normalizedThemePack.lifestyle_moments)}\n- Banned phrases: ${JSON.stringify(normalizedThemePack.banned_phrases)}\n\nTOPIC: Teach to the core tension above. Start with a PROBLEM-based hook that makes viewers recognize themselves.`;\n} else if (config.topic) {\n  topicSection = `TOPIC: ${config.topic}\n\nStart with a PROBLEM-based hook. What mistake or myth can you address?`;\n} else if (config.theme) {\n  topicSection = `TOPIC: ${config.theme}\n\nStart with a PROBLEM-based hook. What mistake or myth can you address?`;\n} else {\n  topicSection = `TOPIC: Practical car buying or ownership advice.\n\nStart with a PROBLEM-based hook. What common mistake do car buyers make?`;\n}\n\n// ═══════════════════════════════════════════════════════════════\n// USER PROMPT (DATA ONLY - instructions are in system prompt)\n// ═══════════════════════════════════════════════════════════════\n\nconst userPrompt = `Generate a ${scriptLength.toUpperCase()} educational script for ${avatarName}.\n\n${topicSection}\n\nTIMING:\n- Hook: ${eduTiming.hook} seconds\n- Value: ${eduTiming.value} seconds\n- Authority: ${eduTiming.authority} seconds\n- CTA: ${eduTiming.cta} seconds\n- Total: ~${eduTiming.total} seconds\n\nWrite now.`;\n\nconsole.log(`✅ Edu prompt built for ${avatarName}`);\nconsole.log(`🎨 Theme: ${normalizedThemePack ? normalizedThemePack.theme_name : config.topic || 'seasonal default'}`);\nconsole.log(`⏱️ Timing: ${scriptLength} (~${eduTiming.total}s)`);\n\nreturn [{\n  json: {\n    ...config,\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    timing: eduTiming\n  }\n}];"
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// BUILD SCRIPT PROMPT — TEMP_003 (educational)\n// Educational uses seconds, not words — different timing model\n// ═══════════════════════════════════════════════════════════════\n\nconst config = $json;\nconst timing = config.timing;\nconst themePack = config.theme_pack || null;\n\n// Get assembled system prompt (REQUIRED - no fallback)\nconst systemPrompt = $('Assemble System Prompt').first()?.json?.system_prompt;\n\nif (!systemPrompt) {\n  throw new Error('System prompt is required. Check Assemble System Prompt node.');\n}\n\n// ═══════════════════════════════════════════════════════════════\n// EDU-SPECIFIC TIMING (seconds, not words)\n// ═══════════════════════════════════════════════════════════════\n\nconst eduTimings = {\n  quick: { hook: 3, value: 25, authority: 7, cta: 5, total: 40 },\n  standard: { hook: 3, value: 35, authority: 7, cta: 10, total: 55 },\n  detailed: { hook: 3, value: 50, authority: 10, cta: 12, total: 75 }\n};\n\nconst scriptLength = config.script_length || 'standard';\nconst eduTiming = eduTimings[scriptLength];\n\n// ═══════════════════════════════════════════════════════════════\n// THEME SECTION WITH FALLBACKS\n// ═══════════════════════════════════════════════════════════════\n\nconst avatarName = config.avatar_name || config.person_display_name || 'Shad';\n\n// Normalize theme pack (handle both seed and pack formats)\nlet normalizedThemePack = null;\nif (themePack) {\n  normalizedThemePack = {\n    theme_name: themePack.theme_name || themePack.theme_seed || 'Car Buying Tips',\n    emoji: themePack.emoji || '🚗',\n    core_tension: themePack.core_tension || themePack.direction || 'Common car problems people ignore until they become expensive',\n    education_angle: themePack.education_angle || themePack.direction || 'Practical tips to save money and avoid costly mistakes',\n    lifestyle_moments: themePack.lifestyle_moments || themePack.local_micro_moments || ['Dashboard warning lights', 'Weird car noises', 'Unexpected repair bills'],\n    banned_phrases: themePack.banned_phrases || ['guaranteed approval', 'no credit no problem', 'your next chapter', 'fresh start']\n  };\n}\n\nlet topicSection = '';\nif (normalizedThemePack) {\n  topicSection = `THEME PACK:\n- Theme: ${normalizedThemePack.theme_name} ${normalizedThemePack.emoji}\n- Core tension: ${normalizedThemePack.core_tension}\n- Education angle: ${normalizedThemePack.education_angle}\n- Problem scenarios: ${JSON.stringify(normalizedThemePack.lifestyle_moments)}\n- Banned phrases: ${JSON.stringify(normalizedThemePack.banned_phrases)}\n\nTOPIC: Teach to the core tension above. Start with a PROBLEM-based hook that makes viewers recognize themselves.`;\n} else if (config.topic) {\n  topicSection = `TOPIC: ${config.topic}\n\nStart with a PROBLEM-based hook. What mistake or myth can you address?`;\n} else if (config.theme) {\n  topicSection = `TOPIC: ${config.theme}\n\nStart with a PROBLEM-based hook. What mistake or myth can you address?`;\n} else {\n  topicSection = `TOPIC: Practical car buying or ownership advice.\n\nStart with a PROBLEM-based hook. What common mistake do car buyers make?`;\n}\n\n// ═══════════════════════════════════════════════════════════════\n// USER PROMPT (DATA ONLY - instructions are in system prompt)\n// ═══════════════════════════════════════════════════════════════\n\nconst userPrompt = `Generate a ${scriptLength.toUpperCase()} educational script for ${avatarName}.\n\n${topicSection}\n\nBUSINESS INFO:\n- Name: ${config.business_name || 'Capitol Car Credit'}\n- Location: ${config.location || 'Rantoul, Illinois'}\n- Service Area: ${config.service_area || 'Central Illinois'}\n\nTIMING:\n- Hook: ${eduTiming.hook} seconds\n- Value: ${eduTiming.value} seconds\n- Authority: ${eduTiming.authority} seconds\n- CTA: ${eduTiming.cta} seconds\n- Total: ~${eduTiming.total} seconds\n\nWrite now.`;\n\nconsole.log(`✅ Edu prompt built for ${avatarName}`);\nconsole.log(`🎨 Theme: ${normalizedThemePack ? normalizedThemePack.theme_name : config.topic || 'seasonal default'}`);\nconsole.log(`⏱️ Timing: ${scriptLength} (~${eduTiming.total}s)`);\n\nreturn [{\n  json: {\n    ...config,\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    timing: eduTiming\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -887,7 +887,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT i.pronunciations, i.legal, i.feature_enrichment, i.template_guidance, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'",
+        "query": "=SELECT i.pronunciations, i.legal, i.feature_enrichment, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'",
         "options": {}
       },
       "id": "fetch-industry-config-001",
@@ -925,8 +925,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1808,
-        720
+        1824,
+        528
       ],
       "id": "43d9026d-8fad-41ac-a50a-a283cb30f122",
       "name": "Prepare Script Context"
@@ -1789,8 +1789,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "7ff2478c-86a7-4384-811a-fa937994529d",
-  "activeVersionId": "7ff2478c-86a7-4384-811a-fa937994529d",
+  "versionId": "e30f669f-4c56-45f2-89b3-e442ced77cf9",
+  "activeVersionId": "6fb5b3fa-0819-4c96-8524-56a35c5e8555",
   "triggerCount": 1,
   "shared": [
     {
@@ -1802,9 +1802,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-23T18:48:48.204Z",
-    "createdAt": "2026-01-23T18:48:43.987Z",
-    "versionId": "7ff2478c-86a7-4384-811a-fa937994529d",
+    "updatedAt": "2026-01-26T13:50:07.871Z",
+    "createdAt": "2026-01-26T13:49:07.748Z",
+    "versionId": "6fb5b3fa-0819-4c96-8524-56a35c5e8555",
     "workflowId": "gM6DTZfNbcSofqQO",
     "nodes": [
       {
@@ -2688,7 +2688,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=SELECT i.pronunciations, i.legal, i.feature_enrichment, i.template_guidance, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'",
+          "query": "=SELECT i.pronunciations, i.legal, i.feature_enrichment, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'",
           "options": {}
         },
         "id": "fetch-industry-config-001",
@@ -2726,8 +2726,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1808,
-          720
+          1824,
+          528
         ],
         "id": "43d9026d-8fad-41ac-a50a-a283cb30f122",
         "name": "Prepare Script Context"
@@ -3583,7 +3583,7 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 7ff2478c",
+    "name": "Version 6fb5b3fa",
     "description": "",
     "autosaved": true
   },
