@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-23T00:21:13.669Z",
+  "updatedAt": "2026-01-26T14:47:07.629Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -75,7 +75,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1376,
+        1584,
         144
       ],
       "id": "call-script",
@@ -108,7 +108,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1600,
+        1808,
         144
       ],
       "id": "if-preview",
@@ -121,7 +121,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1824,
+        2032,
         48
       ],
       "id": "delete-preview",
@@ -136,7 +136,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2048,
+        2256,
         48
       ],
       "id": "respond-preview",
@@ -153,7 +153,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1824,
+        2032,
         240
       ],
       "id": "respond-started",
@@ -180,7 +180,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        2048,
+        2256,
         240
       ],
       "id": "call-avatar",
@@ -193,7 +193,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2272,
+        2480,
         240
       ],
       "id": "split-ratios",
@@ -223,7 +223,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        2496,
+        2704,
         240
       ],
       "id": "call-video",
@@ -257,7 +257,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2720,
+        2928,
         240
       ],
       "id": "if-needs-banners",
@@ -270,7 +270,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2944,
+        3152,
         144
       ],
       "id": "prep-banners",
@@ -300,7 +300,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        3168,
+        3376,
         144
       ],
       "id": "call-banners",
@@ -313,7 +313,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3392,
+        3600,
         336
       ],
       "id": "no-banners",
@@ -326,7 +326,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3392,
+        3600,
         144
       ],
       "id": "merge-banner-results",
@@ -341,7 +341,7 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        3616,
+        3824,
         240
       ],
       "id": "aggregate-all",
@@ -354,7 +354,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3840,
+        4048,
         240
       ],
       "id": "format-response",
@@ -374,7 +374,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        4064,
+        4272,
         240
       ],
       "id": "send-email",
@@ -443,7 +443,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        4288,
+        4496,
         144
       ],
       "id": "update-job",
@@ -495,7 +495,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3104,
+        3312,
         -16
       ],
       "typeVersion": 1,
@@ -505,13 +505,13 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  p.full_name,\n  p.display_name,\n  p.voice_id,\n  p.voice_settings,\n  a.photo_avatar_id,\n  a.motion_avatar_id\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $json.avatar_id }}'",
+        "query": "SELECT\n  p.full_name,\n  p.display_name,\n  p.voice_id,\n  p.voice_settings,\n  a.photo_avatar_id,\n  a.motion_avatar_id\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $(\"Webhook\").first().json.body.avatar_id }}'",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        32,
+        240,
         144
       ],
       "id": "lookup-avatar-config",
@@ -525,12 +525,12 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{\n  json: { \n    ...config\n  }\n}];"
+        "jsCode": "// Get webhook body and DB results from earlier nodes\n\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst clientResult = $('Lookup Client Base').first().json;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  service_area: clientResult.service_area,\n  business_name: clientResult.business_name,\n  location: clientResult.location,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{\n  json: { \n    ...config\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        704,
+        912,
         144
       ],
       "id": "build-config",
@@ -545,7 +545,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        256,
+        464,
         144
       ],
       "id": "lookup-background",
@@ -565,7 +565,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4288,
+        4496,
         336
       ],
       "id": "format-email-error",
@@ -593,7 +593,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        4512,
+        4720,
         336
       ],
       "id": "call-error-email-orch",
@@ -608,7 +608,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        480,
+        688,
         144
       ],
       "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
@@ -627,13 +627,13 @@
         "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"Rantoul, Illinois\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
+        "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"service_area\": \"{{ $json.service_area }}\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        928,
+        1136,
         144
       ],
       "id": "f11f6e71-048c-4184-87d5-06c2c6068624",
@@ -646,11 +646,32 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1152,
+        1360,
         144
       ],
       "id": "d2f5a8cb-f53a-4f24-a16f-b7348f6ac8fd",
       "name": "Add Theme Pack to Config"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  prompt_content->'identity'->>'service_area' as service_area,\n  prompt_content->'identity'->>'location' as location,\n  prompt_content->'identity'->>'business_name' as business_name\nFROM client_prompts\nWHERE client_id = '{{ $json.client_id }}'\nAND prompt_type = 'base'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        16,
+        144
+      ],
+      "id": "2fcce21b-ffac-4443-b549-d89ceb9fbe3c",
+      "name": "Lookup Client Base",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
     }
   ],
   "connections": {
@@ -691,7 +712,7 @@
       "main": [
         [
           {
-            "node": "Lookup Avatar Config",
+            "node": "Lookup Client Base",
             "type": "main",
             "index": 0
           }
@@ -938,6 +959,17 @@
           }
         ]
       ]
+    },
+    "Lookup Client Base": {
+      "main": [
+        [
+          {
+            "node": "Lookup Avatar Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -950,8 +982,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "ec963060-eacb-48fc-9b4c-f91e61195da0",
-  "activeVersionId": "ec963060-eacb-48fc-9b4c-f91e61195da0",
+  "versionId": "b572117e-d394-4272-85bb-9c44c32ab475",
+  "activeVersionId": "b572117e-d394-4272-85bb-9c44c32ab475",
   "triggerCount": 1,
   "shared": [
     {
@@ -963,9 +995,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-23T00:21:17.556Z",
-    "createdAt": "2026-01-23T00:21:13.673Z",
-    "versionId": "ec963060-eacb-48fc-9b4c-f91e61195da0",
+    "updatedAt": "2026-01-26T14:47:13.288Z",
+    "createdAt": "2026-01-26T14:47:07.632Z",
+    "versionId": "b572117e-d394-4272-85bb-9c44c32ab475",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -1037,7 +1069,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1376,
+          1584,
           144
         ],
         "id": "call-script",
@@ -1070,7 +1102,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1600,
+          1808,
           144
         ],
         "id": "if-preview",
@@ -1083,7 +1115,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1824,
+          2032,
           48
         ],
         "id": "delete-preview",
@@ -1098,7 +1130,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.4,
         "position": [
-          2048,
+          2256,
           48
         ],
         "id": "respond-preview",
@@ -1115,7 +1147,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.4,
         "position": [
-          1824,
+          2032,
           240
         ],
         "id": "respond-started",
@@ -1142,7 +1174,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          2048,
+          2256,
           240
         ],
         "id": "call-avatar",
@@ -1155,7 +1187,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2272,
+          2480,
           240
         ],
         "id": "split-ratios",
@@ -1185,7 +1217,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          2496,
+          2704,
           240
         ],
         "id": "call-video",
@@ -1219,7 +1251,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2720,
+          2928,
           240
         ],
         "id": "if-needs-banners",
@@ -1232,7 +1264,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2944,
+          3152,
           144
         ],
         "id": "prep-banners",
@@ -1262,7 +1294,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          3168,
+          3376,
           144
         ],
         "id": "call-banners",
@@ -1275,7 +1307,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3392,
+          3600,
           336
         ],
         "id": "no-banners",
@@ -1288,7 +1320,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3392,
+          3600,
           144
         ],
         "id": "merge-banner-results",
@@ -1303,7 +1335,7 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          3616,
+          3824,
           240
         ],
         "id": "aggregate-all",
@@ -1316,7 +1348,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3840,
+          4048,
           240
         ],
         "id": "format-response",
@@ -1336,7 +1368,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          4064,
+          4272,
           240
         ],
         "id": "send-email",
@@ -1405,7 +1437,7 @@
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
         "position": [
-          4288,
+          4496,
           144
         ],
         "id": "update-job",
@@ -1457,7 +1489,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3104,
+          3312,
           -16
         ],
         "typeVersion": 1,
@@ -1467,13 +1499,13 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  p.full_name,\n  p.display_name,\n  p.voice_id,\n  p.voice_settings,\n  a.photo_avatar_id,\n  a.motion_avatar_id\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $json.avatar_id }}'",
+          "query": "SELECT\n  p.full_name,\n  p.display_name,\n  p.voice_id,\n  p.voice_settings,\n  a.photo_avatar_id,\n  a.motion_avatar_id\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $(\"Webhook\").first().json.body.avatar_id }}'",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          32,
+          240,
           144
         ],
         "id": "lookup-avatar-config",
@@ -1487,12 +1519,12 @@
       },
       {
         "parameters": {
-          "jsCode": "// Get webhook body and DB results from earlier nodes\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{\n  json: { \n    ...config\n  }\n}];"
+          "jsCode": "// Get webhook body and DB results from earlier nodes\n\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst clientResult = $('Lookup Client Base').first().json;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  service_area: clientResult.service_area,\n  business_name: clientResult.business_name,\n  location: clientResult.location,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{\n  json: { \n    ...config\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          704,
+          912,
           144
         ],
         "id": "build-config",
@@ -1507,7 +1539,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          256,
+          464,
           144
         ],
         "id": "lookup-background",
@@ -1527,7 +1559,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4288,
+          4496,
           336
         ],
         "id": "format-email-error",
@@ -1555,7 +1587,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          4512,
+          4720,
           336
         ],
         "id": "call-error-email-orch",
@@ -1570,7 +1602,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
         "position": [
-          480,
+          688,
           144
         ],
         "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
@@ -1589,13 +1621,13 @@
           "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"Rantoul, Illinois\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
+          "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"service_area\": \"{{ $json.service_area }}\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          928,
+          1136,
           144
         ],
         "id": "f11f6e71-048c-4184-87d5-06c2c6068624",
@@ -1608,11 +1640,32 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1152,
+          1360,
           144
         ],
         "id": "d2f5a8cb-f53a-4f24-a16f-b7348f6ac8fd",
         "name": "Add Theme Pack to Config"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n  prompt_content->'identity'->>'service_area' as service_area,\n  prompt_content->'identity'->>'location' as location,\n  prompt_content->'identity'->>'business_name' as business_name\nFROM client_prompts\nWHERE client_id = '{{ $json.client_id }}'\nAND prompt_type = 'base'",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          16,
+          144
+        ],
+        "id": "2fcce21b-ffac-4443-b549-d89ceb9fbe3c",
+        "name": "Lookup Client Base",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
       }
     ],
     "connections": {
@@ -1653,7 +1706,7 @@
         "main": [
           [
             {
-              "node": "Lookup Avatar Config",
+              "node": "Lookup Client Base",
               "type": "main",
               "index": 0
             }
@@ -1900,10 +1953,21 @@
             }
           ]
         ]
+      },
+      "Lookup Client Base": {
+        "main": [
+          [
+            {
+              "node": "Lookup Avatar Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version ec963060",
+    "name": "Version b572117e",
     "description": "",
     "autosaved": true
   },
