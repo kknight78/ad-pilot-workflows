@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-15T14:53:50.781Z",
+  "updatedAt": "2026-01-26T22:43:07.170Z",
   "createdAt": "2025-12-13T13:57:35.713Z",
   "id": "06zwjQATNzxzQqDt",
   "name": "Theme Suggester",
@@ -73,7 +73,7 @@
             {
               "id": "prompt",
               "name": "prompt",
-              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n════════════════════════════════���══════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\n{{ $('Get Recent Themes').all().length > 0 ? '═══════════════════════════════════════════════════════════════\\n🚫 RECENTLY SUGGESTED THEMES (DO NOT REPEAT)\\n═══════════════════════════════════════════════════════════════\\nThese themes were already suggested recently. Generate something DIFFERENT — avoid similar words, concepts, and angles:\\n' + $('Get Recent Themes').all().map(row => '- ' + row.json.theme_seed).join('\\n') + '\\n' : '' }}\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
               "type": "string"
             }
           ]
@@ -85,7 +85,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
       "position": [
-        608,
+        808,
         208
       ]
     },
@@ -98,14 +98,14 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1008,
+        1208,
         208
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, themes: $json.themes } }}",
+        "responseBody": "={{ { success: true, themes: $('Prepare Log').item.json.themes } }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -134,7 +134,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1200,
+        1600,
         208
       ]
     },
@@ -170,13 +170,74 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        800,
+        1000,
         208
       ],
       "credentials": {
         "googlePalmApi": {
           "id": "prVNksIVEgzVrhKB",
           "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT theme_seed FROM (SELECT theme_seed, MAX(created_at) as latest FROM generated_themes WHERE client_id = '{{ $json.client_id }}' AND created_at > NOW() - INTERVAL '30 days' GROUP BY theme_seed ORDER BY latest DESC LIMIT 20) sub",
+        "options": {
+          "queryParams": "={{ [$json.client_id] }}"
+        }
+      },
+      "id": "get-recent-themes-suggester",
+      "name": "Get Recent Themes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        500,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log each generated theme to the database\nconst themes = $input.item.json.themes || [];\nconst clientId = $('Parse Request').first().json.client_id;\n\n// Store theme names for logging\nconst themeNames = themes.map(t => t.name);\n\nreturn [{\n  json: {\n    themes: themes,\n    theme_names_to_log: themeNames,\n    client_id: clientId\n  }\n}];"
+      },
+      "id": "prepare-log-themes",
+      "name": "Prepare Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1308,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO generated_themes (client_id, theme_seed, template_type, source) SELECT '{{ $('Parse Request').first().json.client_id }}', unnest(ARRAY[{{ $json.theme_names_to_log.map(t => \"'\" + t.replace(/'/g, \"''\") + \"'\").join(',') }}]), 'suggestion', 'theme-suggester'",
+        "options": {
+          "queryParams": "={{ [$json.client_id, $json.theme_names_to_log] }}"
+        }
+      },
+      "id": "log-themes-db",
+      "name": "Log Themes to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1408,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
         }
       }
     }
@@ -194,6 +255,17 @@
       ]
     },
     "Parse Request": {
+      "main": [
+        [
+          {
+            "node": "Get Recent Themes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Themes": {
       "main": [
         [
           {
@@ -215,22 +287,44 @@
         ]
       ]
     },
-    "Parse Response": {
+    "Gemini API": {
       "main": [
         [
           {
-            "node": "Respond Success",
+            "node": "Parse Response",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Gemini API": {
+    "Parse Response": {
       "main": [
         [
           {
-            "node": "Parse Response",
+            "node": "Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Log": {
+      "main": [
+        [
+          {
+            "node": "Log Themes to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Themes to DB": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
             "type": "main",
             "index": 0
           }
@@ -246,8 +340,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b22bd562-48aa-436c-88d2-8a9c6e442f6e",
-  "activeVersionId": "b22bd562-48aa-436c-88d2-8a9c6e442f6e",
+  "versionId": "e49317eb-89c4-459d-91a9-590ce7f3c572",
+  "activeVersionId": "e49317eb-89c4-459d-91a9-590ce7f3c572",
   "triggerCount": 1,
   "shared": [
     {
@@ -259,9 +353,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-15T14:49:34.144Z",
-    "createdAt": "2026-01-15T14:49:34.144Z",
-    "versionId": "b22bd562-48aa-436c-88d2-8a9c6e442f6e",
+    "updatedAt": "2026-01-26T22:43:07.172Z",
+    "createdAt": "2026-01-26T22:43:07.172Z",
+    "versionId": "e49317eb-89c4-459d-91a9-590ce7f3c572",
     "workflowId": "06zwjQATNzxzQqDt",
     "nodes": [
       {
@@ -331,7 +425,7 @@
               {
                 "id": "prompt",
                 "name": "prompt",
-                "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
+                "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n════════════════════════════════���══════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\n{{ $('Get Recent Themes').all().length > 0 ? '═══════════════════════════════════════════════════════════════\\n🚫 RECENTLY SUGGESTED THEMES (DO NOT REPEAT)\\n═══════════════════════════════════════════════════════════════\\nThese themes were already suggested recently. Generate something DIFFERENT — avoid similar words, concepts, and angles:\\n' + $('Get Recent Themes').all().map(row => '- ' + row.json.theme_seed).join('\\n') + '\\n' : '' }}\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
                 "type": "string"
               }
             ]
@@ -343,7 +437,7 @@
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.3,
         "position": [
-          608,
+          808,
           208
         ]
       },
@@ -356,14 +450,14 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1008,
+          1208,
           208
         ]
       },
       {
         "parameters": {
           "respondWith": "json",
-          "responseBody": "={{ { success: true, themes: $json.themes } }}",
+          "responseBody": "={{ { success: true, themes: $('Prepare Log').item.json.themes } }}",
           "options": {
             "responseHeaders": {
               "entries": [
@@ -392,7 +486,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1200,
+          1600,
           208
         ]
       },
@@ -428,13 +522,74 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          800,
+          1000,
           208
         ],
         "credentials": {
           "googlePalmApi": {
             "id": "prVNksIVEgzVrhKB",
             "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT theme_seed FROM (SELECT theme_seed, MAX(created_at) as latest FROM generated_themes WHERE client_id = '{{ $json.client_id }}' AND created_at > NOW() - INTERVAL '30 days' GROUP BY theme_seed ORDER BY latest DESC LIMIT 20) sub",
+          "options": {
+            "queryParams": "={{ [$json.client_id] }}"
+          }
+        },
+        "id": "get-recent-themes-suggester",
+        "name": "Get Recent Themes",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          500,
+          208
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        },
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Log each generated theme to the database\nconst themes = $input.item.json.themes || [];\nconst clientId = $('Parse Request').first().json.client_id;\n\n// Store theme names for logging\nconst themeNames = themes.map(t => t.name);\n\nreturn [{\n  json: {\n    themes: themes,\n    theme_names_to_log: themeNames,\n    client_id: clientId\n  }\n}];"
+        },
+        "id": "prepare-log-themes",
+        "name": "Prepare Log",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1308,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=INSERT INTO generated_themes (client_id, theme_seed, template_type, source) SELECT '{{ $('Parse Request').first().json.client_id }}', unnest(ARRAY[{{ $json.theme_names_to_log.map(t => \"'\" + t.replace(/'/g, \"''\") + \"'\").join(',') }}]), 'suggestion', 'theme-suggester'",
+          "options": {
+            "queryParams": "={{ [$json.client_id, $json.theme_names_to_log] }}"
+          }
+        },
+        "id": "log-themes-db",
+        "name": "Log Themes to DB",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1408,
+          208
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
           }
         }
       }
@@ -452,6 +607,17 @@
         ]
       },
       "Parse Request": {
+        "main": [
+          [
+            {
+              "node": "Get Recent Themes",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Recent Themes": {
         "main": [
           [
             {
@@ -473,22 +639,44 @@
           ]
         ]
       },
-      "Parse Response": {
+      "Gemini API": {
         "main": [
           [
             {
-              "node": "Respond Success",
+              "node": "Parse Response",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Gemini API": {
+      "Parse Response": {
         "main": [
           [
             {
-              "node": "Parse Response",
+              "node": "Prepare Log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Log": {
+        "main": [
+          [
+            {
+              "node": "Log Themes to DB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Log Themes to DB": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
               "type": "main",
               "index": 0
             }
