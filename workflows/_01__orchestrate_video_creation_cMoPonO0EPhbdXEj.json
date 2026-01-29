@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-26T14:47:07.629Z",
+  "updatedAt": "2026-01-28T22:00:48.563Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -242,11 +242,12 @@
           "conditions": [
             {
               "leftValue": "={{ $json._platforms.length }}",
-              "rightValue": "0",
+              "rightValue": 0,
               "operator": {
                 "type": "number",
                 "operation": "gt"
-              }
+              },
+              "id": "21791e5d-afcf-42dc-bd08-92d944a693ca"
             }
           ],
           "combinator": "and"
@@ -257,7 +258,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2928,
+        3136,
         240
       ],
       "id": "if-needs-banners",
@@ -270,7 +271,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3152,
+        3360,
         144
       ],
       "id": "prep-banners",
@@ -300,7 +301,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        3376,
+        3584,
         144
       ],
       "id": "call-banners",
@@ -313,7 +314,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3600,
+        3808,
         336
       ],
       "id": "no-banners",
@@ -326,7 +327,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3600,
+        3808,
         144
       ],
       "id": "merge-banner-results",
@@ -341,7 +342,7 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        3824,
+        4032,
         240
       ],
       "id": "aggregate-all",
@@ -354,7 +355,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4048,
+        4256,
         240
       ],
       "id": "format-response",
@@ -374,7 +375,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        4272,
+        4480,
         240
       ],
       "id": "send-email",
@@ -443,7 +444,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        4496,
+        4704,
         144
       ],
       "id": "update-job",
@@ -565,7 +566,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4496,
+        4704,
         336
       ],
       "id": "format-email-error",
@@ -593,7 +594,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        4720,
+        4928,
         336
       ],
       "id": "call-error-email-orch",
@@ -672,6 +673,21 @@
           "name": "Railway Postgres"
         }
       }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "\n  {\n    \"client\": \"ccc\",\n    \"client_id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"template_id\": \"ad-multi-item-1\",\n    \"ratios\": [\n      \"9:16\",\n      \"4:5\"\n    ],\n    \"platforms\": [\n      \"FACEBOOK\",\n      \"INSTAGRAM\"\n    ],\n    \"theme\": \"Silence the 'What If'\",\n    \"theme_pack\": {\n      \"success\": true,\n      \"mode\": \"pack\",\n      \"theme_name\": \"Future-Proof Your Drive\",\n      \"emoji\": \"✅\",\n      \"why\": \"This theme directly addresses the 'What If' by focusing on the proactive benefits of upgrading to a newer, more reliable vehicle, especially during the winter months in Central Illinois.\",\n      \"core_tension\": \"The nagging feeling that your current car might not handle another harsh winter, or keep up with your evolving lifestyle.\",\n      \"ad_angle\": \"Positions upgrading as a smart, forward-thinking decision that brings peace of mind and unlocks new possibilities, not just a frivolous purchase.\",\n      \"education_angle\": null,\n      \"lifestyle_moments\": [\n        \"Loading up ski gear without worrying about space or reliability.\",\n        \"Effortlessly navigating snowy roads on your way to a weekend getaway.\",\n        \"Enjoying the comfort and convenience of modern tech features on a long drive.\",\n        \"Pulling into a client meeting in a vehicle that reflects your professional success.\",\n        \"Having the confidence to say 'yes' to spontaneous adventures.\",\n        \"Experiencing the relief of knowing your family is safe and secure in a reliable vehicle.\",\n        \"Seeing the admiring glances as you drive down the street.\",\n        \"Arriving at your destination feeling refreshed and energized, thanks to advanced driver-assistance systems.\"\n      ],\n      \"item_affinities\": {\n        \"highlight_features\": [\n          \"AWD/4WD capabilities\",\n          \"Heated seats and steering wheel\",\n          \"Remote start\",\n          \"Advanced safety features (lane departure warning, blind spot monitoring)\",\n          \"Spacious cargo area\",\n          \"Infotainment system\"\n        ],\n        \"highlight_categories\": [\n          \"SUVs\",\n          \"Trucks\",\n          \"Sedans with AWD\"\n        ],\n        \"natural_pairings\": \"This theme is perfect for showcasing vehicles with features that enhance winter driving and provide a sense of security and capability. The focus on future-proofing makes it ideal for highlighting the long-term value and reliability of the featured models, addressing potential buyer concerns about durability and practicality.\"\n      },\n      \"banned_phrases\": [\n        \"Don't wait\",\n        \"Limited time offer\",\n        \"Before it's too late\",\n        \"Risk losing out\",\n        \"The car of your dreams\",\n        \"Turn heads\",\n        \"Ultimate driving experience\",\n        \"Drive into the sunset\",\n        \"Unleash your inner adventurer\",\n        \"Live your best life\"\n      ]\n    },\n    \"topic\": \"\",\n    \"include_animation\": false,\n    \"avatar_id\": \"abb886c1514141fab38aab2f3e8d61ea\",\n    \"background_id\": \"d6426e82-2f14-4059-8a4d-1b497aed8833\",\n    \"media\": {\n      \"music_url\": \"https://res.cloudinary.com/dtpqxuwby/video/upload/v1769612616/Kashido_-_The_Star-Spangled_Banner_Marching_Band_Version_-_clipped_y3wrnn.mp3\"\n    },\n    \"script_length\": \"standard\",\n    \"email\": \"kelly@kellyrae.net\",\n    \"vins\": [\n      \"19XFC2F70GE030425\",\n      \"1GTG6DEN2J1243670\",\n      \"1C4PJMLB4KD309157\",\n      \"5GAEVBKW0KJ224226\",\n      \"2FMPK3J92MBA37588\"\n    ],\n    \"test_mode\": false,\n    \"use_test_voice\": false,\n    \"avatar_name\": \"Gary\",\n    \"script\": {\n      \"hook\": \"Got a refund coming from Uncle Sam? Uncle Carmack's got the best deals of the year waiting!\",\n      \"segments\": [\n        \"This 2019 Buick Enclave — all-wheel drive luxury, tax refund price.\",\n        \"Need reliability? This 2016 Honda Civic is a smart money move.\",\n        \"Want low miles? This 2021 Ford Edge is barely broken in — perfect way to spend that refund.\",\n        \"This 2018 GMC Canyon four-wheel drive — real truck, real deal.\",\n        \"And this 2019 Jeep Cherokee — adventure-ready and tax-refund friendly.\"\n      ],\n      \"cta\": \"See what your refund can do at Capitol Car Credit in Ran-tool — financing available!\",\n      \"full_script\": \"Got a refund coming from Uncle Sam? Uncle Carmack's got the best deals of the year waiting! This 2019 Buick Enclave — all-wheel drive luxury, tax refund price. Need reliability? This 2016 Honda Civic is a smart money move. Want low miles? This 2021 Ford Edge is barely broken in — perfect way to spend that refund. This 2018 GMC Canyon four-wheel drive — real truck, real deal. And this 2019 Jeep Cherokee — adventure-ready and tax-refund friendly. See what your refund can do at Capitol Car Credit in Ran-tool — financing available!\",\n      \"notes\": \"Theme-inspired hook addresses settling vs. upgrading without using banned phrases. Each segment highlights key differentiator: AWD capability, Honda reliability, low mileage value, truck utility, and adventure readiness.\",\n      \"body\": \"This 2019 Buick Enclave — all-wheel drive luxury, tax refund price. Need reliability? This 2016 Honda Civic is a smart money move. Want low miles? This 2021 Ford Edge is barely broken in — perfect way to spend that refund. This 2018 GMC Canyon four-wheel drive — real truck, real deal. And this 2019 Jeep Cherokee — adventure-ready and tax-refund friendly.\"\n    },\n    \"script_edited\": true,\n    \"job_id\": \"mkygnpwonbsg33j\",\n    \"service_area\": \"Central Illinois\",\n    \"business_name\": \"Capitol Car Credit\",\n    \"location\": \"Rantoul, Illinois\",\n    \"voice_id\": \"BeHWq4sQLsXCMP34hpoF\",\n    \"voice_settings\": {\n      \"speed\": 1.05,\n      \"stability\": 0.6,\n      \"similarity_boost\": 1\n    },\n    \"photo_avatar_id\": \"8010c8da7af34022bfab8e0e63c4b8c5\",\n    \"motion_avatar_id\": \"abb886c1514141fab38aab2f3e8d61ea\",\n    \"person_full_name\": \"Gary Knight\",\n    \"person_display_name\": \"Gary\",\n    \"background_rendered_urls\": {\n      \"4:5\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/v1768771760/backgrounds/ccc-exterior-lot-w-church-4x5.jpg\",\n      \"16:9\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/v1768771761/backgrounds/ccc-exterior-lot-w-church-16x9.jpg\",\n      \"9:16\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/v1768771759/backgrounds/ccc-exterior-lot-w-church-9x16.jpg\"\n    },\n    \"system_prompt\": \"You are a TikTok car ad copywriter for Capitol Car Credit in Rantoul, Illinois.\\n\\n═══════════════════════════════════════════════════════════════\\n📋 TEMPLATE: MULTI-ITEM-1\\n═══════════════════════════════════════════════════════════════\\nMulti-vehicle showcase ad. Theme-inspired hook leading into featured vehicles.\\n\\n⚠️ WORD LIMITS (Standard - Two features with personality.):\\n- Hook: 12 words max\\n- Segment: 15 words max\\n- CTA: 12 words max\\n\\nSTRUCTURE:\\n1. HOOK: Theme-inspired opener that creates tension\\n2. SEGMENTS: One per vehicle, feature-focused\\n3. CTA: Action-oriented close with location\\n\\n═══════════════════════════════════════════════════════════════\\n🪝 HOOK RULES\\n═══════════════════════════════════════════════════════════════\\nHook must naturally lead into first item. Create anticipation for what's coming.\\n\\nGOOD EXAMPLES:\\n✅ \\\"Winter's here and you need something that can handle it.\\\"\\n✅ \\\"Looking for your next family road trip vehicle?\\\"\\n✅ \\\"Three trucks that won't let you down.\\\"\\n\\nAVOID:\\n❌ \\\"Come see our great selection!\\\"\\n❌ \\\"We have the best deals in town!\\\"\\n❌ \\\"Check out these amazing vehicles!\\\"\\n\\n═══════════════════════════════════════════════════════════════\\n📝 SEGMENT RULES\\n═══════════════════════════════════════════════════════════════\\nSEGMENT 1 (HERO):\\nFirst vehicle gets the spotlight treatment\\nPattern: Lead with the hook answer, then standout feature\\nExample: \\\"This Chevy Tahoe? Seats eight and still has room for gear.\\\"\\n\\nSEGMENTS 2+:\\nQuick hits - one killer feature each\\nStyle: Conversational, not listy\\n\\nGOOD:\\n✅ \\\"And if you need better mileage, this Toyota Camry gets 39 highway.\\\"\\n✅ \\\"Want something sportier? Check out this Ford Mustang.\\\"\\n\\nBAD:\\n❌ \\\"Next up we have...\\\"\\n❌ \\\"Another great option is...\\\"\\n❌ \\\"Also available is...\\\"\\n\\n═══════════════════════════════════════════════════════════════\\n🗣️ NATURAL FLOW\\n═══════════════════════════════════════════════════════════════\\nEach segment should flow conversationally into the next\\n\\nLEAD-IN VARIETY:\\n- \\\"And if you need...\\\"\\n- \\\"Want something...\\\"\\n- \\\"Or maybe you're looking for...\\\"\\n- \\\"Now this one...\\\"\\n\\nCONNECT FEATURES:\\nLink features to real life\\nGOOD: \\\"Seats eight — perfect for the whole crew\\\", \\\"Gets 39 highway — your wallet will thank you\\\"\\nBAD: \\\"Has seating for eight\\\", \\\"Fuel economy of 39 MPG\\\"\\n\\nFEATURE DIVERSITY: Never repeat the same feature type across segments. Mix: space, fuel, tech, power, safety, comfort.\\n\\n═══════════════════════════════════════════════════════════════\\n🎨 THEME PACK USAGE (Hook Plus Answer)\\n═══════════════════════════════════════════════════════════════\\n1) Theme inspires hook and one segment\\n2) Draw inspiration from lifestyle_moments to evoke core_tension\\n3) Capture the FEELING — do not copy lifestyle_moments verbatim\\n4) At least one segment should answer the tension (reliability, AWD, remote start, etc.)\\n\\nIf theme_pack missing: Use generic value/deals hook\\n\\n═══════════════════════════════════════════════════════════════\\n🌐 GLOBAL RULES\\n═══════════════════════════════════════════════════════════════\\n⚠️ NEVER use any phrase in banned_phrases from theme pack\\n⚠️ Scan all output for banned phrases before returning\\n⚠️ CTA location: Use service_area, if provided, (e.g., Central Illinois) for who you help, NOT the specific town name\\n\\n═══════════════════════════════════════════════════════════════\\n🎯 PRIORITIES (IN ORDER)\\n═══════════════════════════════════════════════════════════════\\n1. AFFORDABILITY - Emphasize value and deals (prices shown on screen, not spoken)\\n2. SELECTION - Variety available\\n3. FINANCING - Available for qualified buyers (mention in CTA)\\n\\n═══════════════════════════════════════════════════════════════\\n📞 CONTACT INFO (FOR TTS)\\n═══════════════════════════════════════════════════════════════\\n- Address: \\\"Capitol Car Credit in Ran-tool\\\"\\n- Full address: \\\"one twenty-five North Century Boulevard, Ran-tool\\\"\\n- Phone: \\\"two one seven, eight nine three, eight two three two\\\"\\n- Website: \\\"C C Ran-tool dot com\\\"\\n\\n═══════════════════════════════════════════════════════════════\\n📢 CTA PATTERNS\\n═══════════════════════════════════════════════════════════════\\n✅ \\\"See more at C C Ran-tool dot com — financing available for qualified buyers!\\\"\\n✅ \\\"Visit Capitol Car Credit in Ran-tool — financing available for qualified buyers!\\\"\\n\\n═══════════════════════════════════════════════════════════════\\n🎨 TONE & STYLE\\n═══════════════════════════════════════════════════════════════\\nConversational and punchy. Sounds like someone talking, not reading a script. Friendly local dealership vibe, not corporate.\\n\\n═══════════════════════════════════════════════════════════════\\n🗣️ PRONUNCIATIONS (NEVER DEVIATE)\\n═══════════════════════════════════════════════════════════════\\n- HP → \\\"horsepower\\\"\\n- V6 → \\\"V 6\\\"\\n- V8 → \\\"V 8\\\"\\n- 4WD → \\\"four wheel drive\\\"\\n- AWD → \\\"all wheel drive\\\"\\n- BMW → \\\"B M W\\\"\\n- FWD → \\\"front wheel drive\\\"\\n- MPG → \\\"miles per gallon\\\"\\n- RWD → \\\"rear wheel drive\\\"\\n- Mazda → \\\"Moz-duh\\\"\\n- Nissan → \\\"Neesawn\\\"\\n- Tucson → \\\"Too-sahn\\\"\\n- Elantra → \\\"Eh-lahn-tra\\\"\\n- Hyundai → \\\"Hunday\\\"\\n- Porsche → \\\"Por-shuh\\\"\\n- Chevrolet → \\\"Shevra-lay\\\"\\n- Kia Forte → \\\"Kia Fortay\\\"\\n- Volkswagen → \\\"Volks-vah-gen\\\"\\n- Mercedes-Benz → \\\"Mer-say-deez Benz\\\"\\n- Rantoul → \\\"Ran-tool\\\"\\n\\n═══════════════════════════════════════════════════════════════\\n⚖️ LEGAL (CRITICAL - NON-NEGOTIABLE)\\n═══════════════════════════════════════════════════════════════\\n❌ NEVER say guaranteed approval\\n❌ NEVER say bad credit no problem\\n❌ NEVER say anyone can get financed\\n❌ NEVER say everyone is approved\\n❌ USE financing available for qualified buyers\\n\\n═══════════════════════════════════════════════════════════════\\n🚨 CLIENT RULES — OVERRIDE EVERYTHING ABOVE\\n═══════════════════════════════════════════════════════════════\\nThese rules are CLIENT-SPECIFIC and take ABSOLUTE PRIORITY.\\nIf ANY rule above conflicts with these, THESE WIN.\\n\\n⛔ NEVER say prices in the script — prices are always displayed on screen. Use those words for features instead.\",\n    \"timing_config\": {\n      \"code\": \"standard\",\n      \"name\": \"Standard\",\n      \"hook_words\": 12,\n      \"segment_words\": 15,\n      \"cta_words\": 12,\n      \"style\": \"Two features with personality.\"\n    },\n    \"template_config\": {\n      \"template_code\": \"MULTI-ITEM-1\",\n      \"template_name\": \"Multi Item\",\n      \"theme_mode\": \"hook_plus_answer\",\n      \"data_requirements\": {\n        \"items\": {\n          \"max\": 5,\n          \"min\": 1\n        },\n        \"hero_photo\": false,\n        \"processing\": [\n          \"background_removal\"\n        ],\n        \"features_per_item\": {\n          \"max\": 0,\n          \"min\": 0\n        }\n      },\n      \"theme_mode_code\": \"hook_plus_answer\",\n      \"theme_mode_name\": \"Hook Plus Answer\",\n      \"theme_mode_rules\": [\n        \"Theme inspires hook and one segment\",\n        \"Draw inspiration from lifestyle_moments to evoke core_tension\",\n        \"Capture the FEELING — do not copy lifestyle_moments verbatim\",\n        \"At least one segment should answer the tension (reliability, AWD, remote start, etc.)\"\n      ]\n    },\n    \"industry_config\": {\n      \"pronunciations\": {\n        \"HP\": \"horsepower\",\n        \"V6\": \"V 6\",\n        \"V8\": \"V 8\",\n        \"4WD\": \"four wheel drive\",\n        \"AWD\": \"all wheel drive\",\n        \"BMW\": \"B M W\",\n        \"FWD\": \"front wheel drive\",\n        \"MPG\": \"miles per gallon\",\n        \"RWD\": \"rear wheel drive\",\n        \"Mazda\": \"Moz-duh\",\n        \"Nissan\": \"Neesawn\",\n        \"Tucson\": \"Too-sahn\",\n        \"Elantra\": \"Eh-lahn-tra\",\n        \"Hyundai\": \"Hunday\",\n        \"Porsche\": \"Por-shuh\",\n        \"Chevrolet\": \"Shevra-lay\",\n        \"Kia Forte\": \"Kia Fortay\",\n        \"Volkswagen\": \"Volks-vah-gen\",\n        \"Mercedes-Benz\": \"Mer-say-deez Benz\"\n      },\n      \"legal\": [\n        \"NEVER say guaranteed approval\",\n        \"NEVER say bad credit no problem\",\n        \"NEVER say anyone can get financed\",\n        \"NEVER say everyone is approved\",\n        \"USE financing available for qualified buyers\"\n      ],\n      \"feature_enrichment\": {\n        \"reliable_brands\": [\n          \"toyota\",\n          \"honda\",\n          \"mazda\",\n          \"subaru\",\n          \"lexus\"\n        ]\n      },\n      \"global_rules\": [\n        \"NEVER use any phrase in banned_phrases from theme pack\",\n        \"Scan all output for banned phrases before returning\",\n        \"CTA location: Use service_area, if provided, (e.g., Central Illinois) for who you help, NOT the specific town name\"\n      ]\n    },\n    \"_prompt_meta\": {\n      \"standalone\": false,\n      \"uses_base\": true,\n      \"respects_rules\": true,\n      \"template_code\": \"MULTI-ITEM-1\",\n      \"theme_mode\": \"hook_plus_answer\",\n      \"industry_prompt_found\": true,\n      \"client_override_found\": false\n    },\n    \"timing\": {\n      \"hook_words\": 12,\n      \"segment_words\": 15,\n      \"cta_words\": 12,\n      \"style\": \"Two features with personality.\",\n      \"code\": \"standard\"\n    },\n    \"theme_section\": \"THEME PACK:\\n- Theme: Future-Proof Your Drive ✅\\n- Core tension: The nagging feeling that your current car might not handle another harsh winter, or keep up with your evolving lifestyle.\\n- Ad angle: Positions upgrading as a smart, forward-thinking decision that brings peace of mind and unlocks new possibilities, not just a frivolous purchase.\\n- Lifestyle moments: [\\\"Loading up ski gear without worrying about space or reliability.\\\",\\\"Effortlessly navigating snowy roads on your way to a weekend getaway.\\\",\\\"Enjoying the comfort and convenience of modern tech features on a long drive.\\\",\\\"Pulling into a client meeting in a vehicle that reflects your professional success.\\\",\\\"Having the confidence to say 'yes' to spontaneous adventures.\\\",\\\"Experiencing the relief of knowing your family is safe and secure in a reliable vehicle.\\\",\\\"Seeing the admiring glances as you drive down the street.\\\",\\\"Arriving at your destination feeling refreshed and energized, thanks to advanced driver-assistance systems.\\\"]\\n- Banned phrases: [\\\"Don't wait\\\",\\\"Limited time offer\\\",\\\"Before it's too late\\\",\\\"Risk losing out\\\",\\\"The car of your dreams\\\",\\\"Turn heads\\\",\\\"Ultimate driving experience\\\",\\\"Drive into the sunset\\\",\\\"Unleash your inner adventurer\\\",\\\"Live your best life\\\"]\",\n    \"vehicles\": [\n      {\n        \"vin\": \"5GAEVBKW0KJ224226\",\n        \"year\": 2019,\n        \"make\": \"Buick\",\n        \"model\": \"Enclave\",\n        \"price\": 20995,\n        \"mileage\": 95718,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/141fc98f1fe34c98808844a35823a4ea.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91179\",\n        \"features\": [\n          \"V6 3.6 Liter\",\n          \"AWD\",\n          \"GRAY\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/5GAEVBKW0KJ224226.png\"\n      },\n      {\n        \"vin\": \"19XFC2F70GE030425\",\n        \"year\": 2016,\n        \"make\": \"Honda\",\n        \"model\": \"Civic Sedan\",\n        \"price\": 12995,\n        \"mileage\": 112836,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/9c39a466b993fa3e639ad5d24cd72b8f.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91224\",\n        \"features\": [\n          \"4-Cyl i-VTEC 2.0 Liter\",\n          \"FWD\",\n          \"GRAY\",\n          \"Reliable Brand\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/19XFC2F70GE030425.png\"\n      },\n      {\n        \"vin\": \"2FMPK3J92MBA37588\",\n        \"year\": 2021,\n        \"make\": \"Ford\",\n        \"model\": \"Edge\",\n        \"price\": 23995,\n        \"mileage\": 35284,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/607250d73725c3730acf237c6109cbd8.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91273\",\n        \"features\": [\n          \"Low Mileage\",\n          \"4-Cyl EcoBoost Turbo 2.0 Liter\",\n          \"FWD\",\n          \"WHITE\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/2FMPK3J92MBA37588.png\"\n      },\n      {\n        \"vin\": \"1GTG6DEN2J1243670\",\n        \"year\": 2018,\n        \"make\": \"GMC\",\n        \"model\": \"Canyon 4WD\",\n        \"price\": 28995,\n        \"mileage\": 53339,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/a77a5a74d690424da0f9b310e0342e73.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/911851\",\n        \"features\": [\n          \"Low Mileage\",\n          \"V6 VVT 3.6 Liter\",\n          \"4WD\",\n          \"GRAY\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/1GTG6DEN2J1243670.png\"\n      },\n      {\n        \"vin\": \"1C4PJMLB4KD309157\",\n        \"year\": 2019,\n        \"make\": \"Jeep\",\n        \"model\": \"Cherokee\",\n        \"price\": 17995,\n        \"mileage\": 76288,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/e88db80cefd9f7cf2414a573a313b151.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91290\",\n        \"features\": [\n          \"4-Cyl Zero Evap 2.4 Liter\",\n          \"4WD\",\n          \"GREEN\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/1C4PJMLB4KD309157.png\"\n      }\n    ],\n    \"user_prompt\": \"Generate a STANDARD multi-car ad script for the dealership.\\n\\nTHEME PACK:\\n- Theme: Future-Proof Your Drive ✅\\n- Core tension: The nagging feeling that your current car might not handle another harsh winter, or keep up with your evolving lifestyle.\\n- Ad angle: Positions upgrading as a smart, forward-thinking decision that brings peace of mind and unlocks new possibilities, not just a frivolous purchase.\\n- Local micro-moments: undefined\\n- Banned phrases: [\\\"Don't wait\\\",\\\"Limited time offer\\\",\\\"Before it's too late\\\",\\\"Risk losing out\\\",\\\"The car of your dreams\\\",\\\"Turn heads\\\",\\\"Ultimate driving experience\\\",\\\"Drive into the sunset\\\",\\\"Unleash your inner adventurer\\\",\\\"Live your best life\\\"]\\n\\nVEHICLES (5):\\n1. 2019 Buick Enclave\\n   Features: V6 3.6 Liter, AWD, GRAY\\n2. 2016 Honda Civic Sedan\\n   Features: 4-Cyl i-VTEC 2.0 Liter, FWD, GRAY, Reliable Brand\\n3. 2021 Ford Edge\\n   Features: Low Mileage, 4-Cyl EcoBoost Turbo 2.0 Liter, FWD, WHITE\\n4. 2018 GMC Canyon 4WD\\n   Features: Low Mileage, V6 VVT 3.6 Liter, 4WD, GRAY\\n5. 2019 Jeep Cherokee\\n   Features: 4-Cyl Zero Evap 2.4 Liter, 4WD, GREEN\\n\\nWORD LIMITS:\\n- Hook: 12 words max\\n- Each segment: 15 words max\\n- CTA: 12 words max (MUST mention the dealership)\\n- TOTAL: 99 words max\\n\\nSEGMENT RULES:\\n- REQUIRED: Year + Make + Model (e.g., \\\"2017 GMC Canyon\\\")\\n- FLEXIBLE: Feature description (trim this if needed to hit word limit)\\n- Each segment highlights ONE standout feature\\n- Sound conversational, not like reading a list\\n\\n\\nOUTPUT JSON:\\n{\\n  \\\"hook\\\": \\\"Punchy opener (12 words max)\\\",\\n  \\\"segments\\\": [\\\"2019 Buick Enclave — ONE standout feature\\\", \\\"2016 Honda Civic Sedan — ONE standout feature\\\", \\\"2021 Ford Edge — ONE standout feature\\\", \\\"2018 GMC Canyon 4WD — ONE standout feature\\\", \\\"2019 Jeep Cherokee — ONE standout feature\\\"],\\n  \\\"cta\\\": \\\"the dealership + call to action (12 words max)\\\",\\n  \\\"full_script\\\": \\\"Complete script\\\",\\n  \\\"notes\\\": \\\"Brief notes\\\"\\n}\",\n    \"word_limits\": {\n      \"total\": 99,\n      \"hook\": 12,\n      \"segment\": 15,\n      \"cta\": 12\n    },\n    \"effective_voice_id\": \"BeHWq4sQLsXCMP34hpoF\",\n    \"original_voice_id\": \"BeHWq4sQLsXCMP34hpoF\",\n    \"word_timestamps\": [\n      {\n        \"word\": \"Got\",\n        \"start\": 0,\n        \"end\": 0.209\n      },\n      {\n        \"word\": \"a\",\n        \"start\": 0.244,\n        \"end\": 0.267\n      },\n      {\n        \"word\": \"refund\",\n        \"start\": 0.325,\n        \"end\": 0.697\n      },\n      {\n        \"word\": \"coming\",\n        \"start\": 0.755,\n        \"end\": 1.01\n      },\n      {\n        \"word\": \"from\",\n        \"start\": 1.045,\n        \"end\": 1.173\n      },\n      {\n        \"word\": \"Uncle\",\n        \"start\": 1.242,\n        \"end\": 1.486\n      },\n      {\n        \"word\": \"Sam?\",\n        \"start\": 1.521,\n        \"end\": 2.032\n      },\n      {\n        \"word\": \"Uncle\",\n        \"start\": 2.194,\n        \"end\": 2.485\n      },\n      {\n        \"word\": \"Carmack's\",\n        \"start\": 2.531,\n        \"end\": 3.088\n      },\n      {\n        \"word\": \"got\",\n        \"start\": 3.146,\n        \"end\": 3.309\n      },\n      {\n        \"word\": \"the\",\n        \"start\": 3.355,\n        \"end\": 3.425\n      },\n      {\n        \"word\": \"best\",\n        \"start\": 3.506,\n        \"end\": 3.796\n      },\n      {\n        \"word\": \"deals\",\n        \"start\": 3.866,\n        \"end\": 4.18\n      },\n      {\n        \"word\": \"of\",\n        \"start\": 4.238,\n        \"end\": 4.307\n      },\n      {\n        \"word\": \"the\",\n        \"start\": 4.354,\n        \"end\": 4.423\n      },\n      {\n        \"word\": \"year\",\n        \"start\": 4.47,\n        \"end\": 4.667\n      },\n      {\n        \"word\": \"waiting!\",\n        \"start\": 4.737,\n        \"end\": 5.224\n      },\n      {\n        \"word\": \"This\",\n        \"start\": 5.422,\n        \"end\": 5.642\n      },\n      {\n        \"word\": \"2019\",\n        \"start\": 5.712,\n        \"end\": 6.734\n      },\n      {\n        \"word\": \"Buick\",\n        \"start\": 6.803,\n        \"end\": 7.129\n      },\n      {\n        \"word\": \"Enclave\",\n        \"start\": 7.221,\n        \"end\": 7.779\n      },\n      {\n        \"word\": \"—\",\n        \"start\": 7.802,\n        \"end\": 7.906\n      },\n      {\n        \"word\": \"all-wheel\",\n        \"start\": 7.953,\n        \"end\": 8.498\n      },\n      {\n        \"word\": \"drive\",\n        \"start\": 8.557,\n        \"end\": 8.882\n      },\n      {\n        \"word\": \"luxury,\",\n        \"start\": 8.928,\n        \"end\": 9.509\n      },\n      {\n        \"word\": \"tax\",\n        \"start\": 9.543,\n        \"end\": 9.915\n      },\n      {\n        \"word\": \"refund\",\n        \"start\": 10.008,\n        \"end\": 10.449\n      },\n      {\n        \"word\": \"price.\",\n        \"start\": 10.507,\n        \"end\": 10.995\n      },\n      {\n        \"word\": \"Need\",\n        \"start\": 11.076,\n        \"end\": 11.308\n      },\n      {\n        \"word\": \"reliability?\",\n        \"start\": 11.366,\n        \"end\": 12.295\n      },\n      {\n        \"word\": \"This\",\n        \"start\": 12.434,\n        \"end\": 12.62\n      },\n      {\n        \"word\": \"2016\",\n        \"start\": 12.69,\n        \"end\": 13.653\n      },\n      {\n        \"word\": \"Honda\",\n        \"start\": 13.723,\n        \"end\": 14.002\n      },\n      {\n        \"word\": \"Civic\",\n        \"start\": 14.06,\n        \"end\": 14.408\n      },\n      {\n        \"word\": \"is\",\n        \"start\": 14.478,\n        \"end\": 14.582\n      },\n      {\n        \"word\": \"a\",\n        \"start\": 14.652,\n        \"end\": 14.687\n      },\n      {\n        \"word\": \"smart\",\n        \"start\": 14.756,\n        \"end\": 15.116\n      },\n      {\n        \"word\": \"money\",\n        \"start\": 15.186,\n        \"end\": 15.43\n      },\n      {\n        \"word\": \"move.\",\n        \"start\": 15.488,\n        \"end\": 15.894\n      },\n      {\n        \"word\": \"Want\",\n        \"start\": 16.01,\n        \"end\": 16.277\n      },\n      {\n        \"word\": \"low\",\n        \"start\": 16.335,\n        \"end\": 16.509\n      },\n      {\n        \"word\": \"miles?\",\n        \"start\": 16.579,\n        \"end\": 17.124\n      },\n      {\n        \"word\": \"This\",\n        \"start\": 17.24,\n        \"end\": 17.426\n      },\n      {\n        \"word\": \"2021\",\n        \"start\": 17.496,\n        \"end\": 18.413\n      },\n      {\n        \"word\": \"Ford\",\n        \"start\": 18.506,\n        \"end\": 18.785\n      },\n      {\n        \"word\": \"Edge\",\n        \"start\": 18.854,\n        \"end\": 19.052\n      },\n      {\n        \"word\": \"is\",\n        \"start\": 19.086,\n        \"end\": 19.168\n      },\n      {\n        \"word\": \"barely\",\n        \"start\": 19.226,\n        \"end\": 19.528\n      },\n      {\n        \"word\": \"broken\",\n        \"start\": 19.574,\n        \"end\": 19.934\n      },\n      {\n        \"word\": \"in\",\n        \"start\": 20.015,\n        \"end\": 20.213\n      },\n      {\n        \"word\": \"—\",\n        \"start\": 20.375,\n        \"end\": 20.433\n      },\n      {\n        \"word\": \"perfect\",\n        \"start\": 20.665,\n        \"end\": 21.037\n      },\n      {\n        \"word\": \"way\",\n        \"start\": 21.083,\n        \"end\": 21.211\n      },\n      {\n        \"word\": \"to\",\n        \"start\": 21.258,\n        \"end\": 21.304\n      },\n      {\n        \"word\": \"spend\",\n        \"start\": 21.362,\n        \"end\": 21.606\n      },\n      {\n        \"word\": \"that\",\n        \"start\": 21.652,\n        \"end\": 21.803\n      },\n      {\n        \"word\": \"refund.\",\n        \"start\": 21.873,\n        \"end\": 22.535\n      },\n      {\n        \"word\": \"This\",\n        \"start\": 22.848,\n        \"end\": 23.034\n      },\n      {\n        \"word\": \"2018\",\n        \"start\": 23.103,\n        \"end\": 24.032\n      },\n      {\n        \"word\": \"GMC\",\n        \"start\": 24.114,\n        \"end\": 24.508\n      },\n      {\n        \"word\": \"Canyon\",\n        \"start\": 24.706,\n        \"end\": 25.077\n      },\n      {\n        \"word\": \"four-wheel\",\n        \"start\": 25.147,\n        \"end\": 25.553\n      },\n      {\n        \"word\": \"drive\",\n        \"start\": 25.611,\n        \"end\": 26.076\n      },\n      {\n        \"word\": \"—\",\n        \"start\": 26.134,\n        \"end\": 26.18\n      },\n      {\n        \"word\": \"real\",\n        \"start\": 26.378,\n        \"end\": 26.598\n      },\n      {\n        \"word\": \"truck,\",\n        \"start\": 26.645,\n        \"end\": 26.97\n      },\n      {\n        \"word\": \"real\",\n        \"start\": 27.016,\n        \"end\": 27.237\n      },\n      {\n        \"word\": \"deal.\",\n        \"start\": 27.306,\n        \"end\": 27.771\n      },\n      {\n        \"word\": \"And\",\n        \"start\": 27.968,\n        \"end\": 28.107\n      },\n      {\n        \"word\": \"this\",\n        \"start\": 28.154,\n        \"end\": 28.293\n      },\n      {\n        \"word\": \"2019\",\n        \"start\": 28.363,\n        \"end\": 29.234\n      },\n      {\n        \"word\": \"Jeep\",\n        \"start\": 29.315,\n        \"end\": 29.547\n      },\n      {\n        \"word\": \"Cherokee\",\n        \"start\": 29.605,\n        \"end\": 30.22\n      },\n      {\n        \"word\": \"—\",\n        \"start\": 30.255,\n        \"end\": 30.302\n      },\n      {\n        \"word\": \"adventure-ready\",\n        \"start\": 30.325,\n        \"end\": 31.056\n      },\n      {\n        \"word\": \"and\",\n        \"start\": 31.103,\n        \"end\": 31.184\n      },\n      {\n        \"word\": \"tax-refund\",\n        \"start\": 31.219,\n        \"end\": 32.02\n      },\n      {\n        \"word\": \"friendly.\",\n        \"start\": 32.09,\n        \"end\": 32.624\n      },\n      {\n        \"word\": \"See\",\n        \"start\": 32.821,\n        \"end\": 32.984\n      },\n      {\n        \"word\": \"what\",\n        \"start\": 33.019,\n        \"end\": 33.135\n      },\n      {\n        \"word\": \"your\",\n        \"start\": 33.181,\n        \"end\": 33.297\n      },\n      {\n        \"word\": \"refund\",\n        \"start\": 33.344,\n        \"end\": 33.762\n      },\n      {\n        \"word\": \"can\",\n        \"start\": 33.82,\n        \"end\": 33.936\n      },\n      {\n        \"word\": \"do\",\n        \"start\": 33.982,\n        \"end\": 34.075\n      },\n      {\n        \"word\": \"at\",\n        \"start\": 34.145,\n        \"end\": 34.214\n      },\n      {\n        \"word\": \"Capitol\",\n        \"start\": 34.261,\n        \"end\": 34.632\n      },\n      {\n        \"word\": \"Car\",\n        \"start\": 34.69,\n        \"end\": 34.853\n      },\n      {\n        \"word\": \"Credit\",\n        \"start\": 34.923,\n        \"end\": 35.248\n      },\n      {\n        \"word\": \"in\",\n        \"start\": 35.306,\n        \"end\": 35.375\n      },\n      {\n        \"word\": \"Ran-tool\",\n        \"start\": 35.445,\n        \"end\": 36.037\n      },\n      {\n        \"word\": \"—\",\n        \"start\": 36.13,\n        \"end\": 36.177\n      },\n      {\n        \"word\": \"financing\",\n        \"start\": 36.316,\n        \"end\": 36.815\n      },\n      {\n        \"word\": \"available!\",\n        \"start\": 36.85,\n        \"end\": 37.57\n      }\n    ],\n    \"_section_timings\": [\n      {\n        \"name\": \"hook\",\n        \"start\": 0,\n        \"end\": 5.224,\n        \"duration\": 5.224\n      },\n      {\n        \"name\": \"segment_1\",\n        \"start\": 5.422,\n        \"end\": 10.995,\n        \"duration\": 5.5729999999999995\n      },\n      {\n        \"name\": \"segment_2\",\n        \"start\": 11.076,\n        \"end\": 15.894,\n        \"duration\": 4.818\n      },\n      {\n        \"name\": \"segment_3\",\n        \"start\": 16.01,\n        \"end\": 22.535,\n        \"duration\": 6.524999999999999\n      },\n      {\n        \"name\": \"segment_4\",\n        \"start\": 22.848,\n        \"end\": 27.771,\n        \"duration\": 4.923000000000002\n      },\n      {\n        \"name\": \"segment_5\",\n        \"start\": 27.968,\n        \"end\": 32.624,\n        \"duration\": 4.656000000000002\n      },\n      {\n        \"name\": \"cta\",\n        \"start\": 32.821,\n        \"end\": 37.57,\n        \"duration\": 4.749000000000002\n      }\n    ],\n    \"audio_duration\": 37.57,\n    \"audio_url\": \"https://res.cloudinary.com/dtpqxuwby/video/upload/v1769631106/ad-pilot-audio/ob2ljudmfbww3jyglnew.mp3\",\n    \"video_id\": \"207484b74a9f45bf896d90516130cbad\",\n    \"status\": \"completed\",\n    \"data\": {\n      \"callback_id\": null,\n      \"caption_url\": \"\",\n      \"created_at\": 1769631108,\n      \"duration\": 39.1053,\n      \"error\": null,\n      \"gif_url\": null,\n      \"id\": \"207484b74a9f45bf896d90516130cbad\",\n      \"status\": \"completed\",\n      \"thumbnail_url\": \"https://files2.heygen.ai/aws_pacific/avatar_tmp/9d1d4cfe12b842308662754fabe57f18/207484b74a9f45bf896d90516130cbad.jpeg?Expires=1770236012&Signature=ixDGkxu-HtRXjoGzh3V8AydukqX4WF7o8Z1yiJDTSBKHpRqzv8CO9VNxrwXV7cZsepdBvXBLTwuN7TY7VGJwKCFprfdsamqfA07NOmaufpIVvJ8OxugZwkYCq0HmiyN3ZY~DLWfWkBLkHwfC3PXS3pbsbolq3l9p6AoKr~M-Z3ZoMG8elSfjWTQMFxRWsWkfBXkcxMVESsPPx4Shud4FMLjjqi9rmXQI3YFmscfKpMOcEbMEb9qhpKyDyYPzJzCiTR4djoulZYXoaZHQUrQfnqlSb0PlCHbsfPN9eRWWgO7KXZXiWdMrJK26iBujN7hZCo1vmIAF3eesyGB6dsJFWg__&Key-Pair-Id=K38HBHX5LX3X2H\",\n      \"video_url\": \"https://files2.heygen.ai/aws_pacific/avatar_tmp/9d1d4cfe12b842308662754fabe57f18/207484b74a9f45bf896d90516130cbad.mp4?Expires=1770236012&Signature=V5XdpcNeGxl2p8HgSIPyKcCoG1ha0IW1xK5PA4aaUhoW2Dju0aB8fhtmWaPxpJPADPZrp8eie2qUGS-hznz0PQMgwtWQ0Sq6CBYTl7nd8qdR4jWAH6jECJxL3tdqYAHmOas5RFfbFAXnQH2UoH6exAWxYCy7r8rs4HeMR1EXlY~bjFoDs7GfyQV20OwAlRZOFr2eUpSKFjrhrTyWWO1--MphexgJIWGREIRkl36P6hMV7HQufOEchr4MM3H7jTxdVbt99d6yvtCE5J1QFnw8fjMl51JtWg2rzxn81tbyZZxP~AzjDkV0-g~elF38IIICsq9-3PMfXqCuNjfvxRHdcQ__&Key-Pair-Id=K38HBHX5LX3X2H\",\n      \"video_url_caption\": null\n    },\n    \"avatar_video_url\": \"https://files2.heygen.ai/aws_pacific/avatar_tmp/9d1d4cfe12b842308662754fabe57f18/207484b74a9f45bf896d90516130cbad.mp4?Expires=1770236012&Signature=V5XdpcNeGxl2p8HgSIPyKcCoG1ha0IW1xK5PA4aaUhoW2Dju0aB8fhtmWaPxpJPADPZrp8eie2qUGS-hznz0PQMgwtWQ0Sq6CBYTl7nd8qdR4jWAH6jECJxL3tdqYAHmOas5RFfbFAXnQH2UoH6exAWxYCy7r8rs4HeMR1EXlY~bjFoDs7GfyQV20OwAlRZOFr2eUpSKFjrhrTyWWO1--MphexgJIWGREIRkl36P6hMV7HQufOEchr4MM3H7jTxdVbt99d6yvtCE5J1QFnw8fjMl51JtWg2rzxn81tbyZZxP~AzjDkV0-g~elF38IIICsq9-3PMfXqCuNjfvxRHdcQ__&Key-Pair-Id=K38HBHX5LX3X2H\",\n    \"avatar_video_duration\": 39.1053,\n    \"avatar_video_alpha_url\": \"https://replicate.delivery/xezq/M5TcOlm63E6KIRXUbYulTm9ZCSoZXkhBfhYABemzjbLFBCCWA/alpha-mask.mp4\",\n    \"ratio\": \"9:16\",\n    \"skipPlatformBanner\": true,\n    \"_ratios\": [\n      \"9:16\",\n      \"4:5\"\n    ],\n    \"_platforms\": [\n      \"FACEBOOK\",\n      \"INSTAGRAM\"\n    ],\n    \"vehiclesToProcess\": [],\n    \"cachedVehicles\": [\n      {\n        \"vin\": \"5GAEVBKW0KJ224226\",\n        \"year\": 2019,\n        \"make\": \"Buick\",\n        \"model\": \"Enclave\",\n        \"price\": 20995,\n        \"mileage\": 95718,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/141fc98f1fe34c98808844a35823a4ea.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91179\",\n        \"features\": [\n          \"V6 3.6 Liter\",\n          \"AWD\",\n          \"GRAY\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/5GAEVBKW0KJ224226.png\"\n      },\n      {\n        \"vin\": \"19XFC2F70GE030425\",\n        \"year\": 2016,\n        \"make\": \"Honda\",\n        \"model\": \"Civic Sedan\",\n        \"price\": 12995,\n        \"mileage\": 112836,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/9c39a466b993fa3e639ad5d24cd72b8f.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91224\",\n        \"features\": [\n          \"4-Cyl i-VTEC 2.0 Liter\",\n          \"FWD\",\n          \"GRAY\",\n          \"Reliable Brand\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/19XFC2F70GE030425.png\"\n      },\n      {\n        \"vin\": \"2FMPK3J92MBA37588\",\n        \"year\": 2021,\n        \"make\": \"Ford\",\n        \"model\": \"Edge\",\n        \"price\": 23995,\n        \"mileage\": 35284,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/607250d73725c3730acf237c6109cbd8.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91273\",\n        \"features\": [\n          \"Low Mileage\",\n          \"4-Cyl EcoBoost Turbo 2.0 Liter\",\n          \"FWD\",\n          \"WHITE\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/2FMPK3J92MBA37588.png\"\n      },\n      {\n        \"vin\": \"1GTG6DEN2J1243670\",\n        \"year\": 2018,\n        \"make\": \"GMC\",\n        \"model\": \"Canyon 4WD\",\n        \"price\": 28995,\n        \"mileage\": 53339,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/a77a5a74d690424da0f9b310e0342e73.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/911851\",\n        \"features\": [\n          \"Low Mileage\",\n          \"V6 VVT 3.6 Liter\",\n          \"4WD\",\n          \"GRAY\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/1GTG6DEN2J1243670.png\"\n      },\n      {\n        \"vin\": \"1C4PJMLB4KD309157\",\n        \"year\": 2019,\n        \"make\": \"Jeep\",\n        \"model\": \"Cherokee\",\n        \"price\": 17995,\n        \"mileage\": 76288,\n        \"image_url\": \"https://imageserver.promaxinventory.com/9199/image/e88db80cefd9f7cf2414a573a313b151.jpg\",\n        \"url\": \"https://www.ccrantoul.com/VehicleDetails/9199/91290\",\n        \"features\": [\n          \"4-Cyl Zero Evap 2.4 Liter\",\n          \"4WD\",\n          \"GREEN\"\n        ],\n        \"photo_url\": \"https://res.cloudinary.com/dtpqxuwby/image/upload/1C4PJMLB4KD309157.png\"\n      }\n    ],\n    \"_banner_config\": {\n      \"y\": \"13.5%\",\n      \"font_size\": \"4 vmin\",\n      \"font_family\": \"Noto Sans\",\n      \"font_weight\": \"700\",\n      \"fill_color\": \"#feb628\"\n    },\n    \"final_video_url\": \"https://f002.backblazeb2.com/file/creatomate-c8xg3hsxdu/26488bbd-1657-4a9d-b5f0-8026104564a7.mp4\",\n    \"video_duration\": 39.12\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2912,
+        240
+      ],
+      "id": "98c86c31-0c99-4c7f-9b53-5138655d6d49",
+      "name": "Edit Fields"
     }
   ],
   "connections": {
@@ -794,13 +810,7 @@
     },
     "Call '[04] Generate Video'": {
       "main": [
-        [
-          {
-            "node": "If: Needs Platform Banners",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "If: Needs Platform Banners": {
@@ -970,6 +980,17 @@
           }
         ]
       ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If: Needs Platform Banners",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -982,8 +1003,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "b572117e-d394-4272-85bb-9c44c32ab475",
-  "activeVersionId": "b572117e-d394-4272-85bb-9c44c32ab475",
+  "versionId": "38e6abc7-c6f8-45ff-992c-1995d5901d7f",
+  "activeVersionId": "1fec9f01-7824-4e0a-bb48-529a3db26ad5",
   "triggerCount": 1,
   "shared": [
     {
@@ -995,9 +1016,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-26T14:47:13.288Z",
-    "createdAt": "2026-01-26T14:47:07.632Z",
-    "versionId": "b572117e-d394-4272-85bb-9c44c32ab475",
+    "updatedAt": "2026-01-28T20:15:17.206Z",
+    "createdAt": "2026-01-28T20:15:14.979Z",
+    "versionId": "1fec9f01-7824-4e0a-bb48-529a3db26ad5",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -1236,11 +1257,12 @@
             "conditions": [
               {
                 "leftValue": "={{ $json._platforms.length }}",
-                "rightValue": "0",
+                "rightValue": 0,
                 "operator": {
                   "type": "number",
                   "operation": "gt"
-                }
+                },
+                "id": "21791e5d-afcf-42dc-bd08-92d944a693ca"
               }
             ],
             "combinator": "and"
@@ -1251,7 +1273,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2928,
+          3136,
           240
         ],
         "id": "if-needs-banners",
@@ -1264,7 +1286,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3152,
+          3360,
           144
         ],
         "id": "prep-banners",
@@ -1294,7 +1316,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          3376,
+          3584,
           144
         ],
         "id": "call-banners",
@@ -1307,7 +1329,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3600,
+          3808,
           336
         ],
         "id": "no-banners",
@@ -1320,7 +1342,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3600,
+          3808,
           144
         ],
         "id": "merge-banner-results",
@@ -1335,7 +1357,7 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          3824,
+          4032,
           240
         ],
         "id": "aggregate-all",
@@ -1348,7 +1370,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4048,
+          4256,
           240
         ],
         "id": "format-response",
@@ -1368,7 +1390,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          4272,
+          4480,
           240
         ],
         "id": "send-email",
@@ -1437,7 +1459,7 @@
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
         "position": [
-          4496,
+          4704,
           144
         ],
         "id": "update-job",
@@ -1559,7 +1581,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4496,
+          4704,
           336
         ],
         "id": "format-email-error",
@@ -1587,7 +1609,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          4720,
+          4928,
           336
         ],
         "id": "call-error-email-orch",
@@ -1967,7 +1989,7 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version b572117e",
+    "name": "Version 1fec9f01",
     "description": "",
     "autosaved": true
   },
