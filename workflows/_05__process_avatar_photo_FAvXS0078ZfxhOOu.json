@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-18T00:35:51.967Z",
+  "updatedAt": "2026-01-28T12:18:46.618Z",
   "createdAt": "2025-12-17T14:15:04.048Z",
   "id": "FAvXS0078ZfxhOOu",
   "name": "[05] Process Avatar Photo",
@@ -182,6 +182,11 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -537,6 +542,11 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -761,8 +771,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        5048,
-        48
+        4880,
+        320
       ],
       "id": "postgres-insert-client-avatar",
       "name": "DB: Insert Client Avatar",
@@ -1287,7 +1297,7 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "d71fa51c-05d6-46f2-b047-265d2c4f0716",
+  "versionId": "132e8850-54db-4377-bcce-f270e25b2bf9",
   "activeVersionId": "d71fa51c-05d6-46f2-b047-265d2c4f0716",
   "triggerCount": 1,
   "shared": [
