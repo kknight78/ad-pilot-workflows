@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-23T13:00:28.476Z",
+  "updatedAt": "2026-01-28T19:09:03.493Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -11,7 +11,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2816,
+        3024,
         1936
       ],
       "id": "wait-node",
@@ -25,7 +25,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3488,
+        3696,
         976
       ],
       "id": "format-errors",
@@ -38,7 +38,7 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        4160,
+        4368,
         976
       ],
       "id": "stop-error",
@@ -68,7 +68,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3936,
+        4144,
         1136
       ],
       "typeVersion": 1,
@@ -115,7 +115,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2368,
+        2576,
         1600
       ],
       "id": "if-complete",
@@ -128,7 +128,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        144,
+        224,
         1392
       ],
       "id": "prep-voice",
@@ -165,7 +165,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1472,
+        1680,
         1536
       ],
       "id": "heygen-create",
@@ -180,7 +180,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1696,
+        1904,
         1680
       ],
       "id": "store-config",
@@ -207,7 +207,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1920,
+        2128,
         1680
       ],
       "id": "check-status",
@@ -222,7 +222,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2592,
+        2800,
         1488
       ],
       "id": "parse-avatar",
@@ -255,7 +255,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2592,
+        2800,
         1792
       ],
       "id": "if-failed",
@@ -290,7 +290,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3040,
+        3248,
         1488
       ],
       "id": "rvm-create",
@@ -304,7 +304,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3712,
+        3920,
         1440
       ],
       "id": "wait-rvm",
@@ -328,7 +328,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3264,
+        3472,
         1360
       ],
       "id": "rvm-status",
@@ -362,7 +362,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3488,
+        3696,
         1264
       ],
       "id": "if-rvm-complete",
@@ -375,7 +375,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3712,
+        3920,
         1216
       ],
       "id": "parse-rvm",
@@ -390,7 +390,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1440,
+        1648,
         1840
       ],
       "typeVersion": 1,
@@ -406,7 +406,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3376,
+        3584,
         1488
       ],
       "typeVersion": 1,
@@ -420,7 +420,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2144,
+        2352,
         1600
       ],
       "id": "preserve-for-loop",
@@ -441,7 +441,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2816,
+        3024,
         1488
       ],
       "id": "download_video",
@@ -467,7 +467,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        368,
+        576,
         1392
       ],
       "id": "elevenlabs-tts",
@@ -492,7 +492,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1248,
+        1456,
         1536
       ],
       "id": "merge-audio-url",
@@ -505,7 +505,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        592,
+        800,
         1456
       ],
       "id": "parse-elevenlabs",
@@ -525,7 +525,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        816,
+        1024,
         1456
       ],
       "id": "temp-audio-service",
@@ -540,7 +540,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3712,
+        3920,
         976
       ],
       "id": "prep-error-email",
@@ -568,7 +568,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        3936,
+        4144,
         976
       ],
       "id": "call-email-error",
@@ -586,7 +586,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1024,
+        1232,
         1440
       ],
       "id": "94c5f2ff-7f0f-4ae9-8fd7-ebbe7ba76e0a",
@@ -918,8 +918,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "895a5b45-3f97-4f5a-b26b-ab4eb03a34e2",
-  "activeVersionId": "895a5b45-3f97-4f5a-b26b-ab4eb03a34e2",
+  "versionId": "6335413c-d398-4132-bb1c-ad91c7f23698",
+  "activeVersionId": "6335413c-d398-4132-bb1c-ad91c7f23698",
   "triggerCount": 0,
   "shared": [
     {
@@ -931,9 +931,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-23T13:00:36.060Z",
-    "createdAt": "2026-01-23T13:00:28.481Z",
-    "versionId": "895a5b45-3f97-4f5a-b26b-ab4eb03a34e2",
+    "updatedAt": "2026-01-28T19:09:17.109Z",
+    "createdAt": "2026-01-28T19:09:03.497Z",
+    "versionId": "6335413c-d398-4132-bb1c-ad91c7f23698",
     "workflowId": "h2iTCTTGjddXykMu",
     "nodes": [
       {
@@ -941,7 +941,7 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          2816,
+          3024,
           1936
         ],
         "id": "wait-node",
@@ -955,7 +955,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3488,
+          3696,
           976
         ],
         "id": "format-errors",
@@ -968,7 +968,7 @@
         "type": "n8n-nodes-base.stopAndError",
         "typeVersion": 1,
         "position": [
-          4160,
+          4368,
           976
         ],
         "id": "stop-error",
@@ -998,7 +998,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3936,
+          4144,
           1136
         ],
         "typeVersion": 1,
@@ -1045,7 +1045,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2368,
+          2576,
           1600
         ],
         "id": "if-complete",
@@ -1058,7 +1058,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          144,
+          224,
           1392
         ],
         "id": "prep-voice",
@@ -1095,7 +1095,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1472,
+          1680,
           1536
         ],
         "id": "heygen-create",
@@ -1110,7 +1110,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1696,
+          1904,
           1680
         ],
         "id": "store-config",
@@ -1137,7 +1137,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1920,
+          2128,
           1680
         ],
         "id": "check-status",
@@ -1152,7 +1152,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2592,
+          2800,
           1488
         ],
         "id": "parse-avatar",
@@ -1185,7 +1185,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2592,
+          2800,
           1792
         ],
         "id": "if-failed",
@@ -1220,7 +1220,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3040,
+          3248,
           1488
         ],
         "id": "rvm-create",
@@ -1234,7 +1234,7 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          3712,
+          3920,
           1440
         ],
         "id": "wait-rvm",
@@ -1258,7 +1258,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3264,
+          3472,
           1360
         ],
         "id": "rvm-status",
@@ -1292,7 +1292,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          3488,
+          3696,
           1264
         ],
         "id": "if-rvm-complete",
@@ -1305,7 +1305,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3712,
+          3920,
           1216
         ],
         "id": "parse-rvm",
@@ -1320,7 +1320,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          1440,
+          1648,
           1840
         ],
         "typeVersion": 1,
@@ -1336,7 +1336,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3376,
+          3584,
           1488
         ],
         "typeVersion": 1,
@@ -1350,7 +1350,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2144,
+          2352,
           1600
         ],
         "id": "preserve-for-loop",
@@ -1371,7 +1371,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2816,
+          3024,
           1488
         ],
         "id": "download_video",
@@ -1397,7 +1397,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          368,
+          576,
           1392
         ],
         "id": "elevenlabs-tts",
@@ -1422,7 +1422,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1248,
+          1456,
           1536
         ],
         "id": "merge-audio-url",
@@ -1435,7 +1435,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          592,
+          800,
           1456
         ],
         "id": "parse-elevenlabs",
@@ -1455,7 +1455,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          816,
+          1024,
           1456
         ],
         "id": "temp-audio-service",
@@ -1470,7 +1470,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3712,
+          3920,
           976
         ],
         "id": "prep-error-email",
@@ -1498,7 +1498,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          3936,
+          4144,
           976
         ],
         "id": "call-email-error",
@@ -1516,7 +1516,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          1024,
+          1232,
           1440
         ],
         "id": "94c5f2ff-7f0f-4ae9-8fd7-ebbe7ba76e0a",
@@ -1841,7 +1841,7 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 895a5b45",
+    "name": "Version 6335413c",
     "description": "",
     "autosaved": true
   },
