@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-22T21:50:26.454Z",
+  "updatedAt": "2026-01-29T23:37:40.303Z",
   "createdAt": "2026-01-22T21:48:02.323Z",
   "id": "TmNkxHfIzdlZTz79",
   "name": "Weekly Intel Agent",
@@ -23,7 +23,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        300
+        304
       ]
     },
     {
@@ -38,7 +38,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        100
+        112
       ],
       "webhookId": "intel-agent-test"
     },
@@ -52,7 +52,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        200
+        208
       ]
     },
     {
@@ -115,7 +115,7 @@
       "typeVersion": 3.2,
       "position": [
         448,
-        200
+        208
       ]
     },
     {
@@ -136,7 +136,7 @@
       "typeVersion": 4.2,
       "position": [
         672,
-        100
+        112
       ],
       "onError": "continueErrorOutput"
     },
@@ -150,7 +150,7 @@
       "typeVersion": 2,
       "position": [
         672,
-        300
+        304
       ]
     },
     {
@@ -163,7 +163,7 @@
       "typeVersion": 2,
       "position": [
         896,
-        100
+        112
       ]
     },
     {
@@ -176,21 +176,18 @@
       "typeVersion": 2,
       "position": [
         896,
-        200
+        208
       ]
     },
     {
-      "parameters": {
-        "mode": "append",
-        "output": "combined"
-      },
+      "parameters": {},
       "id": "merge-results",
       "name": "Merge All Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
         1120,
-        200
+        208
       ]
     },
     {
@@ -203,7 +200,7 @@
       "typeVersion": 2,
       "position": [
         1344,
-        200
+        208
       ]
     },
     {
@@ -217,7 +214,7 @@
       "typeVersion": 1.4,
       "position": [
         1568,
-        200
+        208
       ]
     },
     {
@@ -250,8 +247,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1792,
-        200
+        1840,
+        208
       ]
     },
     {
@@ -264,12 +261,12 @@
       "typeVersion": 2,
       "position": [
         2016,
-        0
+        48
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Format Eric's Sales Sheet\nconst data = $input.item.json;\nconst eric = data.ericSheet;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #7c3aed; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }\n    h2 { margin-top: 30px; color: #4c1d95; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 12px; }\n    .intro { font-size: 18px; color: #6b7280; margin-bottom: 30px; }\n    .section { background: #faf5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }\n    .objection { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }\n    .objection strong { color: #5b21b6; }\n    .response { color: #4c1d95; margin-top: 8px; }\n    .conversation { background: #ecfdf5; border-radius: 8px; padding: 15px; margin: 10px 0; font-style: italic; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>📊 Ad Pilot Sales Sheet</h1>\n  <p class=\"intro\">Hey Eric! Here's what's relevant for client conversations this week.</p>\n  <p><em>Week of ${dateStr}</em></p>\n`;\n\n// What's New to Sell\nif (eric.whatsNewToSell && eric.whatsNewToSell.length > 0) {\n  html += `<div class=\"section\"><h2>🚀 What's New to Sell</h2><ul>`;\n  eric.whatsNewToSell.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Competitor Intel\nif (eric.competitorIntel && eric.competitorIntel.length > 0) {\n  html += `<div class=\"section\"><h2>🔍 Competitor Intel</h2><ul>`;\n  eric.competitorIntel.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Objection Prep\nif (eric.objectionPrep && eric.objectionPrep.length > 0) {\n  html += `<h2>💬 Objection Prep</h2>`;\n  eric.objectionPrep.forEach(item => {\n    html += `<div class=\"objection\">\n      <strong>\"${item.objection}\"</strong>\n      <div class=\"response\">→ ${item.response}</div>\n    </div>`;\n  });\n}\n\n// Conversation Starters\nif (eric.conversationStarters && eric.conversationStarters.length > 0) {\n  html += `<h2>🗣️ Conversation Starters</h2>`;\n  eric.conversationStarters.forEach(item => {\n    html += `<div class=\"conversation\">\"${item}\"</div>`;\n  });\n}\n\n// Nothing this week\nconst hasContent = (eric.whatsNewToSell?.length > 0) ||\n                   (eric.competitorIntel?.length > 0) ||\n                   (eric.objectionPrep?.length > 0) ||\n                   (eric.conversationStarters?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"section\"><p>Quiet week on the news front! Business as usual — our tech stack is stable and clients are happy. 🎉</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Let's fly! 🐦 — Generated by Ad Pilot Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai,eric@ad-pilot.ai',\n    subject: `📊 Sales Sheet - Week of ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'eric'\n  }\n}];"
+        "jsCode": "// Format Eric's Sales Sheet\nconst data = $('Parse LLM Response').item.json;\nconst eric = data.ericSheet;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #7c3aed; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }\n    h2 { margin-top: 30px; color: #4c1d95; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 12px; }\n    .intro { font-size: 18px; color: #6b7280; margin-bottom: 30px; }\n    .section { background: #faf5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }\n    .objection { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }\n    .objection strong { color: #5b21b6; }\n    .response { color: #4c1d95; margin-top: 8px; }\n    .conversation { background: #ecfdf5; border-radius: 8px; padding: 15px; margin: 10px 0; font-style: italic; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>📊 Ad Pilot Sales Sheet</h1>\n  <p class=\"intro\">Hey Eric! Here's what's relevant for client conversations this week.</p>\n  <p><em>Week of ${dateStr}</em></p>\n`;\n\n// What's New to Sell\nif (eric.whatsNewToSell && eric.whatsNewToSell.length > 0) {\n  html += `<div class=\"section\"><h2>🚀 What's New to Sell</h2><ul>`;\n  eric.whatsNewToSell.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Competitor Intel\nif (eric.competitorIntel && eric.competitorIntel.length > 0) {\n  html += `<div class=\"section\"><h2>🔍 Competitor Intel</h2><ul>`;\n  eric.competitorIntel.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Objection Prep\nif (eric.objectionPrep && eric.objectionPrep.length > 0) {\n  html += `<h2>💬 Objection Prep</h2>`;\n  eric.objectionPrep.forEach(item => {\n    html += `<div class=\"objection\">\n      <strong>\"${item.objection}\"</strong>\n      <div class=\"response\">→ ${item.response}</div>\n    </div>`;\n  });\n}\n\n// Conversation Starters\nif (eric.conversationStarters && eric.conversationStarters.length > 0) {\n  html += `<h2>🗣️ Conversation Starters</h2>`;\n  eric.conversationStarters.forEach(item => {\n    html += `<div class=\"conversation\">\"${item}\"</div>`;\n  });\n}\n\n// Nothing this week\nconst hasContent = (eric.whatsNewToSell?.length > 0) ||\n                   (eric.competitorIntel?.length > 0) ||\n                   (eric.objectionPrep?.length > 0) ||\n                   (eric.conversationStarters?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"section\"><p>Quiet week on the news front! Business as usual — our tech stack is stable and clients are happy. 🎉</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Let's fly! 🐦 — Generated by Ad Pilot Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai,eric@ad-pilot.ai',\n    subject: `📊 Sales Sheet - Week of ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'eric'\n  }\n}];"
       },
       "id": "format-eric",
       "name": "Format Eric's Sheet",
@@ -277,12 +274,12 @@
       "typeVersion": 2,
       "position": [
         2016,
-        200
+        208
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Format Client Blurb (only if include: true)\nconst data = $input.item.json;\nconst blurb = data.clientBlurb;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Only generate if there's something worth sharing\nif (!blurb || !blurb.include) {\n  return [{\n    json: {\n      skip: true,\n      reason: 'No newsworthy content for clients this week',\n      type: 'client'\n    }\n  }];\n}\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }\n    h1 { color: #059669; }\n    .blurb-box { background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 20px 0; }\n    .blurb-section { margin-bottom: 15px; }\n    .blurb-section strong { color: #047857; }\n    .tip { background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .tip strong { color: #b45309; }\n    .usage-note { background: #f3f4f6; border-radius: 8px; padding: 15px; margin-top: 30px; font-size: 14px; color: #6b7280; }\n    .footer { margin-top: 30px; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <h1>📰 Client Report Blurb</h1>\n  <p><em>Week of ${dateStr}</em></p>\n  <p>Here's a ready-to-use blurb for this week's client reports:</p>\n\n  <div class=\"blurb-box\">\n    <div class=\"blurb-section\">\n      <strong>What's New in AI Marketing:</strong><br>\n      ${blurb.whatsNew || 'No major updates this week.'}\n    </div>\n\n    <div class=\"blurb-section\">\n      <strong>What We're Doing About It:</strong><br>\n      ${blurb.whatWeAreDoing || 'Continuing to optimize your campaigns with our latest tools.'}\n    </div>\n\n    ${blurb.tipOfTheWeek ? `\n    <div class=\"tip\">\n      <strong>💡 Tip of the Week:</strong><br>\n      ${blurb.tipOfTheWeek}\n    </div>\n    ` : ''}\n  </div>\n\n  <div class=\"usage-note\">\n    <strong>Usage:</strong> Copy the content above into the \"Industry Updates\" section of client weekly reports. Feel free to customize the tone for each client.\n  </div>\n\n  <div class=\"footer\">\n    Generated by Ad Pilot Weekly Intel Agent\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `📰 Client Blurb Ready - ${new Date().toLocaleDateString()}`,\n    html: html,\n    skip: false,\n    type: 'client'\n  }\n}];"
+        "jsCode": "// Format Client Blurb (only if include: true)\nconst data = $('Parse LLM Response').item.json;\nconst blurb = data.clientBlurb;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Only generate if there's something worth sharing\nif (!blurb || !blurb.include) {\n  return [{\n    json: {\n      skip: true,\n      reason: 'No newsworthy content for clients this week',\n      type: 'client'\n    }\n  }];\n}\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }\n    h1 { color: #059669; }\n    .blurb-box { background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 20px 0; }\n    .blurb-section { margin-bottom: 15px; }\n    .blurb-section strong { color: #047857; }\n    .tip { background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .tip strong { color: #b45309; }\n    .usage-note { background: #f3f4f6; border-radius: 8px; padding: 15px; margin-top: 30px; font-size: 14px; color: #6b7280; }\n    .footer { margin-top: 30px; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <h1>📰 Client Report Blurb</h1>\n  <p><em>Week of ${dateStr}</em></p>\n  <p>Here's a ready-to-use blurb for this week's client reports:</p>\n\n  <div class=\"blurb-box\">\n    <div class=\"blurb-section\">\n      <strong>What's New in AI Marketing:</strong><br>\n      ${blurb.whatsNew || 'No major updates this week.'}\n    </div>\n\n    <div class=\"blurb-section\">\n      <strong>What We're Doing About It:</strong><br>\n      ${blurb.whatWeAreDoing || 'Continuing to optimize your campaigns with our latest tools.'}\n    </div>\n\n    ${blurb.tipOfTheWeek ? `\n    <div class=\"tip\">\n      <strong>💡 Tip of the Week:</strong><br>\n      ${blurb.tipOfTheWeek}\n    </div>\n    ` : ''}\n  </div>\n\n  <div class=\"usage-note\">\n    <strong>Usage:</strong> Copy the content above into the \"Industry Updates\" section of client weekly reports. Feel free to customize the tone for each client.\n  </div>\n\n  <div class=\"footer\">\n    Generated by Ad Pilot Weekly Intel Agent\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `📰 Client Blurb Ready - ${new Date().toLocaleDateString()}`,\n    html: html,\n    skip: false,\n    type: 'client'\n  }\n}];"
       },
       "id": "format-client",
       "name": "Format Client Blurb",
@@ -290,7 +287,7 @@
       "typeVersion": 2,
       "position": [
         2016,
-        400
+        368
       ]
     },
     {
@@ -309,8 +306,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2240,
-        0
+        2192,
+        48
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -328,7 +325,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": {{ JSON.stringify($json.to.split(',').map(e => e.trim())) }},\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
         "options": {}
       },
       "id": "send-eric",
@@ -336,8 +333,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2240,
-        200
+        2192,
+        208
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -367,15 +364,16 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
       "id": "if-client-blurb",
       "name": "If Client Blurb",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2240,
-        400
+        2192,
+        368
       ]
     },
     {
@@ -394,8 +392,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2464,
-        350
+        2352,
+        352
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -430,8 +428,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2688,
-        200
+        2512,
+        336
       ]
     },
     {
@@ -459,9 +457,37 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2464,
-        500
+        2352,
+        496
       ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2352,
+        32
+      ],
+      "id": "00098bc0-c07f-4b38-96d1-de6665a48163",
+      "name": "Wait after email 1",
+      "webhookId": "7c7d78fb-0fc6-4d3d-be9a-b717a758789e"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2352,
+        192
+      ],
+      "id": "776f2793-40e2-40d8-a074-c91e5dace294",
+      "name": "Wait after email 2",
+      "webhookId": "17198b43-a27a-4416-8fae-81bc610abb83"
     }
   ],
   "connections": {
@@ -618,16 +644,6 @@
             "node": "Format Kelly's Brief",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Format Eric's Sheet",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Format Client Blurb",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -669,7 +685,7 @@
       "main": [
         [
           {
-            "node": "Success",
+            "node": "Wait after email 1",
             "type": "main",
             "index": 0
           }
@@ -681,7 +697,7 @@
       "main": [
         [
           {
-            "node": "Success",
+            "node": "Wait after email 2",
             "type": "main",
             "index": 0
           }
@@ -718,6 +734,28 @@
         ],
         []
       ]
+    },
+    "Wait after email 1": {
+      "main": [
+        [
+          {
+            "node": "Format Eric's Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait after email 2": {
+      "main": [
+        [
+          {
+            "node": "Format Client Blurb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -730,9 +768,9 @@
     }
   },
   "meta": null,
-  "pinData": null,
-  "versionId": "a572e05d-29b7-46f5-9935-f2504a376c00",
-  "activeVersionId": "a572e05d-29b7-46f5-9935-f2504a376c00",
+  "pinData": {},
+  "versionId": "f6b015e2-b979-472f-80e1-d794a4c624b5",
+  "activeVersionId": "f6b015e2-b979-472f-80e1-d794a4c624b5",
   "triggerCount": 2,
   "shared": [
     {
@@ -744,9 +782,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-22T21:48:02.323Z",
-    "createdAt": "2026-01-22T21:48:02.323Z",
-    "versionId": "a572e05d-29b7-46f5-9935-f2504a376c00",
+    "updatedAt": "2026-01-29T23:37:44.739Z",
+    "createdAt": "2026-01-29T23:37:40.306Z",
+    "versionId": "f6b015e2-b979-472f-80e1-d794a4c624b5",
     "workflowId": "TmNkxHfIzdlZTz79",
     "nodes": [
       {
@@ -766,7 +804,7 @@
         "typeVersion": 1.2,
         "position": [
           0,
-          300
+          304
         ]
       },
       {
@@ -781,7 +819,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          100
+          112
         ],
         "webhookId": "intel-agent-test"
       },
@@ -795,7 +833,7 @@
         "typeVersion": 2,
         "position": [
           224,
-          200
+          208
         ]
       },
       {
@@ -858,7 +896,7 @@
         "typeVersion": 3.2,
         "position": [
           448,
-          200
+          208
         ]
       },
       {
@@ -879,7 +917,7 @@
         "typeVersion": 4.2,
         "position": [
           672,
-          100
+          112
         ],
         "onError": "continueErrorOutput"
       },
@@ -893,7 +931,7 @@
         "typeVersion": 2,
         "position": [
           672,
-          300
+          304
         ]
       },
       {
@@ -906,7 +944,7 @@
         "typeVersion": 2,
         "position": [
           896,
-          100
+          112
         ]
       },
       {
@@ -919,21 +957,18 @@
         "typeVersion": 2,
         "position": [
           896,
-          200
+          208
         ]
       },
       {
-        "parameters": {
-          "mode": "append",
-          "output": "combined"
-        },
+        "parameters": {},
         "id": "merge-results",
         "name": "Merge All Results",
         "type": "n8n-nodes-base.merge",
         "typeVersion": 3,
         "position": [
           1120,
-          200
+          208
         ]
       },
       {
@@ -946,7 +981,7 @@
         "typeVersion": 2,
         "position": [
           1344,
-          200
+          208
         ]
       },
       {
@@ -960,7 +995,7 @@
         "typeVersion": 1.4,
         "position": [
           1568,
-          200
+          208
         ]
       },
       {
@@ -993,8 +1028,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1792,
-          200
+          1840,
+          208
         ]
       },
       {
@@ -1007,12 +1042,12 @@
         "typeVersion": 2,
         "position": [
           2016,
-          0
+          48
         ]
       },
       {
         "parameters": {
-          "jsCode": "// Format Eric's Sales Sheet\nconst data = $input.item.json;\nconst eric = data.ericSheet;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #7c3aed; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }\n    h2 { margin-top: 30px; color: #4c1d95; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 12px; }\n    .intro { font-size: 18px; color: #6b7280; margin-bottom: 30px; }\n    .section { background: #faf5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }\n    .objection { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }\n    .objection strong { color: #5b21b6; }\n    .response { color: #4c1d95; margin-top: 8px; }\n    .conversation { background: #ecfdf5; border-radius: 8px; padding: 15px; margin: 10px 0; font-style: italic; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>📊 Ad Pilot Sales Sheet</h1>\n  <p class=\"intro\">Hey Eric! Here's what's relevant for client conversations this week.</p>\n  <p><em>Week of ${dateStr}</em></p>\n`;\n\n// What's New to Sell\nif (eric.whatsNewToSell && eric.whatsNewToSell.length > 0) {\n  html += `<div class=\"section\"><h2>🚀 What's New to Sell</h2><ul>`;\n  eric.whatsNewToSell.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Competitor Intel\nif (eric.competitorIntel && eric.competitorIntel.length > 0) {\n  html += `<div class=\"section\"><h2>🔍 Competitor Intel</h2><ul>`;\n  eric.competitorIntel.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Objection Prep\nif (eric.objectionPrep && eric.objectionPrep.length > 0) {\n  html += `<h2>💬 Objection Prep</h2>`;\n  eric.objectionPrep.forEach(item => {\n    html += `<div class=\"objection\">\n      <strong>\"${item.objection}\"</strong>\n      <div class=\"response\">→ ${item.response}</div>\n    </div>`;\n  });\n}\n\n// Conversation Starters\nif (eric.conversationStarters && eric.conversationStarters.length > 0) {\n  html += `<h2>🗣️ Conversation Starters</h2>`;\n  eric.conversationStarters.forEach(item => {\n    html += `<div class=\"conversation\">\"${item}\"</div>`;\n  });\n}\n\n// Nothing this week\nconst hasContent = (eric.whatsNewToSell?.length > 0) ||\n                   (eric.competitorIntel?.length > 0) ||\n                   (eric.objectionPrep?.length > 0) ||\n                   (eric.conversationStarters?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"section\"><p>Quiet week on the news front! Business as usual — our tech stack is stable and clients are happy. 🎉</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Let's fly! 🐦 — Generated by Ad Pilot Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai,eric@ad-pilot.ai',\n    subject: `📊 Sales Sheet - Week of ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'eric'\n  }\n}];"
+          "jsCode": "// Format Eric's Sales Sheet\nconst data = $('Parse LLM Response').item.json;\nconst eric = data.ericSheet;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #7c3aed; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }\n    h2 { margin-top: 30px; color: #4c1d95; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 12px; }\n    .intro { font-size: 18px; color: #6b7280; margin-bottom: 30px; }\n    .section { background: #faf5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }\n    .objection { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }\n    .objection strong { color: #5b21b6; }\n    .response { color: #4c1d95; margin-top: 8px; }\n    .conversation { background: #ecfdf5; border-radius: 8px; padding: 15px; margin: 10px 0; font-style: italic; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>📊 Ad Pilot Sales Sheet</h1>\n  <p class=\"intro\">Hey Eric! Here's what's relevant for client conversations this week.</p>\n  <p><em>Week of ${dateStr}</em></p>\n`;\n\n// What's New to Sell\nif (eric.whatsNewToSell && eric.whatsNewToSell.length > 0) {\n  html += `<div class=\"section\"><h2>🚀 What's New to Sell</h2><ul>`;\n  eric.whatsNewToSell.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Competitor Intel\nif (eric.competitorIntel && eric.competitorIntel.length > 0) {\n  html += `<div class=\"section\"><h2>🔍 Competitor Intel</h2><ul>`;\n  eric.competitorIntel.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Objection Prep\nif (eric.objectionPrep && eric.objectionPrep.length > 0) {\n  html += `<h2>💬 Objection Prep</h2>`;\n  eric.objectionPrep.forEach(item => {\n    html += `<div class=\"objection\">\n      <strong>\"${item.objection}\"</strong>\n      <div class=\"response\">→ ${item.response}</div>\n    </div>`;\n  });\n}\n\n// Conversation Starters\nif (eric.conversationStarters && eric.conversationStarters.length > 0) {\n  html += `<h2>🗣️ Conversation Starters</h2>`;\n  eric.conversationStarters.forEach(item => {\n    html += `<div class=\"conversation\">\"${item}\"</div>`;\n  });\n}\n\n// Nothing this week\nconst hasContent = (eric.whatsNewToSell?.length > 0) ||\n                   (eric.competitorIntel?.length > 0) ||\n                   (eric.objectionPrep?.length > 0) ||\n                   (eric.conversationStarters?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"section\"><p>Quiet week on the news front! Business as usual — our tech stack is stable and clients are happy. 🎉</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Let's fly! 🐦 — Generated by Ad Pilot Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai,eric@ad-pilot.ai',\n    subject: `📊 Sales Sheet - Week of ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'eric'\n  }\n}];"
         },
         "id": "format-eric",
         "name": "Format Eric's Sheet",
@@ -1020,12 +1055,12 @@
         "typeVersion": 2,
         "position": [
           2016,
-          200
+          208
         ]
       },
       {
         "parameters": {
-          "jsCode": "// Format Client Blurb (only if include: true)\nconst data = $input.item.json;\nconst blurb = data.clientBlurb;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Only generate if there's something worth sharing\nif (!blurb || !blurb.include) {\n  return [{\n    json: {\n      skip: true,\n      reason: 'No newsworthy content for clients this week',\n      type: 'client'\n    }\n  }];\n}\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }\n    h1 { color: #059669; }\n    .blurb-box { background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 20px 0; }\n    .blurb-section { margin-bottom: 15px; }\n    .blurb-section strong { color: #047857; }\n    .tip { background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .tip strong { color: #b45309; }\n    .usage-note { background: #f3f4f6; border-radius: 8px; padding: 15px; margin-top: 30px; font-size: 14px; color: #6b7280; }\n    .footer { margin-top: 30px; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <h1>📰 Client Report Blurb</h1>\n  <p><em>Week of ${dateStr}</em></p>\n  <p>Here's a ready-to-use blurb for this week's client reports:</p>\n\n  <div class=\"blurb-box\">\n    <div class=\"blurb-section\">\n      <strong>What's New in AI Marketing:</strong><br>\n      ${blurb.whatsNew || 'No major updates this week.'}\n    </div>\n\n    <div class=\"blurb-section\">\n      <strong>What We're Doing About It:</strong><br>\n      ${blurb.whatWeAreDoing || 'Continuing to optimize your campaigns with our latest tools.'}\n    </div>\n\n    ${blurb.tipOfTheWeek ? `\n    <div class=\"tip\">\n      <strong>💡 Tip of the Week:</strong><br>\n      ${blurb.tipOfTheWeek}\n    </div>\n    ` : ''}\n  </div>\n\n  <div class=\"usage-note\">\n    <strong>Usage:</strong> Copy the content above into the \"Industry Updates\" section of client weekly reports. Feel free to customize the tone for each client.\n  </div>\n\n  <div class=\"footer\">\n    Generated by Ad Pilot Weekly Intel Agent\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `📰 Client Blurb Ready - ${new Date().toLocaleDateString()}`,\n    html: html,\n    skip: false,\n    type: 'client'\n  }\n}];"
+          "jsCode": "// Format Client Blurb (only if include: true)\nconst data = $('Parse LLM Response').item.json;\nconst blurb = data.clientBlurb;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Only generate if there's something worth sharing\nif (!blurb || !blurb.include) {\n  return [{\n    json: {\n      skip: true,\n      reason: 'No newsworthy content for clients this week',\n      type: 'client'\n    }\n  }];\n}\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }\n    h1 { color: #059669; }\n    .blurb-box { background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 20px 0; }\n    .blurb-section { margin-bottom: 15px; }\n    .blurb-section strong { color: #047857; }\n    .tip { background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .tip strong { color: #b45309; }\n    .usage-note { background: #f3f4f6; border-radius: 8px; padding: 15px; margin-top: 30px; font-size: 14px; color: #6b7280; }\n    .footer { margin-top: 30px; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <h1>📰 Client Report Blurb</h1>\n  <p><em>Week of ${dateStr}</em></p>\n  <p>Here's a ready-to-use blurb for this week's client reports:</p>\n\n  <div class=\"blurb-box\">\n    <div class=\"blurb-section\">\n      <strong>What's New in AI Marketing:</strong><br>\n      ${blurb.whatsNew || 'No major updates this week.'}\n    </div>\n\n    <div class=\"blurb-section\">\n      <strong>What We're Doing About It:</strong><br>\n      ${blurb.whatWeAreDoing || 'Continuing to optimize your campaigns with our latest tools.'}\n    </div>\n\n    ${blurb.tipOfTheWeek ? `\n    <div class=\"tip\">\n      <strong>💡 Tip of the Week:</strong><br>\n      ${blurb.tipOfTheWeek}\n    </div>\n    ` : ''}\n  </div>\n\n  <div class=\"usage-note\">\n    <strong>Usage:</strong> Copy the content above into the \"Industry Updates\" section of client weekly reports. Feel free to customize the tone for each client.\n  </div>\n\n  <div class=\"footer\">\n    Generated by Ad Pilot Weekly Intel Agent\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `📰 Client Blurb Ready - ${new Date().toLocaleDateString()}`,\n    html: html,\n    skip: false,\n    type: 'client'\n  }\n}];"
         },
         "id": "format-client",
         "name": "Format Client Blurb",
@@ -1033,7 +1068,7 @@
         "typeVersion": 2,
         "position": [
           2016,
-          400
+          368
         ]
       },
       {
@@ -1052,8 +1087,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2240,
-          0
+          2192,
+          48
         ],
         "credentials": {
           "httpBearerAuth": {
@@ -1071,7 +1106,7 @@
           "genericAuthType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+          "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": {{ JSON.stringify($json.to.split(',').map(e => e.trim())) }},\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
           "options": {}
         },
         "id": "send-eric",
@@ -1079,8 +1114,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2240,
-          200
+          2192,
+          208
         ],
         "credentials": {
           "httpBearerAuth": {
@@ -1110,15 +1145,16 @@
               }
             ],
             "combinator": "and"
-          }
+          },
+          "options": {}
         },
         "id": "if-client-blurb",
         "name": "If Client Blurb",
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2240,
-          400
+          2192,
+          368
         ]
       },
       {
@@ -1137,8 +1173,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2464,
-          350
+          2352,
+          352
         ],
         "credentials": {
           "httpBearerAuth": {
@@ -1173,8 +1209,8 @@
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.4,
         "position": [
-          2688,
-          200
+          2512,
+          336
         ]
       },
       {
@@ -1202,9 +1238,37 @@
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.4,
         "position": [
-          2464,
-          500
+          2352,
+          496
         ]
+      },
+      {
+        "parameters": {
+          "amount": 2
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2352,
+          32
+        ],
+        "id": "00098bc0-c07f-4b38-96d1-de6665a48163",
+        "name": "Wait after email 1",
+        "webhookId": "7c7d78fb-0fc6-4d3d-be9a-b717a758789e"
+      },
+      {
+        "parameters": {
+          "amount": 2
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2352,
+          192
+        ],
+        "id": "776f2793-40e2-40d8-a074-c91e5dace294",
+        "name": "Wait after email 2",
+        "webhookId": "17198b43-a27a-4416-8fae-81bc610abb83"
       }
     ],
     "connections": {
@@ -1361,16 +1425,6 @@
               "node": "Format Kelly's Brief",
               "type": "main",
               "index": 0
-            },
-            {
-              "node": "Format Eric's Sheet",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Format Client Blurb",
-              "type": "main",
-              "index": 0
             }
           ]
         ]
@@ -1412,7 +1466,7 @@
         "main": [
           [
             {
-              "node": "Success",
+              "node": "Wait after email 1",
               "type": "main",
               "index": 0
             }
@@ -1424,7 +1478,7 @@
         "main": [
           [
             {
-              "node": "Success",
+              "node": "Wait after email 2",
               "type": "main",
               "index": 0
             }
@@ -1461,12 +1515,34 @@
           ],
           []
         ]
+      },
+      "Wait after email 1": {
+        "main": [
+          [
+            {
+              "node": "Format Eric's Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait after email 2": {
+        "main": [
+          [
+            {
+              "node": "Format Client Blurb",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
-    "authors": "import",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "authors": "Kelly Knight",
+    "name": "Version f6b015e2",
+    "description": "",
+    "autosaved": true
   },
   "tags": []
 }
