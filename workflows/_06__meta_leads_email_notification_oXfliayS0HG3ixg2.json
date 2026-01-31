@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-30T19:45:20.306Z",
+  "updatedAt": "2026-01-30T13:50:27.039Z",
   "createdAt": "2025-12-25T19:55:35.815Z",
   "id": "oXfliayS0HG3ixg2",
   "name": "[06] Meta Leads Email Notification",
@@ -24,10 +24,10 @@
         },
         "sheetName": {
           "__rl": true,
-          "value": 1059722368,
+          "value": 444479958,
           "mode": "list",
-          "cachedResultName": "Leads 2",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit#gid=1059722368"
+          "cachedResultName": "CCC_2026-01_LEADS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit#gid=444479958"
         },
         "event": "rowAdded",
         "options": {}
@@ -61,7 +61,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        300,
+        304,
         0
       ],
       "id": "d2f11c32-c1dd-40c7-9120-43bfd68448df",
@@ -97,16 +97,16 @@
   "staticData": {
     "node:Google Sheets Trigger": {
       "documentId": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
-      "sheetId": 1059722368,
-      "lastIndexChecked": 106
+      "sheetId": 444479958,
+      "lastIndexChecked": 15
     }
   },
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "fe8a8c18-429c-4e49-a261-723c17323d31",
-  "activeVersionId": "fe8a8c18-429c-4e49-a261-723c17323d31",
+  "versionId": "258bcb63-5f5f-4c4e-8858-d6d77afce3cd",
+  "activeVersionId": "258bcb63-5f5f-4c4e-8858-d6d77afce3cd",
   "triggerCount": 1,
   "shared": [
     {
@@ -118,9 +118,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-30T19:45:20.309Z",
-    "createdAt": "2025-12-30T19:45:20.309Z",
-    "versionId": "fe8a8c18-429c-4e49-a261-723c17323d31",
+    "updatedAt": "2026-01-30T13:50:43.158Z",
+    "createdAt": "2026-01-30T13:50:27.043Z",
+    "versionId": "258bcb63-5f5f-4c4e-8858-d6d77afce3cd",
     "workflowId": "oXfliayS0HG3ixg2",
     "nodes": [
       {
@@ -141,10 +141,10 @@
           },
           "sheetName": {
             "__rl": true,
-            "value": 1059722368,
+            "value": 444479958,
             "mode": "list",
-            "cachedResultName": "Leads 2",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit#gid=1059722368"
+            "cachedResultName": "CCC_2026-01_LEADS",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit#gid=444479958"
           },
           "event": "rowAdded",
           "options": {}
@@ -178,7 +178,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          300,
+          304,
           0
         ],
         "id": "d2f11c32-c1dd-40c7-9120-43bfd68448df",
@@ -207,9 +207,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "name": "Version 258bcb63",
+    "description": "",
+    "autosaved": true
   },
   "tags": []
 }
