@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-17T23:46:16.296Z",
+  "updatedAt": "2026-02-04T20:34:15.653Z",
   "createdAt": "2025-12-19T01:37:49.969Z",
   "id": "3MLAcpvKTlDN5g9m",
   "name": "[06] HeyGen Webhook Receiver",
@@ -189,7 +189,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE avatars\nSET preview_video_url = '{{ $json.motion_preview_url }}',\n    preview_image_url = '{{ $json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
+        "query": "UPDATE avatars\nSET preview_video_url = '{{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}',\n    preview_image_url = '{{ $(\"Extract Avatar Info\").first().json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending_review',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}';",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -291,6 +291,74 @@
       ],
       "id": "call-error-email",
       "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM avatars WHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        300
+      ],
+      "id": "db-check-avatar-exists",
+      "name": "DB: Check Avatar Exists",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "avatar-exists",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        300
+      ],
+      "id": "if-avatar-exists",
+      "name": "If: Avatar Exists in DB"
+    },
+    {
+      "parameters": {
+        "options": {},
+        "respondWith": "json",
+        "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        400
+      ],
+      "id": "respond-not-ours",
+      "name": "Respond: Not Our Avatar"
     }
   ],
   "connections": {
@@ -367,7 +435,7 @@
       "main": [
         [
           {
-            "node": "DB: Update Avatar Complete",
+            "node": "DB: Check Avatar Exists",
             "type": "main",
             "index": 0
           }
@@ -436,6 +504,35 @@
           }
         ]
       ]
+    },
+    "DB: Check Avatar Exists": {
+      "main": [
+        [
+          {
+            "node": "If: Avatar Exists in DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Avatar Exists in DB": {
+      "main": [
+        [
+          {
+            "node": "DB: Update Avatar Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Not Our Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -446,8 +543,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "c06769f5-c4a8-43de-a4d1-584057fb2a69",
-  "activeVersionId": "c06769f5-c4a8-43de-a4d1-584057fb2a69",
+  "versionId": "f628520c-fba6-4002-bf69-ec0f2cd222fd",
+  "activeVersionId": "f628520c-fba6-4002-bf69-ec0f2cd222fd",
   "triggerCount": 2,
   "shared": [
     {
@@ -459,9 +556,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-17T23:44:13.546Z",
-    "createdAt": "2026-01-17T23:44:13.546Z",
-    "versionId": "c06769f5-c4a8-43de-a4d1-584057fb2a69",
+    "updatedAt": "2026-02-04T20:34:15.656Z",
+    "createdAt": "2026-02-04T20:34:15.656Z",
+    "versionId": "f628520c-fba6-4002-bf69-ec0f2cd222fd",
     "workflowId": "3MLAcpvKTlDN5g9m",
     "nodes": [
       {
@@ -647,7 +744,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "UPDATE avatars\nSET preview_video_url = '{{ $json.motion_preview_url }}',\n    preview_image_url = '{{ $json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $json.avatar_id }}';",
+          "query": "UPDATE avatars\nSET preview_video_url = '{{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}',\n    preview_image_url = '{{ $(\"Extract Avatar Info\").first().json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending_review',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}';",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
@@ -749,6 +846,74 @@
         ],
         "id": "call-error-email",
         "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id FROM avatars WHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}' LIMIT 1",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          900,
+          300
+        ],
+        "id": "db-check-avatar-exists",
+        "name": "DB: Check Avatar Exists",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "avatar-exists",
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1100,
+          300
+        ],
+        "id": "if-avatar-exists",
+        "name": "If: Avatar Exists in DB"
+      },
+      {
+        "parameters": {
+          "options": {},
+          "respondWith": "json",
+          "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}"
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1300,
+          400
+        ],
+        "id": "respond-not-ours",
+        "name": "Respond: Not Our Avatar"
       }
     ],
     "connections": {
@@ -825,7 +990,7 @@
         "main": [
           [
             {
-              "node": "DB: Update Avatar Complete",
+              "node": "DB: Check Avatar Exists",
               "type": "main",
               "index": 0
             }
@@ -889,6 +1054,35 @@
           [
             {
               "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Check Avatar Exists": {
+        "main": [
+          [
+            {
+              "node": "If: Avatar Exists in DB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Avatar Exists in DB": {
+        "main": [
+          [
+            {
+              "node": "DB: Update Avatar Complete",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond: Not Our Avatar",
               "type": "main",
               "index": 0
             }
