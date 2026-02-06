@@ -1,0 +1,2299 @@
+{
+  "updatedAt": "2026-01-30T22:49:25.700Z",
+  "createdAt": "2026-01-26T23:34:50.230Z",
+  "id": "5pYAGAYJmg7qe3D7",
+  "name": "[01] Orchestrate Video Creation",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ad-pilot",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        224
+      ],
+      "id": "webhook-node",
+      "name": "Webhook",
+      "webhookId": "6d1a0385-44cd-476c-8a78-30afdecdb2de"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\n\nlet config;\n\nif (body.test_workflow) {\n  config = {\n    ...body[0],\n    test_workflow: body.test_workflow\n  };\n} else {\n  config = body;\n}\n\n// Email allowlist\nconst allowlist = [\n  'kelly@kellyrae.net',\n  'kellyraeknight78@gmail.com',\n  'esears48@gmail.com',\n  'kelly@ad-pilot.ai',\n  'eric@ad-pilot.ai',\n  'kimark100@aol.com',\n  'garyknight@carmackcars.com',\n  'karleeknight@gmail.com',\n  'karlee515@yahoo.com',\n  'Blakef1984@gmail.com',\n  'bfree98@aol.com',\n  'kacywaldhoff@yahoo.com',\n  'kacywaldhoff@gmail.com',\n  'Mark@ChampaignExperts.com',\n  'tessawaldhoff@gmail.com',\n  'laurenwaldhoff@gmail.com',\n  'shaddelaney@carmackcars.com',\n  'wedin95@aol.com ',\n  'terricox@carmackcars.com',\n  'hannah.blue1302@gmail.com',\n  'notredameone@yahoo.com',\n  'gregh@consolidatedccs.com'\n];\n\nconst email = config.email;\n\nif (!email) {\n  throw new Error('Email is required');\n}\n\nconst isAllowed = allowlist.some(allowed => \n  email.toLowerCase() === allowed.toLowerCase()\n);\n\nif (!isAllowed) {\n  throw new Error('Your email address is not authorized to use this system.');\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(email)) {\n  throw new Error('Invalid email format');\n}\n\n// Normalize ratios and platforms arrays\nconfig.ratios = config.ratios || ['9:16'];\nconfig.platforms = config.platforms || [];\n\nconsole.log(`Authorized: ${email}`);\nconsole.log(`Ratios: ${config.ratios.join(', ')}`);\nconsole.log(`Platforms: ${config.platforms.join(', ') || 'none'}`);\n\nreturn [{ json: config }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        224
+      ],
+      "id": "filter-emails",
+      "name": "Filter on Whitelisted Emails"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "qXvDgLuvrY7u6d7w",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        224
+      ],
+      "id": "call-script",
+      "name": "Call '[02] Generate Script'"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.preview_mode}}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1824,
+        224
+      ],
+      "id": "if-preview",
+      "name": "If: Script Preview Mode"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = { ...$json };\ndelete config.preview_mode;\nreturn [{ json: config }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        -96
+      ],
+      "id": "delete-preview",
+      "name": "Delete Preview Mode"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2944,
+        128
+      ],
+      "id": "respond-preview",
+      "name": "Respond - Script Preview"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Video generation started. Check your email in a few minutes.\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2048,
+        320
+      ],
+      "id": "respond-started",
+      "name": "Respond - Generation Started"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "g3Uw2wgALuQvGkCE",
+          "mode": "list",
+          "cachedResultName": "[03] Generate Avatar"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2272,
+        320
+      ],
+      "id": "call-avatar",
+      "name": "Call '[03] Generate Avatar'"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split config into one item per ratio\nconst config = $json;\nconst ratios = config.ratios || ['9:16'];\nconst platforms = config.platforms || [];\n\n// Determine if we should skip platform banner in Creatomate\nconst skipPlatformBanner = platforms.length > 0;\n\nconsole.log(`Splitting into ${ratios.length} ratio(s)`);\nconsole.log(`Skip platform banner: ${skipPlatformBanner}`);\n\nreturn ratios.map(ratio => ({\n  json: {\n    ...config,\n    ratio: ratio,\n    skipPlatformBanner: skipPlatformBanner,\n    _ratios: ratios,\n    _platforms: platforms\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        320
+      ],
+      "id": "split-ratios",
+      "name": "Split by Ratios"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rCHIIq9b5UxNMP06",
+          "mode": "list",
+          "cachedResultName": "[04] Generate Video"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2720,
+        320
+      ],
+      "id": "call-video",
+      "name": "Call '[04] Generate Video'",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json._platforms.length }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2944,
+        320
+      ],
+      "id": "if-needs-banners",
+      "name": "If: Needs Platform Banners"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare data for [08] Add Platform Banners\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      video_url: config.final_video_url,\n      avatar_name: config.avatar_name,\n      platforms: config._platforms,\n      ratio: config.ratio,\n      _original_config: config\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3168,
+        224
+      ],
+      "id": "prep-banners",
+      "name": "Prepare for Banners"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "wHt5nlcB8Lq5pqR4",
+          "mode": "list",
+          "cachedResultName": "[08] Add Platform Banners"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3392,
+        224
+      ],
+      "id": "call-banners",
+      "name": "Call '[08] Add Platform Banners'"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No banners needed - create platform_videos array with single video\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.final_video_url\n      }]\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3616,
+        416
+      ],
+      "id": "no-banners",
+      "name": "No Banners - Passthrough"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through results from [08]\n// [08] Format Output already spreads _original_config (with email etc) into root\n// and adds platform_videos - so just pass through all items\nconst allItems = $input.all();\nreturn allItems.map(item => ({ json: item.json }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3616,
+        224
+      ],
+      "id": "merge-banner-results",
+      "name": "Merge Banner Results"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "all_videos",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        320
+      ],
+      "id": "aggregate-all",
+      "name": "Aggregate All Videos"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item (has email, template_id, etc)\nconst baseConfig = allItems[0] || {};\n\n// Get generated_copy from webhook input (preserved through the flow)\n// Try multiple sources in case it's in different places\nconst generatedCopy = baseConfig.generated_copy \n  || $('Webhook').first().json.body.generated_copy \n  || [];\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log('Total videos generated:', allVideos.length);\nconsole.log('Email:', baseConfig.email);\nconsole.log('Generated copy items:', generatedCopy.length);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none'\n    ? `${v.ratio} - ${v.platform}`\n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\n// Build generated copy HTML for email\nlet copyHtml = '';\nif (generatedCopy.length > 0) {\n  copyHtml = '<br/><hr style=\"border: none; border-top: 1px solid #ddd; margin: 20px 0;\"/>';\n  copyHtml += '<p><strong>Platform Copy:</strong></p>';\n\n  for (const item of generatedCopy) {\n    const platform = item.platform?.toUpperCase() || 'UNKNOWN';\n    const copy = item.copy || {};\n\n    copyHtml += '<div style=\"margin: 15px 0; padding: 15px; background: #f9f9f9; border-radius: 8px;\">';\n    copyHtml += `<p style=\"margin: 0 0 10px 0; font-weight: bold; color: #333;\">${platform}</p>`;\n\n    if (platform === 'META') {\n      if (copy.primary_text) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Primary Text:</strong><br/>${copy.primary_text.replace(/\\n/g, '<br/>')}</p>`;\n      }\n      if (copy.headline) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Headline:</strong> ${copy.headline}</p>`;\n      }\n      if (copy.description) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Description:</strong> ${copy.description}</p>`;\n      }\n    } else if (platform === 'TIKTOK') {\n      if (copy.caption) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Caption:</strong><br/>${copy.caption}</p>`;\n      }\n      if (copy.hashtags) {\n        const hashtagStr = Array.isArray(copy.hashtags) ? copy.hashtags.join(' ') : copy.hashtags;\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Hashtags:</strong> ${hashtagStr}</p>`;\n      }\n    } else if (platform === 'YOUTUBE') {\n      if (copy.title) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Title:</strong> ${copy.title}</p>`;\n      }\n      if (copy.description) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Description:</strong><br/>${copy.description.replace(/\\n/g, '<br/>')}</p>`;\n      }\n      if (copy.tags) {\n        const tagsStr = Array.isArray(copy.tags) ? copy.tags.join(', ') : copy.tags;\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Tags:</strong> ${tagsStr}</p>`;\n      }\n    }\n\n    copyHtml += '</div>';\n  }\n}\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    generated_copy: generatedCopy,\n    generated_copy_html: copyHtml,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4064,
+        320
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": {{ JSON.stringify(\"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: \" + $json.template_id + \"</p><p>Theme: \" + ($json.theme || 'N/A') + \"</p><br/><p><strong>Videos:</strong></p>\" + $json.video_links_html + ($json.generated_copy_html || '')) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4288,
+        320
+      ],
+      "id": "send-email",
+      "name": "Send Video Email",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1VQuJs5F_jR9cv-yobmkRoQLhUQmQJTnawFB5I29Hrs0",
+          "mode": "list",
+          "cachedResultName": "Ad Pilot - Jobs"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "jobs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+            "status": "complete",
+            "updated_at": "={{ new Date().toISOString() }}",
+            "script_data": "={{ JSON.stringify($json.script || $('Webhook').first().json.body.script || null) }}",
+            "generated_copy": "={{ JSON.stringify($json.generated_copy || []) }}",
+            "video_url": "={{ $json.final_video_url }}"
+          },
+          "matchingColumns": [
+            "job_id"
+          ],
+          "schema": [
+            {
+              "id": "job_id",
+              "displayName": "job_id",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "script_data",
+              "displayName": "script_data",
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "generated_copy",
+              "displayName": "generated_copy",
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "video_url",
+              "displayName": "video_url",
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4512,
+        224
+      ],
+      "id": "update-job",
+      "name": "Update Job Complete",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q7zq2LAmxWgFj6o6",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Video Generation Orchestration v2\n\nSupports:\n- Multiple ratios per job\n- Platform-specific banners via ffmpeg\n- Organic templates (no banners)",
+        "width": 400,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -416,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "sticky-main",
+      "name": "Info"
+    },
+    {
+      "parameters": {
+        "content": "## Loop through ratios\nEach ratio gets its own Creatomate render",
+        "height": 120,
+        "width": 300,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2192,
+        480
+      ],
+      "typeVersion": 1,
+      "id": "sticky-ratios",
+      "name": "Ratios"
+    },
+    {
+      "parameters": {
+        "content": "## Add platform banners\nffmpeg API adds banners per platform",
+        "height": 120,
+        "width": 350,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3312,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "sticky-banners",
+      "name": "Banners"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  p.full_name,\n  p.display_name,\n  p.voice_id,\n  p.voice_settings,\n  a.photo_avatar_id,\n  a.motion_avatar_id\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $(\"Webhook\").first().json.body.avatar_id }}'::uuid",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        256,
+        224
+      ],
+      "id": "lookup-avatar-config",
+      "name": "Lookup Avatar Config",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get webhook body and DB results from earlier nodes\n\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst clientResult = $('Lookup Client Base').first().json;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  service_area: clientResult.service_area,\n  business_name: clientResult.business_name,\n  location: clientResult.location,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{\n  json: { \n    ...config\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        224
+      ],
+      "id": "build-config",
+      "name": "Build Config"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT rendered_urls \nFROM client_backgrounds \nWHERE id = '{{ $(\"Webhook\").first().json.body.background_id }}'::uuid",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        224
+      ],
+      "id": "lookup-background",
+      "name": "Lookup Background",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const formatResponse = $(\"Format Response\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[01] Orchestrate Video Creation\",\n    error: \"Failed to send video completion email\",\n    details: {\n      email: formatResponse.email,\n      video_count: formatResponse.video_count,\n      template_id: formatResponse.template_id\n    },\n    job_id: formatResponse.job_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4512,
+        416
+      ],
+      "id": "format-email-error",
+      "name": "Format Email Error"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rFyNQNW3IQ1zLHEF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+          "cachedResultName": "[Service] Email Error Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        4736,
+        416
+      ],
+      "id": "call-error-email-orch",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT cb.rendered_urls\nFROM templates t\nLEFT JOIN client_backgrounds cb\n  ON cb.client_id = '{{ $(\"Webhook\").first().json.body.client_id }}'::uuid\n  AND cb.category = TRIM(BOTH '\"' FROM t.bg_wide_override::text)\n  AND cb.is_default = true\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $(\"Webhook\").first().json.body.template_id }}', 'ad-', ''), 'organic-', ''))\nAND t.bg_wide_override IS NOT NULL",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        704,
+        224
+      ],
+      "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
+      "name": "Lookup Wide Override Default",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"service_area\": \"{{ $json.service_area }}\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1152,
+        224
+      ],
+      "id": "f11f6e71-048c-4184-87d5-06c2c6068624",
+      "name": "Generate Theme Pack"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Build Config').first().json;\nconst themePack = $input.first().json;\n\n// Merge the full theme pack into config\nreturn {\n  json: {\n    ...config,\n    theme_pack: themePack\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        224
+      ],
+      "id": "d2f5a8cb-f53a-4f24-a16f-b7348f6ac8fd",
+      "name": "Add Theme Pack to Config"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  prompt_content->'identity'->>'service_area' as service_area,\n  prompt_content->'identity'->>'location' as location,\n  prompt_content->'identity'->>'business_name' as business_name\nFROM client_prompts\nWHERE client_id = '{{ $json.client_id }}'::uuid\nAND prompt_type = 'base'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        32,
+        224
+      ],
+      "id": "2fcce21b-ffac-4443-b549-d89ceb9fbe3c",
+      "name": "Lookup Client Base",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare request for Platform Copy Generator\nconst config = $json;\n\n// Determine content_type from template\nconst templateId = config.template_id || '';\nconst isOrganic = templateId.toLowerCase().includes('organic') || templateId.toLowerCase().includes('educational');\nconst contentType = isOrganic ? 'organic' : 'ad';\n\n// Map platform names to copy generator format\nconst platformMap = {\n  'facebook': 'meta',\n  'instagram': 'meta',\n  'tiktok': 'tiktok',\n  'youtube': 'youtube'\n};\n\n// Get unique platforms for copy generation\nconst selectedPlatforms = config.platforms || [];\nconst copyPlatforms = [...new Set(selectedPlatforms.map(p => platformMap[p.toLowerCase()] || p.toLowerCase()))];\n\n// If no platforms selected (organic), default to meta\nconst platforms = copyPlatforms.length > 0 ? copyPlatforms : ['meta'];\n\nreturn {\n  // Copy generator request\n  copy_request: {\n    client_id: config.client_id,\n    platforms: platforms,\n    content_type: contentType,\n    script: config.script?.full_script || [config.script?.hook, config.script?.body, config.script?.cta].filter(Boolean).join(' '),\n    theme: config.theme || config.topic,\n    store_copy: false\n  },\n  // Pass through original config\n  original_config: config\n};"
+      },
+      "id": "prepare-copy-request",
+      "name": "Prepare Copy Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-platform-copy",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.copy_request) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "call-copy-generator",
+      "name": "Call Copy Generator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2272,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge copy results back into config\nconst copyResponse = $json;\nconst originalConfig = $('Prepare Copy Request').first().json.original_config;\n\n// Debug: log what we have\nconst hasScript = !!originalConfig?.script;\nconsole.log('originalConfig has script:', hasScript);\n\n// Add generated copy to config\nconst configWithCopy = {\n  ...originalConfig,\n  generated_copy: copyResponse.generated_copy || []\n};\n\n// Remove preview_mode flag\ndelete configWithCopy.preview_mode;\n\n// Return in proper n8n format\nreturn [{ json: configWithCopy }];"
+      },
+      "id": "merge-copy-config",
+      "name": "Merge Copy into Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1VQuJs5F_jR9cv-yobmkRoQLhUQmQJTnawFB5I29Hrs0",
+          "mode": "list",
+          "cachedResultName": "Ad Pilot - Jobs"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "jobs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+            "status": "script_ready",
+            "updated_at": "={{ new Date().toISOString() }}",
+            "script_data": "={{ JSON.stringify($json.script || null) }}",
+            "generated_copy": "={{ JSON.stringify($json.generated_copy || []) }}"
+          },
+          "matchingColumns": [
+            "job_id"
+          ],
+          "schema": [
+            {
+              "id": "job_id",
+              "displayName": "job_id",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "script_data",
+              "displayName": "script_data",
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "generated_copy",
+              "displayName": "generated_copy",
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "update-script-ready",
+      "name": "Update Script Ready",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2720,
+        128
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q7zq2LAmxWgFj6o6",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter on Whitelisted Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Avatar Config": {
+      "main": [
+        [
+          {
+            "node": "Lookup Background",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Config": {
+      "main": [
+        [
+          {
+            "node": "Generate Theme Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter on Whitelisted Emails": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client Base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[02] Generate Script'": {
+      "main": [
+        [
+          {
+            "node": "If: Script Preview Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Script Preview Mode": {
+      "main": [
+        [
+          {
+            "node": "Prepare Copy Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond - Generation Started",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond - Generation Started": {
+      "main": [
+        [
+          {
+            "node": "Call '[03] Generate Avatar'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[03] Generate Avatar'": {
+      "main": [
+        [
+          {
+            "node": "Split by Ratios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split by Ratios": {
+      "main": [
+        [
+          {
+            "node": "Call '[04] Generate Video'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[04] Generate Video'": {
+      "main": [
+        [
+          {
+            "node": "If: Needs Platform Banners",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Needs Platform Banners": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Banners",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Banners - Passthrough",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Banners": {
+      "main": [
+        [
+          {
+            "node": "Call '[08] Add Platform Banners'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[08] Add Platform Banners'": {
+      "main": [
+        [
+          {
+            "node": "Merge Banner Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Banners - Passthrough": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Banner Results": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate All Videos": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Send Video Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Video Email": {
+      "main": [
+        [
+          {
+            "node": "Update Job Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Background": {
+      "main": [
+        [
+          {
+            "node": "Lookup Wide Override Default",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email Error": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Wide Override Default": {
+      "main": [
+        [
+          {
+            "node": "Build Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Theme Pack": {
+      "main": [
+        [
+          {
+            "node": "Add Theme Pack to Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Theme Pack to Config": {
+      "main": [
+        [
+          {
+            "node": "Call '[02] Generate Script'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client Base": {
+      "main": [
+        [
+          {
+            "node": "Lookup Avatar Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Copy Request": {
+      "main": [
+        [
+          {
+            "node": "Call Copy Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Copy Generator": {
+      "main": [
+        [
+          {
+            "node": "Merge Copy into Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Copy into Config": {
+      "main": [
+        [
+          {
+            "node": "Update Script Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Script Ready": {
+      "main": [
+        [
+          {
+            "node": "Respond - Script Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b564d2da-c6d5-4bf0-a986-74a9944c7265",
+  "activeVersionId": "b564d2da-c6d5-4bf0-a986-74a9944c7265",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:50.230Z",
+      "createdAt": "2026-01-26T23:34:50.230Z",
+      "role": "workflow:owner",
+      "workflowId": "5pYAGAYJmg7qe3D7",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T22:49:25.703Z",
+    "createdAt": "2026-01-30T22:49:25.703Z",
+    "versionId": "b564d2da-c6d5-4bf0-a986-74a9944c7265",
+    "workflowId": "5pYAGAYJmg7qe3D7",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "ad-pilot",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*",
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -416,
+          224
+        ],
+        "id": "webhook-node",
+        "name": "Webhook",
+        "webhookId": "6d1a0385-44cd-476c-8a78-30afdecdb2de"
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $json.body;\n\nlet config;\n\nif (body.test_workflow) {\n  config = {\n    ...body[0],\n    test_workflow: body.test_workflow\n  };\n} else {\n  config = body;\n}\n\n// Email allowlist\nconst allowlist = [\n  'kelly@kellyrae.net',\n  'kellyraeknight78@gmail.com',\n  'esears48@gmail.com',\n  'kelly@ad-pilot.ai',\n  'eric@ad-pilot.ai',\n  'kimark100@aol.com',\n  'garyknight@carmackcars.com',\n  'karleeknight@gmail.com',\n  'karlee515@yahoo.com',\n  'Blakef1984@gmail.com',\n  'bfree98@aol.com',\n  'kacywaldhoff@yahoo.com',\n  'kacywaldhoff@gmail.com',\n  'Mark@ChampaignExperts.com',\n  'tessawaldhoff@gmail.com',\n  'laurenwaldhoff@gmail.com',\n  'shaddelaney@carmackcars.com',\n  'wedin95@aol.com ',\n  'terricox@carmackcars.com',\n  'hannah.blue1302@gmail.com',\n  'notredameone@yahoo.com',\n  'gregh@consolidatedccs.com'\n];\n\nconst email = config.email;\n\nif (!email) {\n  throw new Error('Email is required');\n}\n\nconst isAllowed = allowlist.some(allowed => \n  email.toLowerCase() === allowed.toLowerCase()\n);\n\nif (!isAllowed) {\n  throw new Error('Your email address is not authorized to use this system.');\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(email)) {\n  throw new Error('Invalid email format');\n}\n\n// Normalize ratios and platforms arrays\nconfig.ratios = config.ratios || ['9:16'];\nconfig.platforms = config.platforms || [];\n\nconsole.log(`Authorized: ${email}`);\nconsole.log(`Ratios: ${config.ratios.join(', ')}`);\nconsole.log(`Platforms: ${config.platforms.join(', ') || 'none'}`);\n\nreturn [{ json: config }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -192,
+          224
+        ],
+        "id": "filter-emails",
+        "name": "Filter on Whitelisted Emails"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "qXvDgLuvrY7u6d7w",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1600,
+          224
+        ],
+        "id": "call-script",
+        "name": "Call '[02] Generate Script'"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{$json.preview_mode}}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1824,
+          224
+        ],
+        "id": "if-preview",
+        "name": "If: Script Preview Mode"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = { ...$json };\ndelete config.preview_mode;\nreturn [{ json: config }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -416,
+          -96
+        ],
+        "id": "delete-preview",
+        "name": "Delete Preview Mode"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          2944,
+          128
+        ],
+        "id": "respond-preview",
+        "name": "Respond - Script Preview"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "{\n  \"success\": true,\n  \"message\": \"Video generation started. Check your email in a few minutes.\"\n}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          2048,
+          320
+        ],
+        "id": "respond-started",
+        "name": "Respond - Generation Started"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "g3Uw2wgALuQvGkCE",
+            "mode": "list",
+            "cachedResultName": "[03] Generate Avatar"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          2272,
+          320
+        ],
+        "id": "call-avatar",
+        "name": "Call '[03] Generate Avatar'"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Split config into one item per ratio\nconst config = $json;\nconst ratios = config.ratios || ['9:16'];\nconst platforms = config.platforms || [];\n\n// Determine if we should skip platform banner in Creatomate\nconst skipPlatformBanner = platforms.length > 0;\n\nconsole.log(`Splitting into ${ratios.length} ratio(s)`);\nconsole.log(`Skip platform banner: ${skipPlatformBanner}`);\n\nreturn ratios.map(ratio => ({\n  json: {\n    ...config,\n    ratio: ratio,\n    skipPlatformBanner: skipPlatformBanner,\n    _ratios: ratios,\n    _platforms: platforms\n  }\n}));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2496,
+          320
+        ],
+        "id": "split-ratios",
+        "name": "Split by Ratios"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rCHIIq9b5UxNMP06",
+            "mode": "list",
+            "cachedResultName": "[04] Generate Video"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "mode": "each",
+          "options": {
+            "waitForSubWorkflow": true
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          2720,
+          320
+        ],
+        "id": "call-video",
+        "name": "Call '[04] Generate Video'",
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json._platforms.length }}",
+                "rightValue": "0",
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2944,
+          320
+        ],
+        "id": "if-needs-banners",
+        "name": "If: Needs Platform Banners"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare data for [08] Add Platform Banners\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      video_url: config.final_video_url,\n      avatar_name: config.avatar_name,\n      platforms: config._platforms,\n      ratio: config.ratio,\n      _original_config: config\n    }\n  };\n});"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3168,
+          224
+        ],
+        "id": "prep-banners",
+        "name": "Prepare for Banners"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "wHt5nlcB8Lq5pqR4",
+            "mode": "list",
+            "cachedResultName": "[08] Add Platform Banners"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "mode": "each",
+          "options": {
+            "waitForSubWorkflow": true
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          3392,
+          224
+        ],
+        "id": "call-banners",
+        "name": "Call '[08] Add Platform Banners'"
+      },
+      {
+        "parameters": {
+          "jsCode": "// No banners needed - create platform_videos array with single video\n// Process ALL items, not just first\nconst allItems = $input.all();\n\nreturn allItems.map(item => {\n  const config = item.json;\n  return {\n    json: {\n      ...config,\n      platform_videos: [{\n        platform: 'none',\n        ratio: config.ratio,\n        video_url: config.final_video_url\n      }]\n    }\n  };\n});"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3616,
+          416
+        ],
+        "id": "no-banners",
+        "name": "No Banners - Passthrough"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pass through results from [08]\n// [08] Format Output already spreads _original_config (with email etc) into root\n// and adds platform_videos - so just pass through all items\nconst allItems = $input.all();\nreturn allItems.map(item => ({ json: item.json }));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3616,
+          224
+        ],
+        "id": "merge-banner-results",
+        "name": "Merge Banner Results"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "all_videos",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          3840,
+          320
+        ],
+        "id": "aggregate-all",
+        "name": "Aggregate All Videos"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Flatten all platform_videos into single array\nconst allItems = $json.all_videos || [];\n\n// Get base config from first item (has email, template_id, etc)\nconst baseConfig = allItems[0] || {};\n\n// Get generated_copy from webhook input (preserved through the flow)\n// Try multiple sources in case it's in different places\nconst generatedCopy = baseConfig.generated_copy \n  || $('Webhook').first().json.body.generated_copy \n  || [];\n\n// Collect all videos\nconst allVideos = [];\nfor (const item of allItems) {\n  const videos = item.platform_videos || [];\n  allVideos.push(...videos);\n}\n\nconsole.log('Total videos generated:', allVideos.length);\nconsole.log('Email:', baseConfig.email);\nconsole.log('Generated copy items:', generatedCopy.length);\n\n// Build video links for email\nconst videoLinks = allVideos.map(v => {\n  const label = v.platform !== 'none'\n    ? `${v.ratio} - ${v.platform}`\n    : v.ratio;\n  return `<a href='${v.video_url}'>${label}</a>`;\n}).join('<br/>');\n\n// Build generated copy HTML for email\nlet copyHtml = '';\nif (generatedCopy.length > 0) {\n  copyHtml = '<br/><hr style=\"border: none; border-top: 1px solid #ddd; margin: 20px 0;\"/>';\n  copyHtml += '<p><strong>Platform Copy:</strong></p>';\n\n  for (const item of generatedCopy) {\n    const platform = item.platform?.toUpperCase() || 'UNKNOWN';\n    const copy = item.copy || {};\n\n    copyHtml += '<div style=\"margin: 15px 0; padding: 15px; background: #f9f9f9; border-radius: 8px;\">';\n    copyHtml += `<p style=\"margin: 0 0 10px 0; font-weight: bold; color: #333;\">${platform}</p>`;\n\n    if (platform === 'META') {\n      if (copy.primary_text) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Primary Text:</strong><br/>${copy.primary_text.replace(/\\n/g, '<br/>')}</p>`;\n      }\n      if (copy.headline) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Headline:</strong> ${copy.headline}</p>`;\n      }\n      if (copy.description) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Description:</strong> ${copy.description}</p>`;\n      }\n    } else if (platform === 'TIKTOK') {\n      if (copy.caption) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Caption:</strong><br/>${copy.caption}</p>`;\n      }\n      if (copy.hashtags) {\n        const hashtagStr = Array.isArray(copy.hashtags) ? copy.hashtags.join(' ') : copy.hashtags;\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Hashtags:</strong> ${hashtagStr}</p>`;\n      }\n    } else if (platform === 'YOUTUBE') {\n      if (copy.title) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Title:</strong> ${copy.title}</p>`;\n      }\n      if (copy.description) {\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Description:</strong><br/>${copy.description.replace(/\\n/g, '<br/>')}</p>`;\n      }\n      if (copy.tags) {\n        const tagsStr = Array.isArray(copy.tags) ? copy.tags.join(', ') : copy.tags;\n        copyHtml += `<p style=\"margin: 8px 0;\"><strong>Tags:</strong> ${tagsStr}</p>`;\n      }\n    }\n\n    copyHtml += '</div>';\n  }\n}\n\nreturn [{\n  json: {\n    ...baseConfig,\n    all_videos: allVideos,\n    video_count: allVideos.length,\n    video_links_html: videoLinks,\n    generated_copy: generatedCopy,\n    generated_copy_html: copyHtml,\n    final_video_url: allVideos[0]?.video_url || baseConfig.final_video_url\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4064,
+          320
+        ],
+        "id": "format-response",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": \"{{ $json.email }}\",\n  \"cc\": \"kellyraeknight78@gmail.com\",\n  \"subject\": \"Your {{ $json.video_count }} Video(s) Ready! 🎬\",\n  \"html\": {{ JSON.stringify(\"<p>Great news! Your video(s) have been generated.</p><br/><p>Template: \" + $json.template_id + \"</p><p>Theme: \" + ($json.theme || 'N/A') + \"</p><br/><p><strong>Videos:</strong></p>\" + $json.video_links_html + ($json.generated_copy_html || '')) }}\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          4288,
+          320
+        ],
+        "id": "send-email",
+        "name": "Send Video Email",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "1VQuJs5F_jR9cv-yobmkRoQLhUQmQJTnawFB5I29Hrs0",
+            "mode": "list",
+            "cachedResultName": "Ad Pilot - Jobs"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "jobs"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+              "status": "complete",
+              "updated_at": "={{ new Date().toISOString() }}",
+              "script_data": "={{ JSON.stringify($json.script || $('Webhook').first().json.body.script || null) }}",
+              "generated_copy": "={{ JSON.stringify($json.generated_copy || []) }}",
+              "video_url": "={{ $json.final_video_url }}"
+            },
+            "matchingColumns": [
+              "job_id"
+            ],
+            "schema": [
+              {
+                "id": "job_id",
+                "displayName": "job_id",
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "status",
+                "displayName": "status",
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "updated_at",
+                "displayName": "updated_at",
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "script_data",
+                "displayName": "script_data",
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "generated_copy",
+                "displayName": "generated_copy",
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "video_url",
+                "displayName": "video_url",
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          4512,
+          224
+        ],
+        "id": "update-job",
+        "name": "Update Job Complete",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "Q7zq2LAmxWgFj6o6",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "# Video Generation Orchestration v2\n\nSupports:\n- Multiple ratios per job\n- Platform-specific banners via ffmpeg\n- Organic templates (no banners)",
+          "width": 400,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -416,
+          16
+        ],
+        "typeVersion": 1,
+        "id": "sticky-main",
+        "name": "Info"
+      },
+      {
+        "parameters": {
+          "content": "## Loop through ratios\nEach ratio gets its own Creatomate render",
+          "height": 120,
+          "width": 300,
+          "color": 2
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2192,
+          480
+        ],
+        "typeVersion": 1,
+        "id": "sticky-ratios",
+        "name": "Ratios"
+      },
+      {
+        "parameters": {
+          "content": "## Add platform banners\nffmpeg API adds banners per platform",
+          "height": 120,
+          "width": 350,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3312,
+          -16
+        ],
+        "typeVersion": 1,
+        "id": "sticky-banners",
+        "name": "Banners"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  p.full_name,\n  p.display_name,\n  p.voice_id,\n  p.voice_settings,\n  a.photo_avatar_id,\n  a.motion_avatar_id\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $(\"Webhook\").first().json.body.avatar_id }}'::uuid",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          256,
+          224
+        ],
+        "id": "lookup-avatar-config",
+        "name": "Lookup Avatar Config",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get webhook body and DB results from earlier nodes\n\nconst webhookData = $(\"Webhook\").first().json;\nconst webhookBody = webhookData.body;\nconst clientResult = $('Lookup Client Base').first().json;\nconst avatarResult = $(\"Lookup Avatar Config\").first().json;\nconst backgroundResult = $(\"Lookup Background\").first()?.json || null;\nconst wideOverrideResult = $(\"Lookup Wide Override Default\").first()?.json || null;\n\n// ============================================\n// Build Configuration\n// ============================================\n\n// Merge avatar config\nconst config = {\n  ...webhookBody,\n  service_area: clientResult.service_area,\n  business_name: clientResult.business_name,\n  location: clientResult.location,\n  avatar_name: avatarResult.display_name || webhookBody.avatar_name,\n  voice_id: avatarResult.voice_id || webhookBody.voice_id,\n  voice_settings: avatarResult.voice_settings || null,  // Let API use defaults if not configured\n  photo_avatar_id: avatarResult.photo_avatar_id,\n  motion_avatar_id: avatarResult.motion_avatar_id,\n  avatar_id: avatarResult.motion_avatar_id,\n  person_full_name: avatarResult.full_name,\n  person_display_name: avatarResult.display_name\n};\n\n// ============================================\n// Background Handling\n// ============================================\n\nif (backgroundResult?.rendered_urls) {\n  // User selected a background\n  config.background_rendered_urls = backgroundResult.rendered_urls;\n  console.log(`Background rendered URLs: ${JSON.stringify(config.background_rendered_urls)}`);\n} else if (wideOverrideResult?.rendered_urls?.['9:16']) {\n  // No user selection, but template has wide override - use default 9:16\n  config.avatar_background_url = wideOverrideResult.rendered_urls['9:16'];\n  console.log(`Avatar background (wide override): ${config.avatar_background_url}`);\n}\n\nconsole.log(`Avatar config built for: ${config.person_display_name || config.avatar_name}`);\nconsole.log(`Voice ID: ${config.voice_id}`);\nconsole.log(`Voice settings: ${JSON.stringify(config.voice_settings)}`);\nconsole.log(`HeyGen Avatar ID: ${config.avatar_id}`);\n\nreturn [{\n  json: { \n    ...config\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          928,
+          224
+        ],
+        "id": "build-config",
+        "name": "Build Config"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT rendered_urls \nFROM client_backgrounds \nWHERE id = '{{ $(\"Webhook\").first().json.body.background_id }}'::uuid",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          480,
+          224
+        ],
+        "id": "lookup-background",
+        "name": "Lookup Background",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "jsCode": "const formatResponse = $(\"Format Response\").first().json;\nreturn [{\n  json: {\n    workflow_name: \"[01] Orchestrate Video Creation\",\n    error: \"Failed to send video completion email\",\n    details: {\n      email: formatResponse.email,\n      video_count: formatResponse.video_count,\n      template_id: formatResponse.template_id\n    },\n    job_id: formatResponse.job_id\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4512,
+          416
+        ],
+        "id": "format-email-error",
+        "name": "Format Email Error"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rFyNQNW3IQ1zLHEF",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+            "cachedResultName": "[Service] Email Error Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          4736,
+          416
+        ],
+        "id": "call-error-email-orch",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT cb.rendered_urls\nFROM templates t\nLEFT JOIN client_backgrounds cb\n  ON cb.client_id = '{{ $(\"Webhook\").first().json.body.client_id }}'::uuid\n  AND cb.category = TRIM(BOTH '\"' FROM t.bg_wide_override::text)\n  AND cb.is_default = true\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $(\"Webhook\").first().json.body.template_id }}', 'ad-', ''), 'organic-', ''))\nAND t.bg_wide_override IS NOT NULL",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          704,
+          224
+        ],
+        "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
+        "name": "Lookup Wide Override Default",
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"service_area\": \"{{ $json.service_area }}\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1152,
+          224
+        ],
+        "id": "f11f6e71-048c-4184-87d5-06c2c6068624",
+        "name": "Generate Theme Pack"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $('Build Config').first().json;\nconst themePack = $input.first().json;\n\n// Merge the full theme pack into config\nreturn {\n  json: {\n    ...config,\n    theme_pack: themePack\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1376,
+          224
+        ],
+        "id": "d2f5a8cb-f53a-4f24-a16f-b7348f6ac8fd",
+        "name": "Add Theme Pack to Config"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n  prompt_content->'identity'->>'service_area' as service_area,\n  prompt_content->'identity'->>'location' as location,\n  prompt_content->'identity'->>'business_name' as business_name\nFROM client_prompts\nWHERE client_id = '{{ $json.client_id }}'::uuid\nAND prompt_type = 'base'",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          32,
+          224
+        ],
+        "id": "2fcce21b-ffac-4443-b549-d89ceb9fbe3c",
+        "name": "Lookup Client Base",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare request for Platform Copy Generator\nconst config = $json;\n\n// Determine content_type from template\nconst templateId = config.template_id || '';\nconst isOrganic = templateId.toLowerCase().includes('organic') || templateId.toLowerCase().includes('educational');\nconst contentType = isOrganic ? 'organic' : 'ad';\n\n// Map platform names to copy generator format\nconst platformMap = {\n  'facebook': 'meta',\n  'instagram': 'meta',\n  'tiktok': 'tiktok',\n  'youtube': 'youtube'\n};\n\n// Get unique platforms for copy generation\nconst selectedPlatforms = config.platforms || [];\nconst copyPlatforms = [...new Set(selectedPlatforms.map(p => platformMap[p.toLowerCase()] || p.toLowerCase()))];\n\n// If no platforms selected (organic), default to meta\nconst platforms = copyPlatforms.length > 0 ? copyPlatforms : ['meta'];\n\nreturn {\n  // Copy generator request\n  copy_request: {\n    client_id: config.client_id,\n    platforms: platforms,\n    content_type: contentType,\n    script: config.script?.full_script || [config.script?.hook, config.script?.body, config.script?.cta].filter(Boolean).join(' '),\n    theme: config.theme || config.topic,\n    store_copy: false\n  },\n  // Pass through original config\n  original_config: config\n};"
+        },
+        "id": "prepare-copy-request",
+        "name": "Prepare Copy Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2048,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-platform-copy",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.copy_request) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "id": "call-copy-generator",
+        "name": "Call Copy Generator",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2272,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Merge copy results back into config\nconst copyResponse = $json;\nconst originalConfig = $('Prepare Copy Request').first().json.original_config;\n\n// Debug: log what we have\nconst hasScript = !!originalConfig?.script;\nconsole.log('originalConfig has script:', hasScript);\n\n// Add generated copy to config\nconst configWithCopy = {\n  ...originalConfig,\n  generated_copy: copyResponse.generated_copy || []\n};\n\n// Remove preview_mode flag\ndelete configWithCopy.preview_mode;\n\n// Return in proper n8n format\nreturn [{ json: configWithCopy }];"
+        },
+        "id": "merge-copy-config",
+        "name": "Merge Copy into Config",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2496,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "1VQuJs5F_jR9cv-yobmkRoQLhUQmQJTnawFB5I29Hrs0",
+            "mode": "list",
+            "cachedResultName": "Ad Pilot - Jobs"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "jobs"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+              "status": "script_ready",
+              "updated_at": "={{ new Date().toISOString() }}",
+              "script_data": "={{ JSON.stringify($json.script || null) }}",
+              "generated_copy": "={{ JSON.stringify($json.generated_copy || []) }}"
+            },
+            "matchingColumns": [
+              "job_id"
+            ],
+            "schema": [
+              {
+                "id": "job_id",
+                "displayName": "job_id",
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "status",
+                "displayName": "status",
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "updated_at",
+                "displayName": "updated_at",
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "script_data",
+                "displayName": "script_data",
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "generated_copy",
+                "displayName": "generated_copy",
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "update-script-ready",
+        "name": "Update Script Ready",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "position": [
+          2720,
+          128
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "Q7zq2LAmxWgFj6o6",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Filter on Whitelisted Emails",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Avatar Config": {
+        "main": [
+          [
+            {
+              "node": "Lookup Background",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Config": {
+        "main": [
+          [
+            {
+              "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter on Whitelisted Emails": {
+        "main": [
+          [
+            {
+              "node": "Lookup Client Base",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call '[02] Generate Script'": {
+        "main": [
+          [
+            {
+              "node": "If: Script Preview Mode",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Script Preview Mode": {
+        "main": [
+          [
+            {
+              "node": "Prepare Copy Request",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond - Generation Started",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Respond - Generation Started": {
+        "main": [
+          [
+            {
+              "node": "Call '[03] Generate Avatar'",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call '[03] Generate Avatar'": {
+        "main": [
+          [
+            {
+              "node": "Split by Ratios",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split by Ratios": {
+        "main": [
+          [
+            {
+              "node": "Call '[04] Generate Video'",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call '[04] Generate Video'": {
+        "main": [
+          [
+            {
+              "node": "If: Needs Platform Banners",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Needs Platform Banners": {
+        "main": [
+          [
+            {
+              "node": "Prepare for Banners",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Banners - Passthrough",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare for Banners": {
+        "main": [
+          [
+            {
+              "node": "Call '[08] Add Platform Banners'",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call '[08] Add Platform Banners'": {
+        "main": [
+          [
+            {
+              "node": "Merge Banner Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "No Banners - Passthrough": {
+        "main": [
+          [
+            {
+              "node": "Aggregate All Videos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Banner Results": {
+        "main": [
+          [
+            {
+              "node": "Aggregate All Videos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate All Videos": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Send Video Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Video Email": {
+        "main": [
+          [
+            {
+              "node": "Update Job Complete",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Background": {
+        "main": [
+          [
+            {
+              "node": "Lookup Wide Override Default",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Email Error": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Wide Override Default": {
+        "main": [
+          [
+            {
+              "node": "Build Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Theme Pack": {
+        "main": [
+          [
+            {
+              "node": "Add Theme Pack to Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add Theme Pack to Config": {
+        "main": [
+          [
+            {
+              "node": "Call '[02] Generate Script'",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Client Base": {
+        "main": [
+          [
+            {
+              "node": "Lookup Avatar Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Copy Request": {
+        "main": [
+          [
+            {
+              "node": "Call Copy Generator",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Copy Generator": {
+        "main": [
+          [
+            {
+              "node": "Merge Copy into Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Copy into Config": {
+        "main": [
+          [
+            {
+              "node": "Update Script Ready",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Script Ready": {
+        "main": [
+          [
+            {
+              "node": "Respond - Script Preview",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
