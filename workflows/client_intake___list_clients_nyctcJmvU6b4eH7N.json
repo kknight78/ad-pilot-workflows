@@ -1,0 +1,313 @@
+{
+  "updatedAt": "2026-01-30T01:12:09.440Z",
+  "createdAt": "2026-01-26T23:34:45.551Z",
+  "id": "nyctcJmvU6b4eH7N",
+  "name": "Client Intake - List Clients",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "client-list",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          },
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-list",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ],
+      "webhookId": "client-list"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract just the fields needed for the dropdown\nconst clients = $input.all().map(item => ({\n  clientId: item.json.clientId,\n  businessName: item.json.businessName,\n  industry: item.json.industry,\n  primaryContactName: item.json.primaryContactName,\n  timestamp: item.json.timestamp\n}));\n\n// Sort by most recent first\nclients.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));\n\nreturn { json: { clients } };"
+      },
+      "id": "format-list",
+      "name": "Format Client List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-list",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "[POSSIBLE_SECRET_REDACTED]",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Submissions",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "230ae56c-f6fb-48f4-b0ed-06618a37ef7d",
+      "name": "Read All Clients",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        496,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q7zq2LAmxWgFj6o6",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read All Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Client List": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Clients": {
+      "main": [
+        [
+          {
+            "node": "Format Client List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "2efdd56e-f66c-4cdc-bb5c-29a4de194d79",
+  "activeVersionId": "2efdd56e-f66c-4cdc-bb5c-29a4de194d79",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:45.551Z",
+      "createdAt": "2026-01-26T23:34:45.551Z",
+      "role": "workflow:owner",
+      "workflowId": "nyctcJmvU6b4eH7N",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:09.443Z",
+    "createdAt": "2026-01-30T01:12:09.443Z",
+    "versionId": "2efdd56e-f66c-4cdc-bb5c-29a4de194d79",
+    "workflowId": "nyctcJmvU6b4eH7N",
+    "nodes": [
+      {
+        "parameters": {
+          "path": "client-list",
+          "responseMode": "responseNode",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            },
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-list",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          272,
+          304
+        ],
+        "webhookId": "client-list"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract just the fields needed for the dropdown\nconst clients = $input.all().map(item => ({\n  clientId: item.json.clientId,\n  businessName: item.json.businessName,\n  industry: item.json.industry,\n  primaryContactName: item.json.primaryContactName,\n  timestamp: item.json.timestamp\n}));\n\n// Sort by most recent first\nclients.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));\n\nreturn { json: { clients } };"
+        },
+        "id": "format-list",
+        "name": "Format Client List",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          704,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-list",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          928,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "[POSSIBLE_SECRET_REDACTED]",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Submissions",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "230ae56c-f6fb-48f4-b0ed-06618a37ef7d",
+        "name": "Read All Clients",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "position": [
+          496,
+          304
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "Q7zq2LAmxWgFj6o6",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Read All Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Client List": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read All Clients": {
+        "main": [
+          [
+            {
+              "node": "Format Client List",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
