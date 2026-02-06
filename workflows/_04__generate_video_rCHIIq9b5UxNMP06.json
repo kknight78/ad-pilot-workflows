@@ -1,0 +1,1597 @@
+{
+  "updatedAt": "2026-01-30T01:14:47.522Z",
+  "createdAt": "2026-01-26T23:34:40.537Z",
+  "id": "rCHIIq9b5UxNMP06",
+  "name": "[04] Generate Video",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst vehicles = config.vehicles || [];\nconst cachedVehicles = [];\nconst needsProcessing = [];\n\n// TEMP_003 skips this, no vehicles required\nfor (const vehicle of vehicles) {\n  const vin = vehicle.vin;\n  \n  if (!vin) {\n    console.log('Vehicle missing VIN, using original');\n    cachedVehicles.push(vehicle);\n    continue;\n  }\n  \n  // Check if bg-removed image exists\n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`✓ VIN ${vin}: Found in cache`);\n      vehicle.photo_url = bgRemovedUrl;\n      cachedVehicles.push(vehicle);\n      continue;\n    }\n  } catch (error) {\n    // Not in cache\n  }\n  needsProcessing.push(vehicle);\n}\n\n// Return single item with arrays\nreturn [{\n  json: {\n    ...config,\n    vehicles: vehicles, // ← Now has updated URLs for cached vehicles\n    vehiclesToProcess: needsProcessing,\n    cachedVehicles: cachedVehicles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        -128
+      ],
+      "id": "5ee1ed6d-b685-44f9-8e1f-400d0827b3ef",
+      "name": "Process All Vehicles"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        160
+      ],
+      "id": "558fb222-cacc-4087-a229-4aa997b6777a",
+      "name": "Wait for Render",
+      "webhookId": "d49effb0-de50-4354-ac9b-59098b0af43f"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Gen core errored out."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        -64
+      ],
+      "id": "923bb706-0c19-45b1-a658-170d42b39318",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items coming into aggregate\nconst allItems = $input.all();\n\n// Get base config from Process All Vehicles\nconst baseConfig = $('Process All Vehicles').first().json;\nconst cachedVehicles = baseConfig.cachedVehicles || [];\nconst originalVehicles = baseConfig.vehicles || [];\n\nconsole.log(`Aggregate: Processing ${allItems.length} items`);\n\n// Process items from removebg/cloudinary flow\nconst processedVehicles = allItems\n  .filter(item => item.json.public_id && item.json.secure_url)\n  .map(item => {\n    const vin = item.json.public_id;\n    \n    // Find the original vehicle data to merge with\n    const originalVehicle = originalVehicles.find(v => v.vin === vin);\n    \n    if (!originalVehicle) {\n      console.warn(`⚠️ No original vehicle found for VIN ${vin}`);\n      return null;\n    }\n    return {\n      ...originalVehicle,  // ← Keep all original vehicle data\n      photo_url: item.json.secure_url  // ← Add Cloudinary URL\n    };\n  })\n  .filter(Boolean); // Remove any nulls\n\n// Create lookup maps by VIN\nconst processedByVin = {};\nprocessedVehicles.forEach(v => {\n  processedByVin[v.vin] = v;\n});\n\nconst cachedByVin = {};\ncachedVehicles.forEach(v => {\n  cachedByVin[v.vin] = v;\n});\n\n// Rebuild vehicles array in ORIGINAL order\nconst finalVehicles = originalVehicles.map(originalVehicle => {\n  const vin = originalVehicle.vin;\n  \n  // Use processed or cached version if available, otherwise original\n  return processedByVin[vin] || cachedByVin[vin] || originalVehicle;\n});\n\nconsole.log(`✓ Total: ${finalVehicles.length} vehicles in correct order`);\n\n// Clean config\nconst { vehiclesToProcess, cachedVehicles: _, ...cleanConfig } = baseConfig;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    vehicles: finalVehicles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        96
+      ],
+      "id": "6be976a7-570a-494c-b41c-72e758ede38f",
+      "name": "Aggregate Vehicles"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        96
+      ],
+      "id": "5df931bc-a974-4b08-88f6-d6006b054fc2",
+      "name": "Aggregate Configs"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Single error - format it for the email\nconst error = $input.first().json;\nconst nodeName = error.node?.name || 'Unknown node';\n\n// Handle different error formats from different APIs\nlet errorMsg = 'Unknown error';\n\n// Cloudinary error format: { \"error\": { \"message\": \"...\" } }\nif (error.error?.message) {\n  errorMsg = error.error.message;\n}\n// Creatomate error format: { \"status\": \"failed\", \"error_message\": \"...\" }\nif (error.error_message) {\n  errorMsg = error.error_message;\n}\n  \n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nelse if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  // Include code if present, otherwise just title\n  errorMsg = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n}\n// Creatomate error format: { \"error_message\": \"...\" }\nelse if (error.error_message) {\n  errorMsg = error.error_message;\n}\n// Generic message fallback\nelse if (error.message) {\n  errorMsg = error.message;\n}\n\nreturn [{\n  json: {\n    nodeName: nodeName,\n    errorMessage: errorMsg,\n    timestamp: new Date().toISOString(),\n    rawError: JSON.stringify(error, null, 2) // Include full error for debugging\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        -64
+      ],
+      "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
+      "name": "Format Node Error"
+    },
+    {
+      "parameters": {
+        "content": "# #3 Generate Video",
+        "height": 720,
+        "width": 2080,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -560,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "cfb457e3-4e30-4045-916a-2c45b78a2cbf",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        -128
+      ],
+      "id": "febf4365-88f4-4424-a9d1-ab1dafbe1e95",
+      "name": "When Executed by Orchestrate Video Creation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "78c8847d-ded2-428b-b6d2-8b59e006a8aa",
+              "leftValue": "={{ $json.vehiclesToProcess.length}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        -128
+      ],
+      "id": "d3c49706-9898-4e26-9cb1-65ebf9239b23",
+      "name": "If: Has Vehicles"
+    },
+    {
+      "parameters": {
+        "jsCode": "const vehiclesToProcess = $json.vehiclesToProcess || [];\n\nreturn vehiclesToProcess.map(vehicle => ({\n  json: vehicle\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -144
+      ],
+      "id": "cabf3be1-d71f-4d05-a6fb-bd60c6480d77",
+      "name": "Send Only Vehicles to Process"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.vin }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        736,
+        -160
+      ],
+      "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
+      "name": "API: Cloudinary, Upload",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cc7c4fae-f404-4b50-b3e0-a86a35ad1403",
+              "leftValue": "={{ $json.api_creatomate_create_video }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        96
+      ],
+      "id": "e31917be-d832-4f23-9f3a-8dfd718a570c",
+      "name": "If: Test, Skip Video Creation"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: $json.api_creatomate_create_video\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        32
+      ],
+      "id": "aa6dce6f-6e60-452b-a4aa-4a90ebd7214d",
+      "name": "Skip Video Creation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0d1a7bf-ac65-4401-bf77-dc691de54791",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        128
+      ],
+      "id": "cdc69818-5724-4f8c-ae10-d81bdabc5677",
+      "name": "If: Succeeded?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiResponse = $json;\nconst config = $('Aggregate Configs').first().json;\nconst buildTemplateOutput = $('Build Template JSON').first().json;\nconst videoUrl = apiResponse.url;\nconst videoDuration = apiResponse.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,  // Preserves ALL previous api_* keys!\n    \n    // Include _banner_config from Build Template JSON\n    _banner_config: buildTemplateOutput._banner_config,\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_creatomate_create_video: apiResponse })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        112
+      ],
+      "id": "94a3f672-71bd-4b34-a989-262f4bef3c0e",
+      "name": "Parse Video Creation Response"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.creatomate.com/v1/renders/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        736,
+        144
+      ],
+      "id": "cfbd1219-c74c-4024-9f11-0aef6b6c211b",
+      "name": "API: Creatomate, Check Status",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.creatomate }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        176
+      ],
+      "id": "3e365a4a-5fa9-4942-827f-6f51a60a38c7",
+      "name": "API: Creatomate, Create Video",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Get the VIN from context (passed through service)\nconst vin = $json.context?.vin || $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file and original context data\nreturn {\n  json: {\n    ...$json.context,\n    vin: vin\n  },\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -160
+      ],
+      "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
+      "name": "Parse Remove.bg"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Updated Build Template JSON node\n// v10: Removed text overlay support (feature disabled for now)\n\nreturn (async () => {\n\nconst config = $json;\n\n// ============================================\n// STEP 1: Determine Template Tag\n// ============================================\nconst clientId = (config.client || 'ccc').toUpperCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\n\nconst templateTag = templateId.toUpperCase().replace(/-/, '_');\nconst uniqueTag = `${clientId}_${templateTag}_${ratio}`;\n\n// ============================================\n// STEP 2: Fetch Template from Creatomate\n// ============================================\nconst apiKey = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\nconst templateList = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates?tags=${encodeURIComponent(uniqueTag)}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!templateList || templateList.length === 0) {\n  throw new Error(`No template found with tag: ${uniqueTag}`);\n}\n\nconst template = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates/${templateList[0].id}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!template.source) {\n  throw new Error(`Template ${template.id} has no source property`);\n}\n\nconst source = JSON.parse(JSON.stringify(template.source));\nconst templateWidth = source.width || 720;\nconst templateHeight = source.height || 1280;\n\nconsole.log(`📐 Template: ${templateWidth}x${templateHeight} for ${ratio}`);\n\n// ============================================\n// STEP 3: Build Swap Config\n// ============================================\n\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'the manager';\n\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  'tiktok': `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  'youtube': `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  'instagram': `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  'facebook': `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  'none': `Ask ${avatarName} for a great deal!`\n};\nconst platformText = platformTexts[basePlatform] || platformTexts['none'];\n\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\nconst hookEnd = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration || ctaSection?.end || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\nconst selectedPhotos = config.selected_photos || [];\nconst featurePhotos = selectedPhotos.slice(1, 6);\n\nfunction formatPrice(price) {\n  if (!price) return null;\n  let priceNum = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price;\n  if (isNaN(priceNum)) return price;\n  return '$' + priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 });\n}\n// ============================================\n// Background Image Configuration\n// ============================================\n\nlet bgImageUrl = null;\nlet avatarBgUrl = null;\n\n// Full-screen background (multi-car, edu, etc.)\nconst renderedUrls = config.background_rendered_urls || null;\nif (renderedUrls && renderedUrls[ratio]) {\n  bgImageUrl = renderedUrls[ratio];\n  console.log(`📐 Background ${ratio}: ${bgImageUrl}`);\n}\n\n// Avatar background for wide override (spotlight 16:9)\nif (config.avatar_background_url && ratio === '16:9') {\n  avatarBgUrl = config.avatar_background_url;\n  console.log(`📐 Avatar background (wide): ${avatarBgUrl}`);\n}\n\nconst swapConfig = {\n  hookEnd,\n  ctaStart,\n  videoDuration,\n  skipPlatformBanner,\n  platformText,\n  bgMusicSource: config.media?.music_url,\n  bgImageSource: bgImageUrl,\n  avatarBgSource: avatarBgUrl,\n  avatar1Source: config.avatar_video_url,\n  avatar1MaskSource: config.avatar_video_alpha_url || config.avatar_mask_video_url,\n  item1Source: heroVehicle.photo_url,\n  item1Title: heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}` : null,\n  item1Price: formatPrice(heroVehicle.price),\n  videoThumbnailText: config.script?.thumbnail_text || config.theme_pack?.theme_name || config.script?.hook || ''\n};\n  \n// Spotlight features\nfeaturePhotos.forEach((photo, index) => {\n  const featureNum = index + 1;\n  const segmentNum = featureNum + 1;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + segmentNum);\n  swapConfig[`item1Feature${featureNum}Source`] = photo?.photo_url;\n  swapConfig[`item1Feature${featureNum}Time`] = segmentTiming?.start;\n  swapConfig[`item1Feature${featureNum}Duration`] = segmentTiming?.duration;\n});\n\n// Multi-item vehicles\nvehicles.forEach((vehicle, index) => {\n  const itemNum = index + 1;\n  if (itemNum > 5) return;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + itemNum);\n  swapConfig[`item${itemNum}Source`] = vehicle.photo_url;\n  swapConfig[`item${itemNum}Title`] = vehicle.year && vehicle.make && vehicle.model\n    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;\n  swapConfig[`item${itemNum}Price`] = formatPrice(vehicle.price);\n  swapConfig[`item${itemNum}Mileage`] = vehicle.mileage\n    ? `${Number(vehicle.mileage).toLocaleString('en-US')} mi` : null;\n  if (isSpotlight && itemNum === 1) {\n    swapConfig[`item${itemNum}Time`] = 0;\n    swapConfig[`item${itemNum}Duration`] = videoDuration;\n  } else {\n    swapConfig[`item${itemNum}Time`] = segmentTiming?.start;\n    swapConfig[`item${itemNum}Duration`] = segmentTiming?.duration;\n  }\n  swapConfig[`item${itemNum}Visible`] = true;\n});\n\nfor (let i = vehicles.length + 1; i <= 5; i++) {\n  swapConfig[`item${i}Visible`] = false;\n}\n\n// ============================================\n// STEP 4: Apply Swaps to Source\n// ============================================\n\nlet bannerConfig = null;\n\nfunction applyScaleAnimTiming(element, cfg) {\n  if (!element.animations) return;\n  const scaleAnims = element.animations.filter(a => a.type === 'scale');\n  if (scaleAnims.length === 1 && cfg.hookEnd !== undefined) {\n    scaleAnims[0].time = cfg.hookEnd;\n  } else if (scaleAnims.length === 2) {\n    // Spotlight 16:9 scales in at start, out at hookEnd (which includes Seg1/Hero seg)\n    if (ratio === '16:9' && isSpotlight) {\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.hookEnd;\n    } else {\n      if (cfg.hookEnd !== undefined) scaleAnims[0].time = cfg.hookEnd;\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.ctaStart;\n    }\n  }\n}\n\nfunction applySwaps(element, cfg, parent = null) {\n  const name = element.name;\n\n  if (name?.match(/^avatar-(\\d+)$/i)) {\n    const n = RegExp.$1;\n    if (element.type !== \"composition\" && cfg[`avatar${n}Source`]) {\n      element.source = cfg[`avatar${n}Source`];\n    }\n    if (element.type === \"composition\") {\n      applyScaleAnimTiming(element, cfg);\n    }\n  }\n\n  if (name?.match(/^avatar-(\\d+)-mask$/)) {\n    const n = RegExp.$1;\n    if (cfg[`avatar${n}MaskSource`]) {\n      element.source = cfg[`avatar${n}MaskSource`];\n    }\n  }\n\n  if (name === 'photo' && parent === 'Item-1') {\n    if (cfg.item1Source) element.source = cfg.item1Source;\n    if (isSpotlight) applyScaleAnimTiming(element, cfg);\n  }\n  if (name === 'title' && parent === 'Item-1' && cfg.item1Title) element.text = cfg.item1Title;\n  if (name === 'price' && parent === 'Item-1' && cfg.item1Price) element.text = cfg.item1Price;\n\n  const featureMatch = name?.match(/^feature-(\\d+)$/);\n  if (featureMatch && parent === 'Item-1') {\n    const n = featureMatch[1];\n    if (cfg[`item1Feature${n}Source`]) element.source = cfg[`item1Feature${n}Source`];\n    if (cfg[`item1Feature${n}Time`] !== undefined) element.time = cfg[`item1Feature${n}Time`];\n    if (cfg[`item1Feature${n}Duration`] !== undefined) element.duration = cfg[`item1Feature${n}Duration`];\n  }\n\n  const itemMatch = name?.match(/^Item-(\\d+)$/);\n  if (itemMatch && itemMatch[1] !== '0') {\n    const n = itemMatch[1];\n    if (cfg[`item${n}Time`] !== undefined) element.time = cfg[`item${n}Time`];\n    if (cfg[`item${n}Duration`] !== undefined) element.duration = cfg[`item${n}Duration`];\n    if (cfg[`item${n}Visible`] === false) element.visible = false;\n  }\n\n  const parentItemMatch = parent?.match(/^Item-(\\d+)$/);\n  if (parentItemMatch && parentItemMatch[1] !== '0') {\n    const n = parentItemMatch[1];\n    if (name === 'photo' && cfg[`item${n}Source`]) element.source = cfg[`item${n}Source`];\n    if (name === 'title' && cfg[`item${n}Title`]) element.text = cfg[`item${n}Title`];\n    if (name === 'price' && cfg[`item${n}Price`]) element.text = cfg[`item${n}Price`];\n    if (name === 'mileage' && cfg[`item${n}Mileage`]) element.text = cfg[`item${n}Mileage`];\n  }\n\n  if (name === 'platform-banner' || name === 'platform-text') {\n    if (!bannerConfig && element.y !== undefined) {\n      bannerConfig = {\n        y: element.y,\n        font_size: element.font_size,\n        font_family: element.font_family,\n        font_weight: element.font_weight,\n        fill_color: element.fill_color\n      };\n    }\n    if (cfg.skipPlatformBanner) {\n      element.visible = false;\n    } else {\n      if (cfg.platformText) element.text = cfg.platformText;\n      if (element.animations?.[0] && cfg.videoDuration) {\n        element.animations[0].duration = cfg.videoDuration;\n      }\n    }\n  }\n\n  if (name === 'Company-Intro' || name === 'Contact-Info-intro') {\n    if (cfg.hookEnd !== undefined) element.duration = cfg.hookEnd;\n  }\n  if (name === 'Company-Outro') {\n    if (cfg.ctaStart !== undefined) element.time = cfg.ctaStart;\n  }\n\n  if (name === 'background-music' && cfg.bgMusicSource) {\n    element.source = cfg.bgMusicSource;\n  }\n\n  if (name === 'background-image') {\n    if (cfg.bgImageSource) element.source = cfg.bgImageSource;\n    if (cfg.bgConfig) {\n      element.x = cfg.bgConfig.x;\n      element.y = cfg.bgConfig.y;\n      element.width = cfg.bgConfig.width;\n      element.height = cfg.bgConfig.height;\n      element.fit = cfg.bgConfig.fit;\n    }\n  }\n\n  // Hide any text overlay elements (feature disabled)\n  if (name === 'background-headline' || name === 'text-overlay-headline' ||\n      name === 'background-subtext' || name === 'text-overlay-subtext') {\n    element.visible = false;\n  }\n\n  if (name === 'video-thumbnail' && cfg.videoThumbnailText) {\n    element.text = cfg.videoThumbnailText;\n  }\n\n  if (element.elements && Array.isArray(element.elements)) {\n    element.elements.forEach(child => applySwaps(child, cfg, name));\n  }\n}\n\nif (swapConfig.videoDuration) {\n  source.duration = swapConfig.videoDuration;\n}\n\nif (source.elements && Array.isArray(source.elements)) {\n  source.elements.forEach(element => applySwaps(element, swapConfig, null));\n}\n\nconsole.log(`✅ Done for ${ratio}`);\n\n// ============================================\n// STEP 5: Return\n// ============================================\n\nconst output = {\n  ...config,\n  creatomate: { source },\n  _template_tag: uniqueTag,\n  _swap_config: Object.fromEntries(Object.entries(swapConfig).filter(([_, v]) => v !== undefined)),\n  _banner_config: bannerConfig\n};\n\nreturn { json: JSON.parse(JSON.stringify(output)) };\n\n})();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        96
+      ],
+      "id": "unified-build-template-json",
+      "name": "Build Template JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3f2511ab-5b89-4844-973a-9b615994e7b4",
+              "leftValue": "={{$json.status}}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1072,
+        240
+      ],
+      "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
+      "name": "If: Failed?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[04] Generate Video\",\n    error: input.errorMessage || \"Unknown error\",\n    details: input.rawError || JSON.stringify(input, null, 2),\n    job_id: null,\n    to_email: \"errors@ad-pilot.ai\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        -64
+      ],
+      "id": "prep-error-email",
+      "name": "Prep: Error Email"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rFyNQNW3IQ1zLHEF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+          "cachedResultName": "[Service] Email Error Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1296,
+        -64
+      ],
+      "id": "call-email-error",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn {\n  json: {\n    image_url: input.photo_url || input.image_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vin: input.vin,\n      // Pass through other fields needed by Parse Remove.bg\n      ...input\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -144
+      ],
+      "id": "prep-remove-bg",
+      "name": "Prep: Remove BG"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RmW2on3d2zlhjj33",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/pbHuh1HdmZxbFX0M",
+          "cachedResultName": "[Service] Remove Background"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        -144
+      ],
+      "id": "call-remove-bg",
+      "name": "Call: Remove Background",
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "connections": {
+    "Process All Vehicles": {
+      "main": [
+        [
+          {
+            "node": "If: Has Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Render": {
+      "main": [
+        [
+          {
+            "node": "API: Creatomate, Check Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Vehicles": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Configs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Configs": {
+      "main": [
+        [
+          {
+            "node": "Build Template JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Node Error": {
+      "main": [
+        [
+          {
+            "node": "Prep: Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Orchestrate Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Process All Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Has Vehicles": {
+      "main": [
+        [
+          {
+            "node": "Send Only Vehicles to Process",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Configs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Only Vehicles to Process": {
+      "main": [
+        [
+          {
+            "node": "Prep: Remove BG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Cloudinary, Upload": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Test, Skip Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Skip Video Creation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: Creatomate, Create Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Parse Video Creation Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Parse Video Creation Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If: Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Video Creation Response": {
+      "main": [
+        []
+      ]
+    },
+    "API: Creatomate, Check Status": {
+      "main": [
+        [
+          {
+            "node": "If: Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Creatomate, Create Video": {
+      "main": [
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Remove.bg": {
+      "main": [
+        [
+          {
+            "node": "API: Cloudinary, Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Template JSON": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip Video Creation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Failed?": {
+      "main": [
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Error Email": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Email Error": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Remove BG": {
+      "main": [
+        [
+          {
+            "node": "Call: Remove Background",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Remove Background": {
+      "main": [
+        [
+          {
+            "node": "Parse Remove.bg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "263486bb-4b62-49f6-b493-14d6a80635a5",
+  "activeVersionId": "263486bb-4b62-49f6-b493-14d6a80635a5",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:40.537Z",
+      "createdAt": "2026-01-26T23:34:40.537Z",
+      "role": "workflow:owner",
+      "workflowId": "rCHIIq9b5UxNMP06",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:14:47.529Z",
+    "createdAt": "2026-01-30T01:14:47.529Z",
+    "versionId": "263486bb-4b62-49f6-b493-14d6a80635a5",
+    "workflowId": "rCHIIq9b5UxNMP06",
+    "nodes": [
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\nconst vehicles = config.vehicles || [];\nconst cachedVehicles = [];\nconst needsProcessing = [];\n\n// TEMP_003 skips this, no vehicles required\nfor (const vehicle of vehicles) {\n  const vin = vehicle.vin;\n  \n  if (!vin) {\n    console.log('Vehicle missing VIN, using original');\n    cachedVehicles.push(vehicle);\n    continue;\n  }\n  \n  // Check if bg-removed image exists\n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`✓ VIN ${vin}: Found in cache`);\n      vehicle.photo_url = bgRemovedUrl;\n      cachedVehicles.push(vehicle);\n      continue;\n    }\n  } catch (error) {\n    // Not in cache\n  }\n  needsProcessing.push(vehicle);\n}\n\n// Return single item with arrays\nreturn [{\n  json: {\n    ...config,\n    vehicles: vehicles, // ← Now has updated URLs for cached vehicles\n    vehiclesToProcess: needsProcessing,\n    cachedVehicles: cachedVehicles\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -224,
+          -128
+        ],
+        "id": "5ee1ed6d-b685-44f9-8e1f-400d0827b3ef",
+        "name": "Process All Vehicles"
+      },
+      {
+        "parameters": {
+          "amount": 15
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          576,
+          160
+        ],
+        "id": "558fb222-cacc-4087-a229-4aa997b6777a",
+        "name": "Wait for Render",
+        "webhookId": "d49effb0-de50-4354-ac9b-59098b0af43f"
+      },
+      {
+        "parameters": {
+          "errorMessage": "Gen core errored out."
+        },
+        "type": "n8n-nodes-base.stopAndError",
+        "typeVersion": 1,
+        "position": [
+          1424,
+          -64
+        ],
+        "id": "923bb706-0c19-45b1-a658-170d42b39318",
+        "name": "Stop and Error"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get all items coming into aggregate\nconst allItems = $input.all();\n\n// Get base config from Process All Vehicles\nconst baseConfig = $('Process All Vehicles').first().json;\nconst cachedVehicles = baseConfig.cachedVehicles || [];\nconst originalVehicles = baseConfig.vehicles || [];\n\nconsole.log(`Aggregate: Processing ${allItems.length} items`);\n\n// Process items from removebg/cloudinary flow\nconst processedVehicles = allItems\n  .filter(item => item.json.public_id && item.json.secure_url)\n  .map(item => {\n    const vin = item.json.public_id;\n    \n    // Find the original vehicle data to merge with\n    const originalVehicle = originalVehicles.find(v => v.vin === vin);\n    \n    if (!originalVehicle) {\n      console.warn(`⚠️ No original vehicle found for VIN ${vin}`);\n      return null;\n    }\n    return {\n      ...originalVehicle,  // ← Keep all original vehicle data\n      photo_url: item.json.secure_url  // ← Add Cloudinary URL\n    };\n  })\n  .filter(Boolean); // Remove any nulls\n\n// Create lookup maps by VIN\nconst processedByVin = {};\nprocessedVehicles.forEach(v => {\n  processedByVin[v.vin] = v;\n});\n\nconst cachedByVin = {};\ncachedVehicles.forEach(v => {\n  cachedByVin[v.vin] = v;\n});\n\n// Rebuild vehicles array in ORIGINAL order\nconst finalVehicles = originalVehicles.map(originalVehicle => {\n  const vin = originalVehicle.vin;\n  \n  // Use processed or cached version if available, otherwise original\n  return processedByVin[vin] || cachedByVin[vin] || originalVehicle;\n});\n\nconsole.log(`✓ Total: ${finalVehicles.length} vehicles in correct order`);\n\n// Clean config\nconst { vehiclesToProcess, cachedVehicles: _, ...cleanConfig } = baseConfig;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    vehicles: finalVehicles\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -240,
+          96
+        ],
+        "id": "6be976a7-570a-494c-b41c-72e758ede38f",
+        "name": "Aggregate Vehicles"
+      },
+      {
+        "parameters": {
+          "jsCode": "return $input.all();"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -80,
+          96
+        ],
+        "id": "5df931bc-a974-4b08-88f6-d6006b054fc2",
+        "name": "Aggregate Configs"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Single error - format it for the email\nconst error = $input.first().json;\nconst nodeName = error.node?.name || 'Unknown node';\n\n// Handle different error formats from different APIs\nlet errorMsg = 'Unknown error';\n\n// Cloudinary error format: { \"error\": { \"message\": \"...\" } }\nif (error.error?.message) {\n  errorMsg = error.error.message;\n}\n// Creatomate error format: { \"status\": \"failed\", \"error_message\": \"...\" }\nif (error.error_message) {\n  errorMsg = error.error_message;\n}\n  \n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nelse if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  // Include code if present, otherwise just title\n  errorMsg = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n}\n// Creatomate error format: { \"error_message\": \"...\" }\nelse if (error.error_message) {\n  errorMsg = error.error_message;\n}\n// Generic message fallback\nelse if (error.message) {\n  errorMsg = error.message;\n}\n\nreturn [{\n  json: {\n    nodeName: nodeName,\n    errorMessage: errorMsg,\n    timestamp: new Date().toISOString(),\n    rawError: JSON.stringify(error, null, 2) // Include full error for debugging\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          992,
+          -64
+        ],
+        "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
+        "name": "Format Node Error"
+      },
+      {
+        "parameters": {
+          "content": "# #3 Generate Video",
+          "height": 720,
+          "width": 2080,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -560,
+          -272
+        ],
+        "typeVersion": 1,
+        "id": "cfb457e3-4e30-4045-916a-2c45b78a2cbf",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -416,
+          -128
+        ],
+        "id": "febf4365-88f4-4424-a9d1-ab1dafbe1e95",
+        "name": "When Executed by Orchestrate Video Creation"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "78c8847d-ded2-428b-b6d2-8b59e006a8aa",
+                "leftValue": "={{ $json.vehiclesToProcess.length}}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -80,
+          -128
+        ],
+        "id": "d3c49706-9898-4e26-9cb1-65ebf9239b23",
+        "name": "If: Has Vehicles"
+      },
+      {
+        "parameters": {
+          "jsCode": "const vehiclesToProcess = $json.vehiclesToProcess || [];\n\nreturn vehiclesToProcess.map(vehicle => ({\n  json: vehicle\n}));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          80,
+          -144
+        ],
+        "id": "cabf3be1-d71f-4d05-a6fb-bd60c6480d77",
+        "name": "Send Only Vehicles to Process"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "parameterType": "formBinaryData",
+                "name": "file",
+                "inputDataFieldName": "data"
+              },
+              {
+                "name": "upload_preset",
+                "value": "n8n_unsigned"
+              },
+              {
+                "name": "public_id",
+                "value": "={{ $json.vin }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          736,
+          -160
+        ],
+        "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
+        "name": "API: Cloudinary, Upload",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "cc7c4fae-f404-4b50-b3e0-a86a35ad1403",
+                "leftValue": "={{ $json.api_creatomate_create_video }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          240,
+          96
+        ],
+        "id": "e31917be-d832-4f23-9f3a-8dfd718a570c",
+        "name": "If: Test, Skip Video Creation"
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: $json.api_creatomate_create_video\n}]"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          576,
+          32
+        ],
+        "id": "aa6dce6f-6e60-452b-a4aa-4a90ebd7214d",
+        "name": "Skip Video Creation"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "b0d1a7bf-ac65-4401-bf77-dc691de54791",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          928,
+          128
+        ],
+        "id": "cdc69818-5724-4f8c-ae10-d81bdabc5677",
+        "name": "If: Succeeded?"
+      },
+      {
+        "parameters": {
+          "jsCode": "const apiResponse = $json;\nconst config = $('Aggregate Configs').first().json;\nconst buildTemplateOutput = $('Build Template JSON').first().json;\nconst videoUrl = apiResponse.url;\nconst videoDuration = apiResponse.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,  // Preserves ALL previous api_* keys!\n    \n    // Include _banner_config from Build Template JSON\n    _banner_config: buildTemplateOutput._banner_config,\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_creatomate_create_video: apiResponse })\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1312,
+          112
+        ],
+        "id": "94a3f672-71bd-4b34-a989-262f4bef3c0e",
+        "name": "Parse Video Creation Response"
+      },
+      {
+        "parameters": {
+          "url": "=https://api.creatomate.com/v1/renders/{{ $json.id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          736,
+          144
+        ],
+        "id": "cfbd1219-c74c-4024-9f11-0aef6b6c211b",
+        "name": "API: Creatomate, Check Status",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.creatomate.com/v1/renders",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.creatomate }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          384,
+          176
+        ],
+        "id": "3e365a4a-5fa9-4942-827f-6f51a60a38c7",
+        "name": "API: Creatomate, Create Video",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Get the VIN from context (passed through service)\nconst vin = $json.context?.vin || $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file and original context data\nreturn {\n  json: {\n    ...$json.context,\n    vin: vin\n  },\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          576,
+          -160
+        ],
+        "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
+        "name": "Parse Remove.bg"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Updated Build Template JSON node\n// v10: Removed text overlay support (feature disabled for now)\n\nreturn (async () => {\n\nconst config = $json;\n\n// ============================================\n// STEP 1: Determine Template Tag\n// ============================================\nconst clientId = (config.client || 'ccc').toUpperCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\n\nconst templateTag = templateId.toUpperCase().replace(/-/, '_');\nconst uniqueTag = `${clientId}_${templateTag}_${ratio}`;\n\n// ============================================\n// STEP 2: Fetch Template from Creatomate\n// ============================================\nconst apiKey = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\nconst templateList = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates?tags=${encodeURIComponent(uniqueTag)}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!templateList || templateList.length === 0) {\n  throw new Error(`No template found with tag: ${uniqueTag}`);\n}\n\nconst template = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `https://api.creatomate.com/v1/templates/${templateList[0].id}`,\n  headers: { 'Authorization': `Bearer ${apiKey}` },\n  json: true\n});\n\nif (!template.source) {\n  throw new Error(`Template ${template.id} has no source property`);\n}\n\nconst source = JSON.parse(JSON.stringify(template.source));\nconst templateWidth = source.width || 720;\nconst templateHeight = source.height || 1280;\n\nconsole.log(`📐 Template: ${templateWidth}x${templateHeight} for ${ratio}`);\n\n// ============================================\n// STEP 3: Build Swap Config\n// ============================================\n\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'the manager';\n\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  'tiktok': `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  'youtube': `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  'instagram': `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  'facebook': `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  'none': `Ask ${avatarName} for a great deal!`\n};\nconst platformText = platformTexts[basePlatform] || platformTexts['none'];\n\nconst sectionTimings = config._section_timings || [];\nconst hookSection = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\nconst hookEnd = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration || ctaSection?.end || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\nconst selectedPhotos = config.selected_photos || [];\nconst featurePhotos = selectedPhotos.slice(1, 6);\n\nfunction formatPrice(price) {\n  if (!price) return null;\n  let priceNum = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price;\n  if (isNaN(priceNum)) return price;\n  return '$' + priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 });\n}\n// ============================================\n// Background Image Configuration\n// ============================================\n\nlet bgImageUrl = null;\nlet avatarBgUrl = null;\n\n// Full-screen background (multi-car, edu, etc.)\nconst renderedUrls = config.background_rendered_urls || null;\nif (renderedUrls && renderedUrls[ratio]) {\n  bgImageUrl = renderedUrls[ratio];\n  console.log(`📐 Background ${ratio}: ${bgImageUrl}`);\n}\n\n// Avatar background for wide override (spotlight 16:9)\nif (config.avatar_background_url && ratio === '16:9') {\n  avatarBgUrl = config.avatar_background_url;\n  console.log(`📐 Avatar background (wide): ${avatarBgUrl}`);\n}\n\nconst swapConfig = {\n  hookEnd,\n  ctaStart,\n  videoDuration,\n  skipPlatformBanner,\n  platformText,\n  bgMusicSource: config.media?.music_url,\n  bgImageSource: bgImageUrl,\n  avatarBgSource: avatarBgUrl,\n  avatar1Source: config.avatar_video_url,\n  avatar1MaskSource: config.avatar_video_alpha_url || config.avatar_mask_video_url,\n  item1Source: heroVehicle.photo_url,\n  item1Title: heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}` : null,\n  item1Price: formatPrice(heroVehicle.price),\n  videoThumbnailText: config.script?.thumbnail_text || config.theme_pack?.theme_name || config.script?.hook || ''\n};\n  \n// Spotlight features\nfeaturePhotos.forEach((photo, index) => {\n  const featureNum = index + 1;\n  const segmentNum = featureNum + 1;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + segmentNum);\n  swapConfig[`item1Feature${featureNum}Source`] = photo?.photo_url;\n  swapConfig[`item1Feature${featureNum}Time`] = segmentTiming?.start;\n  swapConfig[`item1Feature${featureNum}Duration`] = segmentTiming?.duration;\n});\n\n// Multi-item vehicles\nvehicles.forEach((vehicle, index) => {\n  const itemNum = index + 1;\n  if (itemNum > 5) return;\n  const segmentTiming = sectionTimings.find(t => t.name === 'segment_' + itemNum);\n  swapConfig[`item${itemNum}Source`] = vehicle.photo_url;\n  swapConfig[`item${itemNum}Title`] = vehicle.year && vehicle.make && vehicle.model\n    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;\n  swapConfig[`item${itemNum}Price`] = formatPrice(vehicle.price);\n  swapConfig[`item${itemNum}Mileage`] = vehicle.mileage\n    ? `${Number(vehicle.mileage).toLocaleString('en-US')} mi` : null;\n  if (isSpotlight && itemNum === 1) {\n    swapConfig[`item${itemNum}Time`] = 0;\n    swapConfig[`item${itemNum}Duration`] = videoDuration;\n  } else {\n    swapConfig[`item${itemNum}Time`] = segmentTiming?.start;\n    swapConfig[`item${itemNum}Duration`] = segmentTiming?.duration;\n  }\n  swapConfig[`item${itemNum}Visible`] = true;\n});\n\nfor (let i = vehicles.length + 1; i <= 5; i++) {\n  swapConfig[`item${i}Visible`] = false;\n}\n\n// ============================================\n// STEP 4: Apply Swaps to Source\n// ============================================\n\nlet bannerConfig = null;\n\nfunction applyScaleAnimTiming(element, cfg) {\n  if (!element.animations) return;\n  const scaleAnims = element.animations.filter(a => a.type === 'scale');\n  if (scaleAnims.length === 1 && cfg.hookEnd !== undefined) {\n    scaleAnims[0].time = cfg.hookEnd;\n  } else if (scaleAnims.length === 2) {\n    // Spotlight 16:9 scales in at start, out at hookEnd (which includes Seg1/Hero seg)\n    if (ratio === '16:9' && isSpotlight) {\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.hookEnd;\n    } else {\n      if (cfg.hookEnd !== undefined) scaleAnims[0].time = cfg.hookEnd;\n      if (cfg.ctaStart !== undefined) scaleAnims[1].time = cfg.ctaStart;\n    }\n  }\n}\n\nfunction applySwaps(element, cfg, parent = null) {\n  const name = element.name;\n\n  if (name?.match(/^avatar-(\\d+)$/i)) {\n    const n = RegExp.$1;\n    if (element.type !== \"composition\" && cfg[`avatar${n}Source`]) {\n      element.source = cfg[`avatar${n}Source`];\n    }\n    if (element.type === \"composition\") {\n      applyScaleAnimTiming(element, cfg);\n    }\n  }\n\n  if (name?.match(/^avatar-(\\d+)-mask$/)) {\n    const n = RegExp.$1;\n    if (cfg[`avatar${n}MaskSource`]) {\n      element.source = cfg[`avatar${n}MaskSource`];\n    }\n  }\n\n  if (name === 'photo' && parent === 'Item-1') {\n    if (cfg.item1Source) element.source = cfg.item1Source;\n    if (isSpotlight) applyScaleAnimTiming(element, cfg);\n  }\n  if (name === 'title' && parent === 'Item-1' && cfg.item1Title) element.text = cfg.item1Title;\n  if (name === 'price' && parent === 'Item-1' && cfg.item1Price) element.text = cfg.item1Price;\n\n  const featureMatch = name?.match(/^feature-(\\d+)$/);\n  if (featureMatch && parent === 'Item-1') {\n    const n = featureMatch[1];\n    if (cfg[`item1Feature${n}Source`]) element.source = cfg[`item1Feature${n}Source`];\n    if (cfg[`item1Feature${n}Time`] !== undefined) element.time = cfg[`item1Feature${n}Time`];\n    if (cfg[`item1Feature${n}Duration`] !== undefined) element.duration = cfg[`item1Feature${n}Duration`];\n  }\n\n  const itemMatch = name?.match(/^Item-(\\d+)$/);\n  if (itemMatch && itemMatch[1] !== '0') {\n    const n = itemMatch[1];\n    if (cfg[`item${n}Time`] !== undefined) element.time = cfg[`item${n}Time`];\n    if (cfg[`item${n}Duration`] !== undefined) element.duration = cfg[`item${n}Duration`];\n    if (cfg[`item${n}Visible`] === false) element.visible = false;\n  }\n\n  const parentItemMatch = parent?.match(/^Item-(\\d+)$/);\n  if (parentItemMatch && parentItemMatch[1] !== '0') {\n    const n = parentItemMatch[1];\n    if (name === 'photo' && cfg[`item${n}Source`]) element.source = cfg[`item${n}Source`];\n    if (name === 'title' && cfg[`item${n}Title`]) element.text = cfg[`item${n}Title`];\n    if (name === 'price' && cfg[`item${n}Price`]) element.text = cfg[`item${n}Price`];\n    if (name === 'mileage' && cfg[`item${n}Mileage`]) element.text = cfg[`item${n}Mileage`];\n  }\n\n  if (name === 'platform-banner' || name === 'platform-text') {\n    if (!bannerConfig && element.y !== undefined) {\n      bannerConfig = {\n        y: element.y,\n        font_size: element.font_size,\n        font_family: element.font_family,\n        font_weight: element.font_weight,\n        fill_color: element.fill_color\n      };\n    }\n    if (cfg.skipPlatformBanner) {\n      element.visible = false;\n    } else {\n      if (cfg.platformText) element.text = cfg.platformText;\n      if (element.animations?.[0] && cfg.videoDuration) {\n        element.animations[0].duration = cfg.videoDuration;\n      }\n    }\n  }\n\n  if (name === 'Company-Intro' || name === 'Contact-Info-intro') {\n    if (cfg.hookEnd !== undefined) element.duration = cfg.hookEnd;\n  }\n  if (name === 'Company-Outro') {\n    if (cfg.ctaStart !== undefined) element.time = cfg.ctaStart;\n  }\n\n  if (name === 'background-music' && cfg.bgMusicSource) {\n    element.source = cfg.bgMusicSource;\n  }\n\n  if (name === 'background-image') {\n    if (cfg.bgImageSource) element.source = cfg.bgImageSource;\n    if (cfg.bgConfig) {\n      element.x = cfg.bgConfig.x;\n      element.y = cfg.bgConfig.y;\n      element.width = cfg.bgConfig.width;\n      element.height = cfg.bgConfig.height;\n      element.fit = cfg.bgConfig.fit;\n    }\n  }\n\n  // Hide any text overlay elements (feature disabled)\n  if (name === 'background-headline' || name === 'text-overlay-headline' ||\n      name === 'background-subtext' || name === 'text-overlay-subtext') {\n    element.visible = false;\n  }\n\n  if (name === 'video-thumbnail' && cfg.videoThumbnailText) {\n    element.text = cfg.videoThumbnailText;\n  }\n\n  if (element.elements && Array.isArray(element.elements)) {\n    element.elements.forEach(child => applySwaps(child, cfg, name));\n  }\n}\n\nif (swapConfig.videoDuration) {\n  source.duration = swapConfig.videoDuration;\n}\n\nif (source.elements && Array.isArray(source.elements)) {\n  source.elements.forEach(element => applySwaps(element, swapConfig, null));\n}\n\nconsole.log(`✅ Done for ${ratio}`);\n\n// ============================================\n// STEP 5: Return\n// ============================================\n\nconst output = {\n  ...config,\n  creatomate: { source },\n  _template_tag: uniqueTag,\n  _swap_config: Object.fromEntries(Object.entries(swapConfig).filter(([_, v]) => v !== undefined)),\n  _banner_config: bannerConfig\n};\n\nreturn { json: JSON.parse(JSON.stringify(output)) };\n\n})();\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          80,
+          96
+        ],
+        "id": "unified-build-template-json",
+        "name": "Build Template JSON"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "3f2511ab-5b89-4844-973a-9b615994e7b4",
+                "leftValue": "={{$json.status}}",
+                "rightValue": "failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1072,
+          240
+        ],
+        "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
+        "name": "If: Failed?"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[04] Generate Video\",\n    error: input.errorMessage || \"Unknown error\",\n    details: input.rawError || JSON.stringify(input, null, 2),\n    job_id: null,\n    to_email: \"errors@ad-pilot.ai\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1152,
+          -64
+        ],
+        "id": "prep-error-email",
+        "name": "Prep: Error Email"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rFyNQNW3IQ1zLHEF",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+            "cachedResultName": "[Service] Email Error Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1296,
+          -64
+        ],
+        "id": "call-email-error",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn {\n  json: {\n    image_url: input.photo_url || input.image_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vin: input.vin,\n      // Pass through other fields needed by Parse Remove.bg\n      ...input\n    }\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          -144
+        ],
+        "id": "prep-remove-bg",
+        "name": "Prep: Remove BG"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "RmW2on3d2zlhjj33",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/pbHuh1HdmZxbFX0M",
+            "cachedResultName": "[Service] Remove Background"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          400,
+          -144
+        ],
+        "id": "call-remove-bg",
+        "name": "Call: Remove Background",
+        "onError": "continueErrorOutput"
+      }
+    ],
+    "connections": {
+      "Process All Vehicles": {
+        "main": [
+          [
+            {
+              "node": "If: Has Vehicles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for Render": {
+        "main": [
+          [
+            {
+              "node": "API: Creatomate, Check Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Vehicles": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Configs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Configs": {
+        "main": [
+          [
+            {
+              "node": "Build Template JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Node Error": {
+        "main": [
+          [
+            {
+              "node": "Prep: Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Executed by Orchestrate Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Process All Vehicles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Has Vehicles": {
+        "main": [
+          [
+            {
+              "node": "Send Only Vehicles to Process",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Aggregate Configs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Only Vehicles to Process": {
+        "main": [
+          [
+            {
+              "node": "Prep: Remove BG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Cloudinary, Upload": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Vehicles",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Test, Skip Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Skip Video Creation",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "API: Creatomate, Create Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Parse Video Creation Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Succeeded?": {
+        "main": [
+          [
+            {
+              "node": "Parse Video Creation Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If: Failed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Video Creation Response": {
+        "main": [
+          []
+        ]
+      },
+      "API: Creatomate, Check Status": {
+        "main": [
+          [
+            {
+              "node": "If: Succeeded?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Creatomate, Create Video": {
+        "main": [
+          [
+            {
+              "node": "Wait for Render",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Remove.bg": {
+        "main": [
+          [
+            {
+              "node": "API: Cloudinary, Upload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Template JSON": {
+        "main": [
+          [
+            {
+              "node": "If: Test, Skip Video Creation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Failed?": {
+        "main": [
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait for Render",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Error Email": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Email Error": {
+        "main": [
+          [
+            {
+              "node": "Stop and Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Remove BG": {
+        "main": [
+          [
+            {
+              "node": "Call: Remove Background",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Remove Background": {
+        "main": [
+          [
+            {
+              "node": "Parse Remove.bg",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
