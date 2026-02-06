@@ -1,0 +1,281 @@
+{
+  "updatedAt": "2026-01-30T01:12:18.905Z",
+  "createdAt": "2026-01-26T23:35:00.306Z",
+  "id": "F7A6v9hZj0SJaFeA",
+  "name": "Music List",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "music",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          },
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "id": "webhook-music",
+      "name": "Webhook",
+      "webhookId": "music-list"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  s.id as song_id,\n  s.name,\n  s.artist,\n  s.audio_preview_url,\n  s.cloudinary_url,\n  s.filters\nFROM songs s\nJOIN client_music cm ON cm.song_id = s.id\nWHERE cm.client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'\n  AND cm.active = true\nORDER BY s.name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        200,
+        200
+      ],
+      "id": "query-music",
+      "name": "Query Music",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tracks = $input.all().map(item => ({\n  song_id: item.json.song_id,\n  name: item.json.name,\n  artist: item.json.artist,\n  audio_url: item.json.audio_preview_url,\n  cloudinary_url: item.json.cloudinary_url,\n  filters: item.json.filters || [],\n  label: item.json.artist ? `${item.json.name} - ${item.json.artist}` : item.json.name\n}));\n\nreturn [{ json: { success: true, tracks } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        200
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        200
+      ],
+      "id": "respond",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Query Music",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Music": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "b8ef1679-3caf-4778-beeb-d48f19c11f22",
+  "activeVersionId": "b8ef1679-3caf-4778-beeb-d48f19c11f22",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:35:00.306Z",
+      "createdAt": "2026-01-26T23:35:00.306Z",
+      "role": "workflow:owner",
+      "workflowId": "F7A6v9hZj0SJaFeA",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:18.907Z",
+    "createdAt": "2026-01-30T01:12:18.907Z",
+    "versionId": "b8ef1679-3caf-4778-beeb-d48f19c11f22",
+    "workflowId": "F7A6v9hZj0SJaFeA",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "music",
+          "responseMode": "responseNode",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            },
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "id": "webhook-music",
+        "name": "Webhook",
+        "webhookId": "music-list"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  s.id as song_id,\n  s.name,\n  s.artist,\n  s.audio_preview_url,\n  s.cloudinary_url,\n  s.filters\nFROM songs s\nJOIN client_music cm ON cm.song_id = s.id\nWHERE cm.client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'\n  AND cm.active = true\nORDER BY s.name",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          200,
+          200
+        ],
+        "id": "query-music",
+        "name": "Query Music",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const tracks = $input.all().map(item => ({\n  song_id: item.json.song_id,\n  name: item.json.name,\n  artist: item.json.artist,\n  audio_url: item.json.audio_preview_url,\n  cloudinary_url: item.json.cloudinary_url,\n  filters: item.json.filters || [],\n  label: item.json.artist ? `${item.json.name} - ${item.json.artist}` : item.json.name\n}));\n\nreturn [{ json: { success: true, tracks } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          200
+        ],
+        "id": "format-response",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          600,
+          200
+        ],
+        "id": "respond",
+        "name": "Respond"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Query Music",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Music": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
