@@ -1,0 +1,503 @@
+{
+  "updatedAt": "2026-02-03T22:21:07.213Z",
+  "createdAt": "2026-01-26T23:34:44.106Z",
+  "id": "d7gwJvT7f9pk9O6O",
+  "name": "Generate Themed Background",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-background",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        208
+      ],
+      "id": "webhook",
+      "name": "Webhook",
+      "webhookId": "generate-background"
+    },
+    {
+      "parameters": {
+        "jsCode": "  // Get webhook body and client slug from lookup\n  const webhookData = $('Webhook').first().json;\n  const body = webhookData.body;\n  const clientSlug = $input.first().json.slug || 'unknown';\n  const theme = body.theme || 'abstract gradient';\n  const clientId = body.client_id;\n  const style = body.style || 'hybrid';\n  const clarity = body.clarity || 'balanced';\n  const headline = body.headline || '';\n  const subtext = body.subtext || '';\n\n  // Clarity instructions\n  const clarityMap = {\n    subtle: 'Include 1 faint symbolic motif related to the theme, subtly integrated into the design.',\n    balanced: 'Include 1-2 clear theme objects that are recognizable but not overwhelming.',\n    bold: 'Include 2-4 prominent, instantly recognizable theme objects.'\n  };\n  const clarityInstruction = clarityMap[clarity] || clarityMap.balanced;\n\n  // Universal safe zone - visible in all aspect ratios (9:16, 4:5, 16:9)\n  const safeZoneRules = `CRITICAL PLACEMENT - UNIVERSAL SAFE ZONE:\n  All text, focal elements, and key theme objects MUST be placed in the CENTER-RIGHT area:\n  - Horizontally: Right 50-60% of the image\n  - Vertically: Middle 35% of the image (not too high, not too low)\n  This ensures visibility when cropped to any aspect ratio (9:16, 4:5, or 16:9).\n  Do NOT place important elements near the top or bottom edges.`;\n\n  // Base composition rules (shared across styles)\n  const compositionRules = `COMPOSITION:\n  - Create a SEAMLESS, CONTINUOUS background that flows naturally across the entire image\n  - NO panels, sections, dividers, frames, or distinct left/right areas\n  - Use a GRADIENT OF COMPLEXITY: subtle/minimal on the left, more detailed toward the right\n  - The left side should have the SAME style, texture, and colors as the rest, just softer/simpler\n  - A person will be composited on the left later, so avoid placing focal elements there\n  - Think of it like a single cohesive scene, not a split layout`;\n\n  const doNotInclude = `DO NOT INCLUDE:\n  - Any text, words, letters, symbols or numbers (unless Typography style)\n  - Recognizable faces or people\n  - Logos, brand marks, or trademarked imagery\n  - Busy patterns that would compete with a speaker\n  - Any frames, boxes, panels, UI elements, or placeholder shapes\n  - Gray or colored rectangles, dividers, or solid color sections\n  - Distinct left/right split layouts or panels`;\n\n  let prompt = '';\n\n  switch (style) {\n    case 'abstract':\n      prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients, bokeh effects, flowing shapes, painterly. NOT photorealistic.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching the theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'hybrid':\n      prompt = `Create a vertical background for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients + bokeh + flowing shapes, combined with recognizable theme elements.\n  ${clarityInstruction}\n  Make theme objects large enough to recognize at a glance, with soft depth-of-field and glow accents.\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'illustration':\n      prompt = `Create a bold, clean, illustrated vertical background.\n\n  THEME: \"${theme}\"\n\n  STYLE: Modern vector/flat illustration, crisp shapes, limited color palette, soft grain.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Cluster iconic objects in the center-right safe zone - big, readable, not busy.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'photorealistic':\n      prompt = `Create a photorealistic vertical background image for a video ad.\n\n  THEME: \"${theme}\"\n\n  STYLE: Cinematic photography look, shallow depth-of-field, professional lighting.\n  ${clarityInstruction}\n  Include theme-relevant objects (large, recognizable).\n  Use generic/non-identifiable environment (no real landmarks, no readable signage).\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  ${doNotInclude}\n  - No identifiable locations, license plates, or readable signage`;\n      break;\n\n    case 'texture':\n      prompt = `Create a minimal vertical background with premium texture and subtle theme cues.\n\n  THEME: \"${theme}\"\n\n  STYLE: Material/texture focus (paper, brushed metal, linen, concrete, wood grain), soft lighting, gentle bokeh.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Place subtle theme object in the center-right safe zone.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'typography':\n      prompt = `Create a bold typographic vertical background poster for a video ad.\n\n  CRITICAL - TEXT POSITIONING:\n  A person will be standing on the LEFT side of this image later.\n  Place ALL text on the OPPOSITE side from where the person will stand.\n  The person takes up the left 40-50%, so put text in the remaining space.\n\n  TEXT LAYOUT (IMPORTANT):\n  - Keep headline COMPACT - use 2-3 lines maximum, NOT one word per line\n  - Group multiple words on each line (e.g., \"IT'S TAX\" on line 1, \"RETURN TIME!!\" on line 2)\n  - Subtext must appear DIRECTLY BELOW the headline, not separated\n  - Keep headline and subtext together as ONE text block, vertically centered\n  - Do NOT spread text across the full height of the image\n\n  HEADLINE TEXT (render exactly): \"${headline}\"\n  ${subtext ? `SUBTEXT directly below headline (render exactly): \"${subtext}\"` : ''}\n  THEME: \"${theme}\"\n\n  TEXT STYLE:\n  - Bold, condensed sans-serif font\n  - High contrast for readability\n  - Headline and subtext grouped tightly together\n\n  BACKGROUND:\n  - Seamless, continuous background across entire image\n  - Beautiful bokeh, gradients, or theme-appropriate imagery\n  - Professional color palette matching the theme\n  - NO panels, frames, dividers, or split layouts\n\n  DO NOT:\n  - Put one word per line (too tall)\n  - Separate subtext from headline\n  - Place text where a person would stand (left side)\n  - Place text near top or bottom edges`;\n      break;\n\n\n    default:\n      prompt = `Create an abstract vertical background for: \"${theme}\"`;\n  }\n\n  // Build the complete request body for Gemini\n  const requestBody = {\n    generationConfig: {\n      responseModalities: [\"IMAGE\"],\n      imageConfig: {\n        aspectRatio: \"9:16\"\n      }\n    },\n    contents: [{\n      parts: [{\n        text: prompt\n      }]\n    }]\n  };\n\n  return [{ json: { requestBody, theme, clientId, clientSlug, style, clarity } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        208
+      ],
+      "id": "build-prompt",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst theme = $('Build Prompt').first().json.theme;\nconst clientId = $('Build Prompt').first().json.clientId;\nconst clientSlug = $('Build Prompt').first().json.clientSlug;\n\nlet imageData = null;\nlet mimeType = 'image/png';\n\nif (response.candidates && response.candidates[0]) {\n  const parts = response.candidates[0].content?.parts || [];\n  for (const part of parts) {\n    if (part.inlineData) {\n      imageData = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nif (!imageData) {\n  throw new Error('No image in response: ' + JSON.stringify(response).substring(0, 500));\n}\n\nreturn [{ json: { imageData, mimeType, theme, clientId, clientSlug } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        208
+      ],
+      "id": "extract-image",
+      "name": "Extract Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file\": \"data:{{ $json.mimeType }};base64,{{ $json.imageData }}\",\n  \"upload_preset\": \"ad_pilot_backgrounds\",\n  \"folder\": \"backgrounds/{{ $json.clientSlug }}/themed\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        912,
+        208
+      ],
+      "id": "cloudinary-upload",
+      "name": "Upload to Cloudinary"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Return base64 image data - frontend will upload to Cloudinary when user saves\nconst extractData = $input.first().json;\n\nreturn [{ json: {\n  success: true,\n  theme: extractData.theme,\n  client_id: extractData.clientId,\n  client_slug: extractData.clientSlug,\n  // Return base64 data instead of Cloudinary URL\n  image_base64: extractData.imageData,\n  mime_type: extractData.mimeType\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        208
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        208
+      ],
+      "id": "respond",
+      "name": "Respond"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT slug FROM clients WHERE id = '{{ $json.body.client_id }}'",
+        "options": {}
+      },
+      "id": "lookup-client-node",
+      "name": "Lookup Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        112,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        208
+      ],
+      "id": "9414b595-03ac-4990-910c-a5ed5d0690c8",
+      "name": "Gemini Image Gen",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4ayLTz1aZXMGf1GO",
+          "name": "Google Gemini(PaLM) Api account"
+        },
+        "httpHeaderAuth": {
+          "id": "g3uUNUN8DLHbJv5q",
+          "name": "Google API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Image Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Image Gen": {
+      "main": [
+        [
+          {
+            "node": "Extract Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "1d1dafe0-ec6b-48fb-b865-0f4ef1029dd2",
+  "activeVersionId": "1d1dafe0-ec6b-48fb-b865-0f4ef1029dd2",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:44.106Z",
+      "createdAt": "2026-01-26T23:34:44.106Z",
+      "role": "workflow:owner",
+      "workflowId": "d7gwJvT7f9pk9O6O",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-03T22:21:16.256Z",
+    "createdAt": "2026-02-03T22:21:07.214Z",
+    "versionId": "1d1dafe0-ec6b-48fb-b865-0f4ef1029dd2",
+    "workflowId": "d7gwJvT7f9pk9O6O",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "generate-background",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*",
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          208
+        ],
+        "id": "webhook",
+        "name": "Webhook",
+        "webhookId": "generate-background"
+      },
+      {
+        "parameters": {
+          "jsCode": "  // Get webhook body and client slug from lookup\n  const webhookData = $('Webhook').first().json;\n  const body = webhookData.body;\n  const clientSlug = $input.first().json.slug || 'unknown';\n  const theme = body.theme || 'abstract gradient';\n  const clientId = body.client_id;\n  const style = body.style || 'hybrid';\n  const clarity = body.clarity || 'balanced';\n  const headline = body.headline || '';\n  const subtext = body.subtext || '';\n\n  // Clarity instructions\n  const clarityMap = {\n    subtle: 'Include 1 faint symbolic motif related to the theme, subtly integrated into the design.',\n    balanced: 'Include 1-2 clear theme objects that are recognizable but not overwhelming.',\n    bold: 'Include 2-4 prominent, instantly recognizable theme objects.'\n  };\n  const clarityInstruction = clarityMap[clarity] || clarityMap.balanced;\n\n  // Universal safe zone - visible in all aspect ratios (9:16, 4:5, 16:9)\n  const safeZoneRules = `CRITICAL PLACEMENT - UNIVERSAL SAFE ZONE:\n  All text, focal elements, and key theme objects MUST be placed in the CENTER-RIGHT area:\n  - Horizontally: Right 50-60% of the image\n  - Vertically: Middle 35% of the image (not too high, not too low)\n  This ensures visibility when cropped to any aspect ratio (9:16, 4:5, or 16:9).\n  Do NOT place important elements near the top or bottom edges.`;\n\n  // Base composition rules (shared across styles)\n  const compositionRules = `COMPOSITION:\n  - Create a SEAMLESS, CONTINUOUS background that flows naturally across the entire image\n  - NO panels, sections, dividers, frames, or distinct left/right areas\n  - Use a GRADIENT OF COMPLEXITY: subtle/minimal on the left, more detailed toward the right\n  - The left side should have the SAME style, texture, and colors as the rest, just softer/simpler\n  - A person will be composited on the left later, so avoid placing focal elements there\n  - Think of it like a single cohesive scene, not a split layout`;\n\n  const doNotInclude = `DO NOT INCLUDE:\n  - Any text, words, letters, symbols or numbers (unless Typography style)\n  - Recognizable faces or people\n  - Logos, brand marks, or trademarked imagery\n  - Busy patterns that would compete with a speaker\n  - Any frames, boxes, panels, UI elements, or placeholder shapes\n  - Gray or colored rectangles, dividers, or solid color sections\n  - Distinct left/right split layouts or panels`;\n\n  let prompt = '';\n\n  switch (style) {\n    case 'abstract':\n      prompt = `Create an abstract, artistic vertical background image for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients, bokeh effects, flowing shapes, painterly. NOT photorealistic.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching the theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'hybrid':\n      prompt = `Create a vertical background for a video advertisement.\n\n  THEME: \"${theme}\"\n\n  STYLE: Abstract gradients + bokeh + flowing shapes, combined with recognizable theme elements.\n  ${clarityInstruction}\n  Make theme objects large enough to recognize at a glance, with soft depth-of-field and glow accents.\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  COLORS: Professional palette matching theme.\n\n  ${doNotInclude}`;\n      break;\n\n    case 'illustration':\n      prompt = `Create a bold, clean, illustrated vertical background.\n\n  THEME: \"${theme}\"\n\n  STYLE: Modern vector/flat illustration, crisp shapes, limited color palette, soft grain.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Cluster iconic objects in the center-right safe zone - big, readable, not busy.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'photorealistic':\n      prompt = `Create a photorealistic vertical background image for a video ad.\n\n  THEME: \"${theme}\"\n\n  STYLE: Cinematic photography look, shallow depth-of-field, professional lighting.\n  ${clarityInstruction}\n  Include theme-relevant objects (large, recognizable).\n  Use generic/non-identifiable environment (no real landmarks, no readable signage).\n\n  ${safeZoneRules}\n\n  ${compositionRules}\n\n  ${doNotInclude}\n  - No identifiable locations, license plates, or readable signage`;\n      break;\n\n    case 'texture':\n      prompt = `Create a minimal vertical background with premium texture and subtle theme cues.\n\n  THEME: \"${theme}\"\n\n  STYLE: Material/texture focus (paper, brushed metal, linen, concrete, wood grain), soft lighting, gentle bokeh.\n  ${clarityInstruction}\n\n  ${safeZoneRules}\n  Place subtle theme object in the center-right safe zone.\n\n  ${compositionRules}\n\n  ${doNotInclude}`;\n      break;\n\n    case 'typography':\n      prompt = `Create a bold typographic vertical background poster for a video ad.\n\n  CRITICAL - TEXT POSITIONING:\n  A person will be standing on the LEFT side of this image later.\n  Place ALL text on the OPPOSITE side from where the person will stand.\n  The person takes up the left 40-50%, so put text in the remaining space.\n\n  TEXT LAYOUT (IMPORTANT):\n  - Keep headline COMPACT - use 2-3 lines maximum, NOT one word per line\n  - Group multiple words on each line (e.g., \"IT'S TAX\" on line 1, \"RETURN TIME!!\" on line 2)\n  - Subtext must appear DIRECTLY BELOW the headline, not separated\n  - Keep headline and subtext together as ONE text block, vertically centered\n  - Do NOT spread text across the full height of the image\n\n  HEADLINE TEXT (render exactly): \"${headline}\"\n  ${subtext ? `SUBTEXT directly below headline (render exactly): \"${subtext}\"` : ''}\n  THEME: \"${theme}\"\n\n  TEXT STYLE:\n  - Bold, condensed sans-serif font\n  - High contrast for readability\n  - Headline and subtext grouped tightly together\n\n  BACKGROUND:\n  - Seamless, continuous background across entire image\n  - Beautiful bokeh, gradients, or theme-appropriate imagery\n  - Professional color palette matching the theme\n  - NO panels, frames, dividers, or split layouts\n\n  DO NOT:\n  - Put one word per line (too tall)\n  - Separate subtext from headline\n  - Place text where a person would stand (left side)\n  - Place text near top or bottom edges`;\n      break;\n\n\n    default:\n      prompt = `Create an abstract vertical background for: \"${theme}\"`;\n  }\n\n  // Build the complete request body for Gemini\n  const requestBody = {\n    generationConfig: {\n      responseModalities: [\"IMAGE\"],\n      imageConfig: {\n        aspectRatio: \"9:16\"\n      }\n    },\n    contents: [{\n      parts: [{\n        text: prompt\n      }]\n    }]\n  };\n\n  return [{ json: { requestBody, theme, clientId, clientSlug, style, clarity } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          320,
+          208
+        ],
+        "id": "build-prompt",
+        "name": "Build Prompt"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst theme = $('Build Prompt').first().json.theme;\nconst clientId = $('Build Prompt').first().json.clientId;\nconst clientSlug = $('Build Prompt').first().json.clientSlug;\n\nlet imageData = null;\nlet mimeType = 'image/png';\n\nif (response.candidates && response.candidates[0]) {\n  const parts = response.candidates[0].content?.parts || [];\n  for (const part of parts) {\n    if (part.inlineData) {\n      imageData = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nif (!imageData) {\n  throw new Error('No image in response: ' + JSON.stringify(response).substring(0, 500));\n}\n\nreturn [{ json: { imageData, mimeType, theme, clientId, clientSlug } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          208
+        ],
+        "id": "extract-image",
+        "name": "Extract Image"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"file\": \"data:{{ $json.mimeType }};base64,{{ $json.imageData }}\",\n  \"upload_preset\": \"ad_pilot_backgrounds\",\n  \"folder\": \"backgrounds/{{ $json.clientSlug }}/themed\"\n}",
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          912,
+          208
+        ],
+        "id": "cloudinary-upload",
+        "name": "Upload to Cloudinary"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Return base64 image data - frontend will upload to Cloudinary when user saves\nconst extractData = $input.first().json;\n\nreturn [{ json: {\n  success: true,\n  theme: extractData.theme,\n  client_id: extractData.clientId,\n  client_slug: extractData.clientSlug,\n  // Return base64 data instead of Cloudinary URL\n  image_base64: extractData.imageData,\n  mime_type: extractData.mimeType\n}}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          208
+        ],
+        "id": "format-response",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1312,
+          208
+        ],
+        "id": "respond",
+        "name": "Respond"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT slug FROM clients WHERE id = '{{ $json.body.client_id }}'",
+          "options": {}
+        },
+        "id": "lookup-client-node",
+        "name": "Lookup Client",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          112,
+          208
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          512,
+          208
+        ],
+        "id": "9414b595-03ac-4990-910c-a5ed5d0690c8",
+        "name": "Gemini Image Gen",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "4ayLTz1aZXMGf1GO",
+            "name": "Google Gemini(PaLM) Api account"
+          },
+          "httpHeaderAuth": {
+            "id": "g3uUNUN8DLHbJv5q",
+            "name": "Google API"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Lookup Client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Prompt": {
+        "main": [
+          [
+            {
+              "node": "Gemini Image Gen",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Image": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Client": {
+        "main": [
+          [
+            {
+              "node": "Build Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Image Gen": {
+        "main": [
+          [
+            {
+              "node": "Extract Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": "Version 1d1dafe0",
+    "description": "",
+    "autosaved": true
+  },
+  "tags": []
+}
