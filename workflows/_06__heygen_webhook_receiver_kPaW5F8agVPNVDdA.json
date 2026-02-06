@@ -1,0 +1,1107 @@
+{
+  "updatedAt": "2026-02-04T20:33:54.626Z",
+  "createdAt": "2026-01-26T23:34:49.104Z",
+  "id": "kPaW5F8agVPNVDdA",
+  "name": "[06] HeyGen Webhook Receiver",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "heygen-webhook",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "webhook-heygen",
+      "name": "Webhook: HeyGen Events",
+      "webhookId": "heygen-webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "OPTIONS",
+        "path": "heygen-webhook",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        512
+      ],
+      "id": "webhook-heygen-options",
+      "name": "Webhook: HeyGen OPTIONS",
+      "webhookId": "heygen-webhook-options"
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        512
+      ],
+      "id": "respond-options",
+      "name": "Respond OPTIONS OK"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        240
+      ],
+      "id": "parse-webhook",
+      "name": "Parse Webhook Event"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-motion-success",
+              "leftValue": "={{ $json.event_type }}",
+              "rightValue": "photo_avatar_add_motion.success",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        240
+      ],
+      "id": "if-motion-success",
+      "name": "If: Motion Success"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.heygen.com/v2/photo_avatar/{{ $json.avatar_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "[BASE64_KEY_REDACTED]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        144
+      ],
+      "id": "get-avatar-details",
+      "name": "API: Get Avatar Details",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst avatarData = response.data || {};\nconst webhookData = $('Parse Webhook Event').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    event_type: webhookData.event_type,\n    avatar_id: avatarData.id,\n    group_id: avatarData.group_id,\n    name: avatarData.name,\n    status: avatarData.status,\n    is_motion: avatarData.is_motion,\n    image_url: avatarData.image_url,\n    motion_preview_url: avatarData.motion_preview_url,\n    default_voice_id: avatarData.default_voice_id,\n    created_at: avatarData.created_at,\n    received_at: webhookData.received_at\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        144
+      ],
+      "id": "extract-avatar-info",
+      "name": "Extract Avatar Info"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        144
+      ],
+      "id": "respond-success",
+      "name": "Respond Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Event type not handled', event_type: $json.event_type }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        400
+      ],
+      "id": "respond-unhandled",
+      "name": "Respond Unhandled"
+    },
+    {
+      "parameters": {
+        "content": "# HeyGen Webhook Receiver\n\nNow uses service workflows:\n- [Service] Send User Notification\n- [Service] Email Error Notification",
+        "height": 160,
+        "width": 280,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "sticky-note",
+      "name": "Intro Note"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE avatars\nSET preview_video_url = '{{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}',\n    preview_image_url = '{{ $(\"Extract Avatar Info\").first().json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending_review',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1120,
+        144
+      ],
+      "id": "postgres-update-avatar",
+      "name": "DB: Update Avatar Complete",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.id as person_id, p.full_name, p.email, p.phone, p.notification_preference, a.style_name\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1344,
+        -48
+      ],
+      "id": "get-person-info",
+      "name": "DB: Get Person Info",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const person = $json;\nconst avatarInfo = $(\"Extract Avatar Info\").first().json;\n\nreturn [{\n  json: {\n    person_id: person.person_id,\n    email: person.email,\n    phone: person.phone,\n    notification_pref: person.notification_preference || 'email',\n    subject: 'Your Avatar is Ready for Review',\n    message: 'Great news! Your ' + (person.style_name || 'new') + ' avatar motion has been generated and is ready for your review.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        -48
+      ],
+      "id": "prep-notification",
+      "name": "Prep: Notification"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "hqfMwxKgqE3DD8VZ",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        -48
+      ],
+      "id": "call-notification",
+      "name": "Call: Send User Notification"
+    },
+    {
+      "parameters": {
+        "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        352
+      ],
+      "id": "format-error",
+      "name": "Format Error"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rFyNQNW3IQ1zLHEF",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        352
+      ],
+      "id": "call-error-email",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM avatars WHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}' LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        300
+      ],
+      "id": "db-check-avatar-exists",
+      "name": "DB: Check Avatar Exists",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "avatar-exists",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        300
+      ],
+      "id": "if-avatar-exists",
+      "name": "If: Avatar Exists in DB"
+    },
+    {
+      "parameters": {
+        "options": {},
+        "respondWith": "json",
+        "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        400
+      ],
+      "id": "respond-not-ours",
+      "name": "Respond: Not Our Avatar"
+    }
+  ],
+  "connections": {
+    "Webhook: HeyGen Events": {
+      "main": [
+        [
+          {
+            "node": "Parse Webhook Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: HeyGen OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond OPTIONS OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Webhook Event": {
+      "main": [
+        [
+          {
+            "node": "If: Motion Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Motion Success": {
+      "main": [
+        [
+          {
+            "node": "API: Get Avatar Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unhandled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Get Avatar Details": {
+      "main": [
+        [
+          {
+            "node": "Extract Avatar Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Avatar Info": {
+      "main": [
+        [
+          {
+            "node": "DB: Check Avatar Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Update Avatar Complete": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DB: Get Person Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Get Person Info": {
+      "main": [
+        [
+          {
+            "node": "Prep: Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Notification": {
+      "main": [
+        [
+          {
+            "node": "Call: Send User Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Check Avatar Exists": {
+      "main": [
+        [
+          {
+            "node": "If: Avatar Exists in DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Avatar Exists in DB": {
+      "main": [
+        [
+          {
+            "node": "DB: Update Avatar Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Not Our Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "3e71bc06-fa1d-4d40-8772-958d1396ce62",
+  "activeVersionId": "3e71bc06-fa1d-4d40-8772-958d1396ce62",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:49.104Z",
+      "createdAt": "2026-01-26T23:34:49.104Z",
+      "role": "workflow:owner",
+      "workflowId": "kPaW5F8agVPNVDdA",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-04T20:33:54.632Z",
+    "createdAt": "2026-02-04T20:33:54.632Z",
+    "versionId": "3e71bc06-fa1d-4d40-8772-958d1396ce62",
+    "workflowId": "kPaW5F8agVPNVDdA",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "heygen-webhook",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          240
+        ],
+        "id": "webhook-heygen",
+        "name": "Webhook: HeyGen Events",
+        "webhookId": "heygen-webhook"
+      },
+      {
+        "parameters": {
+          "httpMethod": "OPTIONS",
+          "path": "heygen-webhook",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          512
+        ],
+        "id": "webhook-heygen-options",
+        "name": "Webhook: HeyGen OPTIONS",
+        "webhookId": "heygen-webhook-options"
+      },
+      {
+        "parameters": {
+          "respondWith": "noData",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          224,
+          512
+        ],
+        "id": "respond-options",
+        "name": "Respond OPTIONS OK"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\nconst eventType = body.event_type || 'unknown';\nconst eventData = body.event_data || {};\n\nreturn [{\n  json: {\n    event_type: eventType,\n    event_data: eventData,\n    avatar_id: eventData.avatar_id || null,\n    received_at: new Date().toISOString()\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          240
+        ],
+        "id": "parse-webhook",
+        "name": "Parse Webhook Event"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "check-motion-success",
+                "leftValue": "={{ $json.event_type }}",
+                "rightValue": "photo_avatar_add_motion.success",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          448,
+          240
+        ],
+        "id": "if-motion-success",
+        "name": "If: Motion Success"
+      },
+      {
+        "parameters": {
+          "url": "=https://api.heygen.com/v2/photo_avatar/{{ $json.avatar_id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-Api-Key",
+                "value": "[BASE64_KEY_REDACTED]"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          144
+        ],
+        "id": "get-avatar-details",
+        "name": "API: Get Avatar Details",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\nconst avatarData = response.data || {};\nconst webhookData = $('Parse Webhook Event').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    event_type: webhookData.event_type,\n    avatar_id: avatarData.id,\n    group_id: avatarData.group_id,\n    name: avatarData.name,\n    status: avatarData.status,\n    is_motion: avatarData.is_motion,\n    image_url: avatarData.image_url,\n    motion_preview_url: avatarData.motion_preview_url,\n    default_voice_id: avatarData.default_voice_id,\n    created_at: avatarData.created_at,\n    received_at: webhookData.received_at\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          144
+        ],
+        "id": "extract-avatar-info",
+        "name": "Extract Avatar Info"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, avatar_id: $json.avatar_id }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1344,
+          144
+        ],
+        "id": "respond-success",
+        "name": "Respond Success"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, message: 'Event type not handled', event_type: $json.event_type }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          672,
+          400
+        ],
+        "id": "respond-unhandled",
+        "name": "Respond Unhandled"
+      },
+      {
+        "parameters": {
+          "content": "# HeyGen Webhook Receiver\n\nNow uses service workflows:\n- [Service] Send User Notification\n- [Service] Email Error Notification",
+          "height": 160,
+          "width": 280,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -208,
+          48
+        ],
+        "typeVersion": 1,
+        "id": "sticky-note",
+        "name": "Intro Note"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE avatars\nSET preview_video_url = '{{ $(\"Extract Avatar Info\").first().json.motion_preview_url }}',\n    preview_image_url = '{{ $(\"Extract Avatar Info\").first().json.image_url }}',\n    motion_status = 'complete',\n    approval_status = 'pending_review',\n    updated_at = NOW()\nWHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}';",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1120,
+          144
+        ],
+        "id": "postgres-update-avatar",
+        "name": "DB: Update Avatar Complete",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT p.id as person_id, p.full_name, p.email, p.phone, p.notification_preference, a.style_name\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}'",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1344,
+          -48
+        ],
+        "id": "get-person-info",
+        "name": "DB: Get Person Info",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const person = $json;\nconst avatarInfo = $(\"Extract Avatar Info\").first().json;\n\nreturn [{\n  json: {\n    person_id: person.person_id,\n    email: person.email,\n    phone: person.phone,\n    notification_pref: person.notification_preference || 'email',\n    subject: 'Your Avatar is Ready for Review',\n    message: 'Great news! Your ' + (person.style_name || 'new') + ' avatar motion has been generated and is ready for your review.'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1568,
+          -48
+        ],
+        "id": "prep-notification",
+        "name": "Prep: Notification"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "hqfMwxKgqE3DD8VZ",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1792,
+          -48
+        ],
+        "id": "call-notification",
+        "name": "Call: Send User Notification"
+      },
+      {
+        "parameters": {
+          "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1344,
+          352
+        ],
+        "id": "format-error",
+        "name": "Format Error"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rFyNQNW3IQ1zLHEF",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1568,
+          352
+        ],
+        "id": "call-error-email",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id FROM avatars WHERE motion_avatar_id = '{{ $(\"Extract Avatar Info\").first().json.avatar_id }}' LIMIT 1",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          900,
+          300
+        ],
+        "id": "db-check-avatar-exists",
+        "name": "DB: Check Avatar Exists",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "avatar-exists",
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1100,
+          300
+        ],
+        "id": "if-avatar-exists",
+        "name": "If: Avatar Exists in DB"
+      },
+      {
+        "parameters": {
+          "options": {},
+          "respondWith": "json",
+          "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}"
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1300,
+          400
+        ],
+        "id": "respond-not-ours",
+        "name": "Respond: Not Our Avatar"
+      }
+    ],
+    "connections": {
+      "Webhook: HeyGen Events": {
+        "main": [
+          [
+            {
+              "node": "Parse Webhook Event",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: HeyGen OPTIONS": {
+        "main": [
+          [
+            {
+              "node": "Respond OPTIONS OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Webhook Event": {
+        "main": [
+          [
+            {
+              "node": "If: Motion Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Motion Success": {
+        "main": [
+          [
+            {
+              "node": "API: Get Avatar Details",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond Unhandled",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Get Avatar Details": {
+        "main": [
+          [
+            {
+              "node": "Extract Avatar Info",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Avatar Info": {
+        "main": [
+          [
+            {
+              "node": "DB: Check Avatar Exists",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Update Avatar Complete": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "DB: Get Person Info",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Get Person Info": {
+        "main": [
+          [
+            {
+              "node": "Prep: Notification",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Notification": {
+        "main": [
+          [
+            {
+              "node": "Call: Send User Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Error": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Check Avatar Exists": {
+        "main": [
+          [
+            {
+              "node": "If: Avatar Exists in DB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Avatar Exists in DB": {
+        "main": [
+          [
+            {
+              "node": "DB: Update Avatar Complete",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond: Not Our Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
