@@ -1,0 +1,341 @@
+{
+  "updatedAt": "2026-01-30T01:12:16.234Z",
+  "createdAt": "2026-01-26T23:35:00.666Z",
+  "id": "eQITTkTwF8r1ObR7",
+  "name": "[TEMP] Dedupe and Add Constraint",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dedupe-avatars",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "webhook",
+      "name": "Webhook",
+      "webhookId": "dedupe-avatars"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Find and show duplicates\nSELECT group_id, style_name, COUNT(*) as cnt\nFROM avatars\nGROUP BY group_id, style_name\nHAVING COUNT(*) > 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        240
+      ],
+      "id": "find-dupes",
+      "name": "Find Duplicates",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Delete duplicates keeping the one with motion (or most recent)\nDELETE FROM avatars a\nUSING avatars b\nWHERE a.group_id = b.group_id \n  AND a.style_name = b.style_name\n  AND a.id > b.id\n  AND (a.motion_avatar_id IS NULL OR b.motion_avatar_id IS NOT NULL);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        440,
+        240
+      ],
+      "id": "delete-dupes",
+      "name": "Delete Duplicates",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Check if constraint already exists, if not add it\nDO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_constraint WHERE conname = 'unique_style_per_group'\n  ) THEN\n    ALTER TABLE avatars ADD CONSTRAINT unique_style_per_group UNIQUE (group_id, style_name);\n  END IF;\nEND $$;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        660,
+        240
+      ],
+      "id": "add-constraint",
+      "name": "Add Constraint",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as total_avatars FROM avatars;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        880,
+        240
+      ],
+      "id": "count",
+      "name": "Count Total",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Find Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Delete Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Add Constraint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Constraint": {
+      "main": [
+        [
+          {
+            "node": "Count Total",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "5e61e21e-2dee-4844-8003-242c5818331d",
+  "activeVersionId": "5e61e21e-2dee-4844-8003-242c5818331d",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:35:00.666Z",
+      "createdAt": "2026-01-26T23:35:00.666Z",
+      "role": "workflow:owner",
+      "workflowId": "eQITTkTwF8r1ObR7",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:16.237Z",
+    "createdAt": "2026-01-30T01:12:16.237Z",
+    "versionId": "5e61e21e-2dee-4844-8003-242c5818331d",
+    "workflowId": "eQITTkTwF8r1ObR7",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "dedupe-avatars",
+          "responseMode": "lastNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          240
+        ],
+        "id": "webhook",
+        "name": "Webhook",
+        "webhookId": "dedupe-avatars"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "-- Find and show duplicates\nSELECT group_id, style_name, COUNT(*) as cnt\nFROM avatars\nGROUP BY group_id, style_name\nHAVING COUNT(*) > 1;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          220,
+          240
+        ],
+        "id": "find-dupes",
+        "name": "Find Duplicates",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "-- Delete duplicates keeping the one with motion (or most recent)\nDELETE FROM avatars a\nUSING avatars b\nWHERE a.group_id = b.group_id \n  AND a.style_name = b.style_name\n  AND a.id > b.id\n  AND (a.motion_avatar_id IS NULL OR b.motion_avatar_id IS NOT NULL);",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          440,
+          240
+        ],
+        "id": "delete-dupes",
+        "name": "Delete Duplicates",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "-- Check if constraint already exists, if not add it\nDO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1 FROM pg_constraint WHERE conname = 'unique_style_per_group'\n  ) THEN\n    ALTER TABLE avatars ADD CONSTRAINT unique_style_per_group UNIQUE (group_id, style_name);\n  END IF;\nEND $$;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          660,
+          240
+        ],
+        "id": "add-constraint",
+        "name": "Add Constraint",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT COUNT(*) as total_avatars FROM avatars;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          880,
+          240
+        ],
+        "id": "count",
+        "name": "Count Total",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Find Duplicates",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Duplicates": {
+        "main": [
+          [
+            {
+              "node": "Delete Duplicates",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete Duplicates": {
+        "main": [
+          [
+            {
+              "node": "Add Constraint",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add Constraint": {
+        "main": [
+          [
+            {
+              "node": "Count Total",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
