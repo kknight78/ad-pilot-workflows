@@ -1,0 +1,1535 @@
+{
+  "updatedAt": "2026-01-30T01:12:10.167Z",
+  "createdAt": "2026-01-26T23:34:58.522Z",
+  "id": "KFxZ3AYn1gEVbSy9",
+  "name": "Voice Clone API",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice/clone",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-clone",
+      "name": "Webhook - Create Voice Clone",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        304
+      ],
+      "webhookId": "voice-clone-create"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice/preview",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-preview",
+      "name": "Webhook - Generate Preview",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        944
+      ],
+      "webhookId": "voice-preview-generate"
+    },
+    {
+      "parameters": {
+        "url": "https://api.elevenlabs.io/v1/voices",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-get-voices",
+      "name": "ElevenLabs - Get All Voices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const webhookItem = $('Webhook - Create Voice Clone').first();\nconst voiceName = webhookItem.json.body?.name || 'Voice Clone';\nconst voices = $json.voices || [];\nconst existingVoice = voices.find(v => v.name === voiceName);\nreturn {\n  json: {\n    voiceName: voiceName,\n    existingVoiceId: existingVoice?.voice_id || null,\n    hasExisting: !!existingVoice,\n    originalBody: webhookItem.json.body\n  },\n  binary: webhookItem.binary\n};"
+      },
+      "id": "code-find-existing",
+      "name": "Find Existing Voice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-has-existing",
+              "leftValue": "={{ $json.hasExisting }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-existing",
+      "name": "Has Existing Voice?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        640,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.elevenlabs.io/v1/voices/{{ $json.existingVoiceId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-delete-voice",
+      "name": "ElevenLabs - Delete Old Voice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        864,
+        208
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const ifNodeItem = $('Has Existing Voice?').first();\nreturn { json: { voiceName: ifNodeItem.json.voiceName, readyToCreate: true }, binary: ifNodeItem.binary };"
+      },
+      "id": "code-prep-after-delete",
+      "name": "Prep After Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/voices/add",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.voiceName }}"
+            },
+            {
+              "name": "remove_background_noise",
+              "value": "true"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "files"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "http-create-clone",
+      "name": "ElevenLabs - Create Voice Clone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1536,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-clone-success",
+              "leftValue": "={{ $json.voice_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-clone-success",
+      "name": "IF Clone Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, voice_id: $json.voice_id, requires_verification: $json.requires_verification || false }) }}",
+        "options": {}
+      },
+      "id": "respond-clone-success",
+      "name": "Response - Clone Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1984,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.detail?.message || $json.message || 'Voice clone creation failed' }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "respond-clone-error",
+      "name": "Response - Clone Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1984,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const body = $json.body || {};\nconst voiceSettings = body.voice_settings || {};\nconst modelId = body.model_id || 'eleven_multilingual_v2';\nconst ttsBody = {\n  text: body.text,\n  model_id: modelId,\n  voice_settings: {\n    stability: voiceSettings.stability ?? 0.5,\n    similarity_boost: voiceSettings.similarity_boost ?? 0.75,\n    style: voiceSettings.style ?? 0.0,\n    use_speaker_boost: voiceSettings.use_speaker_boost ?? true\n  }\n};\nreturn { json: { voice_id: body.voice_id, ttsBody: ttsBody } };"
+      },
+      "id": "code-prep-tts",
+      "name": "Prep TTS Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.ttsBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "http-generate-preview",
+      "name": "ElevenLabs - Text to Speech",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        944
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-preview-success",
+              "leftValue": "={{ $binary.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-preview-success",
+      "name": "IF Preview Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        640,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "audio/mpeg"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-preview-success",
+      "name": "Response - Preview Audio",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.message || 'Preview generation failed' }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "respond-preview-error",
+      "name": "Response - Preview Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const ifNodeItem = $('Has Existing Voice?').first();\nreturn { json: { voiceName: ifNodeItem.json.voiceName, readyToCreate: true }, binary: ifNodeItem.binary };"
+      },
+      "id": "code-prep-no-delete",
+      "name": "Prep No Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        400
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "merge-paths",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1312,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice/delete",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-delete-voice",
+      "name": "Webhook - Delete Voice",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        1264
+      ],
+      "webhookId": "voice-delete"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.elevenlabs.io/v1/voices/{{ $json.body.voice_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-delete-elevenlabs",
+      "name": "Delete ElevenLabs Voice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        1264
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, deleted: true }) }}",
+        "options": {}
+      },
+      "id": "respond-delete-success",
+      "name": "Response - Delete Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "path": "voice/list",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-list-voices",
+      "name": "Webhook - List Voices",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        624
+      ],
+      "webhookId": "aae32b33-d957-48ac-b401-49c0001db7d5"
+    },
+    {
+      "parameters": {
+        "url": "https://api.elevenlabs.io/v1/voices",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-list-voices",
+      "name": "ElevenLabs - List Voices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        624
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, voices: $json.voices.map(v => ({ voice_id: v.voice_id, name: v.name })) }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "response-list-voices",
+      "name": "Response - List Voices",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        624
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Create Voice Clone": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - Get All Voices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Generate Preview": {
+      "main": [
+        [
+          {
+            "node": "Prep TTS Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - Get All Voices": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Voice": {
+      "main": [
+        [
+          {
+            "node": "Has Existing Voice?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Existing Voice?": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - Delete Old Voice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep No Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - Delete Old Voice": {
+      "main": [
+        [
+          {
+            "node": "Prep After Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep After Delete": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep No Delete": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - Create Voice Clone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - Create Voice Clone": {
+      "main": [
+        [
+          {
+            "node": "IF Clone Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Clone Success": {
+      "main": [
+        [
+          {
+            "node": "Response - Clone Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response - Clone Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep TTS Request": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - Text to Speech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - Text to Speech": {
+      "main": [
+        [
+          {
+            "node": "IF Preview Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Preview Success": {
+      "main": [
+        [
+          {
+            "node": "Response - Preview Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response - Preview Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Delete Voice": {
+      "main": [
+        [
+          {
+            "node": "Delete ElevenLabs Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete ElevenLabs Voice": {
+      "main": [
+        [
+          {
+            "node": "Response - Delete Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - List Voices": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - List Voices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - List Voices": {
+      "main": [
+        [
+          {
+            "node": "Response - List Voices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "45cc0b17-8506-4ef0-a648-bd706370cd73",
+  "activeVersionId": "45cc0b17-8506-4ef0-a648-bd706370cd73",
+  "triggerCount": 4,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:58.522Z",
+      "createdAt": "2026-01-26T23:34:58.522Z",
+      "role": "workflow:owner",
+      "workflowId": "KFxZ3AYn1gEVbSy9",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:10.171Z",
+    "createdAt": "2026-01-30T01:12:10.171Z",
+    "versionId": "45cc0b17-8506-4ef0-a648-bd706370cd73",
+    "workflowId": "KFxZ3AYn1gEVbSy9",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "voice/clone",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-clone",
+        "name": "Webhook - Create Voice Clone",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -32,
+          304
+        ],
+        "webhookId": "voice-clone-create"
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "voice/preview",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-preview",
+        "name": "Webhook - Generate Preview",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -32,
+          944
+        ],
+        "webhookId": "voice-preview-generate"
+      },
+      {
+        "parameters": {
+          "url": "https://api.elevenlabs.io/v1/voices",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "http-get-voices",
+        "name": "ElevenLabs - Get All Voices",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          192,
+          304
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const webhookItem = $('Webhook - Create Voice Clone').first();\nconst voiceName = webhookItem.json.body?.name || 'Voice Clone';\nconst voices = $json.voices || [];\nconst existingVoice = voices.find(v => v.name === voiceName);\nreturn {\n  json: {\n    voiceName: voiceName,\n    existingVoiceId: existingVoice?.voice_id || null,\n    hasExisting: !!existingVoice,\n    originalBody: webhookItem.json.body\n  },\n  binary: webhookItem.binary\n};"
+        },
+        "id": "code-find-existing",
+        "name": "Find Existing Voice",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          416,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "condition-has-existing",
+                "leftValue": "={{ $json.hasExisting }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-has-existing",
+        "name": "Has Existing Voice?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          640,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "DELETE",
+          "url": "=https://api.elevenlabs.io/v1/voices/{{ $json.existingVoiceId }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "http-delete-voice",
+        "name": "ElevenLabs - Delete Old Voice",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          864,
+          208
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const ifNodeItem = $('Has Existing Voice?').first();\nreturn { json: { voiceName: ifNodeItem.json.voiceName, readyToCreate: true }, binary: ifNodeItem.binary };"
+        },
+        "id": "code-prep-after-delete",
+        "name": "Prep After Delete",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1088,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.elevenlabs.io/v1/voices/add",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "name",
+                "value": "={{ $json.voiceName }}"
+              },
+              {
+                "name": "remove_background_noise",
+                "value": "true"
+              },
+              {
+                "parameterType": "formBinaryData",
+                "name": "files",
+                "inputDataFieldName": "files"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "id": "http-create-clone",
+        "name": "ElevenLabs - Create Voice Clone",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1536,
+          304
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "condition-clone-success",
+                "leftValue": "={{ $json.voice_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-clone-success",
+        "name": "IF Clone Success",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1760,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, voice_id: $json.voice_id, requires_verification: $json.requires_verification || false }) }}",
+          "options": {}
+        },
+        "id": "respond-clone-success",
+        "name": "Response - Clone Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1984,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: false, error: $json.detail?.message || $json.message || 'Voice clone creation failed' }) }}",
+          "options": {
+            "responseCode": 400
+          }
+        },
+        "id": "respond-clone-error",
+        "name": "Response - Clone Error",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1984,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const body = $json.body || {};\nconst voiceSettings = body.voice_settings || {};\nconst modelId = body.model_id || 'eleven_multilingual_v2';\nconst ttsBody = {\n  text: body.text,\n  model_id: modelId,\n  voice_settings: {\n    stability: voiceSettings.stability ?? 0.5,\n    similarity_boost: voiceSettings.similarity_boost ?? 0.75,\n    style: voiceSettings.style ?? 0.0,\n    use_speaker_boost: voiceSettings.use_speaker_boost ?? true\n  }\n};\nreturn { json: { voice_id: body.voice_id, ttsBody: ttsBody } };"
+        },
+        "id": "code-prep-tts",
+        "name": "Prep TTS Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          192,
+          944
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.ttsBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            },
+            "timeout": 30000
+          }
+        },
+        "id": "http-generate-preview",
+        "name": "ElevenLabs - Text to Speech",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          416,
+          944
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "condition-preview-success",
+                "leftValue": "={{ $binary.data }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "object",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-preview-success",
+        "name": "IF Preview Success",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          640,
+          944
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "binary",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "audio/mpeg"
+                },
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-preview-success",
+        "name": "Response - Preview Audio",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          864,
+          848
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: false, error: $json.message || 'Preview generation failed' }) }}",
+          "options": {
+            "responseCode": 400
+          }
+        },
+        "id": "respond-preview-error",
+        "name": "Response - Preview Error",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          864,
+          1040
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const ifNodeItem = $('Has Existing Voice?').first();\nreturn { json: { voiceName: ifNodeItem.json.voiceName, readyToCreate: true }, binary: ifNodeItem.binary };"
+        },
+        "id": "code-prep-no-delete",
+        "name": "Prep No Delete",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1088,
+          400
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "merge-paths",
+        "name": "Merge Paths",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          1312,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "voice/delete",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-delete-voice",
+        "name": "Webhook - Delete Voice",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -32,
+          1264
+        ],
+        "webhookId": "voice-delete"
+      },
+      {
+        "parameters": {
+          "method": "DELETE",
+          "url": "=https://api.elevenlabs.io/v1/voices/{{ $json.body.voice_id }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "http-delete-elevenlabs",
+        "name": "Delete ElevenLabs Voice",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          192,
+          1264
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, deleted: true }) }}",
+          "options": {}
+        },
+        "id": "respond-delete-success",
+        "name": "Response - Delete Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          416,
+          1264
+        ]
+      },
+      {
+        "parameters": {
+          "path": "voice/list",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-list-voices",
+        "name": "Webhook - List Voices",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -32,
+          624
+        ],
+        "webhookId": "aae32b33-d957-48ac-b401-49c0001db7d5"
+      },
+      {
+        "parameters": {
+          "url": "https://api.elevenlabs.io/v1/voices",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "http-list-voices",
+        "name": "ElevenLabs - List Voices",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          192,
+          624
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, voices: $json.voices.map(v => ({ voice_id: v.voice_id, name: v.name })) }) }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "response-list-voices",
+        "name": "Response - List Voices",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          416,
+          624
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook - Create Voice Clone": {
+        "main": [
+          [
+            {
+              "node": "ElevenLabs - Get All Voices",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook - Generate Preview": {
+        "main": [
+          [
+            {
+              "node": "Prep TTS Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ElevenLabs - Get All Voices": {
+        "main": [
+          [
+            {
+              "node": "Find Existing Voice",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Existing Voice": {
+        "main": [
+          [
+            {
+              "node": "Has Existing Voice?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Existing Voice?": {
+        "main": [
+          [
+            {
+              "node": "ElevenLabs - Delete Old Voice",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Prep No Delete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ElevenLabs - Delete Old Voice": {
+        "main": [
+          [
+            {
+              "node": "Prep After Delete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep After Delete": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep No Delete": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge Paths": {
+        "main": [
+          [
+            {
+              "node": "ElevenLabs - Create Voice Clone",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ElevenLabs - Create Voice Clone": {
+        "main": [
+          [
+            {
+              "node": "IF Clone Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Clone Success": {
+        "main": [
+          [
+            {
+              "node": "Response - Clone Success",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Response - Clone Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep TTS Request": {
+        "main": [
+          [
+            {
+              "node": "ElevenLabs - Text to Speech",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ElevenLabs - Text to Speech": {
+        "main": [
+          [
+            {
+              "node": "IF Preview Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Preview Success": {
+        "main": [
+          [
+            {
+              "node": "Response - Preview Audio",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Response - Preview Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook - Delete Voice": {
+        "main": [
+          [
+            {
+              "node": "Delete ElevenLabs Voice",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete ElevenLabs Voice": {
+        "main": [
+          [
+            {
+              "node": "Response - Delete Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook - List Voices": {
+        "main": [
+          [
+            {
+              "node": "ElevenLabs - List Voices",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ElevenLabs - List Voices": {
+        "main": [
+          [
+            {
+              "node": "Response - List Voices",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
