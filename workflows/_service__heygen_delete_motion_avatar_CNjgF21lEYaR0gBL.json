@@ -1,0 +1,137 @@
+{
+  "updatedAt": "2026-01-26T23:34:59.958Z",
+  "createdAt": "2026-01-26T23:34:59.958Z",
+  "id": "CNjgF21lEYaR0gBL",
+  "name": "[Service] HeyGen Delete Motion Avatar",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger",
+      "name": "When Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\nif (!input.motion_avatar_id) {\n  throw new Error('motion_avatar_id is required');\n}\n\nreturn [{\n  json: {\n    motion_avatar_id: input.motion_avatar_id\n  }\n}];"
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.heygen.com/v2/talking_photo/{{ $json.motion_avatar_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "delete-avatar",
+      "name": "API: HeyGen Delete Motion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vHwnmobM8C8U7vIZ",
+          "name": "HeyGen"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst input = $('Validate Input').item.json;\n\n// HeyGen returns empty response on success\nconst success = response.error === undefined;\n\nreturn [{\n  json: {\n    success: success,\n    motion_avatar_id: input.motion_avatar_id,\n    error: response.error || null\n  }\n}];"
+      },
+      "id": "return-result",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When Called by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen Delete Motion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HeyGen Delete Motion": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "944ee656-0f44-4098-b73c-7f42a272cc75",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:59.958Z",
+      "createdAt": "2026-01-26T23:34:59.958Z",
+      "role": "workflow:owner",
+      "workflowId": "CNjgF21lEYaR0gBL",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
