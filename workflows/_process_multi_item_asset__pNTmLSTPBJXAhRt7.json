@@ -1,0 +1,1307 @@
+{
+  "updatedAt": "2026-01-31T04:07:37.024Z",
+  "createdAt": "2026-01-26T23:34:41.120Z",
+  "id": "pNTmLSTPBJXAhRt7",
+  "name": "[Process Multi-Item Asset]",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-multi-item-asset",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "process-multi-item"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'::uuid",
+        "options": {}
+      },
+      "id": "fetch-asset-001",
+      "name": "Fetch Asset + Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const asset = $input.first().json;\n\n// Parse inventory_items JSON if it's a string\nconst inventoryItems = typeof asset.inventory_items === 'string' \n  ? JSON.parse(asset.inventory_items) \n  : asset.inventory_items;\n\nif (!inventoryItems || inventoryItems.length === 0) {\n  throw new Error('No inventory items found on asset');\n}\n\n// Extract item IDs for the query\nconst itemIds = inventoryItems.map(item => item.id);\n\nconsole.log(`Processing ${itemIds.length} items:`, itemIds);\n\nreturn [{\n  json: {\n    asset,\n    inventoryItems,\n    itemIds\n  }\n}];"
+      },
+      "id": "extract-items-001",
+      "name": "Extract Item IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  v.*,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id AND i.is_primary = true LIMIT 1) as primary_image_url,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id ORDER BY sort_order LIMIT 1) as first_image_url\nFROM inventory_vehicles v\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+        "options": {}
+      },
+      "id": "fetch-vehicles-001",
+      "name": "Fetch Vehicle Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Extract Item IDs').first().json;\nconst asset = input.asset;\nconst inventoryItems = input.inventoryItems;\nconst vehicles = $input.all().map(item => item.json);\n\n// Helper: Calculate mileage category\nfunction calculateMileageCategory(year, mileage) {\n  const currentYear = new Date().getFullYear();\n  const age = currentYear - year;\n  const avgMilesPerYear = 12000;\n  const expectedMiles = age * avgMilesPerYear;\n  \n  if (expectedMiles === 0) return 'new';\n  \n  const ratio = mileage / expectedMiles;\n  \n  if (ratio < 0.7) return 'low_for_age';\n  if (ratio > 1.3) return 'high_for_age';\n  return 'average';\n}\n\n// Helper: Summarize equipment into categories\nfunction summarizeEquipment(features) {\n  if (!features || !features[0]) return {};\n  \n  const featureList = typeof features[0] === 'string' \n    ? features[0].split('|').map(f => f.trim())\n    : features;\n  \n  const categories = {\n    powertrain: [],\n    comfort: [],\n    tech: [],\n    safety: [],\n    convenience: []\n  };\n  \n  featureList.forEach(f => {\n    const fLower = f.toLowerCase();\n    if (/v\\d|engine|4wd|awd|fwd|hybrid|turbo|ecoboost/i.test(f)) {\n      categories.powertrain.push(f);\n    } else if (/leather|heated|cooled|seat|sunroof|moonroof/i.test(f)) {\n      categories.comfort.push(f);\n    } else if (/nav|bluetooth|radio|sound|infotainment|carplay|android/i.test(f)) {\n      categories.tech.push(f);\n    } else if (/abs|air bag|safety|blind|lane|backup|camera/i.test(f)) {\n      categories.safety.push(f);\n    } else if (/remote|keyless|power window|power door|cruise/i.test(f)) {\n      categories.convenience.push(f);\n    }\n  });\n  \n  return categories;\n}\n\n// Helper: Pick highlight features\nfunction pickHighlights(features, count = 5) {\n  if (!features || !features[0]) return [];\n  \n  const priority = [\n    'leather', 'navigation', 'sunroof', 'moonroof', 'awd', '4wd', 'v8', 'v6',\n    'hybrid', 'heated seats', 'remote start', 'backup camera', 'camera',\n    'bose', 'premium sound', 'carplay', 'android auto', 'bluetooth',\n    'blind spot', 'lane', 'adaptive cruise'\n  ];\n  \n  const featureList = typeof features[0] === 'string'\n    ? features[0].split('|').map(f => f.trim())\n    : features;\n  \n  const highlights = [];\n  \n  for (const p of priority) {\n    if (highlights.length >= count) break;\n    const match = featureList.find(f => f.toLowerCase().includes(p));\n    if (match && !highlights.includes(match)) {\n      highlights.push(match);\n    }\n  }\n  \n  return highlights;\n}\n\n// Process each vehicle\nconst processedItems = vehicles.map(vehicle => {\n  // Find sort_order from inventory_items\n  const inventoryItem = inventoryItems.find(i => i.id === vehicle.item_id);\n  const sortOrder = inventoryItem?.sort_order ?? 0;\n  \n  return {\n    item_id: vehicle.item_id,\n    vin: vehicle.vin,\n    year: vehicle.year,\n    make: vehicle.make,\n    model: vehicle.model,\n    trim: vehicle.trim,\n    body_style: vehicle.body_style,\n    \n    // From inventory\n    days_on_lot: vehicle.days_on_lot || 0,\n    mileage: vehicle.mileage || 0,\n    price: vehicle.price,\n    \n    // PROCESSED: mileage_category\n    mileage_category: calculateMileageCategory(vehicle.year, vehicle.mileage || 0),\n    \n    // PROCESSED: equipment\n    equipment_summary: summarizeEquipment(vehicle.features),\n    equipment_highlights: pickHighlights(vehicle.features, 5),\n    \n    // Photo URL - will be updated after BG removal check\n    photo_url: vehicle.primary_image_url || vehicle.first_image_url || null,\n    original_photo_url: vehicle.primary_image_url || vehicle.first_image_url || null,\n    \n    // Sort order\n    sort_order: sortOrder\n  };\n});\n\n// Sort by sort_order\nprocessedItems.sort((a, b) => a.sort_order - b.sort_order);\n\nconsole.log('Processed', processedItems.length, 'vehicles');\nprocessedItems.forEach((item, i) => {\n  console.log(`  ${i + 1}. ${item.year} ${item.make} ${item.model} - ${item.mileage_category}, ${item.equipment_highlights.length} highlights`);\n});\n\nreturn [{\n  json: {\n    asset,\n    processedItems\n  }\n}];"
+      },
+      "id": "process-vehicles-001",
+      "name": "Process Vehicles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { asset, processedItems } = $input.first().json;\n\nconsole.log('🔍 Checking BG removal status for', processedItems.length, 'vehicles...');\n\n// Check Cloudinary for each vehicle's bg-removed image\nconst checkedItems = await Promise.all(processedItems.map(async (item) => {\n  if (!item.vin || !item.photo_url) {\n    console.log(`  ⚠️ ${item.item_id}: Skipping - no VIN or photo`);\n    return { ...item, needs_bg_removal: false, bg_check_skipped: true };\n  }\n  \n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${item.vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`  ✅ ${item.vin}: BG-removed exists in Cloudinary`);\n      return { \n        ...item, \n        photo_url: bgRemovedUrl,\n        bg_removed_url: bgRemovedUrl,\n        needs_bg_removal: false,\n        bg_already_exists: true\n      };\n    }\n  } catch (e) {\n    // 404 or error means it doesn't exist\n  }\n  \n  console.log(`  🔄 ${item.vin}: Needs BG removal`);\n  return { \n    ...item, \n    needs_bg_removal: true,\n    bg_already_exists: false\n  };\n}));\n\n// Count how many need processing\nconst needsProcessing = checkedItems.filter(i => i.needs_bg_removal);\nconst alreadyDone = checkedItems.filter(i => !i.needs_bg_removal && !i.bg_check_skipped);\n\nconsole.log(`\\n📊 Summary: ${alreadyDone.length} already have BG removed, ${needsProcessing.length} need processing`);\n\nreturn [{\n  json: {\n    asset,\n    processedItems: checkedItems,\n    needsBgRemovalCount: needsProcessing.length\n  }\n}];"
+      },
+      "id": "check-bg-status-001",
+      "name": "Check BG Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bg-check-001",
+              "leftValue": "={{ $json.needsBgRemovalCount }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-needs-bg-001",
+      "name": "If: Any Need BG Removal",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through items that need BG removal one at a time\nconst { asset, processedItems } = $input.first().json;\n\nconst itemsNeedingBg = processedItems.filter(i => i.needs_bg_removal);\nconst itemsNotNeedingBg = processedItems.filter(i => !i.needs_bg_removal);\n\nconsole.log(`Splitting: ${itemsNeedingBg.length} items need BG removal`);\n\n// Return each item that needs BG removal as a separate output\n// Also pass along the items that don't need it for later merge\nreturn itemsNeedingBg.map((item, index) => ({\n  json: {\n    item,\n    itemIndex: index,\n    totalItems: itemsNeedingBg.length,\n    asset,\n    itemsNotNeedingBg: index === 0 ? itemsNotNeedingBg : [] // Only pass on first iteration\n  }\n}));"
+      },
+      "id": "split-items-001",
+      "name": "Split Items for BG",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare input for Remove Background service\nconst { item } = $json;\n\nconsole.log(`🔄 Preparing BG removal for ${item.vin}...`);\n\nreturn [{\n  json: {\n    image_url: item.original_photo_url || item.photo_url,\n    size: 'auto',\n    format: 'png',\n    crop: true,\n    crop_margin: '10%',\n    context: {\n      vin: item.vin,\n      item_id: item.item_id\n    }\n  }\n}];"
+      },
+      "id": "prep-bg-removal-001",
+      "name": "Prep for BG Removal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RmW2on3d2zlhjj33",
+          "mode": "list"
+        }
+      },
+      "id": "call-remove-bg-001",
+      "name": "Call Remove Background",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        2220,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rename binary file to VIN.png for Cloudinary upload\nconst items = $input.all();\n\nfor (const item of items) {\n  const vin = item.json.context?.vin || 'unknown';\n  \n  if (item.binary && item.binary.data) {\n    item.binary.data.fileName = `${vin}.png`;\n    item.binary.data.mimeType = 'image/png';\n  }\n  \n  // Add VIN to top level for Cloudinary node\n  item.json.VIN = vin;\n  item.json.item_id = item.json.context?.item_id;\n}\n\nreturn items;"
+      },
+      "id": "rename-binary-001",
+      "name": "Rename Binary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.VIN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "upload-cloudinary-001",
+      "name": "Upload to Cloudinary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Capture the uploaded URL and item info for merging later\nconst uploadResult = $json;\nconst prevData = $('Split Items for BG').first().json;\n\nconst vin = prevData.item.vin;\nconst bgRemovedUrl = uploadResult.secure_url || `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n\nconsole.log(`✅ ${vin}: Uploaded to Cloudinary - ${bgRemovedUrl}`);\n\nreturn [{\n  json: {\n    item_id: prevData.item.item_id,\n    vin: vin,\n    bg_removed_url: bgRemovedUrl,\n    upload_success: true\n  }\n}];"
+      },
+      "id": "capture-upload-001",
+      "name": "Capture Upload Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData"
+      },
+      "id": "aggregate-uploads-001",
+      "name": "Aggregate Upload Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge BG-removed URLs back into processedItems\nconst uploadResults = $input.first().json;\nconst originalData = $('Check BG Status').first().json;\n\nconst { asset, processedItems } = originalData;\n\n// Build a map of item_id -> bg_removed_url from upload results\nconst bgUrlMap = {};\nif (uploadResults && Array.isArray(uploadResults)) {\n  uploadResults.forEach(result => {\n    if (result.item_id && result.bg_removed_url) {\n      bgUrlMap[result.item_id] = result.bg_removed_url;\n    }\n  });\n}\n\nconsole.log('BG URL map:', bgUrlMap);\n\n// Update processedItems with the new URLs\nconst updatedItems = processedItems.map(item => {\n  if (bgUrlMap[item.item_id]) {\n    return {\n      ...item,\n      photo_url: bgUrlMap[item.item_id],\n      bg_removed_url: bgUrlMap[item.item_id],\n      bg_removed: true\n    };\n  }\n  // Item already had BG removed or was skipped\n  if (item.bg_removed_url) {\n    return { ...item, photo_url: item.bg_removed_url, bg_removed: true };\n  }\n  return item;\n});\n\nconsole.log('\\n📊 Final items:');\nupdatedItems.forEach(item => {\n  const status = item.bg_removed ? '✅' : '⚠️';\n  console.log(`  ${status} ${item.vin}: ${item.photo_url}`);\n});\n\nreturn [{\n  json: {\n    asset,\n    processedItems: updatedItems\n  }\n}];"
+      },
+      "id": "merge-results-001",
+      "name": "Merge BG Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// No items needed BG removal - just pass through\nconst { asset, processedItems } = $input.first().json;\n\nconsole.log('✅ All items already have BG removed, passing through...');\n\nreturn [{\n  json: {\n    asset,\n    processedItems\n  }\n}];"
+      },
+      "id": "pass-through-001",
+      "name": "Pass Through (No BG Needed)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-paths-001",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pick the result from whichever path executed\nconst items = $input.all();\n\n// Find the item with processedItems (could be from either path)\nfor (const item of items) {\n  if (item.json.processedItems) {\n    return [item];\n  }\n}\n\n// Fallback\nreturn items;"
+      },
+      "id": "select-result-001",
+      "name": "Select Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { asset, processedItems } = $input.first().json;\n\n// Build item summary for theme pack\nfunction buildItemSummary(items) {\n  const lines = items.map(item => {\n    const highlights = item.equipment_highlights.slice(0, 3).join(', ');\n    const mileageNote = item.mileage_category === 'low_for_age' ? 'low miles' : \n                        item.mileage_category === 'high_for_age' ? 'higher miles' : '';\n    const daysNote = item.days_on_lot > 60 ? `${item.days_on_lot} days on lot` : '';\n    \n    const notes = [highlights, mileageNote, daysNote].filter(Boolean).join(', ');\n    return `- ${item.year} ${item.make} ${item.model}${notes ? ` (${notes})` : ''}`;\n  });\n  \n  // Add mix summary\n  const bodyTypes = [...new Set(items.map(i => i.body_style || 'vehicle').filter(Boolean))];\n  const avgDaysOnLot = Math.round(items.reduce((sum, i) => sum + (i.days_on_lot || 0), 0) / items.length);\n  \n  return `${items.length} vehicles this week:\\n${lines.join('\\n')}\\n\\nMix: ${bodyTypes.join(', ') || 'mixed'}.${avgDaysOnLot > 0 ? ` Avg ${avgDaysOnLot} days on lot.` : ''}`;\n}\n\nconst itemSummary = buildItemSummary(processedItems);\n\n// Get current date info\nconst now = new Date();\nconst monthNames = ['January', 'February', 'March', 'April', 'May', 'June', \n                    'July', 'August', 'September', 'October', 'November', 'December'];\n\nconsole.log('Item summary for theme pack:');\nconsole.log(itemSummary);\n\nreturn [{\n  json: {\n    asset,\n    processedItems,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed,\n      emoji: asset.theme_emoji,\n      direction: asset.theme_direction,\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      current_date: now.toISOString().split('T')[0],\n      current_month: monthNames[now.getMonth()],\n      item_summary: itemSummary\n    }\n  }\n}];"
+      },
+      "id": "build-summary-001",
+      "name": "Build Item Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.themePackRequest) }}",
+        "options": {}
+      },
+      "id": "generate-theme-001",
+      "name": "Generate Theme Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const themePackResponse = $json;\nconst prevData = $('Select Result').first().json;\nconst { asset, processedItems } = prevData;\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build the processed_data to save\nconst processedData = {\n  items: processedItems.map(item => ({\n    item_id: item.item_id,\n    vin: item.vin,\n    year: item.year,\n    make: item.make,\n    model: item.model,\n    trim: item.trim,\n    body_style: item.body_style,\n    price: item.price,\n    mileage: item.mileage,\n    days_on_lot: item.days_on_lot,\n    mileage_category: item.mileage_category,\n    equipment_highlights: item.equipment_highlights,\n    photo_url: item.photo_url,\n    bg_removed: item.bg_removed || false,\n    sort_order: item.sort_order\n  })),\n  theme_pack: {\n    theme_name: themePackResponse.theme_name || asset.theme_seed,\n    hook: themePackResponse.hook,\n    talking_points: themePackResponse.talking_points,\n    cta: themePackResponse.cta,\n    emoji: themePackResponse.emoji || asset.theme_emoji\n  },\n  processed_at: new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_data: processedData,\n    status: 'processed'\n  }\n}];"
+      },
+      "id": "prepare-save-001",
+      "name": "Prepare Save Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE assets \nSET \n  processed_data = '{{ JSON.stringify($json.processed_data) }}'::jsonb,\n  status = '{{ $json.status }}',\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, status",
+        "options": {}
+      },
+      "id": "save-asset-001",
+      "name": "Save to Asset",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4640,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"asset_id\": \"{{ $json.id }}\",\n  \"status\": \"{{ $json.status }}\",\n  \"message\": \"Asset processed successfully\"\n}",
+        "options": {}
+      },
+      "id": "respond-001",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        4860,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Asset + Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Asset + Plan": {
+      "main": [
+        [
+          {
+            "node": "Extract Item IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Item IDs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Vehicle Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Vehicle Data": {
+      "main": [
+        [
+          {
+            "node": "Process Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Vehicles": {
+      "main": [
+        [
+          {
+            "node": "Check BG Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check BG Status": {
+      "main": [
+        [
+          {
+            "node": "If: Any Need BG Removal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Any Need BG Removal": {
+      "main": [
+        [
+          {
+            "node": "Split Items for BG",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pass Through (No BG Needed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Items for BG": {
+      "main": [
+        [
+          {
+            "node": "Prep for BG Removal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep for BG Removal": {
+      "main": [
+        [
+          {
+            "node": "Call Remove Background",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Remove Background": {
+      "main": [
+        [
+          {
+            "node": "Rename Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Binary": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Capture Upload Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture Upload Result": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Upload Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Upload Results": {
+      "main": [
+        [
+          {
+            "node": "Merge BG Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge BG Results": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass Through (No BG Needed)": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        [
+          {
+            "node": "Select Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Result": {
+      "main": [
+        [
+          {
+            "node": "Build Item Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Item Summary": {
+      "main": [
+        [
+          {
+            "node": "Generate Theme Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Theme Pack": {
+      "main": [
+        [
+          {
+            "node": "Prepare Save Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Save Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Asset": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "fcf504e5-2830-4171-adba-ccee446e03eb",
+  "activeVersionId": "fcf504e5-2830-4171-adba-ccee446e03eb",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:41.120Z",
+      "createdAt": "2026-01-26T23:34:41.120Z",
+      "role": "workflow:owner",
+      "workflowId": "pNTmLSTPBJXAhRt7",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-31T04:07:37.029Z",
+    "createdAt": "2026-01-31T04:07:37.029Z",
+    "versionId": "fcf504e5-2830-4171-adba-ccee446e03eb",
+    "workflowId": "pNTmLSTPBJXAhRt7",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "process-multi-item-asset",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook-001",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "process-multi-item"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'::uuid",
+          "options": {}
+        },
+        "id": "fetch-asset-001",
+        "name": "Fetch Asset + Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const asset = $input.first().json;\n\n// Parse inventory_items JSON if it's a string\nconst inventoryItems = typeof asset.inventory_items === 'string' \n  ? JSON.parse(asset.inventory_items) \n  : asset.inventory_items;\n\nif (!inventoryItems || inventoryItems.length === 0) {\n  throw new Error('No inventory items found on asset');\n}\n\n// Extract item IDs for the query\nconst itemIds = inventoryItems.map(item => item.id);\n\nconsole.log(`Processing ${itemIds.length} items:`, itemIds);\n\nreturn [{\n  json: {\n    asset,\n    inventoryItems,\n    itemIds\n  }\n}];"
+        },
+        "id": "extract-items-001",
+        "name": "Extract Item IDs",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT \n  v.*,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id AND i.is_primary = true LIMIT 1) as primary_image_url,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id ORDER BY sort_order LIMIT 1) as first_image_url\nFROM inventory_vehicles v\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+          "options": {}
+        },
+        "id": "fetch-vehicles-001",
+        "name": "Fetch Vehicle Data",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          900,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $('Extract Item IDs').first().json;\nconst asset = input.asset;\nconst inventoryItems = input.inventoryItems;\nconst vehicles = $input.all().map(item => item.json);\n\n// Helper: Calculate mileage category\nfunction calculateMileageCategory(year, mileage) {\n  const currentYear = new Date().getFullYear();\n  const age = currentYear - year;\n  const avgMilesPerYear = 12000;\n  const expectedMiles = age * avgMilesPerYear;\n  \n  if (expectedMiles === 0) return 'new';\n  \n  const ratio = mileage / expectedMiles;\n  \n  if (ratio < 0.7) return 'low_for_age';\n  if (ratio > 1.3) return 'high_for_age';\n  return 'average';\n}\n\n// Helper: Summarize equipment into categories\nfunction summarizeEquipment(features) {\n  if (!features || !features[0]) return {};\n  \n  const featureList = typeof features[0] === 'string' \n    ? features[0].split('|').map(f => f.trim())\n    : features;\n  \n  const categories = {\n    powertrain: [],\n    comfort: [],\n    tech: [],\n    safety: [],\n    convenience: []\n  };\n  \n  featureList.forEach(f => {\n    const fLower = f.toLowerCase();\n    if (/v\\d|engine|4wd|awd|fwd|hybrid|turbo|ecoboost/i.test(f)) {\n      categories.powertrain.push(f);\n    } else if (/leather|heated|cooled|seat|sunroof|moonroof/i.test(f)) {\n      categories.comfort.push(f);\n    } else if (/nav|bluetooth|radio|sound|infotainment|carplay|android/i.test(f)) {\n      categories.tech.push(f);\n    } else if (/abs|air bag|safety|blind|lane|backup|camera/i.test(f)) {\n      categories.safety.push(f);\n    } else if (/remote|keyless|power window|power door|cruise/i.test(f)) {\n      categories.convenience.push(f);\n    }\n  });\n  \n  return categories;\n}\n\n// Helper: Pick highlight features\nfunction pickHighlights(features, count = 5) {\n  if (!features || !features[0]) return [];\n  \n  const priority = [\n    'leather', 'navigation', 'sunroof', 'moonroof', 'awd', '4wd', 'v8', 'v6',\n    'hybrid', 'heated seats', 'remote start', 'backup camera', 'camera',\n    'bose', 'premium sound', 'carplay', 'android auto', 'bluetooth',\n    'blind spot', 'lane', 'adaptive cruise'\n  ];\n  \n  const featureList = typeof features[0] === 'string'\n    ? features[0].split('|').map(f => f.trim())\n    : features;\n  \n  const highlights = [];\n  \n  for (const p of priority) {\n    if (highlights.length >= count) break;\n    const match = featureList.find(f => f.toLowerCase().includes(p));\n    if (match && !highlights.includes(match)) {\n      highlights.push(match);\n    }\n  }\n  \n  return highlights;\n}\n\n// Process each vehicle\nconst processedItems = vehicles.map(vehicle => {\n  // Find sort_order from inventory_items\n  const inventoryItem = inventoryItems.find(i => i.id === vehicle.item_id);\n  const sortOrder = inventoryItem?.sort_order ?? 0;\n  \n  return {\n    item_id: vehicle.item_id,\n    vin: vehicle.vin,\n    year: vehicle.year,\n    make: vehicle.make,\n    model: vehicle.model,\n    trim: vehicle.trim,\n    body_style: vehicle.body_style,\n    \n    // From inventory\n    days_on_lot: vehicle.days_on_lot || 0,\n    mileage: vehicle.mileage || 0,\n    price: vehicle.price,\n    \n    // PROCESSED: mileage_category\n    mileage_category: calculateMileageCategory(vehicle.year, vehicle.mileage || 0),\n    \n    // PROCESSED: equipment\n    equipment_summary: summarizeEquipment(vehicle.features),\n    equipment_highlights: pickHighlights(vehicle.features, 5),\n    \n    // Photo URL - will be updated after BG removal check\n    photo_url: vehicle.primary_image_url || vehicle.first_image_url || null,\n    original_photo_url: vehicle.primary_image_url || vehicle.first_image_url || null,\n    \n    // Sort order\n    sort_order: sortOrder\n  };\n});\n\n// Sort by sort_order\nprocessedItems.sort((a, b) => a.sort_order - b.sort_order);\n\nconsole.log('Processed', processedItems.length, 'vehicles');\nprocessedItems.forEach((item, i) => {\n  console.log(`  ${i + 1}. ${item.year} ${item.make} ${item.model} - ${item.mileage_category}, ${item.equipment_highlights.length} highlights`);\n});\n\nreturn [{\n  json: {\n    asset,\n    processedItems\n  }\n}];"
+        },
+        "id": "process-vehicles-001",
+        "name": "Process Vehicles",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const { asset, processedItems } = $input.first().json;\n\nconsole.log('🔍 Checking BG removal status for', processedItems.length, 'vehicles...');\n\n// Check Cloudinary for each vehicle's bg-removed image\nconst checkedItems = await Promise.all(processedItems.map(async (item) => {\n  if (!item.vin || !item.photo_url) {\n    console.log(`  ⚠️ ${item.item_id}: Skipping - no VIN or photo`);\n    return { ...item, needs_bg_removal: false, bg_check_skipped: true };\n  }\n  \n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${item.vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`  ✅ ${item.vin}: BG-removed exists in Cloudinary`);\n      return { \n        ...item, \n        photo_url: bgRemovedUrl,\n        bg_removed_url: bgRemovedUrl,\n        needs_bg_removal: false,\n        bg_already_exists: true\n      };\n    }\n  } catch (e) {\n    // 404 or error means it doesn't exist\n  }\n  \n  console.log(`  🔄 ${item.vin}: Needs BG removal`);\n  return { \n    ...item, \n    needs_bg_removal: true,\n    bg_already_exists: false\n  };\n}));\n\n// Count how many need processing\nconst needsProcessing = checkedItems.filter(i => i.needs_bg_removal);\nconst alreadyDone = checkedItems.filter(i => !i.needs_bg_removal && !i.bg_check_skipped);\n\nconsole.log(`\\n📊 Summary: ${alreadyDone.length} already have BG removed, ${needsProcessing.length} need processing`);\n\nreturn [{\n  json: {\n    asset,\n    processedItems: checkedItems,\n    needsBgRemovalCount: needsProcessing.length\n  }\n}];"
+        },
+        "id": "check-bg-status-001",
+        "name": "Check BG Status",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1340,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "bg-check-001",
+                "leftValue": "={{ $json.needsBgRemovalCount }}",
+                "rightValue": "0",
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-needs-bg-001",
+        "name": "If: Any Need BG Removal",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.1,
+        "position": [
+          1560,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pass through items that need BG removal one at a time\nconst { asset, processedItems } = $input.first().json;\n\nconst itemsNeedingBg = processedItems.filter(i => i.needs_bg_removal);\nconst itemsNotNeedingBg = processedItems.filter(i => !i.needs_bg_removal);\n\nconsole.log(`Splitting: ${itemsNeedingBg.length} items need BG removal`);\n\n// Return each item that needs BG removal as a separate output\n// Also pass along the items that don't need it for later merge\nreturn itemsNeedingBg.map((item, index) => ({\n  json: {\n    item,\n    itemIndex: index,\n    totalItems: itemsNeedingBg.length,\n    asset,\n    itemsNotNeedingBg: index === 0 ? itemsNotNeedingBg : [] // Only pass on first iteration\n  }\n}));"
+        },
+        "id": "split-items-001",
+        "name": "Split Items for BG",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1780,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare input for Remove Background service\nconst { item } = $json;\n\nconsole.log(`🔄 Preparing BG removal for ${item.vin}...`);\n\nreturn [{\n  json: {\n    image_url: item.original_photo_url || item.photo_url,\n    size: 'auto',\n    format: 'png',\n    crop: true,\n    crop_margin: '10%',\n    context: {\n      vin: item.vin,\n      item_id: item.item_id\n    }\n  }\n}];"
+        },
+        "id": "prep-bg-removal-001",
+        "name": "Prep for BG Removal",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "RmW2on3d2zlhjj33",
+            "mode": "list"
+          }
+        },
+        "id": "call-remove-bg-001",
+        "name": "Call Remove Background",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          2220,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Rename binary file to VIN.png for Cloudinary upload\nconst items = $input.all();\n\nfor (const item of items) {\n  const vin = item.json.context?.vin || 'unknown';\n  \n  if (item.binary && item.binary.data) {\n    item.binary.data.fileName = `${vin}.png`;\n    item.binary.data.mimeType = 'image/png';\n  }\n  \n  // Add VIN to top level for Cloudinary node\n  item.json.VIN = vin;\n  item.json.item_id = item.json.context?.item_id;\n}\n\nreturn items;"
+        },
+        "id": "rename-binary-001",
+        "name": "Rename Binary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2440,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "parameterType": "formBinaryData",
+                "name": "file",
+                "inputDataFieldName": "data"
+              },
+              {
+                "name": "upload_preset",
+                "value": "n8n_unsigned"
+              },
+              {
+                "name": "public_id",
+                "value": "={{ $json.VIN }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "upload-cloudinary-001",
+        "name": "Upload to Cloudinary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2660,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Capture the uploaded URL and item info for merging later\nconst uploadResult = $json;\nconst prevData = $('Split Items for BG').first().json;\n\nconst vin = prevData.item.vin;\nconst bgRemovedUrl = uploadResult.secure_url || `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n\nconsole.log(`✅ ${vin}: Uploaded to Cloudinary - ${bgRemovedUrl}`);\n\nreturn [{\n  json: {\n    item_id: prevData.item.item_id,\n    vin: vin,\n    bg_removed_url: bgRemovedUrl,\n    upload_success: true\n  }\n}];"
+        },
+        "id": "capture-upload-001",
+        "name": "Capture Upload Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2880,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData"
+        },
+        "id": "aggregate-uploads-001",
+        "name": "Aggregate Upload Results",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          3100,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Merge BG-removed URLs back into processedItems\nconst uploadResults = $input.first().json;\nconst originalData = $('Check BG Status').first().json;\n\nconst { asset, processedItems } = originalData;\n\n// Build a map of item_id -> bg_removed_url from upload results\nconst bgUrlMap = {};\nif (uploadResults && Array.isArray(uploadResults)) {\n  uploadResults.forEach(result => {\n    if (result.item_id && result.bg_removed_url) {\n      bgUrlMap[result.item_id] = result.bg_removed_url;\n    }\n  });\n}\n\nconsole.log('BG URL map:', bgUrlMap);\n\n// Update processedItems with the new URLs\nconst updatedItems = processedItems.map(item => {\n  if (bgUrlMap[item.item_id]) {\n    return {\n      ...item,\n      photo_url: bgUrlMap[item.item_id],\n      bg_removed_url: bgUrlMap[item.item_id],\n      bg_removed: true\n    };\n  }\n  // Item already had BG removed or was skipped\n  if (item.bg_removed_url) {\n    return { ...item, photo_url: item.bg_removed_url, bg_removed: true };\n  }\n  return item;\n});\n\nconsole.log('\\n📊 Final items:');\nupdatedItems.forEach(item => {\n  const status = item.bg_removed ? '✅' : '⚠️';\n  console.log(`  ${status} ${item.vin}: ${item.photo_url}`);\n});\n\nreturn [{\n  json: {\n    asset,\n    processedItems: updatedItems\n  }\n}];"
+        },
+        "id": "merge-results-001",
+        "name": "Merge BG Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3320,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// No items needed BG removal - just pass through\nconst { asset, processedItems } = $input.first().json;\n\nconsole.log('✅ All items already have BG removed, passing through...');\n\nreturn [{\n  json: {\n    asset,\n    processedItems\n  }\n}];"
+        },
+        "id": "pass-through-001",
+        "name": "Pass Through (No BG Needed)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1780,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineAll",
+          "options": {}
+        },
+        "id": "merge-paths-001",
+        "name": "Merge Paths",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          3540,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pick the result from whichever path executed\nconst items = $input.all();\n\n// Find the item with processedItems (could be from either path)\nfor (const item of items) {\n  if (item.json.processedItems) {\n    return [item];\n  }\n}\n\n// Fallback\nreturn items;"
+        },
+        "id": "select-result-001",
+        "name": "Select Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3760,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const { asset, processedItems } = $input.first().json;\n\n// Build item summary for theme pack\nfunction buildItemSummary(items) {\n  const lines = items.map(item => {\n    const highlights = item.equipment_highlights.slice(0, 3).join(', ');\n    const mileageNote = item.mileage_category === 'low_for_age' ? 'low miles' : \n                        item.mileage_category === 'high_for_age' ? 'higher miles' : '';\n    const daysNote = item.days_on_lot > 60 ? `${item.days_on_lot} days on lot` : '';\n    \n    const notes = [highlights, mileageNote, daysNote].filter(Boolean).join(', ');\n    return `- ${item.year} ${item.make} ${item.model}${notes ? ` (${notes})` : ''}`;\n  });\n  \n  // Add mix summary\n  const bodyTypes = [...new Set(items.map(i => i.body_style || 'vehicle').filter(Boolean))];\n  const avgDaysOnLot = Math.round(items.reduce((sum, i) => sum + (i.days_on_lot || 0), 0) / items.length);\n  \n  return `${items.length} vehicles this week:\\n${lines.join('\\n')}\\n\\nMix: ${bodyTypes.join(', ') || 'mixed'}.${avgDaysOnLot > 0 ? ` Avg ${avgDaysOnLot} days on lot.` : ''}`;\n}\n\nconst itemSummary = buildItemSummary(processedItems);\n\n// Get current date info\nconst now = new Date();\nconst monthNames = ['January', 'February', 'March', 'April', 'May', 'June', \n                    'July', 'August', 'September', 'October', 'November', 'December'];\n\nconsole.log('Item summary for theme pack:');\nconsole.log(itemSummary);\n\nreturn [{\n  json: {\n    asset,\n    processedItems,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed,\n      emoji: asset.theme_emoji,\n      direction: asset.theme_direction,\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      current_date: now.toISOString().split('T')[0],\n      current_month: monthNames[now.getMonth()],\n      item_summary: itemSummary\n    }\n  }\n}];"
+        },
+        "id": "build-summary-001",
+        "name": "Build Item Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3980,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.themePackRequest) }}",
+          "options": {}
+        },
+        "id": "generate-theme-001",
+        "name": "Generate Theme Pack",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4200,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const themePackResponse = $json;\nconst prevData = $('Select Result').first().json;\nconst { asset, processedItems } = prevData;\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build the processed_data to save\nconst processedData = {\n  items: processedItems.map(item => ({\n    item_id: item.item_id,\n    vin: item.vin,\n    year: item.year,\n    make: item.make,\n    model: item.model,\n    trim: item.trim,\n    body_style: item.body_style,\n    price: item.price,\n    mileage: item.mileage,\n    days_on_lot: item.days_on_lot,\n    mileage_category: item.mileage_category,\n    equipment_highlights: item.equipment_highlights,\n    photo_url: item.photo_url,\n    bg_removed: item.bg_removed || false,\n    sort_order: item.sort_order\n  })),\n  theme_pack: {\n    theme_name: themePackResponse.theme_name || asset.theme_seed,\n    hook: themePackResponse.hook,\n    talking_points: themePackResponse.talking_points,\n    cta: themePackResponse.cta,\n    emoji: themePackResponse.emoji || asset.theme_emoji\n  },\n  processed_at: new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_data: processedData,\n    status: 'processed'\n  }\n}];"
+        },
+        "id": "prepare-save-001",
+        "name": "Prepare Save Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4420,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=UPDATE assets \nSET \n  processed_data = '{{ JSON.stringify($json.processed_data) }}'::jsonb,\n  status = '{{ $json.status }}',\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, status",
+          "options": {}
+        },
+        "id": "save-asset-001",
+        "name": "Save to Asset",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4640,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"success\": true,\n  \"asset_id\": \"{{ $json.id }}\",\n  \"status\": \"{{ $json.status }}\",\n  \"message\": \"Asset processed successfully\"\n}",
+          "options": {}
+        },
+        "id": "respond-001",
+        "name": "Respond Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          4860,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Asset + Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Asset + Plan": {
+        "main": [
+          [
+            {
+              "node": "Extract Item IDs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Item IDs": {
+        "main": [
+          [
+            {
+              "node": "Fetch Vehicle Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Vehicle Data": {
+        "main": [
+          [
+            {
+              "node": "Process Vehicles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Vehicles": {
+        "main": [
+          [
+            {
+              "node": "Check BG Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check BG Status": {
+        "main": [
+          [
+            {
+              "node": "If: Any Need BG Removal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Any Need BG Removal": {
+        "main": [
+          [
+            {
+              "node": "Split Items for BG",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Pass Through (No BG Needed)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Items for BG": {
+        "main": [
+          [
+            {
+              "node": "Prep for BG Removal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep for BG Removal": {
+        "main": [
+          [
+            {
+              "node": "Call Remove Background",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Remove Background": {
+        "main": [
+          [
+            {
+              "node": "Rename Binary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Rename Binary": {
+        "main": [
+          [
+            {
+              "node": "Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Capture Upload Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Capture Upload Result": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Upload Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Upload Results": {
+        "main": [
+          [
+            {
+              "node": "Merge BG Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge BG Results": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pass Through (No BG Needed)": {
+        "main": [
+          [
+            {
+              "node": "Merge Paths",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge Paths": {
+        "main": [
+          [
+            {
+              "node": "Select Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Select Result": {
+        "main": [
+          [
+            {
+              "node": "Build Item Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Item Summary": {
+        "main": [
+          [
+            {
+              "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Theme Pack": {
+        "main": [
+          [
+            {
+              "node": "Prepare Save Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Save Data": {
+        "main": [
+          [
+            {
+              "node": "Save to Asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save to Asset": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
