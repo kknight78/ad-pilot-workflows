@@ -1,0 +1,1849 @@
+{
+  "updatedAt": "2026-01-30T01:14:00.247Z",
+  "createdAt": "2026-01-26T23:34:49.477Z",
+  "id": "g3Uw2wgALuQvGkCE",
+  "name": "[03] Generate Avatar",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2816,
+        1936
+      ],
+      "id": "wait-node",
+      "name": "Wait",
+      "webhookId": "c9b371fc-a76f-46c6-b1c3-84bce69ffb63"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst error = config.error || $json.statusText || 'Unknown error';\nconst errorDetails = JSON.stringify(config, null, 2);\nreturn [{ json: { error: error, details: errorDetails, config: config } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3488,
+        976
+      ],
+      "id": "format-errors",
+      "name": "Format Errors"
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        4160,
+        976
+      ],
+      "id": "stop-error",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "content": "# [03] Generate Avatar\n\nGenerates HeyGen talking head video from script,\nthen creates transparent background version via Replicate RVM.\n\n**Optimized TTS Pipeline (Jan 2026):**\n- Uses 11Labs with-timestamps endpoint (audio + timing in one call)\n- Uses temp-audio-service for temporary audio URL (10 min TTL)\n- Eliminated Cloudinary and Whisper API calls\n\nOutputs:\n- avatar_video_url (with background)\n- avatar_video_alpha_url (transparent)\n- _section_timings (from 11Labs alignment)",
+        "height": 240,
+        "width": 360,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -656,
+        1456
+      ],
+      "typeVersion": 1,
+      "id": "sticky-info",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Error Handling\nCapture and format errors from any step",
+        "height": 116,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3936,
+        1136
+      ],
+      "typeVersion": 1,
+      "id": "sticky-errors",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        1392
+      ],
+      "id": "trigger",
+      "name": "When Executed by Orchestrate Video Creation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        1600
+      ],
+      "id": "if-complete",
+      "name": "If: Avatar Complete"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'CwhRBWXzGAHq8TQ4Fs17';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        1392
+      ],
+      "id": "prep-voice",
+      "name": "Prepare Voice Config"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "[BASE64_KEY_REDACTED]"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"Ad Pilot Video\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{ $json.audio_url }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1280 }\n}",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        1536
+      ],
+      "id": "heygen-create",
+      "name": "API: HeyGen, Create Avatar",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst response = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: response.video_id,\n    status: 'pending'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1680
+      ],
+      "id": "store-config",
+      "name": "Store Config + Video ID"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $json.video_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "[BASE64_KEY_REDACTED]"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        1680
+      ],
+      "id": "check-status",
+      "name": "API: Check Avatar Status",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = $('Preserve Config for Loop').item.json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_duration: videoData.duration\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        1488
+      ],
+      "id": "parse-avatar",
+      "name": "Parse Avatar Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2592,
+        1792
+      ],
+      "id": "if-failed",
+      "name": "If: Failed?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [REPLICATE_KEY_REDACTED]"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "respond-async"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.avatar_video_url }}\",\n  \"output_type\": \"alpha-mask\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3040,
+        1488
+      ],
+      "id": "rvm-create",
+      "name": "API: Replicate, Create RVM",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3712,
+        1440
+      ],
+      "id": "wait-rvm",
+      "name": "Wait for RVM",
+      "webhookId": "6a301e7f-cd62-4a9e-b35f-71b49f2020ae"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls.get }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [REPLICATE_KEY_REDACTED]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3264,
+        1360
+      ],
+      "id": "rvm-status",
+      "name": "API: Replicate, Check RVM Status",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3488,
+        1264
+      ],
+      "id": "if-rvm-complete",
+      "name": "If: RVM Complete"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get config with timings from earlier in the flow\nconst config = $('Parse Avatar Response').item.json;\nconst rvm = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_alpha_url: rvm.output\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3712,
+        1216
+      ],
+      "id": "parse-rvm",
+      "name": "Parse RVM Response"
+    },
+    {
+      "parameters": {
+        "content": "## HeyGen Avatar\nGenerate talking head video",
+        "height": 80,
+        "width": 200,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        1840
+      ],
+      "typeVersion": 1,
+      "id": "sticky-avatar",
+      "name": "Sticky Note Avatar"
+    },
+    {
+      "parameters": {
+        "content": "## Replicate RVM\nRemove background for transparent overlay",
+        "height": 116,
+        "width": 280,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3376,
+        1488
+      ],
+      "typeVersion": 1,
+      "id": "sticky-rvm",
+      "name": "Sticky Note RVM"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    status: result.status || 'pending',\n    data: result\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2144,
+        1600
+      ],
+      "id": "preserve-for-loop",
+      "name": "Preserve Config for Loop"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.avatar_video_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2816,
+        1488
+      ],
+      "id": "download_video",
+      "name": "Download Avatar Video"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}/with-timestamps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        1392
+      ],
+      "id": "elevenlabs-tts",
+      "name": "API: 11Labs, Generate TTS with Timestamps",
+      "alwaysOutputData": true,
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "WDYpIJCq1WHnTddq",
+          "name": "Eleven Labs"
+        },
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge temp audio URL with config and section timings\nconst silenceResponse = $('Add Silence for Rest Pose').first().json;\nconst response = $('Parse 11Labs Response').first().json;\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\nreturn [{\n  json: {\n    ...config,\n    audio_url: silenceResponse.audio_url\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        1536
+      ],
+      "id": "merge-audio-url",
+      "name": "Merge Audio URL + Timings with Config"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        1456
+      ],
+      "id": "parse-elevenlabs",
+      "name": "Parse 11Labs Response"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://temp-audio-service-production.up.railway.app/audio",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"audio_base64\": {{ JSON.stringify($json.audio_base64) }},\n  \"format\": \"mp3\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        1456
+      ],
+      "id": "temp-audio-service",
+      "name": "API: Temp Audio Service",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[03] Generate Avatar\",\n    error: input.error || input.errorMessage || \"Unknown error\",\n    details: input.details || JSON.stringify(input.config || input, null, 2),\n    job_id: null,\n    to_email: \"kelly@ad-pilot.ai\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3712,
+        976
+      ],
+      "id": "prep-error-email",
+      "name": "Prep: Error Email"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rFyNQNW3IQ1zLHEF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+          "cachedResultName": "[Service] Email Error Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3936,
+        976
+      ],
+      "id": "call-email-error",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1024,
+        1440
+      ],
+      "id": "94c5f2ff-7f0f-4ae9-8fd7-ebbe7ba76e0a",
+      "name": "Add Silence for Rest Pose"
+    }
+  ],
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "API: Check Avatar Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Errors": {
+      "main": [
+        [
+          {
+            "node": "Prep: Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Orchestrate Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Prepare Voice Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Voice Config": {
+      "main": [
+        [
+          {
+            "node": "API: 11Labs, Generate TTS with Timestamps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: 11Labs, Generate TTS with Timestamps": {
+      "main": [
+        [
+          {
+            "node": "Parse 11Labs Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse 11Labs Response": {
+      "main": [
+        [
+          {
+            "node": "API: Temp Audio Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Temp Audio Service": {
+      "main": [
+        [
+          {
+            "node": "Add Silence for Rest Pose",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Audio URL + Timings with Config": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen, Create Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HeyGen, Create Avatar": {
+      "main": [
+        [
+          {
+            "node": "Store Config + Video ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Config + Video ID": {
+      "main": [
+        [
+          {
+            "node": "API: Check Avatar Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Check Avatar Status": {
+      "main": [
+        [
+          {
+            "node": "Preserve Config for Loop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Preserve Config for Loop": {
+      "main": [
+        [
+          {
+            "node": "If: Avatar Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Avatar Complete": {
+      "main": [
+        [
+          {
+            "node": "Parse Avatar Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If: Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Avatar Response": {
+      "main": [
+        [
+          {
+            "node": "Download Avatar Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Failed?": {
+      "main": [
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Avatar Video": {
+      "main": [
+        [
+          {
+            "node": "API: Replicate, Create RVM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Replicate, Create RVM": {
+      "main": [
+        [
+          {
+            "node": "API: Replicate, Check RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Replicate, Check RVM Status": {
+      "main": [
+        [
+          {
+            "node": "If: RVM Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: RVM Complete": {
+      "main": [
+        [
+          {
+            "node": "Parse RVM Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for RVM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for RVM": {
+      "main": [
+        [
+          {
+            "node": "API: Replicate, Check RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RVM Response": {
+      "main": [
+        []
+      ]
+    },
+    "Prep: Error Email": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Email Error": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Silence for Rest Pose": {
+      "main": [
+        [
+          {
+            "node": "Merge Audio URL + Timings with Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "d0be88b4-dd41-402b-ad6e-56e05819f412",
+  "activeVersionId": "d0be88b4-dd41-402b-ad6e-56e05819f412",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:49.477Z",
+      "createdAt": "2026-01-26T23:34:49.477Z",
+      "role": "workflow:owner",
+      "workflowId": "g3Uw2wgALuQvGkCE",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:14:00.250Z",
+    "createdAt": "2026-01-30T01:14:00.250Z",
+    "versionId": "d0be88b4-dd41-402b-ad6e-56e05819f412",
+    "workflowId": "g3Uw2wgALuQvGkCE",
+    "nodes": [
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2816,
+          1936
+        ],
+        "id": "wait-node",
+        "name": "Wait",
+        "webhookId": "c9b371fc-a76f-46c6-b1c3-84bce69ffb63"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\nconst error = config.error || $json.statusText || 'Unknown error';\nconst errorDetails = JSON.stringify(config, null, 2);\nreturn [{ json: { error: error, details: errorDetails, config: config } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3488,
+          976
+        ],
+        "id": "format-errors",
+        "name": "Format Errors"
+      },
+      {
+        "parameters": {
+          "errorMessage": "={{ $json.id }}"
+        },
+        "type": "n8n-nodes-base.stopAndError",
+        "typeVersion": 1,
+        "position": [
+          4160,
+          976
+        ],
+        "id": "stop-error",
+        "name": "Stop and Error"
+      },
+      {
+        "parameters": {
+          "content": "# [03] Generate Avatar\n\nGenerates HeyGen talking head video from script,\nthen creates transparent background version via Replicate RVM.\n\n**Optimized TTS Pipeline (Jan 2026):**\n- Uses 11Labs with-timestamps endpoint (audio + timing in one call)\n- Uses temp-audio-service for temporary audio URL (10 min TTL)\n- Eliminated Cloudinary and Whisper API calls\n\nOutputs:\n- avatar_video_url (with background)\n- avatar_video_alpha_url (transparent)\n- _section_timings (from 11Labs alignment)",
+          "height": 240,
+          "width": 360,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -656,
+          1456
+        ],
+        "typeVersion": 1,
+        "id": "sticky-info",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "content": "## Error Handling\nCapture and format errors from any step",
+          "height": 116,
+          "width": 360
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3936,
+          1136
+        ],
+        "typeVersion": 1,
+        "id": "sticky-errors",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -80,
+          1392
+        ],
+        "id": "trigger",
+        "name": "When Executed by Orchestrate Video Creation"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "completed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2368,
+          1600
+        ],
+        "id": "if-complete",
+        "name": "If: Avatar Complete"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare voice config - swap to test voice if requested\nconst config = $json;\nconst TEST_VOICE_ID = 'CwhRBWXzGAHq8TQ4Fs17';\n\n// Check if test voice is requested\nconst useTestVoice = config.use_test_voice === true;\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : config.voice_id;\n\nif (useTestVoice) {\n  console.log(`Using TEST voice (${TEST_VOICE_ID}) instead of ${config.voice_id}`);\n} else {\n  console.log(`Using configured voice: ${config.voice_id}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    effective_voice_id: effectiveVoiceId,\n    original_voice_id: config.voice_id\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          144,
+          1392
+        ],
+        "id": "prep-voice",
+        "name": "Prepare Voice Config"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.heygen.com/v2/video/generate",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "[BASE64_KEY_REDACTED]"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              },
+              {
+                "name": "content-type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"title\": \"Ad Pilot Video\",\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"talking_photo\",\n        \"talking_photo_id\": \"{{ $json.avatar_id }}\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{ $json.audio_url }}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 720, \"height\": 1280 }\n}",
+          "options": {
+            "timeout": 900000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1472,
+          1536
+        ],
+        "id": "heygen-create",
+        "name": "API: HeyGen, Create Avatar",
+        "alwaysOutputData": true,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Store config and add video_id for polling\nconst config = $('Merge Audio URL + Timings with Config').item.json;\nconst response = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    video_id: response.video_id,\n    status: 'pending'\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1696,
+          1680
+        ],
+        "id": "store-config",
+        "name": "Store Config + Video ID"
+      },
+      {
+        "parameters": {
+          "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $json.video_id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "[BASE64_KEY_REDACTED]"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1920,
+          1680
+        ],
+        "id": "check-status",
+        "name": "API: Check Avatar Status",
+        "alwaysOutputData": true,
+        "retryOnFail": true
+      },
+      {
+        "parameters": {
+          "jsCode": "// Merge config back with HeyGen response\nconst result = $json;\nconst videoData = result.data;\nconst config = $('Preserve Config for Loop').item.json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_url: videoData.video_url,\n    avatar_video_duration: videoData.duration\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2592,
+          1488
+        ],
+        "id": "parse-avatar",
+        "name": "Parse Avatar Response"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2592,
+          1792
+        ],
+        "id": "if-failed",
+        "name": "If: Failed?"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.replicate.com/v1/predictions",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer [REPLICATE_KEY_REDACTED]"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "respond-async"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.avatar_video_url }}\",\n  \"output_type\": \"alpha-mask\"\n  }\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3040,
+          1488
+        ],
+        "id": "rvm-create",
+        "name": "API: Replicate, Create RVM",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "amount": 10
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          3712,
+          1440
+        ],
+        "id": "wait-rvm",
+        "name": "Wait for RVM",
+        "webhookId": "6a301e7f-cd62-4a9e-b35f-71b49f2020ae"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.urls.get }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer [REPLICATE_KEY_REDACTED]"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3264,
+          1360
+        ],
+        "id": "rvm-status",
+        "name": "API: Replicate, Check RVM Status",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3488,
+          1264
+        ],
+        "id": "if-rvm-complete",
+        "name": "If: RVM Complete"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get config with timings from earlier in the flow\nconst config = $('Parse Avatar Response').item.json;\nconst rvm = $json;\n\nreturn [{\n  json: {\n    ...config,\n    avatar_video_alpha_url: rvm.output\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3712,
+          1216
+        ],
+        "id": "parse-rvm",
+        "name": "Parse RVM Response"
+      },
+      {
+        "parameters": {
+          "content": "## HeyGen Avatar\nGenerate talking head video",
+          "height": 80,
+          "width": 200,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1440,
+          1840
+        ],
+        "typeVersion": 1,
+        "id": "sticky-avatar",
+        "name": "Sticky Note Avatar"
+      },
+      {
+        "parameters": {
+          "content": "## Replicate RVM\nRemove background for transparent overlay",
+          "height": 116,
+          "width": 280,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3376,
+          1488
+        ],
+        "typeVersion": 1,
+        "id": "sticky-rvm",
+        "name": "Sticky Note RVM"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Preserve config and video_id through the wait loop\nconst config = $('Store Config + Video ID').item.json;\nconst result = $json.data;\n\nreturn [{\n  json: {\n    ...config,\n    status: result.status || 'pending',\n    data: result\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2144,
+          1600
+        ],
+        "id": "preserve-for-loop",
+        "name": "Preserve Config for Loop"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.avatar_video_url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            },
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2816,
+          1488
+        ],
+        "id": "download_video",
+        "name": "Download Avatar Video"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}/with-timestamps",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": []
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          368,
+          1392
+        ],
+        "id": "elevenlabs-tts",
+        "name": "API: 11Labs, Generate TTS with Timestamps",
+        "alwaysOutputData": true,
+        "credentials": {
+          "elevenLabsApi": {
+            "id": "WDYpIJCq1WHnTddq",
+            "name": "Eleven Labs"
+          },
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Merge temp audio URL with config and section timings\nconst silenceResponse = $('Add Silence for Rest Pose').first().json;\nconst response = $('Parse 11Labs Response').first().json;\n// Remove the large base64 data (no longer needed)\nconst { audio_base64, ...config } = response;\nreturn [{\n  json: {\n    ...config,\n    audio_url: silenceResponse.audio_url\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1248,
+          1536
+        ],
+        "id": "merge-audio-url",
+        "name": "Merge Audio URL + Timings with Config"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping - no fuzzy word matching!\nconst response = $json;\nconst config = $('Prepare Voice Config').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  console.log('No alignment data from 11Labs');\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      _section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\nconsole.log('Audio duration: ' + audio_duration.toFixed(2) + 's, ' + chars.length + ' characters');\n\n// Get script sections\nconst script = config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\n// full_script format: \"hook segment1 segment2 ... cta\" (space-separated)\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\n\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  console.log(section.name + ': chars ' + startPos + '-' + endPos + ' (\"' + section.text.substring(0, 30) + '...\")');\n  // +1 for the space between sections\n  charPos += section.text.length + 1;\n}\n\n// Now map character positions to timestamps\n// The alignment.characters should match full_script closely\nconst alignmentText = chars.join('');\nconsole.log('Alignment text length: ' + alignmentText.length + ', full_script length: ' + fullScript.length);\n\n// Build section timings from character positions\nconst sectionTimings = [];\n\nfor (const section of sectionPositions) {\n  // Clamp to valid indices\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n\n  // Get timestamps at these character positions\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n\n  const timing = {\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  };\n\n  sectionTimings.push(timing);\n  console.log(section.name + ': ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + timing.duration.toFixed(2) + 's)');\n}\n\n// Also build word timestamps for compatibility\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\n\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    word_timestamps: words,\n    _section_timings: sectionTimings,\n    audio_duration: audio_duration\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          592,
+          1456
+        ],
+        "id": "parse-elevenlabs",
+        "name": "Parse 11Labs Response"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://temp-audio-service-production.up.railway.app/audio",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"audio_base64\": {{ JSON.stringify($json.audio_base64) }},\n  \"format\": \"mp3\"\n}",
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          816,
+          1456
+        ],
+        "id": "temp-audio-service",
+        "name": "API: Temp Audio Service",
+        "alwaysOutputData": true,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[03] Generate Avatar\",\n    error: input.error || input.errorMessage || \"Unknown error\",\n    details: input.details || JSON.stringify(input.config || input, null, 2),\n    job_id: null,\n    to_email: \"kelly@ad-pilot.ai\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3712,
+          976
+        ],
+        "id": "prep-error-email",
+        "name": "Prep: Error Email"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rFyNQNW3IQ1zLHEF",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/mBVi9C0eRoq1xTeb",
+            "cachedResultName": "[Service] Email Error Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          3936,
+          976
+        ],
+        "id": "call-email-error",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1024,
+          1440
+        ],
+        "id": "94c5f2ff-7f0f-4ae9-8fd7-ebbe7ba76e0a",
+        "name": "Add Silence for Rest Pose"
+      }
+    ],
+    "connections": {
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "API: Check Avatar Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Errors": {
+        "main": [
+          [
+            {
+              "node": "Prep: Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Executed by Orchestrate Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Prepare Voice Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Voice Config": {
+        "main": [
+          [
+            {
+              "node": "API: 11Labs, Generate TTS with Timestamps",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: 11Labs, Generate TTS with Timestamps": {
+        "main": [
+          [
+            {
+              "node": "Parse 11Labs Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse 11Labs Response": {
+        "main": [
+          [
+            {
+              "node": "API: Temp Audio Service",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Temp Audio Service": {
+        "main": [
+          [
+            {
+              "node": "Add Silence for Rest Pose",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Audio URL + Timings with Config": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen, Create Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HeyGen, Create Avatar": {
+        "main": [
+          [
+            {
+              "node": "Store Config + Video ID",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Config + Video ID": {
+        "main": [
+          [
+            {
+              "node": "API: Check Avatar Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Check Avatar Status": {
+        "main": [
+          [
+            {
+              "node": "Preserve Config for Loop",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Preserve Config for Loop": {
+        "main": [
+          [
+            {
+              "node": "If: Avatar Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Avatar Complete": {
+        "main": [
+          [
+            {
+              "node": "Parse Avatar Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If: Failed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Avatar Response": {
+        "main": [
+          [
+            {
+              "node": "Download Avatar Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Failed?": {
+        "main": [
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download Avatar Video": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate, Create RVM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Replicate, Create RVM": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate, Check RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Replicate, Check RVM Status": {
+        "main": [
+          [
+            {
+              "node": "If: RVM Complete",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: RVM Complete": {
+        "main": [
+          [
+            {
+              "node": "Parse RVM Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait for RVM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for RVM": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate, Check RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse RVM Response": {
+        "main": [
+          []
+        ]
+      },
+      "Prep: Error Email": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Email Error": {
+        "main": [
+          [
+            {
+              "node": "Stop and Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add Silence for Rest Pose": {
+        "main": [
+          [
+            {
+              "node": "Merge Audio URL + Timings with Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
