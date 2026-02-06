@@ -1,0 +1,1477 @@
+{
+  "updatedAt": "2026-01-30T01:12:07.062Z",
+  "createdAt": "2026-01-26T23:35:01.040Z",
+  "id": "nauW53iR4T9JkgM1",
+  "name": "Weekly Intel Agent",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 20 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Sunday 8pm Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intel-agent-test",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "manual-trigger",
+      "name": "Manual Test Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "intel-agent-test"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Weekly Intel Agent - Source Configuration\n// Last updated: 2026-01-22\n\nconst sources = [\n  // ═══════════════════════════════════════════════════════════════════════════\n  // LLM / AI NEWS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'OpenAI News', url: 'https://openai.com/news/rss.xml', type: 'rss', category: 'llm' },\n  { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss', type: 'rss', category: 'llm' },\n  { name: 'Anthropic News', url: 'https://www.anthropic.com/news', type: 'scrape', category: 'llm' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // CORE STACK — RSS FEEDS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Cloudinary Blog', url: 'https://cloudinary.com/blog/feed', type: 'rss', category: 'stack' },\n  { name: 'n8n GitHub Releases', url: 'https://github.com/n8n-io/n8n/releases.atom', type: 'rss', category: 'stack' },\n  { name: 'n8n Blog', url: 'https://blog.n8n.io/rss/', type: 'rss', category: 'stack' },\n  { name: 'Vercel Changelog', url: 'https://vercel.com/atom', type: 'rss', category: 'stack' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // CORE STACK — WEB SCRAPE (no RSS available)\n  // ═══════════════════════════════════════════════════════════════════════════\n  {\n    name: 'HeyGen API Changelog',\n    url: 'https://docs.heygen.com/changelog',\n    type: 'scrape',\n    category: 'stack',\n    critical: true,\n    watchFor: ['motion_type', 'kling', 'consistent', 'deprecat', 'removed', 'sunset', 'third party', 'credit', 'Avatar IV', 'pricing', 'breaking']\n  },\n  { name: 'HeyGen Blog', url: 'https://www.heygen.com/blog', type: 'scrape', category: 'stack' },\n  { name: 'ElevenLabs Changelog', url: 'https://elevenlabs.io/docs/changelog', type: 'scrape', category: 'stack' },\n  { name: 'Railway Changelog', url: 'https://railway.com/changelog', type: 'scrape', category: 'stack' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // PLATFORMS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Meta Engineering', url: 'https://engineering.fb.com/feed/', type: 'rss', category: 'platform' },\n  { name: 'Meta for Business', url: 'https://www.facebook.com/business/news/rss', type: 'rss', category: 'platform' },\n  { name: 'TikTok Newsroom', url: 'https://newsroom.tiktok.com/en-us', type: 'scrape', category: 'platform' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // COMPETITORS / INDUSTRY\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Synthesia Blog', url: 'https://www.synthesia.io/blog', type: 'scrape', category: 'competitor' },\n  { name: 'Product Hunt AI', url: 'https://www.producthunt.com/feed?category=artificial-intelligence', type: 'rss', category: 'competitor' }\n];\n\nreturn sources.map(source => ({ json: source }));"
+      },
+      "id": "config-sources",
+      "name": "Config Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "rss-condition",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "rss",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RSS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "scrape-condition",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "scrape",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Scrape"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-type",
+      "name": "Switch: RSS or Scrape",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-rss",
+      "name": "Fetch RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        100
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Scrape Handler - extracts content from pages without RSS feeds\nconst source = $input.item.json;\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'GET',\n    url: source.url,\n    headers: {\n      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',\n      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',\n      'Accept-Language': 'en-US,en;q=0.5'\n    },\n    returnFullResponse: true\n  });\n\n  const html = response.body;\n\n  // Remove script, style, nav, header, footer content\n  let text = html\n    .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n    .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')\n    .replace(/<nav[^>]*>[\\s\\S]*?<\\/nav>/gi, '')\n    .replace(/<header[^>]*>[\\s\\S]*?<\\/header>/gi, '')\n    .replace(/<footer[^>]*>[\\s\\S]*?<\\/footer>/gi, '');\n\n  // Try to extract content from common content areas\n  const contentPatterns = [\n    /<main[^>]*>([\\s\\S]*?)<\\/main>/gi,\n    /<article[^>]*>([\\s\\S]*?)<\\/article>/gi,\n    /<div[^>]*class=\"[^\"]*content[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*changelog[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*blog[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*post[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi\n  ];\n\n  let extractedContent = '';\n  for (const pattern of contentPatterns) {\n    const matches = text.matchAll(pattern);\n    for (const match of matches) {\n      extractedContent += match[1] + '\\n';\n    }\n  }\n\n  if (!extractedContent) {\n    extractedContent = text;\n  }\n\n  // Strip HTML tags and clean up\n  extractedContent = extractedContent\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  // Limit content length\n  const maxLength = 4000;\n  if (extractedContent.length > maxLength) {\n    extractedContent = extractedContent.substring(0, maxLength) + '... [truncated]';\n  }\n\n  // Check for critical keywords\n  let criticalMatches = [];\n  if (source.critical && source.watchFor) {\n    const lowerContent = extractedContent.toLowerCase();\n    criticalMatches = source.watchFor.filter(keyword =>\n      lowerContent.includes(keyword.toLowerCase())\n    );\n  }\n\n  return {\n    json: {\n      source: source.name,\n      url: source.url,\n      type: 'scrape',\n      category: source.category,\n      critical: source.critical || false,\n      criticalMatches: criticalMatches,\n      content: extractedContent,\n      fetchedAt: new Date().toISOString(),\n      success: true\n    }\n  };\n\n} catch (error) {\n  return {\n    json: {\n      source: source.name,\n      url: source.url,\n      type: 'scrape',\n      category: source.category,\n      critical: source.critical || false,\n      content: '',\n      fetchedAt: new Date().toISOString(),\n      success: false,\n      error: error.message\n    }\n  };\n}"
+      },
+      "id": "scrape-handler",
+      "name": "Scrape Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse RSS/Atom feeds\nconst results = [];\nconst allConfigItems = $('Config Sources').all();\nconst rssConfigItems = allConfigItems.filter(item => item.json.type === 'rss');\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const item = $input.all()[i];\n  const xml = item.json.data || '';\n  const sourceConfig = rssConfigItems[i] ? rssConfigItems[i].json : {};\n  const sourceName = sourceConfig.name || 'Unknown';\n  const sourceUrl = sourceConfig.url || '';\n  const sourceCategory = sourceConfig.category || 'unknown';\n  \n  try {\n    const items = [];\n    const itemMatches = xml.match(/<(item|entry)[^>]*>[\\s\\S]*?<\\/\\1>/gi) || [];\n    \n    for (const entry of itemMatches.slice(0, 5)) {\n      const titleMatch = entry.match(/<title[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i);\n      let title = titleMatch ? titleMatch[1].trim().replace(/<[^>]+>/g, '') : 'No title';\n      \n      let link = '';\n      const linkHrefMatch = entry.match(/<link[^>]*href=[\"']([^\"']+)[\"']/i);\n      const linkTextMatch = entry.match(/<link[^>]*>([^<]+)<\\/link>/i);\n      link = linkHrefMatch ? linkHrefMatch[1] : (linkTextMatch ? linkTextMatch[1] : '');\n      \n      const dateMatch = entry.match(/<(pubDate|updated|published)[^>]*>([^<]+)<\\/\\1>/i);\n      const date = dateMatch ? dateMatch[2].trim() : '';\n      \n      const descMatch = entry.match(/<(description|summary|content)[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/\\1>/i);\n      let description = descMatch ? descMatch[2].trim() : '';\n      description = description.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 300);\n      \n      items.push({ title, link, date, description });\n    }\n    \n    results.push({\n      json: {\n        source: sourceName,\n        url: sourceUrl,\n        type: 'rss',\n        category: sourceCategory,\n        success: items.length > 0,\n        content: items.map(item => `- **${item.title}**${item.date ? ` (${item.date})` : ''}\\n  ${item.description}\\n  Link: ${item.link}`).join('\\n\\n'),\n        items: items\n      }\n    });\n  } catch (error) {\n    results.push({\n      json: {\n        source: sourceName,\n        url: sourceUrl,\n        type: 'rss',\n        category: sourceCategory,\n        success: false,\n        error: error.message,\n        content: ''\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "id": "parse-feeds",
+      "name": "Parse Feeds",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle RSS fetch errors\nconst allConfigItems = $('Config Sources').all();\nconst rssConfigItems = allConfigItems.filter(item => item.json.type === 'rss');\nconst results = [];\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const sourceConfig = rssConfigItems[i] ? rssConfigItems[i].json : {};\n  results.push({\n    json: {\n      source: sourceConfig.name || 'Unknown',\n      url: sourceConfig.url || '',\n      type: 'rss',\n      category: sourceConfig.category || 'unknown',\n      success: false,\n      error: 'HTTP fetch failed',\n      content: ''\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "handle-fetch-error",
+      "name": "Handle RSS Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "output": "combined"
+      },
+      "id": "merge-results",
+      "name": "Merge All Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare prompt for LLM with HeyGen critical monitoring\nconst allItems = $input.all();\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Organize sources by category\nconst categories = {\n  stack: { name: 'Core Stack (HeyGen, ElevenLabs, n8n, etc.)', items: [] },\n  llm: { name: 'LLM / AI News', items: [] },\n  platform: { name: 'Ad Platforms (Meta, TikTok)', items: [] },\n  competitor: { name: 'Competitors & Industry', items: [] },\n  legal: { name: 'Legal & Compliance', items: [] },\n  emerging: { name: 'Emerging Platforms', items: [] }\n};\n\nconst failed = [];\nlet criticalAlerts = [];\n\nfor (const item of allItems) {\n  const data = item.json;\n  \n  if (data.success && data.content) {\n    const cat = categories[data.category] || categories.competitor;\n    cat.items.push(data);\n    \n    // Check for critical alerts\n    if (data.critical && data.criticalMatches && data.criticalMatches.length > 0) {\n      criticalAlerts.push({\n        source: data.source,\n        matches: data.criticalMatches\n      });\n    }\n  } else {\n    failed.push({\n      source: data.source,\n      error: data.error || 'Unknown error'\n    });\n  }\n}\n\n// Build sources summary\nlet sourcesSummary = '';\nfor (const [key, cat] of Object.entries(categories)) {\n  if (cat.items.length > 0) {\n    sourcesSummary += `\\n### ${cat.name}\\n\\n`;\n    for (const source of cat.items) {\n      sourcesSummary += `**${source.source}:**\\n${source.content}\\n\\n`;\n    }\n  }\n}\n\n// Build failed note\nlet failedNote = '';\nif (failed.length > 0) {\n  failedNote = `\\n\\n---\\nNote: Failed to fetch ${failed.length} sources: ${failed.map(f => f.source).join(', ')}`;\n}\n\n// Build critical alerts section\nlet criticalSection = '';\nif (criticalAlerts.length > 0) {\n  criticalSection = `\\n\\n## 🚨 CRITICAL ALERTS DETECTED\\n`;\n  for (const alert of criticalAlerts) {\n    criticalSection += `- **${alert.source}** contains keywords: ${alert.matches.join(', ')}\\n`;\n  }\n  criticalSection += `\\nPay special attention to these sources!\\n`;\n}\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n${criticalSection}\n\n## YOUR TASK\nAnalyze the following data and produce THREE outputs:\n1. Kelly's Intel Brief (technical, actionable)\n2. Eric's Sales Sheet (conversational, client-facing)\n3. Client Report Blurb (only if newsworthy)\n\n## AD PILOT'S TECH STACK (know this well!)\n- **HeyGen**: AI avatar video generation — CRITICAL dependency\n  - We use motion_type: \"kling\" via API (pulls from API credits, NOT GenCredits)\n  - We use saved motion avatars for reuse\n  - 11Labs voice integration (hidden third-party charges via plan_credit)\n- **ElevenLabs**: Voice synthesis for custom voices\n- **Creatomate**: Video template rendering\n- **n8n**: Workflow automation (self-hosted on Railway)\n- **Cloudinary**: Media management and transformations\n- **Railway**: Hosting for n8n and services\n- **Vercel**: Frontend hosting\n- **Meta/TikTok**: Ad publishing platforms\n\n## ⚠️ HEYGEN API CRITICAL MONITORING\n\nAd Pilot depends heavily on HeyGen's API. IMMEDIATELY FLAG if you see ANY mention of:\n- motion_type deprecation or changes\n- kling, consistent, or consistent_gen_3 being removed or changed\n- API credits moving to GenCredits for motion generation\n- Avatar IV becoming mandatory\n- Third-party pricing changes (affects 11Labs integration costs)\n- Photo avatar or motion avatar policy changes\n- Any \"breaking changes\" or \"deprecation\" notices\n\nThese changes could break Ad Pilot's video generation or significantly increase costs.\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\n\nReturn a valid JSON object with exactly three keys. No markdown code blocks, just the raw JSON:\n\n{\n  \"kellyBrief\": {\n    \"criticalAlerts\": [\"ONLY if HeyGen/stack breaking changes detected - include full details\"],\n    \"actionRequired\": [\"item 1 with link\", \"item 2 with link\"],\n    \"investigateThisWeek\": [\"item 1 with link\", \"item 2 with link\"],\n    \"awareness\": [\"item 1\", \"item 2\"]\n  },\n  \"ericSheet\": {\n    \"whatsNewToSell\": [\"capability 1 - how to pitch it\", \"capability 2 - how to pitch it\"],\n    \"competitorIntel\": [\"insight 1\", \"insight 2\"],\n    \"objectionPrep\": [\n      {\"objection\": \"Client might say: I saw [article]...\", \"response\": \"Here's what that means for them...\"}\n    ],\n    \"conversationStarters\": [\"Did you hear about X? Here's what it means for your business...\"]\n  },\n  \"clientBlurb\": {\n    \"include\": true,\n    \"whatsNew\": \"One sentence about relevant AI marketing news\",\n    \"whatWeAreDoing\": \"How Ad Pilot is leveraging this for clients\",\n    \"tipOfTheWeek\": \"Optional helpful tip for their video ads\"\n  }\n}\n\n## GUIDELINES\n- Be specific and actionable — no fluff\n- Include direct links where available\n- Focus on Ad Pilot's stack FIRST, then broader industry\n- If nothing relevant for a section, return empty array or include: false\n- ALWAYS check HeyGen news carefully — flag any API changes in criticalAlerts\n- Eric's content should be quotable in client conversations (casual, friendly tone)\n- Client blurb only if there's genuinely interesting news (set include: false if nothing noteworthy)\n- Keep each item concise but informative`;\n\nreturn [{ json: { prompt: prompt, today: today } }];"
+      },
+      "id": "prepare-prompt",
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}"
+      },
+      "id": "llm-chain",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1568,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "gemini-model",
+      "name": "Gemini Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        400
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4ayLTz1aZXMGf1GO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse LLM Response - safely extract JSON\nconst response = $input.item.json.text || $input.item.json.response || $input.item.json.content || '';\n\nlet parsed;\ntry {\n  let jsonStr = response;\n\n  // Remove markdown code blocks if present\n  const jsonMatch = response.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (jsonMatch) {\n    jsonStr = jsonMatch[1];\n  }\n\n  parsed = JSON.parse(jsonStr.trim());\n\n  // Validate structure\n  if (!parsed.kellyBrief || !parsed.ericSheet || !parsed.clientBlurb) {\n    throw new Error('Missing required keys in response');\n  }\n\n} catch (error) {\n  // Return safe default if parsing fails\n  parsed = {\n    kellyBrief: {\n      criticalAlerts: [],\n      actionRequired: ['⚠️ LLM response parsing failed - check workflow logs'],\n      investigateThisWeek: [],\n      awareness: ['Raw response saved for debugging']\n    },\n    ericSheet: {\n      whatsNewToSell: [],\n      competitorIntel: [],\n      objectionPrep: [],\n      conversationStarters: []\n    },\n    clientBlurb: {\n      include: false\n    },\n    _parseError: error.message,\n    _rawResponse: response.substring(0, 1000)\n  };\n}\n\nreturn [{ json: parsed }];"
+      },
+      "id": "parse-response",
+      "name": "Parse LLM Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Kelly's Intel Brief\nconst data = $input.item.json;\nconst kelly = data.kellyBrief;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #1a56db; border-bottom: 3px solid #1a56db; padding-bottom: 10px; }\n    h2 { margin-top: 30px; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 10px; }\n    a { color: #1a56db; }\n    .critical { background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }\n    .critical h2 { color: #dc2626; margin-top: 0; }\n    .action { background: #fefce8; border-left: 4px solid #ca8a04; padding: 15px; margin: 20px 0; }\n    .action h2 { color: #ca8a04; margin-top: 0; }\n    .investigate { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }\n    .investigate h2 { color: #b45309; margin-top: 0; }\n    .awareness { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; }\n    .awareness h2 { color: #16a34a; margin-top: 0; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>Ad Pilot Weekly Intel Brief</h1>\n  <p><em>${dateStr}</em></p>\n`;\n\n// Critical Alerts\nif (kelly.criticalAlerts && kelly.criticalAlerts.length > 0) {\n  html += `<div class=\"critical\"><h2>🚨 CRITICAL ALERTS</h2><ul>`;\n  kelly.criticalAlerts.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Action Required\nif (kelly.actionRequired && kelly.actionRequired.length > 0) {\n  html += `<div class=\"action\"><h2>🔴 ACTION REQUIRED</h2><ul>`;\n  kelly.actionRequired.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Investigate This Week\nif (kelly.investigateThisWeek && kelly.investigateThisWeek.length > 0) {\n  html += `<div class=\"investigate\"><h2>🟡 INVESTIGATE THIS WEEK</h2><ul>`;\n  kelly.investigateThisWeek.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Awareness\nif (kelly.awareness && kelly.awareness.length > 0) {\n  html += `<div class=\"awareness\"><h2>🟢 AWARENESS</h2><ul>`;\n  kelly.awareness.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Nothing this week\nconst hasContent = (kelly.criticalAlerts?.length > 0) ||\n                   (kelly.actionRequired?.length > 0) ||\n                   (kelly.investigateThisWeek?.length > 0) ||\n                   (kelly.awareness?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"awareness\"><p>✅ All quiet this week. Stack is stable, no critical updates detected.</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Generated by Ad Pilot Weekly Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `${kelly.criticalAlerts?.length > 0 ? '🚨' : '📊'} Weekly Intel Brief - ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'kelly'\n  }\n}];"
+      },
+      "id": "format-kelly",
+      "name": "Format Kelly's Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Eric's Sales Sheet\nconst data = $input.item.json;\nconst eric = data.ericSheet;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #7c3aed; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }\n    h2 { margin-top: 30px; color: #4c1d95; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 12px; }\n    .intro { font-size: 18px; color: #6b7280; margin-bottom: 30px; }\n    .section { background: #faf5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }\n    .objection { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }\n    .objection strong { color: #5b21b6; }\n    .response { color: #4c1d95; margin-top: 8px; }\n    .conversation { background: #ecfdf5; border-radius: 8px; padding: 15px; margin: 10px 0; font-style: italic; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>📊 Ad Pilot Sales Sheet</h1>\n  <p class=\"intro\">Hey Eric! Here's what's relevant for client conversations this week.</p>\n  <p><em>Week of ${dateStr}</em></p>\n`;\n\n// What's New to Sell\nif (eric.whatsNewToSell && eric.whatsNewToSell.length > 0) {\n  html += `<div class=\"section\"><h2>🚀 What's New to Sell</h2><ul>`;\n  eric.whatsNewToSell.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Competitor Intel\nif (eric.competitorIntel && eric.competitorIntel.length > 0) {\n  html += `<div class=\"section\"><h2>🔍 Competitor Intel</h2><ul>`;\n  eric.competitorIntel.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Objection Prep\nif (eric.objectionPrep && eric.objectionPrep.length > 0) {\n  html += `<h2>💬 Objection Prep</h2>`;\n  eric.objectionPrep.forEach(item => {\n    html += `<div class=\"objection\">\n      <strong>\"${item.objection}\"</strong>\n      <div class=\"response\">→ ${item.response}</div>\n    </div>`;\n  });\n}\n\n// Conversation Starters\nif (eric.conversationStarters && eric.conversationStarters.length > 0) {\n  html += `<h2>🗣️ Conversation Starters</h2>`;\n  eric.conversationStarters.forEach(item => {\n    html += `<div class=\"conversation\">\"${item}\"</div>`;\n  });\n}\n\n// Nothing this week\nconst hasContent = (eric.whatsNewToSell?.length > 0) ||\n                   (eric.competitorIntel?.length > 0) ||\n                   (eric.objectionPrep?.length > 0) ||\n                   (eric.conversationStarters?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"section\"><p>Quiet week on the news front! Business as usual — our tech stack is stable and clients are happy. 🎉</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Let's fly! 🐦 — Generated by Ad Pilot Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai,eric@ad-pilot.ai',\n    subject: `📊 Sales Sheet - Week of ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'eric'\n  }\n}];"
+      },
+      "id": "format-eric",
+      "name": "Format Eric's Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Client Blurb (only if include: true)\nconst data = $input.item.json;\nconst blurb = data.clientBlurb;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Only generate if there's something worth sharing\nif (!blurb || !blurb.include) {\n  return [{\n    json: {\n      skip: true,\n      reason: 'No newsworthy content for clients this week',\n      type: 'client'\n    }\n  }];\n}\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }\n    h1 { color: #059669; }\n    .blurb-box { background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 20px 0; }\n    .blurb-section { margin-bottom: 15px; }\n    .blurb-section strong { color: #047857; }\n    .tip { background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .tip strong { color: #b45309; }\n    .usage-note { background: #f3f4f6; border-radius: 8px; padding: 15px; margin-top: 30px; font-size: 14px; color: #6b7280; }\n    .footer { margin-top: 30px; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <h1>📰 Client Report Blurb</h1>\n  <p><em>Week of ${dateStr}</em></p>\n  <p>Here's a ready-to-use blurb for this week's client reports:</p>\n\n  <div class=\"blurb-box\">\n    <div class=\"blurb-section\">\n      <strong>What's New in AI Marketing:</strong><br>\n      ${blurb.whatsNew || 'No major updates this week.'}\n    </div>\n\n    <div class=\"blurb-section\">\n      <strong>What We're Doing About It:</strong><br>\n      ${blurb.whatWeAreDoing || 'Continuing to optimize your campaigns with our latest tools.'}\n    </div>\n\n    ${blurb.tipOfTheWeek ? `\n    <div class=\"tip\">\n      <strong>💡 Tip of the Week:</strong><br>\n      ${blurb.tipOfTheWeek}\n    </div>\n    ` : ''}\n  </div>\n\n  <div class=\"usage-note\">\n    <strong>Usage:</strong> Copy the content above into the \"Industry Updates\" section of client weekly reports. Feel free to customize the tone for each client.\n  </div>\n\n  <div class=\"footer\">\n    Generated by Ad Pilot Weekly Intel Agent\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `📰 Client Blurb Ready - ${new Date().toLocaleDateString()}`,\n    html: html,\n    skip: false,\n    type: 'client'\n  }\n}];"
+      },
+      "id": "format-client",
+      "name": "Format Client Blurb",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "options": {}
+      },
+      "id": "send-kelly",
+      "name": "Send Kelly's Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        0
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "options": {}
+      },
+      "id": "send-eric",
+      "name": "Send Eric's Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        200
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-client-blurb",
+      "name": "If Client Blurb",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "options": {}
+      },
+      "id": "send-client",
+      "name": "Send Client Blurb",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2464,
+        350
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "success",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "All intel emails sent successfully",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "success-response",
+      "name": "Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2688,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "skip-status",
+              "name": "status",
+              "value": "skipped",
+              "type": "string"
+            },
+            {
+              "id": "skip-message",
+              "name": "message",
+              "value": "Client blurb skipped - nothing newsworthy",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "client-skipped",
+      "name": "Client Skipped",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2464,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Sunday 8pm Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Test Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config Sources": {
+      "main": [
+        [
+          {
+            "node": "Switch: RSS or Scrape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: RSS or Scrape": {
+      "main": [
+        [
+          {
+            "node": "Fetch RSS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Scrape Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "Parse Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle RSS Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Handler": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Parse Feeds": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle RSS Error": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Results": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Response": {
+      "main": [
+        [
+          {
+            "node": "Format Kelly's Brief",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format Eric's Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format Client Blurb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Kelly's Brief": {
+      "main": [
+        [
+          {
+            "node": "Send Kelly's Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Eric's Sheet": {
+      "main": [
+        [
+          {
+            "node": "Send Eric's Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Client Blurb": {
+      "main": [
+        [
+          {
+            "node": "If Client Blurb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Kelly's Brief": {
+      "main": [
+        [
+          {
+            "node": "Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Send Eric's Sheet": {
+      "main": [
+        [
+          {
+            "node": "Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "If Client Blurb": {
+      "main": [
+        [
+          {
+            "node": "Send Client Blurb",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Client Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Client Blurb": {
+      "main": [
+        [
+          {
+            "node": "Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Sunday 8pm Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "969f670c-a3f0-4ecf-aae7-0bf8ae6e0f8a",
+  "activeVersionId": "969f670c-a3f0-4ecf-aae7-0bf8ae6e0f8a",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:35:01.040Z",
+      "createdAt": "2026-01-26T23:35:01.040Z",
+      "role": "workflow:owner",
+      "workflowId": "nauW53iR4T9JkgM1",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:07.065Z",
+    "createdAt": "2026-01-30T01:12:07.065Z",
+    "versionId": "969f670c-a3f0-4ecf-aae7-0bf8ae6e0f8a",
+    "workflowId": "nauW53iR4T9JkgM1",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 20 * * 0"
+              }
+            ]
+          }
+        },
+        "id": "schedule-trigger",
+        "name": "Sunday 8pm Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "intel-agent-test",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "manual-trigger",
+        "name": "Manual Test Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          100
+        ],
+        "webhookId": "intel-agent-test"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Weekly Intel Agent - Source Configuration\n// Last updated: 2026-01-22\n\nconst sources = [\n  // ═══════════════════════════════════════════════════════════════════════════\n  // LLM / AI NEWS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'OpenAI News', url: 'https://openai.com/news/rss.xml', type: 'rss', category: 'llm' },\n  { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss', type: 'rss', category: 'llm' },\n  { name: 'Anthropic News', url: 'https://www.anthropic.com/news', type: 'scrape', category: 'llm' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // CORE STACK — RSS FEEDS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Cloudinary Blog', url: 'https://cloudinary.com/blog/feed', type: 'rss', category: 'stack' },\n  { name: 'n8n GitHub Releases', url: 'https://github.com/n8n-io/n8n/releases.atom', type: 'rss', category: 'stack' },\n  { name: 'n8n Blog', url: 'https://blog.n8n.io/rss/', type: 'rss', category: 'stack' },\n  { name: 'Vercel Changelog', url: 'https://vercel.com/atom', type: 'rss', category: 'stack' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // CORE STACK — WEB SCRAPE (no RSS available)\n  // ═══════════════════════════════════════════════════════════════════════════\n  {\n    name: 'HeyGen API Changelog',\n    url: 'https://docs.heygen.com/changelog',\n    type: 'scrape',\n    category: 'stack',\n    critical: true,\n    watchFor: ['motion_type', 'kling', 'consistent', 'deprecat', 'removed', 'sunset', 'third party', 'credit', 'Avatar IV', 'pricing', 'breaking']\n  },\n  { name: 'HeyGen Blog', url: 'https://www.heygen.com/blog', type: 'scrape', category: 'stack' },\n  { name: 'ElevenLabs Changelog', url: 'https://elevenlabs.io/docs/changelog', type: 'scrape', category: 'stack' },\n  { name: 'Railway Changelog', url: 'https://railway.com/changelog', type: 'scrape', category: 'stack' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // PLATFORMS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Meta Engineering', url: 'https://engineering.fb.com/feed/', type: 'rss', category: 'platform' },\n  { name: 'Meta for Business', url: 'https://www.facebook.com/business/news/rss', type: 'rss', category: 'platform' },\n  { name: 'TikTok Newsroom', url: 'https://newsroom.tiktok.com/en-us', type: 'scrape', category: 'platform' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // COMPETITORS / INDUSTRY\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Synthesia Blog', url: 'https://www.synthesia.io/blog', type: 'scrape', category: 'competitor' },\n  { name: 'Product Hunt AI', url: 'https://www.producthunt.com/feed?category=artificial-intelligence', type: 'rss', category: 'competitor' }\n];\n\nreturn sources.map(source => ({ json: source }));"
+        },
+        "id": "config-sources",
+        "name": "Config Sources",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "id": "rss-condition",
+                      "leftValue": "={{ $json.type }}",
+                      "rightValue": "rss",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "RSS"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "id": "scrape-condition",
+                      "leftValue": "={{ $json.type }}",
+                      "rightValue": "scrape",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Scrape"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "switch-type",
+        "name": "Switch: RSS or Scrape",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          448,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "text"
+              }
+            },
+            "timeout": 30000
+          }
+        },
+        "id": "fetch-rss",
+        "name": "Fetch RSS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          100
+        ],
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Scrape Handler - extracts content from pages without RSS feeds\nconst source = $input.item.json;\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'GET',\n    url: source.url,\n    headers: {\n      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',\n      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',\n      'Accept-Language': 'en-US,en;q=0.5'\n    },\n    returnFullResponse: true\n  });\n\n  const html = response.body;\n\n  // Remove script, style, nav, header, footer content\n  let text = html\n    .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n    .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')\n    .replace(/<nav[^>]*>[\\s\\S]*?<\\/nav>/gi, '')\n    .replace(/<header[^>]*>[\\s\\S]*?<\\/header>/gi, '')\n    .replace(/<footer[^>]*>[\\s\\S]*?<\\/footer>/gi, '');\n\n  // Try to extract content from common content areas\n  const contentPatterns = [\n    /<main[^>]*>([\\s\\S]*?)<\\/main>/gi,\n    /<article[^>]*>([\\s\\S]*?)<\\/article>/gi,\n    /<div[^>]*class=\"[^\"]*content[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*changelog[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*blog[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*post[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi\n  ];\n\n  let extractedContent = '';\n  for (const pattern of contentPatterns) {\n    const matches = text.matchAll(pattern);\n    for (const match of matches) {\n      extractedContent += match[1] + '\\n';\n    }\n  }\n\n  if (!extractedContent) {\n    extractedContent = text;\n  }\n\n  // Strip HTML tags and clean up\n  extractedContent = extractedContent\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  // Limit content length\n  const maxLength = 4000;\n  if (extractedContent.length > maxLength) {\n    extractedContent = extractedContent.substring(0, maxLength) + '... [truncated]';\n  }\n\n  // Check for critical keywords\n  let criticalMatches = [];\n  if (source.critical && source.watchFor) {\n    const lowerContent = extractedContent.toLowerCase();\n    criticalMatches = source.watchFor.filter(keyword =>\n      lowerContent.includes(keyword.toLowerCase())\n    );\n  }\n\n  return {\n    json: {\n      source: source.name,\n      url: source.url,\n      type: 'scrape',\n      category: source.category,\n      critical: source.critical || false,\n      criticalMatches: criticalMatches,\n      content: extractedContent,\n      fetchedAt: new Date().toISOString(),\n      success: true\n    }\n  };\n\n} catch (error) {\n  return {\n    json: {\n      source: source.name,\n      url: source.url,\n      type: 'scrape',\n      category: source.category,\n      critical: source.critical || false,\n      content: '',\n      fetchedAt: new Date().toISOString(),\n      success: false,\n      error: error.message\n    }\n  };\n}"
+        },
+        "id": "scrape-handler",
+        "name": "Scrape Handler",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse RSS/Atom feeds\nconst results = [];\nconst allConfigItems = $('Config Sources').all();\nconst rssConfigItems = allConfigItems.filter(item => item.json.type === 'rss');\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const item = $input.all()[i];\n  const xml = item.json.data || '';\n  const sourceConfig = rssConfigItems[i] ? rssConfigItems[i].json : {};\n  const sourceName = sourceConfig.name || 'Unknown';\n  const sourceUrl = sourceConfig.url || '';\n  const sourceCategory = sourceConfig.category || 'unknown';\n  \n  try {\n    const items = [];\n    const itemMatches = xml.match(/<(item|entry)[^>]*>[\\s\\S]*?<\\/\\1>/gi) || [];\n    \n    for (const entry of itemMatches.slice(0, 5)) {\n      const titleMatch = entry.match(/<title[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i);\n      let title = titleMatch ? titleMatch[1].trim().replace(/<[^>]+>/g, '') : 'No title';\n      \n      let link = '';\n      const linkHrefMatch = entry.match(/<link[^>]*href=[\"']([^\"']+)[\"']/i);\n      const linkTextMatch = entry.match(/<link[^>]*>([^<]+)<\\/link>/i);\n      link = linkHrefMatch ? linkHrefMatch[1] : (linkTextMatch ? linkTextMatch[1] : '');\n      \n      const dateMatch = entry.match(/<(pubDate|updated|published)[^>]*>([^<]+)<\\/\\1>/i);\n      const date = dateMatch ? dateMatch[2].trim() : '';\n      \n      const descMatch = entry.match(/<(description|summary|content)[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/\\1>/i);\n      let description = descMatch ? descMatch[2].trim() : '';\n      description = description.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 300);\n      \n      items.push({ title, link, date, description });\n    }\n    \n    results.push({\n      json: {\n        source: sourceName,\n        url: sourceUrl,\n        type: 'rss',\n        category: sourceCategory,\n        success: items.length > 0,\n        content: items.map(item => `- **${item.title}**${item.date ? ` (${item.date})` : ''}\\n  ${item.description}\\n  Link: ${item.link}`).join('\\n\\n'),\n        items: items\n      }\n    });\n  } catch (error) {\n    results.push({\n      json: {\n        source: sourceName,\n        url: sourceUrl,\n        type: 'rss',\n        category: sourceCategory,\n        success: false,\n        error: error.message,\n        content: ''\n      }\n    });\n  }\n}\n\nreturn results;"
+        },
+        "id": "parse-feeds",
+        "name": "Parse Feeds",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          100
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Handle RSS fetch errors\nconst allConfigItems = $('Config Sources').all();\nconst rssConfigItems = allConfigItems.filter(item => item.json.type === 'rss');\nconst results = [];\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const sourceConfig = rssConfigItems[i] ? rssConfigItems[i].json : {};\n  results.push({\n    json: {\n      source: sourceConfig.name || 'Unknown',\n      url: sourceConfig.url || '',\n      type: 'rss',\n      category: sourceConfig.category || 'unknown',\n      success: false,\n      error: 'HTTP fetch failed',\n      content: ''\n    }\n  });\n}\n\nreturn results;"
+        },
+        "id": "handle-fetch-error",
+        "name": "Handle RSS Error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "append",
+          "output": "combined"
+        },
+        "id": "merge-results",
+        "name": "Merge All Results",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          1120,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare prompt for LLM with HeyGen critical monitoring\nconst allItems = $input.all();\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Organize sources by category\nconst categories = {\n  stack: { name: 'Core Stack (HeyGen, ElevenLabs, n8n, etc.)', items: [] },\n  llm: { name: 'LLM / AI News', items: [] },\n  platform: { name: 'Ad Platforms (Meta, TikTok)', items: [] },\n  competitor: { name: 'Competitors & Industry', items: [] },\n  legal: { name: 'Legal & Compliance', items: [] },\n  emerging: { name: 'Emerging Platforms', items: [] }\n};\n\nconst failed = [];\nlet criticalAlerts = [];\n\nfor (const item of allItems) {\n  const data = item.json;\n  \n  if (data.success && data.content) {\n    const cat = categories[data.category] || categories.competitor;\n    cat.items.push(data);\n    \n    // Check for critical alerts\n    if (data.critical && data.criticalMatches && data.criticalMatches.length > 0) {\n      criticalAlerts.push({\n        source: data.source,\n        matches: data.criticalMatches\n      });\n    }\n  } else {\n    failed.push({\n      source: data.source,\n      error: data.error || 'Unknown error'\n    });\n  }\n}\n\n// Build sources summary\nlet sourcesSummary = '';\nfor (const [key, cat] of Object.entries(categories)) {\n  if (cat.items.length > 0) {\n    sourcesSummary += `\\n### ${cat.name}\\n\\n`;\n    for (const source of cat.items) {\n      sourcesSummary += `**${source.source}:**\\n${source.content}\\n\\n`;\n    }\n  }\n}\n\n// Build failed note\nlet failedNote = '';\nif (failed.length > 0) {\n  failedNote = `\\n\\n---\\nNote: Failed to fetch ${failed.length} sources: ${failed.map(f => f.source).join(', ')}`;\n}\n\n// Build critical alerts section\nlet criticalSection = '';\nif (criticalAlerts.length > 0) {\n  criticalSection = `\\n\\n## 🚨 CRITICAL ALERTS DETECTED\\n`;\n  for (const alert of criticalAlerts) {\n    criticalSection += `- **${alert.source}** contains keywords: ${alert.matches.join(', ')}\\n`;\n  }\n  criticalSection += `\\nPay special attention to these sources!\\n`;\n}\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n${criticalSection}\n\n## YOUR TASK\nAnalyze the following data and produce THREE outputs:\n1. Kelly's Intel Brief (technical, actionable)\n2. Eric's Sales Sheet (conversational, client-facing)\n3. Client Report Blurb (only if newsworthy)\n\n## AD PILOT'S TECH STACK (know this well!)\n- **HeyGen**: AI avatar video generation — CRITICAL dependency\n  - We use motion_type: \"kling\" via API (pulls from API credits, NOT GenCredits)\n  - We use saved motion avatars for reuse\n  - 11Labs voice integration (hidden third-party charges via plan_credit)\n- **ElevenLabs**: Voice synthesis for custom voices\n- **Creatomate**: Video template rendering\n- **n8n**: Workflow automation (self-hosted on Railway)\n- **Cloudinary**: Media management and transformations\n- **Railway**: Hosting for n8n and services\n- **Vercel**: Frontend hosting\n- **Meta/TikTok**: Ad publishing platforms\n\n## ⚠️ HEYGEN API CRITICAL MONITORING\n\nAd Pilot depends heavily on HeyGen's API. IMMEDIATELY FLAG if you see ANY mention of:\n- motion_type deprecation or changes\n- kling, consistent, or consistent_gen_3 being removed or changed\n- API credits moving to GenCredits for motion generation\n- Avatar IV becoming mandatory\n- Third-party pricing changes (affects 11Labs integration costs)\n- Photo avatar or motion avatar policy changes\n- Any \"breaking changes\" or \"deprecation\" notices\n\nThese changes could break Ad Pilot's video generation or significantly increase costs.\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\n\nReturn a valid JSON object with exactly three keys. No markdown code blocks, just the raw JSON:\n\n{\n  \"kellyBrief\": {\n    \"criticalAlerts\": [\"ONLY if HeyGen/stack breaking changes detected - include full details\"],\n    \"actionRequired\": [\"item 1 with link\", \"item 2 with link\"],\n    \"investigateThisWeek\": [\"item 1 with link\", \"item 2 with link\"],\n    \"awareness\": [\"item 1\", \"item 2\"]\n  },\n  \"ericSheet\": {\n    \"whatsNewToSell\": [\"capability 1 - how to pitch it\", \"capability 2 - how to pitch it\"],\n    \"competitorIntel\": [\"insight 1\", \"insight 2\"],\n    \"objectionPrep\": [\n      {\"objection\": \"Client might say: I saw [article]...\", \"response\": \"Here's what that means for them...\"}\n    ],\n    \"conversationStarters\": [\"Did you hear about X? Here's what it means for your business...\"]\n  },\n  \"clientBlurb\": {\n    \"include\": true,\n    \"whatsNew\": \"One sentence about relevant AI marketing news\",\n    \"whatWeAreDoing\": \"How Ad Pilot is leveraging this for clients\",\n    \"tipOfTheWeek\": \"Optional helpful tip for their video ads\"\n  }\n}\n\n## GUIDELINES\n- Be specific and actionable — no fluff\n- Include direct links where available\n- Focus on Ad Pilot's stack FIRST, then broader industry\n- If nothing relevant for a section, return empty array or include: false\n- ALWAYS check HeyGen news carefully — flag any API changes in criticalAlerts\n- Eric's content should be quotable in client conversations (casual, friendly tone)\n- Client blurb only if there's genuinely interesting news (set include: false if nothing noteworthy)\n- Keep each item concise but informative`;\n\nreturn [{ json: { prompt: prompt, today: today } }];"
+        },
+        "id": "prepare-prompt",
+        "name": "Prepare Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1344,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.prompt }}"
+        },
+        "id": "llm-chain",
+        "name": "Basic LLM Chain",
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "typeVersion": 1.4,
+        "position": [
+          1568,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "options": {
+            "temperature": 0.3
+          }
+        },
+        "id": "gemini-model",
+        "name": "Gemini Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1,
+        "position": [
+          1616,
+          400
+        ],
+        "credentials": {
+          "googlePalmApi": {
+            "id": "4ayLTz1aZXMGf1GO",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse LLM Response - safely extract JSON\nconst response = $input.item.json.text || $input.item.json.response || $input.item.json.content || '';\n\nlet parsed;\ntry {\n  let jsonStr = response;\n\n  // Remove markdown code blocks if present\n  const jsonMatch = response.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (jsonMatch) {\n    jsonStr = jsonMatch[1];\n  }\n\n  parsed = JSON.parse(jsonStr.trim());\n\n  // Validate structure\n  if (!parsed.kellyBrief || !parsed.ericSheet || !parsed.clientBlurb) {\n    throw new Error('Missing required keys in response');\n  }\n\n} catch (error) {\n  // Return safe default if parsing fails\n  parsed = {\n    kellyBrief: {\n      criticalAlerts: [],\n      actionRequired: ['⚠️ LLM response parsing failed - check workflow logs'],\n      investigateThisWeek: [],\n      awareness: ['Raw response saved for debugging']\n    },\n    ericSheet: {\n      whatsNewToSell: [],\n      competitorIntel: [],\n      objectionPrep: [],\n      conversationStarters: []\n    },\n    clientBlurb: {\n      include: false\n    },\n    _parseError: error.message,\n    _rawResponse: response.substring(0, 1000)\n  };\n}\n\nreturn [{ json: parsed }];"
+        },
+        "id": "parse-response",
+        "name": "Parse LLM Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1792,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format Kelly's Intel Brief\nconst data = $input.item.json;\nconst kelly = data.kellyBrief;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #1a56db; border-bottom: 3px solid #1a56db; padding-bottom: 10px; }\n    h2 { margin-top: 30px; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 10px; }\n    a { color: #1a56db; }\n    .critical { background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }\n    .critical h2 { color: #dc2626; margin-top: 0; }\n    .action { background: #fefce8; border-left: 4px solid #ca8a04; padding: 15px; margin: 20px 0; }\n    .action h2 { color: #ca8a04; margin-top: 0; }\n    .investigate { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }\n    .investigate h2 { color: #b45309; margin-top: 0; }\n    .awareness { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; }\n    .awareness h2 { color: #16a34a; margin-top: 0; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>Ad Pilot Weekly Intel Brief</h1>\n  <p><em>${dateStr}</em></p>\n`;\n\n// Critical Alerts\nif (kelly.criticalAlerts && kelly.criticalAlerts.length > 0) {\n  html += `<div class=\"critical\"><h2>🚨 CRITICAL ALERTS</h2><ul>`;\n  kelly.criticalAlerts.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Action Required\nif (kelly.actionRequired && kelly.actionRequired.length > 0) {\n  html += `<div class=\"action\"><h2>🔴 ACTION REQUIRED</h2><ul>`;\n  kelly.actionRequired.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Investigate This Week\nif (kelly.investigateThisWeek && kelly.investigateThisWeek.length > 0) {\n  html += `<div class=\"investigate\"><h2>🟡 INVESTIGATE THIS WEEK</h2><ul>`;\n  kelly.investigateThisWeek.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Awareness\nif (kelly.awareness && kelly.awareness.length > 0) {\n  html += `<div class=\"awareness\"><h2>🟢 AWARENESS</h2><ul>`;\n  kelly.awareness.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Nothing this week\nconst hasContent = (kelly.criticalAlerts?.length > 0) ||\n                   (kelly.actionRequired?.length > 0) ||\n                   (kelly.investigateThisWeek?.length > 0) ||\n                   (kelly.awareness?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"awareness\"><p>✅ All quiet this week. Stack is stable, no critical updates detected.</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Generated by Ad Pilot Weekly Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `${kelly.criticalAlerts?.length > 0 ? '🚨' : '📊'} Weekly Intel Brief - ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'kelly'\n  }\n}];"
+        },
+        "id": "format-kelly",
+        "name": "Format Kelly's Brief",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2016,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format Eric's Sales Sheet\nconst data = $input.item.json;\nconst eric = data.ericSheet;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #7c3aed; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }\n    h2 { margin-top: 30px; color: #4c1d95; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 12px; }\n    .intro { font-size: 18px; color: #6b7280; margin-bottom: 30px; }\n    .section { background: #faf5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }\n    .objection { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }\n    .objection strong { color: #5b21b6; }\n    .response { color: #4c1d95; margin-top: 8px; }\n    .conversation { background: #ecfdf5; border-radius: 8px; padding: 15px; margin: 10px 0; font-style: italic; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>📊 Ad Pilot Sales Sheet</h1>\n  <p class=\"intro\">Hey Eric! Here's what's relevant for client conversations this week.</p>\n  <p><em>Week of ${dateStr}</em></p>\n`;\n\n// What's New to Sell\nif (eric.whatsNewToSell && eric.whatsNewToSell.length > 0) {\n  html += `<div class=\"section\"><h2>🚀 What's New to Sell</h2><ul>`;\n  eric.whatsNewToSell.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Competitor Intel\nif (eric.competitorIntel && eric.competitorIntel.length > 0) {\n  html += `<div class=\"section\"><h2>🔍 Competitor Intel</h2><ul>`;\n  eric.competitorIntel.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Objection Prep\nif (eric.objectionPrep && eric.objectionPrep.length > 0) {\n  html += `<h2>💬 Objection Prep</h2>`;\n  eric.objectionPrep.forEach(item => {\n    html += `<div class=\"objection\">\n      <strong>\"${item.objection}\"</strong>\n      <div class=\"response\">→ ${item.response}</div>\n    </div>`;\n  });\n}\n\n// Conversation Starters\nif (eric.conversationStarters && eric.conversationStarters.length > 0) {\n  html += `<h2>🗣️ Conversation Starters</h2>`;\n  eric.conversationStarters.forEach(item => {\n    html += `<div class=\"conversation\">\"${item}\"</div>`;\n  });\n}\n\n// Nothing this week\nconst hasContent = (eric.whatsNewToSell?.length > 0) ||\n                   (eric.competitorIntel?.length > 0) ||\n                   (eric.objectionPrep?.length > 0) ||\n                   (eric.conversationStarters?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"section\"><p>Quiet week on the news front! Business as usual — our tech stack is stable and clients are happy. 🎉</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Let's fly! 🐦 — Generated by Ad Pilot Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai,eric@ad-pilot.ai',\n    subject: `📊 Sales Sheet - Week of ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'eric'\n  }\n}];"
+        },
+        "id": "format-eric",
+        "name": "Format Eric's Sheet",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2016,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format Client Blurb (only if include: true)\nconst data = $input.item.json;\nconst blurb = data.clientBlurb;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Only generate if there's something worth sharing\nif (!blurb || !blurb.include) {\n  return [{\n    json: {\n      skip: true,\n      reason: 'No newsworthy content for clients this week',\n      type: 'client'\n    }\n  }];\n}\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }\n    h1 { color: #059669; }\n    .blurb-box { background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 20px 0; }\n    .blurb-section { margin-bottom: 15px; }\n    .blurb-section strong { color: #047857; }\n    .tip { background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .tip strong { color: #b45309; }\n    .usage-note { background: #f3f4f6; border-radius: 8px; padding: 15px; margin-top: 30px; font-size: 14px; color: #6b7280; }\n    .footer { margin-top: 30px; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <h1>📰 Client Report Blurb</h1>\n  <p><em>Week of ${dateStr}</em></p>\n  <p>Here's a ready-to-use blurb for this week's client reports:</p>\n\n  <div class=\"blurb-box\">\n    <div class=\"blurb-section\">\n      <strong>What's New in AI Marketing:</strong><br>\n      ${blurb.whatsNew || 'No major updates this week.'}\n    </div>\n\n    <div class=\"blurb-section\">\n      <strong>What We're Doing About It:</strong><br>\n      ${blurb.whatWeAreDoing || 'Continuing to optimize your campaigns with our latest tools.'}\n    </div>\n\n    ${blurb.tipOfTheWeek ? `\n    <div class=\"tip\">\n      <strong>💡 Tip of the Week:</strong><br>\n      ${blurb.tipOfTheWeek}\n    </div>\n    ` : ''}\n  </div>\n\n  <div class=\"usage-note\">\n    <strong>Usage:</strong> Copy the content above into the \"Industry Updates\" section of client weekly reports. Feel free to customize the tone for each client.\n  </div>\n\n  <div class=\"footer\">\n    Generated by Ad Pilot Weekly Intel Agent\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `📰 Client Blurb Ready - ${new Date().toLocaleDateString()}`,\n    html: html,\n    skip: false,\n    type: 'client'\n  }\n}];"
+        },
+        "id": "format-client",
+        "name": "Format Client Blurb",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2016,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+          "options": {}
+        },
+        "id": "send-kelly",
+        "name": "Send Kelly's Brief",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2240,
+          0
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+          "options": {}
+        },
+        "id": "send-eric",
+        "name": "Send Eric's Sheet",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2240,
+          200
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "skip-check",
+                "leftValue": "={{ $json.skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "id": "if-client-blurb",
+        "name": "If Client Blurb",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2240,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+          "options": {}
+        },
+        "id": "send-client",
+        "name": "Send Client Blurb",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2464,
+          350
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "success",
+                "name": "status",
+                "value": "success",
+                "type": "string"
+              },
+              {
+                "id": "message",
+                "name": "message",
+                "value": "All intel emails sent successfully",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "success-response",
+        "name": "Success",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2688,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "skip-status",
+                "name": "status",
+                "value": "skipped",
+                "type": "string"
+              },
+              {
+                "id": "skip-message",
+                "name": "message",
+                "value": "Client blurb skipped - nothing newsworthy",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "client-skipped",
+        "name": "Client Skipped",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2464,
+          500
+        ]
+      }
+    ],
+    "connections": {
+      "Sunday 8pm Trigger": {
+        "main": [
+          [
+            {
+              "node": "Config Sources",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Test Trigger": {
+        "main": [
+          [
+            {
+              "node": "Config Sources",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Config Sources": {
+        "main": [
+          [
+            {
+              "node": "Switch: RSS or Scrape",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch: RSS or Scrape": {
+        "main": [
+          [
+            {
+              "node": "Fetch RSS",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Scrape Handler",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch RSS": {
+        "main": [
+          [
+            {
+              "node": "Parse Feeds",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Handle RSS Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Scrape Handler": {
+        "main": [
+          [
+            {
+              "node": "Merge All Results",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Parse Feeds": {
+        "main": [
+          [
+            {
+              "node": "Merge All Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Handle RSS Error": {
+        "main": [
+          [
+            {
+              "node": "Merge All Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge All Results": {
+        "main": [
+          [
+            {
+              "node": "Prepare Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Prompt": {
+        "main": [
+          [
+            {
+              "node": "Basic LLM Chain",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Basic LLM Chain",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Basic LLM Chain": {
+        "main": [
+          [
+            {
+              "node": "Parse LLM Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse LLM Response": {
+        "main": [
+          [
+            {
+              "node": "Format Kelly's Brief",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Format Eric's Sheet",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Format Client Blurb",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Kelly's Brief": {
+        "main": [
+          [
+            {
+              "node": "Send Kelly's Brief",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Eric's Sheet": {
+        "main": [
+          [
+            {
+              "node": "Send Eric's Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Client Blurb": {
+        "main": [
+          [
+            {
+              "node": "If Client Blurb",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Kelly's Brief": {
+        "main": [
+          [
+            {
+              "node": "Success",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Send Eric's Sheet": {
+        "main": [
+          [
+            {
+              "node": "Success",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "If Client Blurb": {
+        "main": [
+          [
+            {
+              "node": "Send Client Blurb",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Client Skipped",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Client Blurb": {
+        "main": [
+          [
+            {
+              "node": "Success",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
