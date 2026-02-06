@@ -1,0 +1,199 @@
+{
+  "updatedAt": "2026-01-30T01:12:00.030Z",
+  "createdAt": "2026-01-26T23:34:40.138Z",
+  "id": "YKlWsdtLfYJPfDJi",
+  "name": "[Util] Run Migration",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-migration",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "run-migration-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, processing_status, processed_at, jsonb_array_length(processed_items) as item_count, theme_pack->'theme_name' as theme_name FROM assets WHERE id = 'df7ca9ea-a4b4-4d2b-8328-506d1ecd34e3'",
+        "options": {}
+      },
+      "id": "postgres-001",
+      "name": "Run Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-001",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Query": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "1d275a7c-7299-4442-a795-297de592432e",
+  "activeVersionId": "1d275a7c-7299-4442-a795-297de592432e",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:40.138Z",
+      "createdAt": "2026-01-26T23:34:40.138Z",
+      "role": "workflow:owner",
+      "workflowId": "YKlWsdtLfYJPfDJi",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:00.035Z",
+    "createdAt": "2026-01-30T01:12:00.035Z",
+    "versionId": "1d275a7c-7299-4442-a795-297de592432e",
+    "workflowId": "YKlWsdtLfYJPfDJi",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "run-migration",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-001",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "run-migration-001"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id, processing_status, processed_at, jsonb_array_length(processed_items) as item_count, theme_pack->'theme_name' as theme_name FROM assets WHERE id = 'df7ca9ea-a4b4-4d2b-8328-506d1ecd34e3'",
+          "options": {}
+        },
+        "id": "postgres-001",
+        "name": "Run Query",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}"
+        },
+        "id": "respond-001",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          680,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Run Query",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run Query": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
