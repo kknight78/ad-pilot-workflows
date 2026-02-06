@@ -1,0 +1,627 @@
+{
+  "updatedAt": "2026-01-30T01:12:04.557Z",
+  "createdAt": "2026-01-26T23:34:50.982Z",
+  "id": "yqw6OsqdPKXdRJQx",
+  "name": "Sync HeyGen Avatars to DB",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-avatars",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "id": "webhook",
+      "name": "Webhook Trigger",
+      "webhookId": "sync-avatars"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define all persons to sync\nconst persons = [\n  { person_id: '11111111-1111-1111-1111-111111111111', name: 'Gary', heygen_group_id: '7c9b17d0db574a6aa4e7fc8a2cf71ce8' },\n  { person_id: '22222222-2222-2222-2222-222222222222', name: 'Shad', heygen_group_id: '98c258ddd69741f6a2fa1964e22383a3' },\n  { person_id: '33333333-3333-3333-3333-333333333333', name: 'Kelly', heygen_group_id: '585545c8034c4c43b3969797841efd6c' },\n  { person_id: '00000000-0000-0000-0000-000000000000', name: 'Brooklyn', heygen_group_id: 'a59d7191cd0d454b840a63695fc73abf' }\n];\n\nreturn persons.map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        200
+      ],
+      "id": "list-persons",
+      "name": "List Persons"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.heygen.com/v2/avatar_group/{{ $json.heygen_group_id }}/avatars",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        200
+      ],
+      "id": "get-heygen-avatars",
+      "name": "Get HeyGen Avatars",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ojyMsMj6Dsv91bQI",
+          "name": "HeyGen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get persons list and HeyGen responses\nconst personsList = $('List Persons').all();\nconst heygenResponses = $input.all();\n\nconst MAX_URL_LEN = 490;\nconst allResults = [];\n\n// Process each HeyGen response with its corresponding person\nfor (let i = 0; i < heygenResponses.length; i++) {\n  const person = personsList[i]?.json;\n  const heygenData = heygenResponses[i]?.json;\n  \n  if (!person || !heygenData) continue;\n  \n  const personId = person.person_id;\n  const personName = person.name;\n  const avatarList = heygenData.data?.avatar_list || [];\n  \n  for (const avatar of avatarList) {\n    // Only include motion avatars\n    if (!avatar.is_motion) continue;\n    \n    // Use avatar name as style name (no motion type suffix)\n    const styleName = (avatar.name || 'Default').replace(/'/g, \"''\");\n    \n    // Set URLs to null if too long\n    let previewUrl = avatar.motion_preview_url || null;\n    if (previewUrl && previewUrl.length > MAX_URL_LEN) previewUrl = null;\n    if (previewUrl) previewUrl = previewUrl.replace(/'/g, \"''\");\n    \n    let imageUrl = avatar.image_url || null;\n    if (imageUrl && imageUrl.length > MAX_URL_LEN) imageUrl = null;\n    if (imageUrl) imageUrl = imageUrl.replace(/'/g, \"''\");\n    \n    allResults.push({\n      json: {\n        person_id: personId,\n        person_name: personName,\n        style_name: styleName,\n        motion_avatar_id: avatar.id,\n        preview_video_url: previewUrl,\n        preview_image_url: imageUrl\n      }\n    });\n  }\n}\n\nreturn allResults.length > 0 ? allResults : [{ json: { skip: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        200
+      ],
+      "id": "transform-avatars",
+      "name": "Transform Avatars"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        200
+      ],
+      "id": "if-has-avatars",
+      "name": "Has Avatars?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO avatars (person_id, style_name, motion_avatar_id, preview_video_url, preview_image_url)\nVALUES (\n  '{{ $json.person_id }}'::uuid,\n  '{{ $json.style_name }}',\n  '{{ $json.motion_avatar_id }}',\n  {{ $json.preview_video_url ? \"'\" + $json.preview_video_url + \"'\" : 'NULL' }},\n  {{ $json.preview_image_url ? \"'\" + $json.preview_image_url + \"'\" : 'NULL' }}\n)\nON CONFLICT (motion_avatar_id) DO UPDATE SET\n  style_name = EXCLUDED.style_name,\n  preview_video_url = EXCLUDED.preview_video_url,\n  preview_image_url = EXCLUDED.preview_image_url,\n  updated_at = NOW()\nRETURNING id, person_id, style_name, motion_avatar_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1000,
+        100
+      ],
+      "id": "upsert-avatar",
+      "name": "Upsert Avatar",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid,\n  '{{ $json.id }}'::uuid,\n  true\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n)\nRETURNING avatar_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1200,
+        100
+      ],
+      "id": "link-to-client",
+      "name": "Link to CCC Client",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        200
+      ],
+      "id": "aggregate-results",
+      "name": "Aggregate Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Count total avatars processed\nconst allData = $input.all();\nlet syncedCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  syncedCount += data.filter(d => d && d.id).length;\n}\n\nreturn [{\n  json: {\n    success: true,\n    message: `Synced ${syncedCount} avatars from HeyGen to database`,\n    synced_count: syncedCount\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        200
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        200
+      ],
+      "id": "respond",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "List Persons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Persons": {
+      "main": [
+        [
+          {
+            "node": "Get HeyGen Avatars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HeyGen Avatars": {
+      "main": [
+        [
+          {
+            "node": "Transform Avatars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Avatars": {
+      "main": [
+        [
+          {
+            "node": "Has Avatars?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Avatars?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Avatar": {
+      "main": [
+        [
+          {
+            "node": "Link to CCC Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link to CCC Client": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "01af6b64-e17c-4728-b662-c459946282df",
+  "activeVersionId": "01af6b64-e17c-4728-b662-c459946282df",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:50.982Z",
+      "createdAt": "2026-01-26T23:34:50.982Z",
+      "role": "workflow:owner",
+      "workflowId": "yqw6OsqdPKXdRJQx",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:04.560Z",
+    "createdAt": "2026-01-30T01:12:04.560Z",
+    "versionId": "01af6b64-e17c-4728-b662-c459946282df",
+    "workflowId": "yqw6OsqdPKXdRJQx",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sync-avatars",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "id": "webhook",
+        "name": "Webhook Trigger",
+        "webhookId": "sync-avatars"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Define all persons to sync\nconst persons = [\n  { person_id: '11111111-1111-1111-1111-111111111111', name: 'Gary', heygen_group_id: '7c9b17d0db574a6aa4e7fc8a2cf71ce8' },\n  { person_id: '22222222-2222-2222-2222-222222222222', name: 'Shad', heygen_group_id: '98c258ddd69741f6a2fa1964e22383a3' },\n  { person_id: '33333333-3333-3333-3333-333333333333', name: 'Kelly', heygen_group_id: '585545c8034c4c43b3969797841efd6c' },\n  { person_id: '00000000-0000-0000-0000-000000000000', name: 'Brooklyn', heygen_group_id: 'a59d7191cd0d454b840a63695fc73abf' }\n];\n\nreturn persons.map(p => ({ json: p }));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          200
+        ],
+        "id": "list-persons",
+        "name": "List Persons"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.heygen.com/v2/avatar_group/{{ $json.heygen_group_id }}/avatars",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          400,
+          200
+        ],
+        "id": "get-heygen-avatars",
+        "name": "Get HeyGen Avatars",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ojyMsMj6Dsv91bQI",
+            "name": "HeyGen"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get persons list and HeyGen responses\nconst personsList = $('List Persons').all();\nconst heygenResponses = $input.all();\n\nconst MAX_URL_LEN = 490;\nconst allResults = [];\n\n// Process each HeyGen response with its corresponding person\nfor (let i = 0; i < heygenResponses.length; i++) {\n  const person = personsList[i]?.json;\n  const heygenData = heygenResponses[i]?.json;\n  \n  if (!person || !heygenData) continue;\n  \n  const personId = person.person_id;\n  const personName = person.name;\n  const avatarList = heygenData.data?.avatar_list || [];\n  \n  for (const avatar of avatarList) {\n    // Only include motion avatars\n    if (!avatar.is_motion) continue;\n    \n    // Use avatar name as style name (no motion type suffix)\n    const styleName = (avatar.name || 'Default').replace(/'/g, \"''\");\n    \n    // Set URLs to null if too long\n    let previewUrl = avatar.motion_preview_url || null;\n    if (previewUrl && previewUrl.length > MAX_URL_LEN) previewUrl = null;\n    if (previewUrl) previewUrl = previewUrl.replace(/'/g, \"''\");\n    \n    let imageUrl = avatar.image_url || null;\n    if (imageUrl && imageUrl.length > MAX_URL_LEN) imageUrl = null;\n    if (imageUrl) imageUrl = imageUrl.replace(/'/g, \"''\");\n    \n    allResults.push({\n      json: {\n        person_id: personId,\n        person_name: personName,\n        style_name: styleName,\n        motion_avatar_id: avatar.id,\n        preview_video_url: previewUrl,\n        preview_image_url: imageUrl\n      }\n    });\n  }\n}\n\nreturn allResults.length > 0 ? allResults : [{ json: { skip: true } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          200
+        ],
+        "id": "transform-avatars",
+        "name": "Transform Avatars"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "skip-check",
+                "leftValue": "={{ $json.skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "notEquals"
+                }
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          800,
+          200
+        ],
+        "id": "if-has-avatars",
+        "name": "Has Avatars?"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO avatars (person_id, style_name, motion_avatar_id, preview_video_url, preview_image_url)\nVALUES (\n  '{{ $json.person_id }}'::uuid,\n  '{{ $json.style_name }}',\n  '{{ $json.motion_avatar_id }}',\n  {{ $json.preview_video_url ? \"'\" + $json.preview_video_url + \"'\" : 'NULL' }},\n  {{ $json.preview_image_url ? \"'\" + $json.preview_image_url + \"'\" : 'NULL' }}\n)\nON CONFLICT (motion_avatar_id) DO UPDATE SET\n  style_name = EXCLUDED.style_name,\n  preview_video_url = EXCLUDED.preview_video_url,\n  preview_image_url = EXCLUDED.preview_image_url,\n  updated_at = NOW()\nRETURNING id, person_id, style_name, motion_avatar_id;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1000,
+          100
+        ],
+        "id": "upsert-avatar",
+        "name": "Upsert Avatar",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid,\n  '{{ $json.id }}'::uuid,\n  true\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n)\nRETURNING avatar_id;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1200,
+          100
+        ],
+        "id": "link-to-client",
+        "name": "Link to CCC Client",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          1400,
+          200
+        ],
+        "id": "aggregate-results",
+        "name": "Aggregate Results"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Count total avatars processed\nconst allData = $input.all();\nlet syncedCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  syncedCount += data.filter(d => d && d.id).length;\n}\n\nreturn [{\n  json: {\n    success: true,\n    message: `Synced ${syncedCount} avatars from HeyGen to database`,\n    synced_count: syncedCount\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1600,
+          200
+        ],
+        "id": "format-response",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1800,
+          200
+        ],
+        "id": "respond",
+        "name": "Respond"
+      }
+    ],
+    "connections": {
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "List Persons",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List Persons": {
+        "main": [
+          [
+            {
+              "node": "Get HeyGen Avatars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get HeyGen Avatars": {
+        "main": [
+          [
+            {
+              "node": "Transform Avatars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Transform Avatars": {
+        "main": [
+          [
+            {
+              "node": "Has Avatars?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Avatars?": {
+        "main": [
+          [
+            {
+              "node": "Upsert Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Avatar": {
+        "main": [
+          [
+            {
+              "node": "Link to CCC Client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Link to CCC Client": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Results": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
