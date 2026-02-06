@@ -1,0 +1,1182 @@
+{
+  "updatedAt": "2026-01-26T23:34:45.891Z",
+  "createdAt": "2026-01-26T23:34:45.891Z",
+  "id": "CSZLClT81tnTS3Fy",
+  "name": "Direction Generator",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "direction-generate",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        304
+      ],
+      "webhookId": "direction-generate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mode",
+              "name": "mode",
+              "value": "={{ $json.body.mode || 'full' }}",
+              "type": "string"
+            },
+            {
+              "id": "direction",
+              "name": "direction",
+              "value": "={{ $json.body.direction || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "client_id",
+              "name": "client_id",
+              "value": "={{ $json.body.client_id || 'ccc' }}",
+              "type": "string"
+            },
+            {
+              "id": "location",
+              "name": "location",
+              "value": "={{ $json.body.location || 'Rantoul, IL' }}",
+              "type": "string"
+            },
+            {
+              "id": "target_length",
+              "name": "target_length",
+              "value": "={{ $json.body.target_length || 'standard_30_45' }}",
+              "type": "string"
+            },
+            {
+              "id": "avatar_name",
+              "name": "avatar_name",
+              "value": "={{ $json.body.avatar_name || 'Shad' }}",
+              "type": "string"
+            },
+            {
+              "id": "current_date",
+              "name": "current_date",
+              "value": "={{ $now.format('MMMM d, yyyy') }}",
+              "type": "string"
+            },
+            {
+              "id": "current_month",
+              "name": "current_month",
+              "value": "={{ $now.format('MMMM') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "parse-request",
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        400,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "full",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{ $json.direction }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "full_with_direction"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "full",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{ $json.direction }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "full_generate"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "hook",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "hook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "topic",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "topic"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "route-mode",
+      "name": "Route by Mode",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        608,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate ONE creative direction/theme for this week's content.\n\nThis direction will be used to create BOTH:\n- A paid ad with a hook that uses this theme\n- An educational video topic that ties into this theme\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nGood directions are:\n- Timely (holidays, seasons, current events, weather)\n- Relatable to everyday life\n- Can connect to BOTH car buying AND car ownership/maintenance\n- Creative and unexpected angles work great\n\nExamples of good directions:\n- \"Groundhog Day\" (February timing, repetition theme)\n- \"Tax Refund Season\" (Spring, money theme)\n- \"Back to School\" (August, family/reliability theme)\n- \"New Year, New Ride\" (January, fresh start theme)\n- \"Summer Road Trip\" (June-August, adventure theme)\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest directions about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\nOutput ONLY valid JSON:\n{\n  \"direction\": \"Short Direction Name (2-4 words)\",\n  \"emoji\": \"🎯\",\n  \"why\": \"Brief explanation of why this direction works for both ads and education\"\n}\n\nNo explanations outside the JSON. Generate now:",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "build-direction-prompt",
+      "name": "Build Direction Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        800,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "512"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "gemini-direction",
+      "name": "Gemini - Direction",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1008,
+        112
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prVNksIVEgzVrhKB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Parse JSON\nlet direction;\ntry {\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  direction = JSON.parse(cleanedResponse);\n} catch (error) {\n  // Fallback\n  direction = {\n    direction: \"Fresh Start\",\n    emoji: \"🌟\",\n    why: \"Universal theme that works year-round\"\n  };\n}\n\n// Pass through original data plus direction\nreturn {\n  ...direction,\n  mode: $('Parse Request').item.json.mode,\n  client_id: $('Parse Request').item.json.client_id,\n  location: $('Parse Request').item.json.location,\n  target_length: $('Parse Request').item.json.target_length,\n  avatar_name: $('Parse Request').item.json.avatar_name,\n  current_date: $('Parse Request').item.json.current_date,\n  current_month: $('Parse Request').item.json.current_month\n};"
+      },
+      "id": "parse-direction",
+      "name": "Parse Direction",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "direction",
+              "name": "direction",
+              "value": "={{ $('Parse Request').item.json.direction }}",
+              "type": "string"
+            },
+            {
+              "id": "client_id",
+              "name": "client_id",
+              "value": "={{ $('Parse Request').item.json.client_id }}",
+              "type": "string"
+            },
+            {
+              "id": "location",
+              "name": "location",
+              "value": "={{ $('Parse Request').item.json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "target_length",
+              "name": "target_length",
+              "value": "={{ $('Parse Request').item.json.target_length }}",
+              "type": "string"
+            },
+            {
+              "id": "avatar_name",
+              "name": "avatar_name",
+              "value": "={{ $('Parse Request').item.json.avatar_name }}",
+              "type": "string"
+            },
+            {
+              "id": "current_month",
+              "name": "current_month",
+              "value": "={{ $('Parse Request').item.json.current_month }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "pass-existing-direction-hook",
+      "name": "Use Existing Direction (Hook)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        800,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "direction",
+              "name": "direction",
+              "value": "={{ $('Parse Request').item.json.direction }}",
+              "type": "string"
+            },
+            {
+              "id": "client_id",
+              "name": "client_id",
+              "value": "={{ $('Parse Request').item.json.client_id }}",
+              "type": "string"
+            },
+            {
+              "id": "location",
+              "name": "location",
+              "value": "={{ $('Parse Request').item.json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "target_length",
+              "name": "target_length",
+              "value": "={{ $('Parse Request').item.json.target_length }}",
+              "type": "string"
+            },
+            {
+              "id": "avatar_name",
+              "name": "avatar_name",
+              "value": "={{ $('Parse Request').item.json.avatar_name }}",
+              "type": "string"
+            },
+            {
+              "id": "current_month",
+              "name": "current_month",
+              "value": "={{ $('Parse Request').item.json.current_month }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "pass-existing-direction-topic",
+      "name": "Use Existing Direction (Topic)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        800,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "=You are a creative copywriter for Capitol Car Credit, a used car dealership in {{ $json.location }}.\n\n═══════════════════════════════════════════════════════════════\n🎯 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate a catchy AD HOOK that uses this creative direction:\n\nDirection: \"{{ $json.direction }}\"\n\nThe hook should:\n- Be a question or statement that grabs attention in the first 2-3 seconds\n- Cleverly connect the direction/theme to car buying or car shopping\n- Feel conversational and relatable, NOT salesy\n- Be something a neighbor might say, not a car salesman\n\nExamples of good hooks using directions:\n\nDirection: \"Groundhog Day\"\nHook: \"Does driving your old car feel like Groundhog Day? Same problems, different week?\"\n\nDirection: \"Tax Refund Season\"\nHook: \"What if your tax refund could finally get you out of that car you hate?\"\n\nDirection: \"Summer Road Trip\"\nHook: \"Planning a summer road trip? Here's why your car might have other plans...\"\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER include:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing mentions MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\nOutput ONLY valid JSON:\n{\n  \"hook\": \"Your catchy hook here (1-2 sentences max)\",\n  \"hook_style\": \"question\" or \"statement\"\n}\n\nGenerate now:",
+              "type": "string"
+            },
+            {
+              "id": "direction",
+              "name": "direction",
+              "value": "={{ $json.direction }}",
+              "type": "string"
+            },
+            {
+              "id": "mode",
+              "name": "mode",
+              "value": "={{ $('Parse Request').item.json.mode }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "build-hook-prompt",
+      "name": "Build Hook Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1408,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "=You are a creative content strategist for Capitol Car Credit, a used car dealership in {{ $json.location }}.\n\n═══════════════════════════════════════════════════════════════\n🎯 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate an EDUCATIONAL VIDEO TOPIC for the \"Capitol Smarts\" series that ties into this creative direction:\n\nDirection: \"{{ $json.direction }}\"\nPresenter: {{ $json.avatar_name }}\nMonth: {{ $json.current_month }}\n\nThe topic should:\n- Be genuinely helpful and educational (not salesy)\n- Cleverly connect the direction/theme to car ownership, maintenance, or buying tips\n- Establish {{ $json.avatar_name }} as a trusted local expert\n- Feel like helpful advice from a knowledgeable neighbor\n\nExamples of good topics using directions:\n\nDirection: \"Groundhog Day\"\nTopic: \"Stuck in a repair cycle? How to know when fixing costs more than replacing\"\n\nDirection: \"Tax Refund Season\"\nTopic: \"Smart ways to use your tax refund on your car (that most people miss)\"\n\nDirection: \"Summer Road Trip\"\nTopic: \"5 things to check before any road trip (that could save your vacation)\"\n\nOutput ONLY valid JSON:\n{\n  \"topic\": \"Your educational topic title here\",\n  \"topic_angle\": \"Brief description of the educational angle (1 sentence)\"\n}\n\nGenerate now:",
+              "type": "string"
+            },
+            {
+              "id": "direction",
+              "name": "direction",
+              "value": "={{ $json.direction }}",
+              "type": "string"
+            },
+            {
+              "id": "mode",
+              "name": "mode",
+              "value": "={{ $('Parse Request').item.json.mode }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "build-topic-prompt",
+      "name": "Build Topic Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1408,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "256"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "gemini-hook",
+      "name": "Gemini - Hook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        208
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prVNksIVEgzVrhKB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "256"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "gemini-topic",
+      "name": "Gemini - Topic",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        400
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prVNksIVEgzVrhKB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\nconst direction = $('Build Hook Prompt').item.json.direction;\nconst mode = $('Build Hook Prompt').item.json.mode;\n\n// Parse JSON\nlet result;\ntry {\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n\n  result = JSON.parse(cleanedResponse);\n} catch (error) {\n  result = {\n    hook: \"Looking for a reliable car that won't break the bank?\",\n    hook_style: \"question\"\n  };\n}\n\nreturn {\n  mode: mode,\n  direction: direction,\n  hook: result.hook,\n  hook_style: result.hook_style || 'question'\n};"
+      },
+      "id": "parse-hook",
+      "name": "Parse Hook",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\nconst direction = $('Build Topic Prompt').item.json.direction;\nconst mode = $('Build Topic Prompt').item.json.mode;\n\n// Parse JSON\nlet result;\ntry {\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n\n  result = JSON.parse(cleanedResponse);\n} catch (error) {\n  result = {\n    topic: \"What to check before buying any used car\",\n    topic_angle: \"Essential inspection tips for smart buyers\"\n  };\n}\n\nreturn {\n  mode: mode,\n  direction: direction,\n  topic: result.topic,\n  topic_angle: result.topic_angle || ''\n};"
+      },
+      "id": "parse-topic",
+      "name": "Parse Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-full",
+      "name": "Merge Full Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2112,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine hook and topic results\nconst items = $input.all();\n\nlet direction = '';\nlet directionEmoji = '🎯';\nlet directionWhy = '';\nlet hook = '';\nlet hookStyle = 'question';\nlet topic = '';\nlet topicAngle = '';\n\nfor (const item of items) {\n  const data = item.json;\n  if (data.hook) {\n    hook = data.hook;\n    hookStyle = data.hook_style || 'question';\n    direction = data.direction || direction;\n  }\n  if (data.topic) {\n    topic = data.topic;\n    topicAngle = data.topic_angle || '';\n    direction = data.direction || direction;\n  }\n  if (data.emoji) {\n    directionEmoji = data.emoji;\n  }\n  if (data.why) {\n    directionWhy = data.why;\n  }\n}\n\nreturn {\n  success: true,\n  direction: direction,\n  direction_emoji: directionEmoji,\n  direction_why: directionWhy,\n  ad_hook: hook,\n  ad_hook_style: hookStyle,\n  education_topic: topic,\n  education_topic_angle: topicAngle\n};"
+      },
+      "id": "format-full-response",
+      "name": "Format Full Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\n\nreturn {\n  success: true,\n  direction: data.direction,\n  ad_hook: data.hook,\n  ad_hook_style: data.hook_style || 'question'\n};"
+      },
+      "id": "format-hook-response",
+      "name": "Format Hook Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2112,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\n\nreturn {\n  success: true,\n  direction: data.direction,\n  education_topic: data.topic,\n  education_topic_angle: data.topic_angle || ''\n};"
+      },
+      "id": "format-topic-response",
+      "name": "Format Topic Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2112,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache, no-store, must-revalidate"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-full",
+      "name": "Respond Full",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2512,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache, no-store, must-revalidate"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-hook",
+      "name": "Respond Hook Only",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2304,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache, no-store, must-revalidate"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-topic",
+      "name": "Respond Topic Only",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2304,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "full",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "full"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "if-hook-route",
+      "name": "Route Hook Output",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1952,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "full",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "full"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "if-topic-route",
+      "name": "Route Topic Output",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1952,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "direction",
+              "name": "direction",
+              "value": "={{ $json.direction }}",
+              "type": "string"
+            },
+            {
+              "id": "mode",
+              "name": "mode",
+              "value": "={{ $json.mode }}",
+              "type": "string"
+            },
+            {
+              "id": "client_id",
+              "name": "client_id",
+              "value": "={{ $json.client_id }}",
+              "type": "string"
+            },
+            {
+              "id": "location",
+              "name": "location",
+              "value": "={{ $json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "target_length",
+              "name": "target_length",
+              "value": "={{ $json.target_length }}",
+              "type": "string"
+            },
+            {
+              "id": "avatar_name",
+              "name": "avatar_name",
+              "value": "={{ $json.avatar_name }}",
+              "type": "string"
+            },
+            {
+              "id": "current_month",
+              "name": "current_month",
+              "value": "={{ $json.current_month }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "use-provided-direction",
+      "name": "Use Provided Direction",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        800,
+        -48
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Request": {
+      "main": [
+        [
+          {
+            "node": "Route by Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Mode": {
+      "main": [
+        [
+          {
+            "node": "Use Provided Direction",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Direction Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use Existing Direction (Hook)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use Existing Direction (Topic)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Direction Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Direction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Direction": {
+      "main": [
+        [
+          {
+            "node": "Parse Direction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Direction": {
+      "main": [
+        [
+          {
+            "node": "Build Hook Prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Topic Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Existing Direction (Hook)": {
+      "main": [
+        [
+          {
+            "node": "Build Hook Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Existing Direction (Topic)": {
+      "main": [
+        [
+          {
+            "node": "Build Topic Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Hook Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Hook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Topic Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Hook": {
+      "main": [
+        [
+          {
+            "node": "Parse Hook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Topic": {
+      "main": [
+        [
+          {
+            "node": "Parse Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Hook": {
+      "main": [
+        [
+          {
+            "node": "Route Hook Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Topic": {
+      "main": [
+        [
+          {
+            "node": "Route Topic Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Full Results": {
+      "main": [
+        [
+          {
+            "node": "Format Full Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Full Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Full",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Hook Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Hook Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Topic Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Topic Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Hook Output": {
+      "main": [
+        [
+          {
+            "node": "Merge Full Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Hook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Topic Output": {
+      "main": [
+        [
+          {
+            "node": "Merge Full Results",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Format Topic Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Provided Direction": {
+      "main": [
+        [
+          {
+            "node": "Build Hook Prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Topic Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "eb444d5f-c19a-41d1-b1c6-a0869f7edf9a",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:45.891Z",
+      "createdAt": "2026-01-26T23:34:45.891Z",
+      "role": "workflow:owner",
+      "workflowId": "CSZLClT81tnTS3Fy",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
