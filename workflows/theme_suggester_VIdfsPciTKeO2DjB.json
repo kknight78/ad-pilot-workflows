@@ -1,0 +1,357 @@
+{
+  "updatedAt": "2026-01-30T00:04:17.522Z",
+  "createdAt": "2026-01-26T23:34:37.612Z",
+  "id": "VIdfsPciTKeO2DjB",
+  "name": "Theme Suggester",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "theme-suggest",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        208
+      ],
+      "webhookId": "theme-suggest"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "client_id",
+              "name": "client_id",
+              "value": "={{ $json.body.client_id || 'ccc' }}",
+              "type": "string"
+            },
+            {
+              "id": "location",
+              "name": "location",
+              "value": "={{ $json.body.location || 'Rantoul, IL' }}",
+              "type": "string"
+            },
+            {
+              "id": "current_date",
+              "name": "current_date",
+              "value": "={{ $now.format('MMMM d, yyyy') }}",
+              "type": "string"
+            },
+            {
+              "id": "current_month",
+              "name": "current_month",
+              "value": "={{ $now.format('MMMM') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "parse-request",
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        400,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n👥 TARGET AUDIENCE:\n═══════════════════════════════════════════════════════════════\n\nFirst-time buyers, young professionals (18-30), and \nbudget-conscious families in Central Illinois.\n\nTheir priorities:\n- Affordability and value\n- Fuel efficiency\n- Safety for their families\n- Reliability\n- Modern features\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest themes about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\n✅ Financing themes MUST use:\n- \"Financing options available\"\n- \"We work with you on financing\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME QUALITY STANDARDS:\n═══════════════════════════════════════════════════════════════\n\nGOOD themes feel like:\n- A neighbor mentioning something relatable\n- Timely without being pushy\n- Interesting or creative angles\n- Something locals would connect with\n\nBAD themes sound like:\n- \"YEAR-END BLOWOUT BONANZA!!!\"\n- Every other car dealership\n- Desperate, pushy, or salesy\n- Generic corporate marketing\n- Cheesy car salesman vibes\n\n════════════════════════════════�����══════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate 5-6 theme ideas for this week's video ads.\n\n{{ $('Get Recent Themes').all().length > 0 ? '═══════════════════════════════════════════════════════════════\\n🚫 RECENTLY SUGGESTED THEMES (DO NOT REPEAT)\\n═══════════════════════════════════════════════════════════════\\nThese themes were already suggested recently. Generate something DIFFERENT — avoid similar words, concepts, and angles:\\n' + $('Get Recent Themes').all().map(row => '- ' + row.json.theme_seed).join('\\n') + '\\n' : '' }}\n\nContext:\n- Location: Central Illinois\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nMix of theme types:\n- 1-2 Seasonal/timely (weather, holidays, time of year)\n- 1-2 Evergreen (family, reliability, value, practical)\n- 1-2 Creative/unexpected angles\n\nTheme names should be SHORT (2-4 words max).\n\nOutput ONLY valid JSON:\n{\n  \"themes\": [\n    {\n      \"name\": \"Short Theme Name\",\n      \"emoji\": \"🎯\"\n    }\n  ]\n}\n\nNo sales copy. No explanations. Just theme name + emoji.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "build-prompt",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        808,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the response text from Gemini\nconst geminiResponse = $input.item.json.candidates[0].content.parts[0].text;\n\n// Try to parse as JSON\nlet themes;\ntry {\n  // Remove any markdown code blocks if present\n  let cleanedResponse = geminiResponse.trim();\n  if (cleanedResponse.startsWith('```json')) {\n    cleanedResponse = cleanedResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  } else if (cleanedResponse.startsWith('```')) {\n    cleanedResponse = cleanedResponse.replace(/```\\n?/g, '').trim();\n  }\n  \n  const parsed = JSON.parse(cleanedResponse);\n  themes = parsed.themes || parsed;\n  \n  // Validate structure\n  if (!Array.isArray(themes)) {\n    throw new Error('Response is not an array');\n  }\n  \n  // Ensure each theme has required fields\n  themes = themes.map((theme, index) => ({\n    name: theme.name || `Theme ${index + 1}`,\n    emoji: theme.emoji || '🚗',\n    hook_example: theme.hook_example || theme.hook || 'Check out our latest deals!',\n    why: theme.why || theme.reason || 'Great for engagement'\n  }));\n  \n} catch (error) {\n  // Fallback themes if parsing fails\n  themes = [\n    {\n      name: \"Winter Weather Ready\",\n      emoji: \"❄️\",\n      hook_example: \"Is your car ready for winter? Here's what you need to know!\",\n      why: \"Seasonal relevance - winter driving concerns\"\n    },\n    {\n      name: \"Year-End Savings\",\n      emoji: \"💰\",\n      hook_example: \"Don't miss our year-end deals before they're gone!\",\n      why: \"End of year is prime time for car buying\"\n    },\n    {\n      name: \"Reliable Family Vehicles\",\n      emoji: \"👨‍👩‍👧‍👦\",\n      hook_example: \"Looking for a car the whole family will love?\",\n      why: \"Evergreen theme - families always need reliable vehicles\"\n    },\n    {\n      name: \"Easy Financing Options\",\n      emoji: \"✅\",\n      hook_example: \"Bad credit? No credit? No problem - here's how we can help.\",\n      why: \"Financing is a top concern for car buyers\"\n    },\n    {\n      name: \"Trade-In Value\",\n      emoji: \"🔄\",\n      hook_example: \"Your old car might be worth more than you think!\",\n      why: \"Trade-ins are a key part of the car buying process\"\n    }\n  ];\n}\n\nreturn { themes };"
+      },
+      "id": "parse-response",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1208,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, themes: $('Prepare Log').item.json.themes } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache, no-store, must-revalidate"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents[0].parts[0].text",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "generationConfig.temperature",
+              "value": "0.9"
+            },
+            {
+              "name": "generationConfig.maxOutputTokens",
+              "value": "1024"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "ee55006c-68a6-4fc7-933f-f39a9ae4bda0",
+      "name": "Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        208
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4ayLTz1aZXMGf1GO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT theme_seed FROM (SELECT theme_seed, MAX(created_at) as latest FROM generated_themes WHERE client_id = '{{ $json.client_id }}' AND created_at > NOW() - INTERVAL '30 days' GROUP BY theme_seed ORDER BY latest DESC LIMIT 20) sub",
+        "options": {
+          "queryParams": "={{ [$json.client_id] }}"
+        }
+      },
+      "id": "get-recent-themes-suggester",
+      "name": "Get Recent Themes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        500,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log each generated theme to the database\nconst themes = $input.item.json.themes || [];\nconst clientId = $('Parse Request').first().json.client_id;\n\n// Store theme names for logging\nconst themeNames = themes.map(t => t.name);\n\nreturn [{\n  json: {\n    themes: themes,\n    theme_names_to_log: themeNames,\n    client_id: clientId\n  }\n}];"
+      },
+      "id": "prepare-log-themes",
+      "name": "Prepare Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1308,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO generated_themes (client_id, theme_seed, template_type, source) SELECT '{{ $('Parse Request').first().json.client_id }}', unnest(ARRAY[{{ $json.theme_names_to_log.map(t => \"'\" + t.replace(/'/g, \"''\") + \"'\").join(',') }}]), 'suggestion', 'theme-suggester'",
+        "options": {
+          "queryParams": "={{ [$json.client_id, $json.theme_names_to_log] }}"
+        }
+      },
+      "id": "log-themes-db",
+      "name": "Log Themes to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1408,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Request": {
+      "main": [
+        [
+          {
+            "node": "Get Recent Themes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Themes": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Log": {
+      "main": [
+        [
+          {
+            "node": "Log Themes to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Themes to DB": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "c2264fc8-c14a-464b-a819-40f841579c9a",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:37.612Z",
+      "createdAt": "2026-01-26T23:34:37.612Z",
+      "role": "workflow:owner",
+      "workflowId": "VIdfsPciTKeO2DjB",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
