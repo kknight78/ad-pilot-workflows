@@ -1,0 +1,541 @@
+{
+  "updatedAt": "2026-02-03T21:14:45.111Z",
+  "createdAt": "2026-01-26T23:34:59.596Z",
+  "id": "ZgAvfbXlnG7OzQUz",
+  "name": "[Service] Replicate Alpha Video",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger",
+      "name": "When Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        24
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\n\nif (response.error) {\n  throw new Error(`Replicate error: ${response.error}`);\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: response.urls.get,\n    status: response.status\n  }\n}];"
+      },
+      "id": "store-prediction",
+      "name": "Store Prediction ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        24
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "complete",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-complete",
+      "name": "If Complete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst input = $(\"Store Prediction ID\").first().json;\n\nif (response.status === \"failed\") {\n  throw new Error(`RVM failed: ${response.error || \"Unknown error\"}`);\n}\n\nif (response.status === \"canceled\") {\n  throw new Error(\"RVM prediction was canceled\");\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: input.status_url,\n    status: response.status\n  }\n}];"
+      },
+      "id": "preserve-for-loop",
+      "name": "Preserve for Loop",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "wait",
+      "name": "Wait 3s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        120
+      ],
+      "webhookId": "wait-rvm"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\n\nreturn [{\n  json: {\n    alpha_video_url: response.output,\n    prediction_id: response.id\n  }\n}];"
+      },
+      "id": "return-result",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.video_url }}\",\n    \"output_type\": \"alpha-mask\"\n  }\n}",
+        "options": {}
+      },
+      "id": "da3db9fa-f0db-4d22-9538-254d35e171d8",
+      "name": "Create RVM Prediction",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        24
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "mK813XYHxuc8hVc9",
+          "name": "Replicate"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "07fc3554-9bf8-46f9-8086-8ff12240e9b9",
+      "name": "Check RVM Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        24
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "mK813XYHxuc8hVc9",
+          "name": "Replicate"
+        }
+      },
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "connections": {
+    "When Called by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Create RVM Prediction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Prediction ID": {
+      "main": [
+        [
+          {
+            "node": "Check RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Complete": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preserve for Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve for Loop": {
+      "main": [
+        [
+          {
+            "node": "Wait 3s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3s": {
+      "main": [
+        [
+          {
+            "node": "Check RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create RVM Prediction": {
+      "main": [
+        [
+          {
+            "node": "Store Prediction ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check RVM Status": {
+      "main": [
+        [
+          {
+            "node": "If Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "2a7dd243-46f2-4526-b2cc-6bb5ed8c0234",
+  "activeVersionId": "2a7dd243-46f2-4526-b2cc-6bb5ed8c0234",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:59.596Z",
+      "createdAt": "2026-01-26T23:34:59.596Z",
+      "role": "workflow:owner",
+      "workflowId": "ZgAvfbXlnG7OzQUz",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-03T21:14:55.341Z",
+    "createdAt": "2026-02-03T21:14:45.118Z",
+    "versionId": "2a7dd243-46f2-4526-b2cc-6bb5ed8c0234",
+    "workflowId": "ZgAvfbXlnG7OzQUz",
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "trigger",
+        "name": "When Called by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          0,
+          24
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\n\nif (response.error) {\n  throw new Error(`Replicate error: ${response.error}`);\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: response.urls.get,\n    status: response.status\n  }\n}];"
+        },
+        "id": "store-prediction",
+        "name": "Store Prediction ID",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          448,
+          24
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "complete",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-complete",
+        "name": "If Complete",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          896,
+          -48
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\nconst input = $(\"Store Prediction ID\").first().json;\n\nif (response.status === \"failed\") {\n  throw new Error(`RVM failed: ${response.error || \"Unknown error\"}`);\n}\n\nif (response.status === \"canceled\") {\n  throw new Error(\"RVM prediction was canceled\");\n}\n\nreturn [{\n  json: {\n    prediction_id: response.id,\n    status_url: input.status_url,\n    status: response.status\n  }\n}];"
+        },
+        "id": "preserve-for-loop",
+        "name": "Preserve for Loop",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "amount": 3
+        },
+        "id": "wait",
+        "name": "Wait 3s",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1344,
+          120
+        ],
+        "webhookId": "wait-rvm"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\n\nreturn [{\n  json: {\n    alpha_video_url: response.output,\n    prediction_id: response.id\n  }\n}];"
+        },
+        "id": "return-result",
+        "name": "Return Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          -144
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.replicate.com/v1/predictions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.video_url }}\",\n    \"output_type\": \"alpha-mask\"\n  }\n}",
+          "options": {}
+        },
+        "id": "da3db9fa-f0db-4d22-9538-254d35e171d8",
+        "name": "Create RVM Prediction",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          224,
+          24
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "mK813XYHxuc8hVc9",
+            "name": "Replicate"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.status_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "07fc3554-9bf8-46f9-8086-8ff12240e9b9",
+        "name": "Check RVM Status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          24
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "mK813XYHxuc8hVc9",
+            "name": "Replicate"
+          }
+        },
+        "onError": "continueErrorOutput"
+      }
+    ],
+    "connections": {
+      "When Called by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Create RVM Prediction",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Prediction ID": {
+        "main": [
+          [
+            {
+              "node": "Check RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If Complete": {
+        "main": [
+          [
+            {
+              "node": "Return Result",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Preserve for Loop",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preserve for Loop": {
+        "main": [
+          [
+            {
+              "node": "Wait 3s",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 3s": {
+        "main": [
+          [
+            {
+              "node": "Check RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create RVM Prediction": {
+        "main": [
+          [
+            {
+              "node": "Store Prediction ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check RVM Status": {
+        "main": [
+          [
+            {
+              "node": "If Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": "Version 2a7dd243",
+    "description": "",
+    "autosaved": true
+  },
+  "tags": []
+}
