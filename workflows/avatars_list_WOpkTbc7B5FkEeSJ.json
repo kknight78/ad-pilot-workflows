@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-17T18:50:15.498Z",
+  "updatedAt": "2026-02-06T23:23:55.295Z",
   "createdAt": "2026-01-13T23:16:34.512Z",
   "id": "WOpkTbc7B5FkEeSJ",
   "name": "Avatars List",
@@ -27,7 +27,8 @@
                 "value": "Content-Type"
               }
             ]
-          }
+          },
+          "allowedOrigins": "*"
         }
       },
       "type": "n8n-nodes-base.webhook",
@@ -133,8 +134,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "a2fdd5d6-61c4-4667-922c-3d99e3c4e348",
-  "activeVersionId": "a2fdd5d6-61c4-4667-922c-3d99e3c4e348",
+  "versionId": "e0cae668-7d4f-4ad0-9b62-a611bcbc4218",
+  "activeVersionId": "e0cae668-7d4f-4ad0-9b62-a611bcbc4218",
   "triggerCount": 1,
   "shared": [
     {
@@ -146,9 +147,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-17T18:50:15.502Z",
-    "createdAt": "2026-01-17T18:50:15.502Z",
-    "versionId": "a2fdd5d6-61c4-4667-922c-3d99e3c4e348",
+    "updatedAt": "2026-02-06T23:23:55.298Z",
+    "createdAt": "2026-02-06T23:23:55.298Z",
+    "versionId": "e0cae668-7d4f-4ad0-9b62-a611bcbc4218",
     "workflowId": "WOpkTbc7B5FkEeSJ",
     "nodes": [
       {
@@ -172,7 +173,8 @@
                   "value": "Content-Type"
                 }
               ]
-            }
+            },
+            "allowedOrigins": "*"
           }
         },
         "type": "n8n-nodes-base.webhook",
