@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-17T22:14:18.666Z",
+  "updatedAt": "2026-02-06T23:24:00.822Z",
   "createdAt": "2026-01-14T00:37:07.007Z",
   "id": "xv3sKZ3QO2n9OtOW",
   "name": "Generate Themed Background",
@@ -12,6 +12,7 @@
         "path": "generate-background",
         "responseMode": "responseNode",
         "options": {
+          "allowedOrigins": "*",
           "responseHeaders": {
             "entries": [
               {
@@ -47,43 +48,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        308,
+        320,
         208
       ],
       "id": "build-prompt",
       "name": "Build Prompt"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        500,
-        208
-      ],
-      "id": "gemini-api",
-      "name": "Gemini Image Gen",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "prVNksIVEgzVrhKB",
-          "name": "Google Gemini(PaLM) Api account"
-        },
-        "httpHeaderAuth": {
-          "id": "QCuQqEVYErTsDfHL",
-          "name": "Google API Header auth"
-        }
-      }
     },
     {
       "parameters": {
@@ -92,7 +61,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        708,
+        720,
         208
       ],
       "id": "extract-image",
@@ -112,7 +81,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        900,
+        912,
         208
       ],
       "id": "cloudinary-upload",
@@ -125,7 +94,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1108,
+        1120,
         208
       ],
       "id": "format-response",
@@ -140,30 +109,62 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1300,
+        1312,
         208
       ],
       "id": "respond",
       "name": "Respond"
     },
     {
-      "id": "lookup-client-node",
-      "name": "Lookup Client",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        104,
-        208
-      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "SELECT slug FROM clients WHERE id = '{{ $json.body.client_id }}'",
         "options": {}
       },
+      "id": "lookup-client-node",
+      "name": "Lookup Client",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        112,
+        208
+      ],
       "credentials": {
         "postgres": {
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        208
+      ],
+      "id": "9414b595-03ac-4990-910c-a5ed5d0690c8",
+      "name": "Gemini Image Gen",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prVNksIVEgzVrhKB",
+          "name": "Google Gemini(PaLM) Api account"
+        },
+        "httpHeaderAuth": {
+          "id": "QCuQqEVYErTsDfHL",
+          "name": "Google API Header auth"
         }
       }
     }
@@ -185,17 +186,6 @@
         [
           {
             "node": "Gemini Image Gen",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gemini Image Gen": {
-      "main": [
-        [
-          {
-            "node": "Extract Image",
             "type": "main",
             "index": 0
           }
@@ -234,6 +224,17 @@
           }
         ]
       ]
+    },
+    "Gemini Image Gen": {
+      "main": [
+        [
+          {
+            "node": "Extract Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -244,8 +245,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "65ce55f9-06cd-412e-bdc2-95e64f9e2760",
-  "activeVersionId": "65ce55f9-06cd-412e-bdc2-95e64f9e2760",
+  "versionId": "672f63a9-ca4d-4d2b-886a-68238eedf34a",
+  "activeVersionId": "672f63a9-ca4d-4d2b-886a-68238eedf34a",
   "triggerCount": 1,
   "shared": [
     {
@@ -257,9 +258,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-17T22:14:18.668Z",
-    "createdAt": "2026-01-17T22:14:18.668Z",
-    "versionId": "65ce55f9-06cd-412e-bdc2-95e64f9e2760",
+    "updatedAt": "2026-02-06T23:24:00.826Z",
+    "createdAt": "2026-02-06T23:24:00.826Z",
+    "versionId": "672f63a9-ca4d-4d2b-886a-68238eedf34a",
     "workflowId": "xv3sKZ3QO2n9OtOW",
     "nodes": [
       {
@@ -268,6 +269,7 @@
           "path": "generate-background",
           "responseMode": "responseNode",
           "options": {
+            "allowedOrigins": "*",
             "responseHeaders": {
               "entries": [
                 {
@@ -303,43 +305,11 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          308,
+          320,
           208
         ],
         "id": "build-prompt",
         "name": "Build Prompt"
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
-          "options": {
-            "timeout": 60000
-          }
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          500,
-          208
-        ],
-        "id": "gemini-api",
-        "name": "Gemini Image Gen",
-        "credentials": {
-          "googlePalmApi": {
-            "id": "prVNksIVEgzVrhKB",
-            "name": "Google Gemini(PaLM) Api account"
-          },
-          "httpHeaderAuth": {
-            "id": "QCuQqEVYErTsDfHL",
-            "name": "Google API Header auth"
-          }
-        }
       },
       {
         "parameters": {
@@ -348,7 +318,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          708,
+          720,
           208
         ],
         "id": "extract-image",
@@ -368,7 +338,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          900,
+          912,
           208
         ],
         "id": "cloudinary-upload",
@@ -381,7 +351,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1108,
+          1120,
           208
         ],
         "id": "format-response",
@@ -396,30 +366,62 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1300,
+          1312,
           208
         ],
         "id": "respond",
         "name": "Respond"
       },
       {
-        "id": "lookup-client-node",
-        "name": "Lookup Client",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          104,
-          208
-        ],
         "parameters": {
           "operation": "executeQuery",
           "query": "SELECT slug FROM clients WHERE id = '{{ $json.body.client_id }}'",
           "options": {}
         },
+        "id": "lookup-client-node",
+        "name": "Lookup Client",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          112,
+          208
+        ],
         "credentials": {
           "postgres": {
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          512,
+          208
+        ],
+        "id": "9414b595-03ac-4990-910c-a5ed5d0690c8",
+        "name": "Gemini Image Gen",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "prVNksIVEgzVrhKB",
+            "name": "Google Gemini(PaLM) Api account"
+          },
+          "httpHeaderAuth": {
+            "id": "QCuQqEVYErTsDfHL",
+            "name": "Google API Header auth"
           }
         }
       }
@@ -441,17 +443,6 @@
           [
             {
               "node": "Gemini Image Gen",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Gemini Image Gen": {
-        "main": [
-          [
-            {
-              "node": "Extract Image",
               "type": "main",
               "index": 0
             }
@@ -485,6 +476,17 @@
           [
             {
               "node": "Build Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Image Gen": {
+        "main": [
+          [
+            {
+              "node": "Extract Image",
               "type": "main",
               "index": 0
             }
