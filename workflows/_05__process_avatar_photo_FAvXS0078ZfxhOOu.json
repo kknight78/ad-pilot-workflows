@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-28T12:18:46.618Z",
+  "updatedAt": "2026-02-06T23:23:47.261Z",
   "createdAt": "2025-12-17T14:15:04.048Z",
   "id": "FAvXS0078ZfxhOOu",
   "name": "[05] Process Avatar Photo",
@@ -11,13 +11,15 @@
         "httpMethod": "POST",
         "path": "process-avatar-photo",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         0,
-        240
+        104
       ],
       "id": "webhook-trigger",
       "name": "Webhook: Process Avatar Photo",
@@ -25,13 +27,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body, fallback to default\nconst defaultGroupId = \"585545c8034c4c43b3969797841efd6c\";\nconst groupId = body.group_id || defaultGroupId;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body - null/empty means we need to create a new group\nconst groupId = body.group_id || null;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         224,
-        240
+        104
       ],
       "id": "parse-input",
       "name": "Parse Input"
@@ -65,7 +67,7 @@
       "typeVersion": 2.2,
       "position": [
         448,
-        240
+        104
       ],
       "id": "check-image-source",
       "name": "If: Has Image URL"
@@ -85,7 +87,7 @@
       "typeVersion": 4.2,
       "position": [
         672,
-        144
+        8
       ],
       "id": "download-image",
       "name": "Download Image from URL"
@@ -97,8 +99,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
-        352
+        896,
+        200
       ],
       "id": "use-base64",
       "name": "Use Base64 Image"
@@ -110,8 +112,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        144
+        896,
+        8
       ],
       "id": "convert-to-base64",
       "name": "Convert to Base64"
@@ -121,8 +123,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        1104,
-        240
+        1120,
+        104
       ],
       "id": "merge-paths",
       "name": "Merge Paths"
@@ -132,7 +134,7 @@
         "method": "POST",
         "url": "https://api.replicate.com/v1/predictions",
         "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "genericAuthType": "httpBearerAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -150,8 +152,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1328,
-        240
+        1344,
+        104
       ],
       "id": "birefnet-start",
       "name": "API: Replicate BiRefNet Start",
@@ -169,8 +171,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1552,
-        240
+        1568,
+        104
       ],
       "id": "wait-birefnet",
       "name": "Wait 3s",
@@ -180,7 +182,7 @@
       "parameters": {
         "url": "={{ $('API: Replicate BiRefNet Start').first().json.urls.get }}",
         "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "genericAuthType": "httpBearerAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -192,8 +194,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1760,
-        240
+        1792,
+        104
       ],
       "id": "birefnet-check",
       "name": "API: Check BiRefNet Status",
@@ -232,8 +234,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1984,
-        240
+        2016,
+        8
       ],
       "id": "if-birefnet-done",
       "name": "If: BiRefNet Complete"
@@ -266,8 +268,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2208,
-        352
+        2240,
+        248
       ],
       "id": "if-birefnet-pending",
       "name": "If: BiRefNet Still Processing"
@@ -279,8 +281,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2432,
-        352
+        2464,
+        152
       ],
       "id": "wait-birefnet-retry",
       "name": "Wait 2s (Retry)",
@@ -293,8 +295,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2208,
-        144
+        2240,
+        -64
       ],
       "id": "extract-birefnet-url",
       "name": "Extract BiRefNet URL"
@@ -313,8 +315,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2432,
-        144
+        2912,
+        200
       ],
       "id": "download-bg-removed",
       "name": "Download BG Removed"
@@ -342,8 +344,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2640,
-        144
+        3136,
+        104
       ],
       "id": "heygen-upload-asset",
       "name": "API: HeyGen Upload Asset",
@@ -361,8 +363,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2864,
-        144
+        3360,
+        104
       ],
       "id": "extract-image-key",
       "name": "Extract Image Key"
@@ -390,8 +392,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4400,
-        48
+        6048,
+        -64
       ],
       "id": "heygen-add-motion",
       "name": "API: HeyGen Add Motion",
@@ -404,13 +406,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const motionResult = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nlet motionAvatarId = null;\nif (motionResult.data && motionResult.data.id) {\n  motionAvatarId = motionResult.data.id;\n}\n\nif (!motionAvatarId) {\n  throw new Error('Failed to get motion avatar ID: ' + JSON.stringify(motionResult));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    motion_avatar_id: motionAvatarId,\n    status: 'motion_added'\n  }\n}];"
+        "jsCode": "const motionResult = $json;\n\n// Get base data from Extract Image Key\nconst baseData = $('Extract Image Key').first().json;\n\n// For new groups, group_id comes through the data flow via Photo Avatar Ready\n// Try to get it from the flow first, fall back to Extract Image Key\nlet groupId = baseData.group_id;\ntry {\n  // Try to get from the data flow (works for new group path where Carry Data Forward set group_id)\n  const flowData = $('Photo Avatar Ready').first().json;\n  if (flowData && flowData.group_id) {\n    groupId = flowData.group_id;\n  }\n} catch (e) {\n  // Photo Avatar Ready might not be accessible, use baseData\n}\n\nlet motionAvatarId = null;\nif (motionResult.data && motionResult.data.id) {\n  motionAvatarId = motionResult.data.id;\n}\n\nif (!motionAvatarId) {\n  throw new Error('Failed to get motion avatar ID: ' + JSON.stringify(motionResult));\n}\n\nreturn [{\n  json: {\n    ...baseData,\n    group_id: groupId,  // Ensure correct group_id from either path\n    motion_avatar_id: motionAvatarId,\n    status: 'motion_added'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4624,
-        48
+        6272,
+        -64
       ],
       "id": "extract-motion-id",
       "name": "Extract Motion ID"
@@ -422,8 +424,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5072,
-        48
+        6944,
+        -64
       ],
       "id": "format-response",
       "name": "Format Success Response"
@@ -437,8 +439,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        5280,
-        -32
+        7168,
+        -64
       ],
       "id": "respond-success",
       "name": "Respond Success"
@@ -454,8 +456,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2640,
-        448
+        2464,
+        344
       ],
       "id": "respond-birefnet-error",
       "name": "Respond BiRefNet Error"
@@ -469,8 +471,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -208,
-        48
+        -122,
+        44
       ],
       "typeVersion": 1,
       "id": "sticky-intro",
@@ -499,8 +501,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3088,
-        144
+        4704,
+        104
       ],
       "id": "add-look-to-group",
       "name": "API: Add Look to Group",
@@ -518,8 +520,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3312,
-        144
+        4928,
+        104
       ],
       "id": "extract-photo-avatar-id",
       "name": "Extract Photo Avatar ID"
@@ -529,8 +531,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3520,
-        144
+        5152,
+        104
       ],
       "id": "wait-photo-avatar",
       "name": "Wait 5s (Photo Avatar)",
@@ -538,7 +540,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.heygen.com/v2/photo_avatar/{{ $(\"Extract Photo Avatar ID\").first().json.photo_avatar_id }}",
+        "url": "=https://api.heygen.com/v2/photo_avatar/{{ $('Extract Photo Avatar ID').item.json.photo_avatar_id }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -552,8 +554,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3744,
-        144
+        5376,
+        104
       ],
       "id": "check-photo-avatar-status",
       "name": "API: Check Photo Avatar Status",
@@ -592,8 +594,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3968,
-        144
+        5600,
+        8
       ],
       "id": "if-photo-avatar-complete",
       "name": "If: Photo Avatar Complete"
@@ -636,8 +638,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        4192,
-        240
+        5824,
+        248
       ],
       "id": "if-photo-avatar-processing",
       "name": "If: Photo Avatar Processing"
@@ -649,8 +651,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        4384,
-        224
+        6048,
+        152
       ],
       "id": "wait-photo-avatar-retry",
       "name": "Wait 3s (Retry)",
@@ -658,13 +660,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const statusResponse = $json;\nconst inputData = $('Extract Photo Avatar ID').first().json;\n\n// Photo avatar is complete, we can now add motion\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_status: 'completed',\n    status: 'ready_for_motion'\n  }\n}];"
+        "jsCode": "const statusResponse = $json;\n\n// Data can come from two paths:\n// 1. Existing group path: Extract Photo Avatar ID\n// 2. New group path: Carry Data Forward\nlet inputData;\ntry {\n  inputData = $('Extract Photo Avatar ID').first().json;\n} catch (e) {\n  // Try the new group path\n  try {\n    inputData = $('Carry Data Forward').first().json;\n  } catch (e2) {\n    // Last resort: use what we have in the flow\n    inputData = statusResponse;\n  }\n}\n\n// Photo avatar is complete, we can now add motion\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_status: 'completed',\n    status: 'ready_for_motion'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4192,
-        48
+        5824,
+        -64
       ],
       "id": "photo-avatar-ready",
       "name": "Photo Avatar Ready"
@@ -680,8 +682,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        4384,
-        400
+        6048,
+        344
       ],
       "id": "respond-avatar-error",
       "name": "Respond Photo Avatar Error"
@@ -709,8 +711,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2352,
-        -48
+        2464,
+        -64
       ],
       "id": "avatar-processor",
       "name": "API: Avatar Processor"
@@ -722,8 +724,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2624,
-        -48
+        2688,
+        -64
       ],
       "id": "extract-processed-image",
       "name": "Extract Processed Image"
@@ -735,7 +737,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2864,
+        2912,
         -64
       ],
       "id": "convert-base64-to-binary",
@@ -750,8 +752,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4848,
-        48
+        6496,
+        -64
       ],
       "id": "postgres-insert-avatar",
       "name": "DB: Insert Avatar",
@@ -771,8 +773,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4880,
-        320
+        6720,
+        -64
       ],
       "id": "postgres-insert-client-avatar",
       "name": "DB: Insert Client Avatar",
@@ -790,8 +792,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2640,
-        560
+        2464,
+        536
       ],
       "id": "format-birefnet-error",
       "name": "Format BiRefNet Error"
@@ -803,8 +805,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4384,
-        512
+        6048,
+        536
       ],
       "id": "format-photo-error",
       "name": "Format Photo Avatar Error"
@@ -821,8 +823,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        2864,
-        560
+        2688,
+        536
       ],
       "id": "call-error-birefnet",
       "name": "Call: Email Error (BiRefNet)"
@@ -839,11 +841,125 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        4608,
-        512
+        6272,
+        536
       ],
       "id": "call-error-photo",
       "name": "Call: Email Error (Photo)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-group-check",
+              "leftValue": "={{ $json.group_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3584,
+        104
+      ],
+      "id": "if-has-avatar-group",
+      "name": "If: Has Avatar Group"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/photo_avatar/avatar_group/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.person_name }}\",\n  \"image_key\": \"{{ $json.image_key }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3808,
+        176
+      ],
+      "id": "api-create-avatar-group",
+      "name": "API: Create Avatar Group",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vHwnmobM8C8U7vIZ",
+          "name": "HeyGen"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\n// Create Avatar Group response only contains group_id\n// photo_avatar_id will come later from \"Add Look to Group\"\nif (!response.data || !response.data.group_id) {\n  throw new Error('Failed to create avatar group: ' + JSON.stringify(response));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    group_id: response.data.group_id,  // New group ID to use\n    status: 'group_created',\n    is_new_group: true\n    // NOTE: No photo_avatar_id here - that comes from Add Look to Group\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        176
+      ],
+      "id": "extract-new-group",
+      "name": "Extract New Group"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE persons SET heygen_group_id = '{{ $json.group_id }}', updated_at = NOW() WHERE id = '{{ $('Parse Input').first().json.person_id }}' AND heygen_group_id IS NULL RETURNING id, display_name, heygen_group_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4256,
+        176
+      ],
+      "id": "db-save-group-to-person",
+      "name": "DB: Save Group to Person",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Restore avatar data from Extract New Group (DB node returns query result, not our data)\nconst avatarData = $('Extract New Group').first().json;\n\nconsole.log('Restored avatar data for Add Look to Group:', {\n  group_id: avatarData.group_id,\n  image_key: avatarData.image_key,\n  style_name: avatarData.style_name\n});\n\nreturn [{\n  json: {\n    ...avatarData,\n    group_saved: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4480,
+        176
+      ],
+      "id": "carry-data-forward",
+      "name": "Carry Data Forward"
     }
   ],
   "connections": {
@@ -1053,7 +1169,7 @@
       "main": [
         [
           {
-            "node": "API: Add Look to Group",
+            "node": "If: Has Avatar Group",
             "type": "main",
             "index": 0
           }
@@ -1287,6 +1403,68 @@
           }
         ]
       ]
+    },
+    "If: Has Avatar Group": {
+      "main": [
+        [
+          {
+            "node": "API: Add Look to Group",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: Create Avatar Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Create Avatar Group": {
+      "main": [
+        [
+          {
+            "node": "Extract New Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract New Group": {
+      "main": [
+        [
+          {
+            "node": "DB: Save Group to Person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: Save Group to Person": {
+      "main": [
+        [
+          {
+            "node": "Carry Data Forward",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carry Data Forward": {
+      "main": [
+        [
+          {
+            "node": "API: Add Look to Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1297,8 +1475,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "132e8850-54db-4377-bcce-f270e25b2bf9",
-  "activeVersionId": "d71fa51c-05d6-46f2-b047-265d2c4f0716",
+  "versionId": "1431cabc-371e-4a4e-bae6-f48f3a380f23",
+  "activeVersionId": "1431cabc-371e-4a4e-bae6-f48f3a380f23",
   "triggerCount": 1,
   "shared": [
     {
@@ -1310,9 +1488,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-18T00:35:51.971Z",
-    "createdAt": "2026-01-18T00:35:51.971Z",
-    "versionId": "d71fa51c-05d6-46f2-b047-265d2c4f0716",
+    "updatedAt": "2026-02-06T23:23:47.266Z",
+    "createdAt": "2026-02-06T23:23:47.266Z",
+    "versionId": "1431cabc-371e-4a4e-bae6-f48f3a380f23",
     "workflowId": "FAvXS0078ZfxhOOu",
     "nodes": [
       {
@@ -1320,13 +1498,15 @@
           "httpMethod": "POST",
           "path": "process-avatar-photo",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
         "position": [
           0,
-          240
+          104
         ],
         "id": "webhook-trigger",
         "name": "Webhook: Process Avatar Photo",
@@ -1334,13 +1514,13 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body, fallback to default\nconst defaultGroupId = \"585545c8034c4c43b3969797841efd6c\";\nconst groupId = body.group_id || defaultGroupId;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
+          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body - null/empty means we need to create a new group\nconst groupId = body.group_id || null;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           224,
-          240
+          104
         ],
         "id": "parse-input",
         "name": "Parse Input"
@@ -1374,7 +1554,7 @@
         "typeVersion": 2.2,
         "position": [
           448,
-          240
+          104
         ],
         "id": "check-image-source",
         "name": "If: Has Image URL"
@@ -1394,7 +1574,7 @@
         "typeVersion": 4.2,
         "position": [
           672,
-          144
+          8
         ],
         "id": "download-image",
         "name": "Download Image from URL"
@@ -1406,8 +1586,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          672,
-          352
+          896,
+          200
         ],
         "id": "use-base64",
         "name": "Use Base64 Image"
@@ -1419,8 +1599,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          880,
-          144
+          896,
+          8
         ],
         "id": "convert-to-base64",
         "name": "Convert to Base64"
@@ -1430,8 +1610,8 @@
         "type": "n8n-nodes-base.merge",
         "typeVersion": 3,
         "position": [
-          1104,
-          240
+          1120,
+          104
         ],
         "id": "merge-paths",
         "name": "Merge Paths"
@@ -1441,7 +1621,7 @@
           "method": "POST",
           "url": "https://api.replicate.com/v1/predictions",
           "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "genericAuthType": "httpBearerAuth",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
@@ -1459,8 +1639,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1328,
-          240
+          1344,
+          104
         ],
         "id": "birefnet-start",
         "name": "API: Replicate BiRefNet Start",
@@ -1478,8 +1658,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          1552,
-          240
+          1568,
+          104
         ],
         "id": "wait-birefnet",
         "name": "Wait 3s",
@@ -1489,15 +1669,20 @@
         "parameters": {
           "url": "={{ $('API: Replicate BiRefNet Start').first().json.urls.get }}",
           "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "genericAuthType": "httpBearerAuth",
           "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {}
+            ]
+          },
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1760,
-          240
+          1792,
+          104
         ],
         "id": "birefnet-check",
         "name": "API: Check BiRefNet Status",
@@ -1536,8 +1721,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1984,
-          240
+          2016,
+          8
         ],
         "id": "if-birefnet-done",
         "name": "If: BiRefNet Complete"
@@ -1570,8 +1755,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2208,
-          352
+          2240,
+          248
         ],
         "id": "if-birefnet-pending",
         "name": "If: BiRefNet Still Processing"
@@ -1583,8 +1768,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          2432,
-          352
+          2464,
+          152
         ],
         "id": "wait-birefnet-retry",
         "name": "Wait 2s (Retry)",
@@ -1597,8 +1782,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2208,
-          144
+          2240,
+          -64
         ],
         "id": "extract-birefnet-url",
         "name": "Extract BiRefNet URL"
@@ -1617,8 +1802,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2432,
-          144
+          2912,
+          200
         ],
         "id": "download-bg-removed",
         "name": "Download BG Removed"
@@ -1646,8 +1831,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2640,
-          144
+          3136,
+          104
         ],
         "id": "heygen-upload-asset",
         "name": "API: HeyGen Upload Asset",
@@ -1665,8 +1850,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2864,
-          144
+          3360,
+          104
         ],
         "id": "extract-image-key",
         "name": "Extract Image Key"
@@ -1694,8 +1879,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          4400,
-          48
+          6048,
+          -64
         ],
         "id": "heygen-add-motion",
         "name": "API: HeyGen Add Motion",
@@ -1708,13 +1893,13 @@
       },
       {
         "parameters": {
-          "jsCode": "const motionResult = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nlet motionAvatarId = null;\nif (motionResult.data && motionResult.data.id) {\n  motionAvatarId = motionResult.data.id;\n}\n\nif (!motionAvatarId) {\n  throw new Error('Failed to get motion avatar ID: ' + JSON.stringify(motionResult));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    motion_avatar_id: motionAvatarId,\n    status: 'motion_added'\n  }\n}];"
+          "jsCode": "const motionResult = $json;\n\n// Get base data from Extract Image Key\nconst baseData = $('Extract Image Key').first().json;\n\n// For new groups, group_id comes through the data flow via Photo Avatar Ready\n// Try to get it from the flow first, fall back to Extract Image Key\nlet groupId = baseData.group_id;\ntry {\n  // Try to get from the data flow (works for new group path where Carry Data Forward set group_id)\n  const flowData = $('Photo Avatar Ready').first().json;\n  if (flowData && flowData.group_id) {\n    groupId = flowData.group_id;\n  }\n} catch (e) {\n  // Photo Avatar Ready might not be accessible, use baseData\n}\n\nlet motionAvatarId = null;\nif (motionResult.data && motionResult.data.id) {\n  motionAvatarId = motionResult.data.id;\n}\n\nif (!motionAvatarId) {\n  throw new Error('Failed to get motion avatar ID: ' + JSON.stringify(motionResult));\n}\n\nreturn [{\n  json: {\n    ...baseData,\n    group_id: groupId,  // Ensure correct group_id from either path\n    motion_avatar_id: motionAvatarId,\n    status: 'motion_added'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4624,
-          48
+          6272,
+          -64
         ],
         "id": "extract-motion-id",
         "name": "Extract Motion ID"
@@ -1726,8 +1911,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          5072,
-          48
+          6944,
+          -64
         ],
         "id": "format-response",
         "name": "Format Success Response"
@@ -1741,8 +1926,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          5280,
-          -32
+          7168,
+          -64
         ],
         "id": "respond-success",
         "name": "Respond Success"
@@ -1758,8 +1943,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          2640,
-          448
+          2464,
+          344
         ],
         "id": "respond-birefnet-error",
         "name": "Respond BiRefNet Error"
@@ -1773,8 +1958,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          -208,
-          48
+          -122,
+          44
         ],
         "typeVersion": 1,
         "id": "sticky-intro",
@@ -1803,8 +1988,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3088,
-          144
+          4704,
+          104
         ],
         "id": "add-look-to-group",
         "name": "API: Add Look to Group",
@@ -1822,8 +2007,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3312,
-          144
+          4928,
+          104
         ],
         "id": "extract-photo-avatar-id",
         "name": "Extract Photo Avatar ID"
@@ -1833,8 +2018,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          3520,
-          144
+          5152,
+          104
         ],
         "id": "wait-photo-avatar",
         "name": "Wait 5s (Photo Avatar)",
@@ -1842,17 +2027,22 @@
       },
       {
         "parameters": {
-          "url": "=https://api.heygen.com/v2/photo_avatar/{{ $(\"Extract Photo Avatar ID\").first().json.photo_avatar_id }}",
+          "url": "=https://api.heygen.com/v2/photo_avatar/{{ $('Extract Photo Avatar ID').item.json.photo_avatar_id }}",
           "authentication": "genericCredentialType",
           "genericAuthType": "httpHeaderAuth",
           "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {}
+            ]
+          },
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3744,
-          144
+          5376,
+          104
         ],
         "id": "check-photo-avatar-status",
         "name": "API: Check Photo Avatar Status",
@@ -1891,8 +2081,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          3968,
-          144
+          5600,
+          8
         ],
         "id": "if-photo-avatar-complete",
         "name": "If: Photo Avatar Complete"
@@ -1935,8 +2125,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          4192,
-          240
+          5824,
+          248
         ],
         "id": "if-photo-avatar-processing",
         "name": "If: Photo Avatar Processing"
@@ -1948,8 +2138,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          4384,
-          224
+          6048,
+          152
         ],
         "id": "wait-photo-avatar-retry",
         "name": "Wait 3s (Retry)",
@@ -1957,13 +2147,13 @@
       },
       {
         "parameters": {
-          "jsCode": "const statusResponse = $json;\nconst inputData = $('Extract Photo Avatar ID').first().json;\n\n// Photo avatar is complete, we can now add motion\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_status: 'completed',\n    status: 'ready_for_motion'\n  }\n}];"
+          "jsCode": "const statusResponse = $json;\n\n// Data can come from two paths:\n// 1. Existing group path: Extract Photo Avatar ID\n// 2. New group path: Carry Data Forward\nlet inputData;\ntry {\n  inputData = $('Extract Photo Avatar ID').first().json;\n} catch (e) {\n  // Try the new group path\n  try {\n    inputData = $('Carry Data Forward').first().json;\n  } catch (e2) {\n    // Last resort: use what we have in the flow\n    inputData = statusResponse;\n  }\n}\n\n// Photo avatar is complete, we can now add motion\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_status: 'completed',\n    status: 'ready_for_motion'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4192,
-          48
+          5824,
+          -64
         ],
         "id": "photo-avatar-ready",
         "name": "Photo Avatar Ready"
@@ -1979,8 +2169,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          4384,
-          400
+          6048,
+          344
         ],
         "id": "respond-avatar-error",
         "name": "Respond Photo Avatar Error"
@@ -2008,8 +2198,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2352,
-          -48
+          2464,
+          -64
         ],
         "id": "avatar-processor",
         "name": "API: Avatar Processor"
@@ -2021,8 +2211,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2624,
-          -48
+          2688,
+          -64
         ],
         "id": "extract-processed-image",
         "name": "Extract Processed Image"
@@ -2034,7 +2224,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2864,
+          2912,
           -64
         ],
         "id": "convert-base64-to-binary",
@@ -2049,8 +2239,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4848,
-          48
+          6496,
+          -64
         ],
         "id": "postgres-insert-avatar",
         "name": "DB: Insert Avatar",
@@ -2070,8 +2260,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          5048,
-          48
+          6720,
+          -64
         ],
         "id": "postgres-insert-client-avatar",
         "name": "DB: Insert Client Avatar",
@@ -2089,8 +2279,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2640,
-          560
+          2464,
+          536
         ],
         "id": "format-birefnet-error",
         "name": "Format BiRefNet Error"
@@ -2102,8 +2292,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4384,
-          512
+          6048,
+          536
         ],
         "id": "format-photo-error",
         "name": "Format Photo Avatar Error"
@@ -2120,8 +2310,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          2864,
-          560
+          2688,
+          536
         ],
         "id": "call-error-birefnet",
         "name": "Call: Email Error (BiRefNet)"
@@ -2138,11 +2328,125 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          4608,
-          512
+          6272,
+          536
         ],
         "id": "call-error-photo",
         "name": "Call: Email Error (Photo)"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "has-group-check",
+                "leftValue": "={{ $json.group_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          3584,
+          104
+        ],
+        "id": "if-has-avatar-group",
+        "name": "If: Has Avatar Group"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.heygen.com/v2/photo_avatar/avatar_group/create",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"name\": \"{{ $json.person_name }}\",\n  \"image_key\": \"{{ $json.image_key }}\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3808,
+          176
+        ],
+        "id": "api-create-avatar-group",
+        "name": "API: Create Avatar Group",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "vHwnmobM8C8U7vIZ",
+            "name": "HeyGen"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\n// Create Avatar Group response only contains group_id\n// photo_avatar_id will come later from \"Add Look to Group\"\nif (!response.data || !response.data.group_id) {\n  throw new Error('Failed to create avatar group: ' + JSON.stringify(response));\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    group_id: response.data.group_id,  // New group ID to use\n    status: 'group_created',\n    is_new_group: true\n    // NOTE: No photo_avatar_id here - that comes from Add Look to Group\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4032,
+          176
+        ],
+        "id": "extract-new-group",
+        "name": "Extract New Group"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE persons SET heygen_group_id = '{{ $json.group_id }}', updated_at = NOW() WHERE id = '{{ $('Parse Input').first().json.person_id }}' AND heygen_group_id IS NULL RETURNING id, display_name, heygen_group_id;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4256,
+          176
+        ],
+        "id": "db-save-group-to-person",
+        "name": "DB: Save Group to Person",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Restore avatar data from Extract New Group (DB node returns query result, not our data)\nconst avatarData = $('Extract New Group').first().json;\n\nconsole.log('Restored avatar data for Add Look to Group:', {\n  group_id: avatarData.group_id,\n  image_key: avatarData.image_key,\n  style_name: avatarData.style_name\n});\n\nreturn [{\n  json: {\n    ...avatarData,\n    group_saved: true\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4480,
+          176
+        ],
+        "id": "carry-data-forward",
+        "name": "Carry Data Forward"
       }
     ],
     "connections": {
@@ -2352,7 +2656,7 @@
         "main": [
           [
             {
-              "node": "API: Add Look to Group",
+              "node": "If: Has Avatar Group",
               "type": "main",
               "index": 0
             }
@@ -2581,6 +2885,68 @@
           [
             {
               "node": "Call: Email Error (Photo)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Has Avatar Group": {
+        "main": [
+          [
+            {
+              "node": "API: Add Look to Group",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "API: Create Avatar Group",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Create Avatar Group": {
+        "main": [
+          [
+            {
+              "node": "Extract New Group",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract New Group": {
+        "main": [
+          [
+            {
+              "node": "DB: Save Group to Person",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Save Group to Person": {
+        "main": [
+          [
+            {
+              "node": "Carry Data Forward",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Carry Data Forward": {
+        "main": [
+          [
+            {
+              "node": "API: Add Look to Group",
               "type": "main",
               "index": 0
             }
