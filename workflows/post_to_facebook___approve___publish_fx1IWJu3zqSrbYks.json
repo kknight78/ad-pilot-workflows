@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T13:57:24.916Z",
+  "updatedAt": "2026-02-06T23:24:05.872Z",
   "createdAt": "2025-12-13T13:57:24.916Z",
   "id": "fx1IWJu3zqSrbYks",
   "name": "Post to Facebook - Approve & Publish",
@@ -10,7 +10,9 @@
       "parameters": {
         "path": "approve-and-post",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -278,7 +280,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "cdaed18f-d827-4c22-a207-c80cb21ca114",
+  "versionId": "f38dd76a-5941-4c4c-bb5b-6692e5cd46aa",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
