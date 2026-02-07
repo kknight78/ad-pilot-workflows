@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-19T19:30:35.150Z",
+  "updatedAt": "2026-02-06T23:23:59.998Z",
   "createdAt": "2026-01-18T16:43:38.898Z",
   "id": "6Y4lKunKTyyouh4n",
   "name": "Direction Generator",
@@ -218,7 +218,7 @@
             {
               "id": "prompt",
               "name": "prompt",
-              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate ONE creative direction/theme for this week's content.\n\nThis direction will be used to create BOTH:\n- A paid ad with a hook that uses this theme\n- An educational video topic that ties into this theme\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nGood directions are:\n- Timely (holidays, seasons, current events, weather)\n- Relatable to everyday life\n- Can connect to BOTH car buying AND car ownership/maintenance\n- Creative and unexpected angles work great\n\nExamples of good directions:\n- \"Groundhog Day\" (February timing, repetition theme)\n- \"Tax Refund Season\" (Spring, money theme)\n- \"Back to School\" (August, family/reliability theme)\n- \"New Year, New Ride\" (January, fresh start theme)\n- \"Summer Road Trip\" (June-August, adventure theme)\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest directions about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\nOutput ONLY valid JSON:\n{\n  \"direction\": \"Short Direction Name (2-4 words)\",\n  \"emoji\": \"🎯\",\n  \"why\": \"Brief explanation of why this direction works for both ads and education\"\n}\n\nNo explanations outside the JSON. Generate now:",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═════════════════════════════��═════════════════════════════════\n\nGenerate ONE creative direction/theme for this week's content.\n\nThis direction will be used to create BOTH:\n- A paid ad with a hook that uses this theme\n- An educational video topic that ties into this theme\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nGood directions are:\n- Timely (holidays, seasons, current events, weather)\n- Relatable to everyday life\n- Can connect to BOTH car buying AND car ownership/maintenance\n- Creative and unexpected angles work great\n\nExamples of good directions:\n- \"Groundhog Day\" (February timing, repetition theme)\n- \"Tax Refund Season\" (Spring, money theme)\n- \"Back to School\" (August, family/reliability theme)\n- \"New Year, New Ride\" (January, fresh start theme)\n- \"Summer Road Trip\" (June-August, adventure theme)\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest directions about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\nOutput ONLY valid JSON:\n{\n  \"direction\": \"Short Direction Name (2-4 words)\",\n  \"emoji\": \"🎯\",\n  \"why\": \"Brief explanation of why this direction works for both ads and education\"\n}\n\nNo explanations outside the JSON. Generate now:",
               "type": "string"
             }
           ]
@@ -1165,8 +1165,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "f4b1b8c5-bff5-47df-85a1-80b3d1ebab07",
-  "activeVersionId": "b15bb4ca-0836-4f6b-a044-1091bd0e7d31",
+  "versionId": "6296af12-c163-4c88-81c6-36a5c03ffea0",
+  "activeVersionId": "6296af12-c163-4c88-81c6-36a5c03ffea0",
   "triggerCount": 1,
   "shared": [
     {
@@ -1178,9 +1178,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-19T19:21:54.389Z",
-    "createdAt": "2026-01-19T19:21:41.850Z",
-    "versionId": "b15bb4ca-0836-4f6b-a044-1091bd0e7d31",
+    "updatedAt": "2026-02-06T23:24:00.002Z",
+    "createdAt": "2026-02-06T23:24:00.002Z",
+    "versionId": "6296af12-c163-4c88-81c6-36a5c03ffea0",
     "workflowId": "6Y4lKunKTyyouh4n",
     "nodes": [
       {
@@ -1395,7 +1395,7 @@
               {
                 "id": "prompt",
                 "name": "prompt",
-                "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate ONE creative direction/theme for this week's content.\n\nThis direction will be used to create BOTH:\n- A paid ad with a hook that uses this theme\n- An educational video topic that ties into this theme\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nGood directions are:\n- Timely (holidays, seasons, current events, weather)\n- Relatable to everyday life\n- Can connect to BOTH car buying AND car ownership/maintenance\n- Creative and unexpected angles work great\n\nExamples of good directions:\n- \"Groundhog Day\" (February timing, repetition theme)\n- \"Tax Refund Season\" (Spring, money theme)\n- \"Back to School\" (August, family/reliability theme)\n- \"New Year, New Ride\" (January, fresh start theme)\n- \"Summer Road Trip\" (June-August, adventure theme)\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest directions about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\nOutput ONLY valid JSON:\n{\n  \"direction\": \"Short Direction Name (2-4 words)\",\n  \"emoji\": \"🎯\",\n  \"why\": \"Brief explanation of why this direction works for both ads and education\"\n}\n\nNo explanations outside the JSON. Generate now:",
+                "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═════════════════════════════��═════════════════════════════════\n\nGenerate ONE creative direction/theme for this week's content.\n\nThis direction will be used to create BOTH:\n- A paid ad with a hook that uses this theme\n- An educational video topic that ties into this theme\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nGood directions are:\n- Timely (holidays, seasons, current events, weather)\n- Relatable to everyday life\n- Can connect to BOTH car buying AND car ownership/maintenance\n- Creative and unexpected angles work great\n\nExamples of good directions:\n- \"Groundhog Day\" (February timing, repetition theme)\n- \"Tax Refund Season\" (Spring, money theme)\n- \"Back to School\" (August, family/reliability theme)\n- \"New Year, New Ride\" (January, fresh start theme)\n- \"Summer Road Trip\" (June-August, adventure theme)\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest directions about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\nOutput ONLY valid JSON:\n{\n  \"direction\": \"Short Direction Name (2-4 words)\",\n  \"emoji\": \"🎯\",\n  \"why\": \"Brief explanation of why this direction works for both ads and education\"\n}\n\nNo explanations outside the JSON. Generate now:",
                 "type": "string"
               }
             ]
@@ -1414,7 +1414,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "googlePalmApi",
           "sendBody": true,
@@ -1645,7 +1645,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "googlePalmApi",
           "sendBody": true,
@@ -1687,7 +1687,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "googlePalmApi",
           "sendBody": true,
@@ -2335,8 +2335,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "added gemini 3 flash preview",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false
   },
   "tags": []
