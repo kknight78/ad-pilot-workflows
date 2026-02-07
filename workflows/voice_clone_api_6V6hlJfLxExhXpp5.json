@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-19T16:34:49.628Z",
+  "updatedAt": "2026-02-06T23:24:10.730Z",
   "createdAt": "2025-12-13T13:57:26.047Z",
   "id": "6V6hlJfLxExhXpp5",
   "name": "Voice Clone API",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "voice/clone",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook-clone",
       "name": "Webhook - Create Voice Clone",
@@ -28,7 +30,9 @@
         "httpMethod": "POST",
         "path": "voice/preview",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook-preview",
       "name": "Webhook - Generate Preview",
@@ -410,7 +414,9 @@
         "httpMethod": "POST",
         "path": "voice/delete",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook-delete-voice",
       "name": "Webhook - Delete Voice",
@@ -465,7 +471,9 @@
       "parameters": {
         "path": "voice/list",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook-list-voices",
       "name": "Webhook - List Voices",
@@ -753,8 +761,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "77f286a4-cada-46c0-ad2a-7f4373959a3b",
-  "activeVersionId": "77f286a4-cada-46c0-ad2a-7f4373959a3b",
+  "versionId": "10dee7fb-1c7c-4c68-8c49-89c9c0b93c73",
+  "activeVersionId": "10dee7fb-1c7c-4c68-8c49-89c9c0b93c73",
   "triggerCount": 4,
   "shared": [
     {
@@ -766,9 +774,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-19T16:34:52.787Z",
-    "createdAt": "2026-01-19T16:34:49.632Z",
-    "versionId": "77f286a4-cada-46c0-ad2a-7f4373959a3b",
+    "updatedAt": "2026-02-06T23:24:10.734Z",
+    "createdAt": "2026-02-06T23:24:10.734Z",
+    "versionId": "10dee7fb-1c7c-4c68-8c49-89c9c0b93c73",
     "workflowId": "6V6hlJfLxExhXpp5",
     "nodes": [
       {
@@ -776,7 +784,9 @@
           "httpMethod": "POST",
           "path": "voice/clone",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook-clone",
         "name": "Webhook - Create Voice Clone",
@@ -793,7 +803,9 @@
           "httpMethod": "POST",
           "path": "voice/preview",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook-preview",
         "name": "Webhook - Generate Preview",
@@ -1175,7 +1187,9 @@
           "httpMethod": "POST",
           "path": "voice/delete",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook-delete-voice",
         "name": "Webhook - Delete Voice",
@@ -1230,7 +1244,9 @@
         "parameters": {
           "path": "voice/list",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook-list-voices",
         "name": "Webhook - List Voices",
@@ -1511,8 +1527,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 77f286a4",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false
   },
   "tags": []
