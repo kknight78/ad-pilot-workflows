@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T00:17:13.598Z",
+  "updatedAt": "2026-02-06T23:24:01.534Z",
   "createdAt": "2025-12-13T13:57:33.702Z",
   "id": "plrubLhICCFRHjk0",
   "name": "Guidance Rules API",
@@ -10,7 +10,9 @@
       "parameters": {
         "path": "guidance-rules",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "get-webhook",
       "name": "GET Guidance Rules",
@@ -27,7 +29,9 @@
         "httpMethod": "POST",
         "path": "guidance-rules",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "post-webhook",
       "name": "POST Guidance Rules",
@@ -44,7 +48,9 @@
         "httpMethod": "DELETE",
         "path": "guidance-rules",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "delete-webhook",
       "name": "DELETE Guidance Rules",
@@ -685,8 +691,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "d8a093c6-3432-4e8e-875a-5fbca410cb9f",
-  "activeVersionId": "d8a093c6-3432-4e8e-875a-5fbca410cb9f",
+  "versionId": "5e1adbb5-ddf9-4b5b-9f21-2c0bff523d03",
+  "activeVersionId": "5e1adbb5-ddf9-4b5b-9f21-2c0bff523d03",
   "triggerCount": 3,
   "shared": [
     {
@@ -698,16 +704,18 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-14T00:17:13.600Z",
-    "createdAt": "2025-12-14T00:17:13.600Z",
-    "versionId": "d8a093c6-3432-4e8e-875a-5fbca410cb9f",
+    "updatedAt": "2026-02-06T23:24:01.537Z",
+    "createdAt": "2026-02-06T23:24:01.537Z",
+    "versionId": "5e1adbb5-ddf9-4b5b-9f21-2c0bff523d03",
     "workflowId": "plrubLhICCFRHjk0",
     "nodes": [
       {
         "parameters": {
           "path": "guidance-rules",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "get-webhook",
         "name": "GET Guidance Rules",
@@ -724,7 +732,9 @@
           "httpMethod": "POST",
           "path": "guidance-rules",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "post-webhook",
         "name": "POST Guidance Rules",
@@ -741,7 +751,9 @@
           "httpMethod": "DELETE",
           "path": "guidance-rules",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "delete-webhook",
         "name": "DELETE Guidance Rules",
