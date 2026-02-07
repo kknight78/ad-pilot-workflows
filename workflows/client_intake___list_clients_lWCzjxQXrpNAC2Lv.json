@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T00:54:48.734Z",
+  "updatedAt": "2026-02-06T23:23:57.834Z",
   "createdAt": "2025-12-13T13:57:26.760Z",
   "id": "lWCzjxQXrpNAC2Lv",
   "name": "Client Intake - List Clients",
@@ -26,7 +26,8 @@
                 "value": "Content-Type"
               }
             ]
-          }
+          },
+          "allowedOrigins": "*"
         }
       },
       "id": "webhook-list",
@@ -149,8 +150,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "effe3048-5324-4102-90a8-21fe2b37074b",
-  "activeVersionId": "effe3048-5324-4102-90a8-21fe2b37074b",
+  "versionId": "ac85c025-5133-460f-8e74-e678a19e7d60",
+  "activeVersionId": "ac85c025-5133-460f-8e74-e678a19e7d60",
   "triggerCount": 1,
   "shared": [
     {
@@ -162,9 +163,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-14T00:54:48.736Z",
-    "createdAt": "2025-12-14T00:54:48.736Z",
-    "versionId": "effe3048-5324-4102-90a8-21fe2b37074b",
+    "updatedAt": "2026-02-06T23:23:57.838Z",
+    "createdAt": "2026-02-06T23:23:57.838Z",
+    "versionId": "ac85c025-5133-460f-8e74-e678a19e7d60",
     "workflowId": "lWCzjxQXrpNAC2Lv",
     "nodes": [
       {
@@ -187,7 +188,8 @@
                   "value": "Content-Type"
                 }
               ]
-            }
+            },
+            "allowedOrigins": "*"
           }
         },
         "id": "webhook-list",
