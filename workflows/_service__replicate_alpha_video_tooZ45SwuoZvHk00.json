@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-17T20:10:23.671Z",
+  "updatedAt": "2026-02-06T23:23:52.786Z",
   "createdAt": "2026-01-16T15:25:20.443Z",
   "id": "tooZ45SwuoZvHk00",
   "name": "[Service] Replicate Alpha Video",
@@ -16,44 +16,8 @@
       "typeVersion": 1.1,
       "position": [
         0,
-        0
+        24
       ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.replicate.com/v1/predictions",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.video_url }}\",\n    \"output_type\": \"alpha-mask\"\n  }\n}",
-        "options": {}
-      },
-      "id": "create-prediction",
-      "name": "Create RVM Prediction",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        224,
-        0
-      ],
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "Cg4MVmFYrBVN7VDI",
-          "name": "Replicate"
-        }
-      },
-      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -65,32 +29,8 @@
       "typeVersion": 2,
       "position": [
         448,
-        0
+        24
       ]
-    },
-    {
-      "parameters": {
-        "url": "={{ $json.status_url }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "sendHeaders": true,
-        "options": {}
-      },
-      "id": "check-status",
-      "name": "Check RVM Status",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        672,
-        0
-      ],
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "Cg4MVmFYrBVN7VDI",
-          "name": "Replicate"
-        }
-      },
-      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -120,8 +60,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        880,
-        0
+        896,
+        -48
       ]
     },
     {
@@ -133,8 +73,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        144
+        1120,
+        48
       ]
     },
     {
@@ -146,8 +86,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1328,
-        144
+        1344,
+        120
       ],
       "webhookId": "wait-rvm"
     },
@@ -160,9 +100,74 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
+        1120,
         -144
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.video_url }}\",\n    \"output_type\": \"alpha-mask\"\n  }\n}",
+        "options": {}
+      },
+      "id": "da3db9fa-f0db-4d22-9538-254d35e171d8",
+      "name": "Create RVM Prediction",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        24
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Cg4MVmFYrBVN7VDI",
+          "name": "Replicate"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "07fc3554-9bf8-46f9-8086-8ff12240e9b9",
+      "name": "Check RVM Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        24
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Cg4MVmFYrBVN7VDI",
+          "name": "Replicate"
+        }
+      },
+      "onError": "continueErrorOutput"
     }
   ],
   "connections": {
@@ -177,18 +182,6 @@
         ]
       ]
     },
-    "Create RVM Prediction": {
-      "main": [
-        [
-          {
-            "node": "Store Prediction ID",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
     "Store Prediction ID": {
       "main": [
         [
@@ -198,18 +191,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "Check RVM Status": {
-      "main": [
-        [
-          {
-            "node": "If Complete",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
       ]
     },
     "If Complete": {
@@ -251,6 +232,28 @@
           }
         ]
       ]
+    },
+    "Create RVM Prediction": {
+      "main": [
+        [
+          {
+            "node": "Store Prediction ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check RVM Status": {
+      "main": [
+        [
+          {
+            "node": "If Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -261,8 +264,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "7535bd87-dc62-418b-b1f5-859bec0256af",
-  "activeVersionId": "7535bd87-dc62-418b-b1f5-859bec0256af",
+  "versionId": "7037b2fd-ef64-4fa4-8d64-1b77f6d105a9",
+  "activeVersionId": "7037b2fd-ef64-4fa4-8d64-1b77f6d105a9",
   "triggerCount": 0,
   "shared": [
     {
@@ -274,9 +277,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-17T20:10:23.674Z",
-    "createdAt": "2026-01-17T20:10:23.674Z",
-    "versionId": "7535bd87-dc62-418b-b1f5-859bec0256af",
+    "updatedAt": "2026-02-06T23:23:52.789Z",
+    "createdAt": "2026-02-06T23:23:52.789Z",
+    "versionId": "7037b2fd-ef64-4fa4-8d64-1b77f6d105a9",
     "workflowId": "tooZ45SwuoZvHk00",
     "nodes": [
       {
@@ -289,44 +292,8 @@
         "typeVersion": 1.1,
         "position": [
           0,
-          0
+          24
         ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.replicate.com/v1/predictions",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpBearerAuth",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          },
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.video_url }}\",\n    \"output_type\": \"alpha-mask\"\n  }\n}",
-          "options": {}
-        },
-        "id": "create-prediction",
-        "name": "Create RVM Prediction",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          224,
-          0
-        ],
-        "credentials": {
-          "httpBearerAuth": {
-            "id": "Cg4MVmFYrBVN7VDI",
-            "name": "Replicate"
-          }
-        },
-        "onError": "continueErrorOutput"
       },
       {
         "parameters": {
@@ -338,32 +305,8 @@
         "typeVersion": 2,
         "position": [
           448,
-          0
+          24
         ]
-      },
-      {
-        "parameters": {
-          "url": "={{ $json.status_url }}",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpBearerAuth",
-          "sendHeaders": true,
-          "options": {}
-        },
-        "id": "check-status",
-        "name": "Check RVM Status",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          672,
-          0
-        ],
-        "credentials": {
-          "httpBearerAuth": {
-            "id": "Cg4MVmFYrBVN7VDI",
-            "name": "Replicate"
-          }
-        },
-        "onError": "continueErrorOutput"
       },
       {
         "parameters": {
@@ -393,8 +336,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          880,
-          0
+          896,
+          -48
         ]
       },
       {
@@ -406,8 +349,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1104,
-          144
+          1120,
+          48
         ]
       },
       {
@@ -419,8 +362,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          1328,
-          144
+          1344,
+          120
         ],
         "webhookId": "wait-rvm"
       },
@@ -433,9 +376,74 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1104,
+          1120,
           -144
         ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.replicate.com/v1/predictions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"version\": \"73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac\",\n  \"input\": {\n    \"input_video\": \"{{ $json.video_url }}\",\n    \"output_type\": \"alpha-mask\"\n  }\n}",
+          "options": {}
+        },
+        "id": "da3db9fa-f0db-4d22-9538-254d35e171d8",
+        "name": "Create RVM Prediction",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          224,
+          24
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "Cg4MVmFYrBVN7VDI",
+            "name": "Replicate"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.status_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "07fc3554-9bf8-46f9-8086-8ff12240e9b9",
+        "name": "Check RVM Status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          24
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "Cg4MVmFYrBVN7VDI",
+            "name": "Replicate"
+          }
+        },
+        "onError": "continueErrorOutput"
       }
     ],
     "connections": {
@@ -450,18 +458,6 @@
           ]
         ]
       },
-      "Create RVM Prediction": {
-        "main": [
-          [
-            {
-              "node": "Store Prediction ID",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          []
-        ]
-      },
       "Store Prediction ID": {
         "main": [
           [
@@ -471,18 +467,6 @@
               "index": 0
             }
           ]
-        ]
-      },
-      "Check RVM Status": {
-        "main": [
-          [
-            {
-              "node": "If Complete",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          []
         ]
       },
       "If Complete": {
@@ -519,6 +503,28 @@
           [
             {
               "node": "Check RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create RVM Prediction": {
+        "main": [
+          [
+            {
+              "node": "Store Prediction ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check RVM Status": {
+        "main": [
+          [
+            {
+              "node": "If Complete",
               "type": "main",
               "index": 0
             }
