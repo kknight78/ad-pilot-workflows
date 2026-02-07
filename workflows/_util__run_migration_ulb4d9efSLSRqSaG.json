@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-21T23:10:58.713Z",
+  "updatedAt": "2026-02-06T23:24:12.358Z",
   "createdAt": "2026-01-21T22:09:28.730Z",
   "id": "ulb4d9efSLSRqSaG",
   "name": "[Util] Run Migration",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "run-migration",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook-001",
       "name": "Webhook",
@@ -91,8 +93,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "aa4541b8-273e-4a9b-93aa-21e256f01f22",
-  "activeVersionId": "aa4541b8-273e-4a9b-93aa-21e256f01f22",
+  "versionId": "01fd76ba-61b7-4694-8ffc-ddb69ae507ac",
+  "activeVersionId": "01fd76ba-61b7-4694-8ffc-ddb69ae507ac",
   "triggerCount": 1,
   "shared": [
     {
@@ -104,9 +106,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-21T23:10:58.716Z",
-    "createdAt": "2026-01-21T23:10:58.716Z",
-    "versionId": "aa4541b8-273e-4a9b-93aa-21e256f01f22",
+    "updatedAt": "2026-02-06T23:24:12.361Z",
+    "createdAt": "2026-02-06T23:24:12.361Z",
+    "versionId": "01fd76ba-61b7-4694-8ffc-ddb69ae507ac",
     "workflowId": "ulb4d9efSLSRqSaG",
     "nodes": [
       {
@@ -114,7 +116,9 @@
           "httpMethod": "POST",
           "path": "run-migration",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook-001",
         "name": "Webhook",
