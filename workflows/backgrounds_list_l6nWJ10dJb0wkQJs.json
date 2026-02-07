@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-19T15:14:36.334Z",
+  "updatedAt": "2026-02-06T23:23:55.878Z",
   "createdAt": "2026-01-13T23:24:30.926Z",
   "id": "l6nWJ10dJb0wkQJs",
   "name": "Backgrounds List",
@@ -26,7 +26,8 @@
                 "value": "Content-Type"
               }
             ]
-          }
+          },
+          "allowedOrigins": "*"
         }
       },
       "type": "n8n-nodes-base.webhook",
@@ -132,8 +133,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "dce1870e-5785-4d42-baab-e66fb5fc0100",
-  "activeVersionId": "dce1870e-5785-4d42-baab-e66fb5fc0100",
+  "versionId": "720c19cf-979e-45d9-b33d-4ff7682f8abf",
+  "activeVersionId": "720c19cf-979e-45d9-b33d-4ff7682f8abf",
   "triggerCount": 1,
   "shared": [
     {
@@ -145,9 +146,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-19T15:14:48.655Z",
-    "createdAt": "2026-01-19T15:14:36.338Z",
-    "versionId": "dce1870e-5785-4d42-baab-e66fb5fc0100",
+    "updatedAt": "2026-02-06T23:23:55.881Z",
+    "createdAt": "2026-02-06T23:23:55.881Z",
+    "versionId": "720c19cf-979e-45d9-b33d-4ff7682f8abf",
     "workflowId": "l6nWJ10dJb0wkQJs",
     "nodes": [
       {
@@ -170,7 +171,8 @@
                   "value": "Content-Type"
                 }
               ]
-            }
+            },
+            "allowedOrigins": "*"
           }
         },
         "type": "n8n-nodes-base.webhook",
@@ -269,8 +271,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "remove background_type",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false
   },
   "tags": []
