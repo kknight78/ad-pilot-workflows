@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-29T17:48:39.344Z",
+  "updatedAt": "2026-02-06T23:24:10.081Z",
   "createdAt": "2025-12-13T13:57:21.648Z",
   "id": "FHXFDSGFYOqEHLfh",
   "name": "Topic Suggestor",
@@ -12,7 +12,7 @@
         "path": "topic-suggest",
         "responseMode": "responseNode",
         "options": {
-          "allowedOrigins": "https://demo.ad-pilot.ai"
+          "allowedOrigins": "*"
         }
       },
       "id": "4d220ddd-3b81-4432-aceb-3399e20e279c",
@@ -301,8 +301,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "52e25924-23ec-4dd2-8694-7204a4ac4393",
-  "activeVersionId": "52e25924-23ec-4dd2-8694-7204a4ac4393",
+  "versionId": "e6217e47-9b04-41fe-9e3d-2ad5cb8be64c",
+  "activeVersionId": "e6217e47-9b04-41fe-9e3d-2ad5cb8be64c",
   "triggerCount": 1,
   "shared": [
     {
@@ -314,9 +314,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-29T17:48:39.346Z",
-    "createdAt": "2025-12-29T17:48:39.346Z",
-    "versionId": "52e25924-23ec-4dd2-8694-7204a4ac4393",
+    "updatedAt": "2026-02-06T23:24:10.084Z",
+    "createdAt": "2026-02-06T23:24:10.084Z",
+    "versionId": "e6217e47-9b04-41fe-9e3d-2ad5cb8be64c",
     "workflowId": "FHXFDSGFYOqEHLfh",
     "nodes": [
       {
@@ -325,7 +325,7 @@
           "path": "topic-suggest",
           "responseMode": "responseNode",
           "options": {
-            "allowedOrigins": "https://demo.ad-pilot.ai"
+            "allowedOrigins": "*"
           }
         },
         "id": "4d220ddd-3b81-4432-aceb-3399e20e279c",
