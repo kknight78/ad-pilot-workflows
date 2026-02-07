@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-16T16:14:59.990Z",
+  "updatedAt": "2026-02-06T23:23:48.021Z",
   "createdAt": "2026-01-16T16:14:59.990Z",
   "id": "qshYTKTe8TdPI5hN",
   "name": "[06] Avatar Approved",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "avatar-approved",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook",
       "name": "Webhook: Avatar Approved",
@@ -335,8 +337,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "3fe13a3d-5938-44cd-8df4-73e19a7d209f",
-  "activeVersionId": "3fe13a3d-5938-44cd-8df4-73e19a7d209f",
+  "versionId": "83253953-c533-4046-adeb-04cc78d80063",
+  "activeVersionId": "83253953-c533-4046-adeb-04cc78d80063",
   "triggerCount": 1,
   "shared": [
     {
@@ -348,9 +350,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-16T16:28:49.979Z",
-    "createdAt": "2026-01-16T16:15:00.062Z",
-    "versionId": "3fe13a3d-5938-44cd-8df4-73e19a7d209f",
+    "updatedAt": "2026-02-06T23:23:48.024Z",
+    "createdAt": "2026-02-06T23:23:48.024Z",
+    "versionId": "83253953-c533-4046-adeb-04cc78d80063",
     "workflowId": "qshYTKTe8TdPI5hN",
     "nodes": [
       {
@@ -358,7 +360,9 @@
           "httpMethod": "POST",
           "path": "avatar-approved",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook",
         "name": "Webhook: Avatar Approved",
@@ -675,8 +679,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 3fe13a3d",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false
   },
   "tags": []
