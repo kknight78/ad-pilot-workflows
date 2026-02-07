@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-26T22:40:11.537Z",
+  "updatedAt": "2026-02-06T23:24:08.832Z",
   "createdAt": "2026-01-19T20:01:58.634Z",
   "id": "iktU7rwsiRVJepzF",
   "name": "Thematic Target Pack Generator",
@@ -154,7 +154,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        760,
+        768,
         304
       ]
     },
@@ -165,7 +165,7 @@
             {
               "id": "prompt",
               "name": "prompt",
-              "value": "=You are a creative strategist creating  automotive video content for social ad platforms.\n\n═══════════════════════════════════════════════════════════════\n🎯 YOUR TASK\n═══════════════════════════════════════════════════════════════\nGenerate a THEME SEED — a short, evocative theme direction for this week's video content.\n\nContext:\n- Location: {{ $json.service_area }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n{{ $json.local_override_text ? '- CLIENT DIRECTION: ' + $json.local_override_text : '' }}\n\n{{ $json.recent_themes ? '═══════════════════════════════════════════════════════════════\\n🚫 RECENT THEMES (DO NOT REPEAT)\\n═══════════════════════════════════════════════════════════════\\nThese themes were used recently. Generate something DIFFERENT — avoid similar words, concepts, and angles:\\n' + $json.recent_themes + '\\n' : '' }}\n\n══════════════════════════════���������������════════════════════════════════\n���� THEME PHILOSOPHY\n═══════════════════════════════════════════════════════════════\nGreat themes tap into ASPIRATION and IDENTITY, FOMO, but not anxiety.\n\nTarget viewer: Someone who knows they need a new car and has been putting it off and/or someone whose car is FINE, but who's been daydreaming about something better.\n\nGood theme energy:\n- \"Check this worry off your list\"\n- \"You'll be surprised how affordable...\"\n- \"Don't put it off, the time is now\"\n- \"Your future self is waiting\"\n- \"You deserve this upgrade\"\n- \"Imagine pulling up in...\"\n- \"Finally stop settling\"\n- \"Make them do a double-take\"\n\nAvoid theme energy:\n- \"Your car might fail you\"\n- \"Don't get stranded\"\n- \"Avoid embarrassment\"\n- \"Before it's too late\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME DIVERSITY\n═══════════════════════════════════════════════════════════════\nThemes should rotate across different angles. Don't default to the obvious.\n\nLEAD with one of these (pick a DIFFERENT category than recent themes):\n- IDENTITY: Who you're becoming, how others see you, personal evolution, being responsible\n- LIFESTYLE: Life moments, family, adventures, daily joy\n- ASPIRATION: Dreams, goals, treating yourself, leveling up\n- FINANCIAL: Smart money moves, lower payments, more freedom\n- COMMUNITY: Local pride, events, neighbors, belonging\n- MILESTONES: New job, kids growing up, fresh starts, celebrations\n\nSEASON/WEATHER/HOLIDAY should be SECONDARY flavor, not the primary hook.\nBad: \"Winter Upgrade\" (season IS the theme)\nGood: \"New Year, New Arrival\" (milestone primary, season flavor)\nGood: \"Make Them Look Twice\" (identity primary, no season needed)\nGood: \"Get holiday ready\"\n\n{{ $json.local_override_text ? '═══════════════════════════════════════════════════════════════\\n🎪 CLIENT DIRECTION RULE\\n═══════════════════════════════════════════════════════════════\\nThe client provided specific direction. Build the seed around their input.\\nCapture their intent, but make it punchy and compelling.\\n' : '' }}\n\n═══════════════════════════════════════════════════════════════\n📦 OUTPUT FORMAT (JSON ONLY)\n═══════════════════════════════════════════════════════════════\nReturn ONLY valid JSON. No markdown, no extra text.\n\n{\n  \"theme_seed\": \"2–5 words, evocative, non-generic\",\n  \"emoji\": \"ONE emoji that fits\",\n  \"direction\": \"One sentence: the vibe and why it works this week\",\n  \"local_override_text\": \"Exact client input if provided, otherwise null\"\n}",
+              "value": "=You are a creative strategist creating  automotive video content for social ad platforms.\n\n═══════════════════════════════════════════════════════════════\n🎯 YOUR TASK\n═══════════════════════════════════════════════════════════════\nGenerate a THEME SEED — a short, evocative theme direction for this week's video content.\n\nContext:\n- Location: {{ $json.service_area }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n{{ $json.local_override_text ? '- CLIENT DIRECTION: ' + $json.local_override_text : '' }}\n\n{{ $json.recent_themes ? '═══════════════════════════════════════════════════════════════\\n🚫 RECENT THEMES (DO NOT REPEAT)\\n═══════════════════════════════════════════════════════════════\\nThese themes were used recently. Generate something DIFFERENT — avoid similar words, concepts, and angles:\\n' + $json.recent_themes + '\\n' : '' }}\n\n══════════════════════════════�����������������════════════════════════════════\n���� THEME PHILOSOPHY\n═══════════════════════════════════════════════════════════════\nGreat themes tap into ASPIRATION and IDENTITY, FOMO, but not anxiety.\n\nTarget viewer: Someone who knows they need a new car and has been putting it off and/or someone whose car is FINE, but who's been daydreaming about something better.\n\nGood theme energy:\n- \"Check this worry off your list\"\n- \"You'll be surprised how affordable...\"\n- \"Don't put it off, the time is now\"\n- \"Your future self is waiting\"\n- \"You deserve this upgrade\"\n- \"Imagine pulling up in...\"\n- \"Finally stop settling\"\n- \"Make them do a double-take\"\n\nAvoid theme energy:\n- \"Your car might fail you\"\n- \"Don't get stranded\"\n- \"Avoid embarrassment\"\n- \"Before it's too late\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME DIVERSITY\n═══════════════════════════════════════════════════════════════\nThemes should rotate across different angles. Don't default to the obvious.\n\nLEAD with one of these (pick a DIFFERENT category than recent themes):\n- IDENTITY: Who you're becoming, how others see you, personal evolution, being responsible\n- LIFESTYLE: Life moments, family, adventures, daily joy\n- ASPIRATION: Dreams, goals, treating yourself, leveling up\n- FINANCIAL: Smart money moves, lower payments, more freedom\n- COMMUNITY: Local pride, events, neighbors, belonging\n- MILESTONES: New job, kids growing up, fresh starts, celebrations\n\nSEASON/WEATHER/HOLIDAY should be SECONDARY flavor, not the primary hook.\nBad: \"Winter Upgrade\" (season IS the theme)\nGood: \"New Year, New Arrival\" (milestone primary, season flavor)\nGood: \"Make Them Look Twice\" (identity primary, no season needed)\nGood: \"Get holiday ready\"\n\n{{ $json.local_override_text ? '═══════════════════════════════════════════════════════════════\\n🎪 CLIENT DIRECTION RULE\\n═══════════════════════════════════════════════════════════════\\nThe client provided specific direction. Build the seed around their input.\\nCapture their intent, but make it punchy and compelling.\\n' : '' }}\n\n═══════════════════════════════════════════════════════════════\n📦 OUTPUT FORMAT (JSON ONLY)\n═══════════════════════════════════════════════════════════════\nReturn ONLY valid JSON. No markdown, no extra text.\n\n{\n  \"theme_seed\": \"2–5 words, evocative, non-generic\",\n  \"emoji\": \"ONE emoji that fits\",\n  \"direction\": \"One sentence: the vibe and why it works this week\",\n  \"local_override_text\": \"Exact client input if provided, otherwise null\"\n}",
               "type": "string"
             }
           ]
@@ -177,7 +177,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
       "position": [
-        968,
+        976,
         208
       ]
     },
@@ -200,7 +200,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
       "position": [
-        968,
+        976,
         400
       ]
     },
@@ -236,7 +236,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1160,
+        1168,
         208
       ],
       "credentials": {
@@ -278,7 +278,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1160,
+        1168,
         400
       ],
       "credentials": {
@@ -297,7 +297,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1368,
+        1376,
         208
       ]
     },
@@ -310,7 +310,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1368,
+        1376,
         400
       ]
     },
@@ -346,7 +346,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1560,
+        1568,
         208
       ]
     },
@@ -382,7 +382,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1560,
+        1568,
         400
       ]
     },
@@ -397,16 +397,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        472,
+        480,
         304
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
         }
       },
-      "alwaysOutputData": true,
       "onError": "continueRegularOutput"
     },
     {
@@ -433,8 +433,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1368,
-        208
+        1376,
+        48
       ],
       "credentials": {
         "postgres": {
@@ -454,8 +454,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1368,
-        400
+        1376,
+        544
       ],
       "credentials": {
         "postgres": {
@@ -625,8 +625,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "77610f29-dab2-4a18-9e2c-025cb0098c7d",
-  "activeVersionId": "77610f29-dab2-4a18-9e2c-025cb0098c7d",
+  "versionId": "4cb47da2-3ba9-45ea-bf90-152d3ba124da",
+  "activeVersionId": "4cb47da2-3ba9-45ea-bf90-152d3ba124da",
   "triggerCount": 1,
   "shared": [
     {
@@ -638,9 +638,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-26T22:40:11.540Z",
-    "createdAt": "2026-01-26T22:40:11.540Z",
-    "versionId": "77610f29-dab2-4a18-9e2c-025cb0098c7d",
+    "updatedAt": "2026-02-06T23:24:08.835Z",
+    "createdAt": "2026-02-06T23:24:08.835Z",
+    "versionId": "4cb47da2-3ba9-45ea-bf90-152d3ba124da",
     "workflowId": "iktU7rwsiRVJepzF",
     "nodes": [
       {
@@ -791,7 +791,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          760,
+          768,
           304
         ]
       },
@@ -802,7 +802,7 @@
               {
                 "id": "prompt",
                 "name": "prompt",
-                "value": "=You are a creative strategist creating  automotive video content for social ad platforms.\n\n═══════════════════════════════════════════════════════════════\n🎯 YOUR TASK\n═══════════════════════════════════════════════════════════════\nGenerate a THEME SEED — a short, evocative theme direction for this week's video content.\n\nContext:\n- Location: {{ $json.service_area }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n{{ $json.local_override_text ? '- CLIENT DIRECTION: ' + $json.local_override_text : '' }}\n\n{{ $json.recent_themes ? '═══════════════════════════════════════════════════════════════\\n🚫 RECENT THEMES (DO NOT REPEAT)\\n═══════════════════════════════════════════════════════════════\\nThese themes were used recently. Generate something DIFFERENT — avoid similar words, concepts, and angles:\\n' + $json.recent_themes + '\\n' : '' }}\n\n══════════════════════════════���������������════════════════════════════════\n���� THEME PHILOSOPHY\n═══════════════════════════════════════════════════════════════\nGreat themes tap into ASPIRATION and IDENTITY, FOMO, but not anxiety.\n\nTarget viewer: Someone who knows they need a new car and has been putting it off and/or someone whose car is FINE, but who's been daydreaming about something better.\n\nGood theme energy:\n- \"Check this worry off your list\"\n- \"You'll be surprised how affordable...\"\n- \"Don't put it off, the time is now\"\n- \"Your future self is waiting\"\n- \"You deserve this upgrade\"\n- \"Imagine pulling up in...\"\n- \"Finally stop settling\"\n- \"Make them do a double-take\"\n\nAvoid theme energy:\n- \"Your car might fail you\"\n- \"Don't get stranded\"\n- \"Avoid embarrassment\"\n- \"Before it's too late\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME DIVERSITY\n═══════════════════════════════════════════════════════════════\nThemes should rotate across different angles. Don't default to the obvious.\n\nLEAD with one of these (pick a DIFFERENT category than recent themes):\n- IDENTITY: Who you're becoming, how others see you, personal evolution, being responsible\n- LIFESTYLE: Life moments, family, adventures, daily joy\n- ASPIRATION: Dreams, goals, treating yourself, leveling up\n- FINANCIAL: Smart money moves, lower payments, more freedom\n- COMMUNITY: Local pride, events, neighbors, belonging\n- MILESTONES: New job, kids growing up, fresh starts, celebrations\n\nSEASON/WEATHER/HOLIDAY should be SECONDARY flavor, not the primary hook.\nBad: \"Winter Upgrade\" (season IS the theme)\nGood: \"New Year, New Arrival\" (milestone primary, season flavor)\nGood: \"Make Them Look Twice\" (identity primary, no season needed)\nGood: \"Get holiday ready\"\n\n{{ $json.local_override_text ? '═══════════════════════════════════════════════════════════════\\n🎪 CLIENT DIRECTION RULE\\n═══════════════════════════════════════════════════════════════\\nThe client provided specific direction. Build the seed around their input.\\nCapture their intent, but make it punchy and compelling.\\n' : '' }}\n\n═══════════════════════════════════════════════════════════════\n📦 OUTPUT FORMAT (JSON ONLY)\n═══════════════════════════════════════════════════════════════\nReturn ONLY valid JSON. No markdown, no extra text.\n\n{\n  \"theme_seed\": \"2–5 words, evocative, non-generic\",\n  \"emoji\": \"ONE emoji that fits\",\n  \"direction\": \"One sentence: the vibe and why it works this week\",\n  \"local_override_text\": \"Exact client input if provided, otherwise null\"\n}",
+                "value": "=You are a creative strategist creating  automotive video content for social ad platforms.\n\n═══════════════════════════════════════════════════════════════\n🎯 YOUR TASK\n═══════════════════════════════════════════════════════════════\nGenerate a THEME SEED — a short, evocative theme direction for this week's video content.\n\nContext:\n- Location: {{ $json.service_area }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n{{ $json.local_override_text ? '- CLIENT DIRECTION: ' + $json.local_override_text : '' }}\n\n{{ $json.recent_themes ? '═══════════════════════════════════════════════════════════════\\n🚫 RECENT THEMES (DO NOT REPEAT)\\n═══════════════════════════════════════════════════════════════\\nThese themes were used recently. Generate something DIFFERENT — avoid similar words, concepts, and angles:\\n' + $json.recent_themes + '\\n' : '' }}\n\n══════════════════════════════�����������������════════════════════════════════\n���� THEME PHILOSOPHY\n═══════════════════════════════════════════════════════════════\nGreat themes tap into ASPIRATION and IDENTITY, FOMO, but not anxiety.\n\nTarget viewer: Someone who knows they need a new car and has been putting it off and/or someone whose car is FINE, but who's been daydreaming about something better.\n\nGood theme energy:\n- \"Check this worry off your list\"\n- \"You'll be surprised how affordable...\"\n- \"Don't put it off, the time is now\"\n- \"Your future self is waiting\"\n- \"You deserve this upgrade\"\n- \"Imagine pulling up in...\"\n- \"Finally stop settling\"\n- \"Make them do a double-take\"\n\nAvoid theme energy:\n- \"Your car might fail you\"\n- \"Don't get stranded\"\n- \"Avoid embarrassment\"\n- \"Before it's too late\"\n\n═══════════════════════════════════════════════════════════════\n🎨 THEME DIVERSITY\n═══════════════════════════════════════════════════════════════\nThemes should rotate across different angles. Don't default to the obvious.\n\nLEAD with one of these (pick a DIFFERENT category than recent themes):\n- IDENTITY: Who you're becoming, how others see you, personal evolution, being responsible\n- LIFESTYLE: Life moments, family, adventures, daily joy\n- ASPIRATION: Dreams, goals, treating yourself, leveling up\n- FINANCIAL: Smart money moves, lower payments, more freedom\n- COMMUNITY: Local pride, events, neighbors, belonging\n- MILESTONES: New job, kids growing up, fresh starts, celebrations\n\nSEASON/WEATHER/HOLIDAY should be SECONDARY flavor, not the primary hook.\nBad: \"Winter Upgrade\" (season IS the theme)\nGood: \"New Year, New Arrival\" (milestone primary, season flavor)\nGood: \"Make Them Look Twice\" (identity primary, no season needed)\nGood: \"Get holiday ready\"\n\n{{ $json.local_override_text ? '═══════════════════════════════════════════════════════════════\\n🎪 CLIENT DIRECTION RULE\\n═══════════════════════════════════════════════════════════════\\nThe client provided specific direction. Build the seed around their input.\\nCapture their intent, but make it punchy and compelling.\\n' : '' }}\n\n═══════════════════════════════════════════════════════════════\n📦 OUTPUT FORMAT (JSON ONLY)\n═══════════════════════════════════════════════════════════════\nReturn ONLY valid JSON. No markdown, no extra text.\n\n{\n  \"theme_seed\": \"2–5 words, evocative, non-generic\",\n  \"emoji\": \"ONE emoji that fits\",\n  \"direction\": \"One sentence: the vibe and why it works this week\",\n  \"local_override_text\": \"Exact client input if provided, otherwise null\"\n}",
                 "type": "string"
               }
             ]
@@ -814,7 +814,7 @@
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.3,
         "position": [
-          968,
+          976,
           208
         ]
       },
@@ -837,7 +837,7 @@
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.3,
         "position": [
-          968,
+          976,
           400
         ]
       },
@@ -873,7 +873,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1160,
+          1168,
           208
         ],
         "credentials": {
@@ -915,7 +915,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1160,
+          1168,
           400
         ],
         "credentials": {
@@ -934,7 +934,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1368,
+          1376,
           208
         ]
       },
@@ -947,7 +947,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1368,
+          1376,
           400
         ]
       },
@@ -983,7 +983,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1560,
+          1568,
           208
         ]
       },
@@ -1019,7 +1019,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1560,
+          1568,
           400
         ]
       },
@@ -1034,16 +1034,16 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          472,
+          480,
           304
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
           }
         },
-        "alwaysOutputData": true,
         "onError": "continueRegularOutput"
       },
       {
@@ -1070,8 +1070,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1368,
-          208
+          1376,
+          48
         ],
         "credentials": {
           "postgres": {
@@ -1091,8 +1091,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1368,
-          400
+          1376,
+          544
         ],
         "credentials": {
           "postgres": {
