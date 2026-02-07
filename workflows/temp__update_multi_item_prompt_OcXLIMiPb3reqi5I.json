@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-21T01:27:14.628Z",
+  "updatedAt": "2026-02-06T23:24:07.627Z",
   "createdAt": "2026-01-21T01:27:14.628Z",
   "id": "OcXLIMiPb3reqi5I",
   "name": "TEMP: Update Multi-Item Prompt",
@@ -11,7 +11,9 @@
         "httpMethod": "GET",
         "path": "do-update-prompt",
         "responseMode": "lastNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook",
       "name": "Webhook",
@@ -66,7 +68,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "86d8aa67-c723-4481-8107-baef24abe9fd",
+  "versionId": "81b4a19a-816b-444e-9082-a4ca951e78aa",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
