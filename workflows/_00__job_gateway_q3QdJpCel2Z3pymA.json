@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T23:51:34.327Z",
+  "updatedAt": "2026-02-06T23:23:42.559Z",
   "createdAt": "2025-12-13T13:57:22.103Z",
   "id": "q3QdJpCel2Z3pymA",
   "name": "[00] Job Gateway",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "ad-pilot/start",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -132,6 +134,16 @@
               "removed": false
             },
             {
+              "id": "generated_copy",
+              "displayName": "generated_copy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
               "id": "video_url",
               "displayName": "video_url",
               "required": false,
@@ -144,6 +156,16 @@
             {
               "id": "error_message",
               "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "api_cache",
+              "displayName": "api_cache",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -203,7 +225,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/ad-pilot",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/ad-pilot",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -422,7 +444,6 @@
             "job_id": "={{ $('Generate Job ID').item.json.job_id }}",
             "status": "={{ $json.final_video_url ? 'complete' : 'script_ready' }}",
             "updated_at": "={{ new Date().toISOString() }}",
-            "script_data": "={{ JSON.stringify($json.script) }}",
             "video_url": "={{ $json.final_video_url || '' }}",
             "api_cache": "={{ $json.test_mode ? JSON.stringify({ api_claude_script_generation: $json.api_claude_script_generation, api_claude_categorize_photos: $json.api_claude_categorize_photos, api_claude_feature_identification: $json.api_claude_feature_identification }) : '' }}"
           },
@@ -515,7 +536,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": true
             },
             {
               "id": "video_url",
@@ -594,7 +616,9 @@
       "parameters": {
         "path": "ad-pilot/status",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -649,8 +673,6 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -664,7 +686,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const row = $input.first().json;\n\n// Parse api_cache if it exists\nlet apiCache = {};\nif (row.api_cache) {\n  try {\n    apiCache = JSON.parse(row.api_cache);\n  } catch (e) {\n    // Ignore parse errors\n  }\n}\n\nreturn [{\n  json: {\n    job_id: row.job_id,\n    status: row.status,\n    script_data: row.script_data ? JSON.parse(row.script_data) : null,\n    video_url: row.video_url || null,\n    error_message: row.error_message || null,\n    ...apiCache\n  }\n}];"
+        "jsCode": "const row = $input.first().json;\n\n// Parse api_cache if it exists\nlet apiCache = {};\nif (row.api_cache) {\n  try {\n    apiCache = JSON.parse(row.api_cache);\n  } catch (e) {\n    // Ignore parse errors\n  }\n}\n\n// Parse generated_copy if it exists\nlet generatedCopy = null;\nif (row.generated_copy) {\n  try {\n    generatedCopy = JSON.parse(row.generated_copy);\n  } catch (e) {\n    // Ignore parse errors\n  }\n}\n\nreturn [{\n  json: {\n    job_id: row.job_id,\n    status: row.status,\n    script_data: row.script_data ? JSON.parse(row.script_data) : null,\n    generated_copy: generatedCopy,\n    video_url: row.video_url || null,\n    error_message: row.error_message || null,\n    ...apiCache\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -981,8 +1003,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b374da80-3f3f-4a2c-84b9-0e2dc3d71a81",
-  "activeVersionId": "b374da80-3f3f-4a2c-84b9-0e2dc3d71a81",
+  "versionId": "3a333eef-16c6-45ca-a3e1-e507da10c1eb",
+  "activeVersionId": "3a333eef-16c6-45ca-a3e1-e507da10c1eb",
   "triggerCount": 2,
   "shared": [
     {
@@ -994,9 +1016,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-13T23:51:34.333Z",
-    "createdAt": "2025-12-13T23:51:34.333Z",
-    "versionId": "b374da80-3f3f-4a2c-84b9-0e2dc3d71a81",
+    "updatedAt": "2026-02-06T23:23:42.563Z",
+    "createdAt": "2026-02-06T23:23:42.563Z",
+    "versionId": "3a333eef-16c6-45ca-a3e1-e507da10c1eb",
     "workflowId": "q3QdJpCel2Z3pymA",
     "nodes": [
       {
@@ -1004,7 +1026,9 @@
           "httpMethod": "POST",
           "path": "ad-pilot/start",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
@@ -1125,6 +1149,16 @@
                 "removed": false
               },
               {
+                "id": "generated_copy",
+                "displayName": "generated_copy",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
                 "id": "video_url",
                 "displayName": "video_url",
                 "required": false,
@@ -1137,6 +1171,16 @@
               {
                 "id": "error_message",
                 "displayName": "error_message",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "api_cache",
+                "displayName": "api_cache",
                 "required": false,
                 "defaultMatch": false,
                 "display": true,
@@ -1196,7 +1240,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/ad-pilot",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/ad-pilot",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ JSON.stringify($json) }}",
@@ -1415,7 +1459,6 @@
               "job_id": "={{ $('Generate Job ID').item.json.job_id }}",
               "status": "={{ $json.final_video_url ? 'complete' : 'script_ready' }}",
               "updated_at": "={{ new Date().toISOString() }}",
-              "script_data": "={{ JSON.stringify($json.script) }}",
               "video_url": "={{ $json.final_video_url || '' }}",
               "api_cache": "={{ $json.test_mode ? JSON.stringify({ api_claude_script_generation: $json.api_claude_script_generation, api_claude_categorize_photos: $json.api_claude_categorize_photos, api_claude_feature_identification: $json.api_claude_feature_identification }) : '' }}"
             },
@@ -1508,7 +1551,8 @@
                 "defaultMatch": false,
                 "display": true,
                 "type": "string",
-                "canBeUsedToMatch": true
+                "canBeUsedToMatch": true,
+                "removed": true
               },
               {
                 "id": "video_url",
@@ -1587,7 +1631,9 @@
         "parameters": {
           "path": "ad-pilot/status",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
@@ -1642,8 +1688,6 @@
       },
       {
         "parameters": {
-          "respondWith": "json",
-          "responseBody": "={{ JSON.stringify($json) }}",
           "options": {}
         },
         "type": "n8n-nodes-base.respondToWebhook",
@@ -1657,7 +1701,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const row = $input.first().json;\n\n// Parse api_cache if it exists\nlet apiCache = {};\nif (row.api_cache) {\n  try {\n    apiCache = JSON.parse(row.api_cache);\n  } catch (e) {\n    // Ignore parse errors\n  }\n}\n\nreturn [{\n  json: {\n    job_id: row.job_id,\n    status: row.status,\n    script_data: row.script_data ? JSON.parse(row.script_data) : null,\n    video_url: row.video_url || null,\n    error_message: row.error_message || null,\n    ...apiCache\n  }\n}];"
+          "jsCode": "const row = $input.first().json;\n\n// Parse api_cache if it exists\nlet apiCache = {};\nif (row.api_cache) {\n  try {\n    apiCache = JSON.parse(row.api_cache);\n  } catch (e) {\n    // Ignore parse errors\n  }\n}\n\n// Parse generated_copy if it exists\nlet generatedCopy = null;\nif (row.generated_copy) {\n  try {\n    generatedCopy = JSON.parse(row.generated_copy);\n  } catch (e) {\n    // Ignore parse errors\n  }\n}\n\nreturn [{\n  json: {\n    job_id: row.job_id,\n    status: row.status,\n    script_data: row.script_data ? JSON.parse(row.script_data) : null,\n    generated_copy: generatedCopy,\n    video_url: row.video_url || null,\n    error_message: row.error_message || null,\n    ...apiCache\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
