@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-18T01:23:33.214Z",
+  "updatedAt": "2026-02-06T23:24:04.753Z",
   "createdAt": "2026-01-14T12:36:46.539Z",
   "id": "kDcbTedKxlN3z1Rg",
   "name": "Music List",
@@ -27,7 +27,8 @@
                 "value": "Content-Type"
               }
             ]
-          }
+          },
+          "allowedOrigins": "*"
         }
       },
       "type": "n8n-nodes-base.webhook",
@@ -133,8 +134,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "aefad422-d1f7-4cf0-bd61-5e7e04d18ab8",
-  "activeVersionId": "aefad422-d1f7-4cf0-bd61-5e7e04d18ab8",
+  "versionId": "692e2656-e70b-431b-ab17-d8dd806da5f7",
+  "activeVersionId": "692e2656-e70b-431b-ab17-d8dd806da5f7",
   "triggerCount": 1,
   "shared": [
     {
@@ -146,9 +147,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-18T01:23:33.217Z",
-    "createdAt": "2026-01-18T01:23:33.217Z",
-    "versionId": "aefad422-d1f7-4cf0-bd61-5e7e04d18ab8",
+    "updatedAt": "2026-02-06T23:24:04.758Z",
+    "createdAt": "2026-02-06T23:24:04.758Z",
+    "versionId": "692e2656-e70b-431b-ab17-d8dd806da5f7",
     "workflowId": "kDcbTedKxlN3z1Rg",
     "nodes": [
       {
@@ -172,7 +173,8 @@
                   "value": "Content-Type"
                 }
               ]
-            }
+            },
+            "allowedOrigins": "*"
           }
         },
         "type": "n8n-nodes-base.webhook",
