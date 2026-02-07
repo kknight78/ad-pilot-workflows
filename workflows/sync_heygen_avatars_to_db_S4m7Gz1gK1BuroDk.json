@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-14T13:58:48.263Z",
+  "updatedAt": "2026-02-06T23:24:07.009Z",
   "createdAt": "2026-01-13T23:36:27.460Z",
   "id": "S4m7Gz1gK1BuroDk",
   "name": "Sync HeyGen Avatars to DB",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "sync-avatars",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -305,8 +307,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "4a533118-7c98-43d6-8f10-13cf261e0782",
-  "activeVersionId": "4a533118-7c98-43d6-8f10-13cf261e0782",
+  "versionId": "fb418162-f40e-42bc-b12a-a5c3494f99c9",
+  "activeVersionId": "fb418162-f40e-42bc-b12a-a5c3494f99c9",
   "triggerCount": 1,
   "shared": [
     {
@@ -318,9 +320,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-14T13:58:48.268Z",
-    "createdAt": "2026-01-14T13:58:48.268Z",
-    "versionId": "4a533118-7c98-43d6-8f10-13cf261e0782",
+    "updatedAt": "2026-02-06T23:24:07.012Z",
+    "createdAt": "2026-02-06T23:24:07.012Z",
+    "versionId": "fb418162-f40e-42bc-b12a-a5c3494f99c9",
     "workflowId": "S4m7Gz1gK1BuroDk",
     "nodes": [
       {
@@ -328,7 +330,9 @@
           "httpMethod": "POST",
           "path": "sync-avatars",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
