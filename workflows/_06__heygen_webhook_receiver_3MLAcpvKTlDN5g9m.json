@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-04T20:34:15.653Z",
+  "updatedAt": "2026-02-06T23:23:48.716Z",
   "createdAt": "2025-12-19T01:37:49.969Z",
   "id": "3MLAcpvKTlDN5g9m",
   "name": "[06] HeyGen Webhook Receiver",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "heygen-webhook",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -28,7 +30,9 @@
         "httpMethod": "OPTIONS",
         "path": "heygen-webhook",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -543,8 +547,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "f628520c-fba6-4002-bf69-ec0f2cd222fd",
-  "activeVersionId": "f628520c-fba6-4002-bf69-ec0f2cd222fd",
+  "versionId": "9ab2df61-9ca0-4cd8-8e27-19a81031c1cf",
+  "activeVersionId": "9ab2df61-9ca0-4cd8-8e27-19a81031c1cf",
   "triggerCount": 2,
   "shared": [
     {
@@ -556,9 +560,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-04T20:34:15.656Z",
-    "createdAt": "2026-02-04T20:34:15.656Z",
-    "versionId": "f628520c-fba6-4002-bf69-ec0f2cd222fd",
+    "updatedAt": "2026-02-06T23:23:48.719Z",
+    "createdAt": "2026-02-06T23:23:48.719Z",
+    "versionId": "9ab2df61-9ca0-4cd8-8e27-19a81031c1cf",
     "workflowId": "3MLAcpvKTlDN5g9m",
     "nodes": [
       {
@@ -566,7 +570,9 @@
           "httpMethod": "POST",
           "path": "heygen-webhook",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
@@ -583,7 +589,9 @@
           "httpMethod": "OPTIONS",
           "path": "heygen-webhook",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
