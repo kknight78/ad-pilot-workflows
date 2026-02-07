@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T22:10:05.739Z",
+  "updatedAt": "2026-02-06T23:24:06.380Z",
   "createdAt": "2025-12-13T13:57:26.458Z",
   "id": "9AhE2jO1zxja8aDS",
   "name": "Sheet Collaborator",
@@ -27,7 +27,8 @@
                 "value": "Content-Type"
               }
             ]
-          }
+          },
+          "allowedOrigins": "*"
         }
       },
       "id": "webhook-trigger",
@@ -597,8 +598,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "6bc0c166-89d1-4fd2-b40b-85e9d37f3fa5",
-  "activeVersionId": "6bc0c166-89d1-4fd2-b40b-85e9d37f3fa5",
+  "versionId": "89af2375-c8f1-4fcb-aca7-5fc16aac39ed",
+  "activeVersionId": "89af2375-c8f1-4fcb-aca7-5fc16aac39ed",
   "triggerCount": 1,
   "shared": [
     {
@@ -610,9 +611,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-13T17:42:06.576Z",
-    "createdAt": "2025-12-13T17:42:06.576Z",
-    "versionId": "6bc0c166-89d1-4fd2-b40b-85e9d37f3fa5",
+    "updatedAt": "2026-02-06T23:24:06.384Z",
+    "createdAt": "2026-02-06T23:24:06.384Z",
+    "versionId": "89af2375-c8f1-4fcb-aca7-5fc16aac39ed",
     "workflowId": "9AhE2jO1zxja8aDS",
     "nodes": [
       {
@@ -636,7 +637,8 @@
                   "value": "Content-Type"
                 }
               ]
-            }
+            },
+            "allowedOrigins": "*"
           }
         },
         "id": "webhook-trigger",
