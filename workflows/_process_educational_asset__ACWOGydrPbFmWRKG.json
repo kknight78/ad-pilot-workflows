@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-21T23:10:40.687Z",
+  "updatedAt": "2026-02-06T23:23:53.969Z",
   "createdAt": "2026-01-21T22:11:40.503Z",
   "id": "ACWOGydrPbFmWRKG",
   "name": "[Process Educational Asset]",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "process-educational-asset",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook-001",
       "name": "Webhook",
@@ -60,7 +62,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ $json.themePackRequest }}",
@@ -200,8 +202,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "ee2c8050-5a19-4baa-a578-63eb88831018",
-  "activeVersionId": "ee2c8050-5a19-4baa-a578-63eb88831018",
+  "versionId": "95cce314-f1ce-4a0b-a3f3-a951e1b533f3",
+  "activeVersionId": "95cce314-f1ce-4a0b-a3f3-a951e1b533f3",
   "triggerCount": 1,
   "shared": [
     {
@@ -213,9 +215,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-21T23:10:40.689Z",
-    "createdAt": "2026-01-21T23:10:40.689Z",
-    "versionId": "ee2c8050-5a19-4baa-a578-63eb88831018",
+    "updatedAt": "2026-02-06T23:23:53.972Z",
+    "createdAt": "2026-02-06T23:23:53.972Z",
+    "versionId": "95cce314-f1ce-4a0b-a3f3-a951e1b533f3",
     "workflowId": "ACWOGydrPbFmWRKG",
     "nodes": [
       {
@@ -223,7 +225,9 @@
           "httpMethod": "POST",
           "path": "process-educational-asset",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook-001",
         "name": "Webhook",
@@ -272,7 +276,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ $json.themePackRequest }}",
