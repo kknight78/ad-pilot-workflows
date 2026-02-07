@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-22T12:46:51.899Z",
+  "updatedAt": "2026-02-06T23:24:11.860Z",
   "createdAt": "2025-12-22T12:45:45.151Z",
   "id": "hYtZolDYfDyohw9z",
   "name": "[TEMP] Import HeyGen Avatars",
@@ -11,7 +11,9 @@
         "httpMethod": "GET",
         "path": "import-avatars",
         "responseMode": "lastNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -156,7 +158,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "b2fbcc4f-6e8d-446a-a1e0-2d3df39dcab5",
+  "versionId": "b34066bd-1137-4c26-bb00-aae9d63934d8",
   "activeVersionId": null,
   "triggerCount": 1,
   "shared": [
