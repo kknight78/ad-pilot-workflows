@@ -1,0 +1,602 @@
+{
+  "updatedAt": "2026-02-06T23:25:10.831Z",
+  "createdAt": "2026-02-06T23:25:10.831Z",
+  "id": "jfZ06gcNZ5ooTfMM",
+  "name": "[SYNC] Meta Ad Insights",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-meta-insights",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        208
+      ],
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "webhookId": "sync-meta-insights"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "schedule-trigger",
+      "name": "Daily 6am CT",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ],
+      "id": "manual-trigger",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, client_id, account_id, account_name, access_token, token_expires_at\nFROM meta_ad_accounts\nWHERE account_status = 1\n  AND access_token IS NOT NULL\n  AND (token_expires_at IS NULL OR token_expires_at > NOW())",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        304,
+        208
+      ],
+      "id": "get-active-accounts",
+      "name": "Get Active Accounts"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/act_{{ $json.account_id }}/ads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,name,status,campaign_id"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        208
+      ],
+      "id": "get-ads-list",
+      "name": "Get Ads List"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes: MULTI=multi-item, SPOT=spotlight, EDU=educational, \n//                 CAROUSEL=carousel, IMAGE=single-image, BUY=acquisition\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        208
+      ],
+      "id": "parse-ads",
+      "name": "Parse Ad Names"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        208
+      ],
+      "id": "has-ads",
+      "name": "Has Ads?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meta_ads (meta_ad_id, meta_campaign_id, account_id, name, status, template_type, theme, updated_at)\nVALUES (\n  '{{ $json.meta_ad_id }}',\n  {{ $json.meta_campaign_id ? \"'\" + $json.meta_campaign_id + \"'\" : 'NULL' }},\n  '{{ $json.account_id }}',\n  '{{ $json.name }}',\n  '{{ $json.status }}',\n  '{{ $json.template_type }}',\n  {{ $json.theme ? \"'\" + $json.theme + \"'\" : 'NULL' }},\n  NOW()\n)\nON CONFLICT (meta_ad_id) DO UPDATE SET\n  name = EXCLUDED.name,\n  status = EXCLUDED.status,\n  template_type = EXCLUDED.template_type,\n  theme = EXCLUDED.theme,\n  updated_at = NOW()\nRETURNING meta_ad_id, account_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1104,
+        112
+      ],
+      "id": "upsert-ads",
+      "name": "Upsert Ads"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group ads by account for insights fetch\nconst items = $input.all();\nconst accounts = $('Get Active Accounts').all();\n\n// Get date params from Prepare Date Params node\nconst dateParamsData = $('Prepare Date Params').first()?.json || {};\nconst dateParams = dateParamsData._dateParams || { date_preset: 'last_7d' };\nconst isBackfill = dateParamsData._isBackfill || false;\n\n// Build token lookup from original accounts\nconst tokenMap = new Map();\nfor (const acc of accounts) {\n  tokenMap.set(acc.json.account_id, acc.json.access_token);\n}\n\nconst accountMap = new Map();\nfor (const item of items) {\n  const accountId = item.json.account_id;\n  if (!accountMap.has(accountId)) {\n    accountMap.set(accountId, {\n      account_id: accountId,\n      access_token: tokenMap.get(accountId),\n      _dateParams: dateParams,\n      _isBackfill: isBackfill\n    });\n  }\n}\n\nreturn Array.from(accountMap.values()).map(a => ({ json: a }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        112
+      ],
+      "id": "group-by-account",
+      "name": "Group by Account"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/act_{{ $json.account_id }}/insights",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "ad"
+            },
+            {
+              "name": "fields",
+              "value": "ad_id,ad_name,spend,impressions,clicks,ctr,cpc,cpm,actions"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            },
+            {
+              "name": "={{ $json._dateParams.date_preset ? 'date_preset' : 'time_range' }}",
+              "value": "={{ $json._dateParams.date_preset || $json._dateParams.time_range }}"
+            },
+            {
+              "name": "={{ $json._dateParams.time_increment ? 'time_increment' : '' }}",
+              "value": "={{ $json._dateParams.time_increment || '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1504,
+        112
+      ],
+      "id": "get-insights",
+      "name": "Get Insights"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Meta actions array and transform insights for database\n\nfunction parseActions(actions) {\n  const actionMap = {};\n  (actions || []).forEach(a => {\n    actionMap[a.action_type] = parseInt(a.value);\n  });\n  \n  return {\n    leads: actionMap['lead'] || 0,\n    video_views: actionMap['video_view'] || 0,\n    link_clicks: actionMap['link_click'] || 0,\n    post_reactions: actionMap['post_reaction'] || 0,\n    post_comments: actionMap['comment'] || 0,\n    post_saves: actionMap['onsite_conversion.post_save'] || 0,\n    post_shares: actionMap['share'] || 0,\n    landing_page_views: actionMap['landing_page_view'] || 0\n  };\n}\n\n// Get account data from previous node\nconst accountsData = $('Group by Account').all();\nconst insightsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < insightsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const insightsData = insightsResponses[i]?.json;\n  \n  if (!account || !insightsData?.data) continue;\n  \n  const insights = insightsData.data;\n  \n  for (const insight of insights) {\n    const parsed = parseActions(insight.actions);\n    const spend = parseFloat(insight.spend || 0);\n    const costPerLead = parsed.leads > 0 ? (spend / parsed.leads) : null;\n    \n    results.push({\n      json: {\n        meta_ad_id: insight.ad_id,\n        account_id: account.account_id,\n        date_start: insight.date_start,\n        date_stop: insight.date_stop,\n        spend: spend,\n        impressions: parseInt(insight.impressions || 0),\n        clicks: parseInt(insight.clicks || 0),\n        ctr: parseFloat(insight.ctr || 0),\n        cpc: parseFloat(insight.cpc || 0),\n        cpm: parseFloat(insight.cpm || 0),\n        video_views: parsed.video_views,\n        post_reactions: parsed.post_reactions,\n        post_comments: parsed.post_comments,\n        post_shares: parsed.post_shares,\n        post_saves: parsed.post_saves,\n        link_clicks: parsed.link_clicks,\n        landing_page_views: parsed.landing_page_views,\n        leads: parsed.leads,\n        cost_per_lead: costPerLead,\n        actions_raw: JSON.stringify(insight.actions || [])\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no insights' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        112
+      ],
+      "id": "transform-insights",
+      "name": "Transform Insights"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1904,
+        112
+      ],
+      "id": "has-insights",
+      "name": "Has Insights?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meta_ad_insights (\n  meta_ad_id, account_id, date_start, date_stop,\n  spend, impressions, clicks, ctr, cpc, cpm,\n  video_views, post_reactions, post_comments, post_shares, post_saves,\n  link_clicks, landing_page_views, leads, cost_per_lead, actions_raw\n)\nVALUES (\n  '{{ $json.meta_ad_id }}',\n  '{{ $json.account_id }}',\n  '{{ $json.date_start }}',\n  '{{ $json.date_stop }}',\n  {{ $json.spend }},\n  {{ $json.impressions }},\n  {{ $json.clicks }},\n  {{ $json.ctr }},\n  {{ $json.cpc }},\n  {{ $json.cpm }},\n  {{ $json.video_views }},\n  {{ $json.post_reactions }},\n  {{ $json.post_comments }},\n  {{ $json.post_shares }},\n  {{ $json.post_saves }},\n  {{ $json.link_clicks }},\n  {{ $json.landing_page_views }},\n  {{ $json.leads }},\n  {{ $json.cost_per_lead !== null ? $json.cost_per_lead : 'NULL' }},\n  '{{ $json.actions_raw }}'::jsonb\n)\nON CONFLICT (meta_ad_id, date_start, date_stop) DO NOTHING\nRETURNING id, meta_ad_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2112,
+        0
+      ],
+      "id": "upsert-insights",
+      "name": "Upsert Insights"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2304,
+        112
+      ],
+      "id": "aggregate-results",
+      "name": "Aggregate Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insightsCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insightsCount += data.filter(d => d && d.id).length;\n}\n\n// Get ad count from earlier in flow\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\n// Get backfill status from Group by Account (it has _isBackfill)\nconst groupData = $('Group by Account').first()?.json || {};\nconst isBackfill = groupData._isBackfill || false;\n\nreturn [{\n  json: {\n    success: true,\n    message: isBackfill \n      ? `Backfill complete: synced ${adsCount} ads and ${insightsCount} insight records from Meta`\n      : `Synced ${adsCount} ads and ${insightsCount} insight records from Meta`,\n    mode: isBackfill ? 'backfill' : 'daily',\n    ads_synced: adsCount,\n    insights_synced: insightsCount,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2512,
+        112
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2704,
+        208
+      ],
+      "id": "respond",
+      "name": "Respond"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No ads found - return empty response\nreturn [{\n  json: {\n    success: true,\n    message: 'No active Meta ad accounts found or no ads to sync',\n    ads_synced: 0,\n    insights_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        304
+      ],
+      "id": "no-ads-response",
+      "name": "No Ads Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No insights found - still count ads\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\nreturn [{\n  json: {\n    success: true,\n    message: `Synced ${adsCount} ads, but no insights data available for date range`,\n    ads_synced: adsCount,\n    insights_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2112,
+        208
+      ],
+      "id": "no-insights-response",
+      "name": "No Insights Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare date parameters for Meta API\n// Supports backfill mode via webhook body: { \"backfill\": true, \"days\": 90 }\n// Default: last 7 days\n\nconst accounts = $input.all();\n\n// Try multiple ways to get webhook data\nconst webhookNode = $('Webhook Trigger').first();\nlet webhookData = {};\n\nif (webhookNode) {\n  // Try direct json, then body property\n  webhookData = webhookNode.json?.body || webhookNode.json || {};\n}\n\n// Check if this is a backfill request\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 90, 180); // Max 180 days\n\nlet dateParams;\nif (isBackfill) {\n  // Historical backfill with daily breakdown\n  const until = new Date();\n  const since = new Date();\n  since.setDate(since.getDate() - backfillDays);\n  \n  dateParams = {\n    time_range: JSON.stringify({\n      since: since.toISOString().split('T')[0],\n      until: until.toISOString().split('T')[0]\n    }),\n    time_increment: '1' // Daily breakdown\n  };\n} else {\n  // Normal daily sync\n  dateParams = {\n    date_preset: 'last_7d'\n  };\n}\n\n// Pass through accounts with date params attached\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _dateParams: dateParams,\n    _isBackfill: isBackfill,\n    _debug_webhookData: webhookData\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        208
+      ],
+      "id": "prepare-date-params",
+      "name": "Prepare Date Params"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 6am CT": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Accounts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Date Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ads List": {
+      "main": [
+        [
+          {
+            "node": "Parse Ad Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Ad Names": {
+      "main": [
+        [
+          {
+            "node": "Has Ads?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Ads?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Ads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Ads Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Ads": {
+      "main": [
+        [
+          {
+            "node": "Group by Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group by Account": {
+      "main": [
+        [
+          {
+            "node": "Get Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Insights": {
+      "main": [
+        [
+          {
+            "node": "Transform Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Insights": {
+      "main": [
+        [
+          {
+            "node": "Has Insights?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Insights?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Insights Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Insights": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Ads Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Insights Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Date Params": {
+      "main": [
+        [
+          {
+            "node": "Get Ads List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "6ddb9f12-7147-4ef9-9e21-5789c1c5a4e7",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-02-06T23:25:10.831Z",
+      "createdAt": "2026-02-06T23:25:10.831Z",
+      "role": "workflow:owner",
+      "workflowId": "jfZ06gcNZ5ooTfMM",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
