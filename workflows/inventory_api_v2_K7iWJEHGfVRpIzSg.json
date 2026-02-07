@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-19T01:41:04.662Z",
+  "updatedAt": "2026-02-06T23:24:04.016Z",
   "createdAt": "2026-01-18T18:04:01.423Z",
   "id": "K7iWJEHGfVRpIzSg",
   "name": "Inventory API v2",
@@ -11,7 +11,9 @@
         "httpMethod": "GET",
         "path": "inventory-v2",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook-inventory",
       "name": "Webhook: Inventory v2",
@@ -117,8 +119,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "908a4123-8844-40cb-9cf0-886d5d7f64aa",
-  "activeVersionId": "908a4123-8844-40cb-9cf0-886d5d7f64aa",
+  "versionId": "fc482ac8-a85d-4cd0-905b-daa005ae4f76",
+  "activeVersionId": "fc482ac8-a85d-4cd0-905b-daa005ae4f76",
   "triggerCount": 1,
   "shared": [
     {
@@ -130,9 +132,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-19T01:41:04.666Z",
-    "createdAt": "2026-01-19T01:41:04.666Z",
-    "versionId": "908a4123-8844-40cb-9cf0-886d5d7f64aa",
+    "updatedAt": "2026-02-06T23:24:04.021Z",
+    "createdAt": "2026-02-06T23:24:04.021Z",
+    "versionId": "fc482ac8-a85d-4cd0-905b-daa005ae4f76",
     "workflowId": "K7iWJEHGfVRpIzSg",
     "nodes": [
       {
@@ -140,7 +142,9 @@
           "httpMethod": "GET",
           "path": "inventory-v2",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook-inventory",
         "name": "Webhook: Inventory v2",
