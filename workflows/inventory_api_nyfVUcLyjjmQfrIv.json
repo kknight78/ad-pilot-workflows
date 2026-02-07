@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-14T01:18:26.460Z",
+  "updatedAt": "2026-02-06T23:24:03.433Z",
   "createdAt": "2025-12-13T13:57:25.336Z",
   "id": "nyfVUcLyjjmQfrIv",
   "name": "Inventory API",
@@ -23,7 +23,9 @@
       "parameters": {
         "path": "inventory",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -128,8 +130,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "722f31b1-2077-45d6-b35b-45b97bfbcfa8",
-  "activeVersionId": "722f31b1-2077-45d6-b35b-45b97bfbcfa8",
+  "versionId": "7e0c3fad-1d56-4985-9607-7929e56e9536",
+  "activeVersionId": "7e0c3fad-1d56-4985-9607-7929e56e9536",
   "triggerCount": 1,
   "shared": [
     {
@@ -141,9 +143,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-14T01:18:26.465Z",
-    "createdAt": "2025-12-14T01:18:26.465Z",
-    "versionId": "722f31b1-2077-45d6-b35b-45b97bfbcfa8",
+    "updatedAt": "2026-02-06T23:24:03.436Z",
+    "createdAt": "2026-02-06T23:24:03.436Z",
+    "versionId": "7e0c3fad-1d56-4985-9607-7929e56e9536",
     "workflowId": "nyfVUcLyjjmQfrIv",
     "nodes": [
       {
@@ -163,7 +165,9 @@
         "parameters": {
           "path": "inventory",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
