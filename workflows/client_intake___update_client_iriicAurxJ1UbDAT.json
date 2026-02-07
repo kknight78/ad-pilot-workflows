@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-13T22:11:41.044Z",
+  "updatedAt": "2026-02-06T23:23:58.469Z",
   "createdAt": "2025-12-13T13:57:28.812Z",
   "id": "iriicAurxJ1UbDAT",
   "name": "Client Intake - Update Client",
@@ -27,7 +27,8 @@
                 "value": "Content-Type"
               }
             ]
-          }
+          },
+          "allowedOrigins": "*"
         }
       },
       "id": "webhook-update",
@@ -88,7 +89,7 @@
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "g3qdIZMDD4wzQ69l",
+          "id": "9WK1ZemzeOSj1j4A",
           "name": "Google Sheets account"
         }
       }
@@ -161,8 +162,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "5e701b30-d7df-4ef5-a6f0-4c7873bd48ad",
-  "activeVersionId": "5e701b30-d7df-4ef5-a6f0-4c7873bd48ad",
+  "versionId": "0c14f55f-1987-463e-bf7e-6f15045a74f3",
+  "activeVersionId": "0c14f55f-1987-463e-bf7e-6f15045a74f3",
   "triggerCount": 1,
   "shared": [
     {
@@ -174,9 +175,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-13T13:57:28.826Z",
-    "createdAt": "2025-12-13T13:57:28.826Z",
-    "versionId": "5e701b30-d7df-4ef5-a6f0-4c7873bd48ad",
+    "updatedAt": "2026-02-06T23:23:58.472Z",
+    "createdAt": "2026-02-06T23:23:58.472Z",
+    "versionId": "0c14f55f-1987-463e-bf7e-6f15045a74f3",
     "workflowId": "iriicAurxJ1UbDAT",
     "nodes": [
       {
@@ -200,7 +201,8 @@
                   "value": "Content-Type"
                 }
               ]
-            }
+            },
+            "allowedOrigins": "*"
           }
         },
         "id": "webhook-update",
@@ -261,7 +263,7 @@
         ],
         "credentials": {
           "googleSheetsOAuth2Api": {
-            "id": "g3qdIZMDD4wzQ69l",
+            "id": "9WK1ZemzeOSj1j4A",
             "name": "Google Sheets account"
           }
         }
