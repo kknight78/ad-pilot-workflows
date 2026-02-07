@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-28T21:44:42.811Z",
+  "updatedAt": "2026-02-06T23:23:46.352Z",
   "createdAt": "2025-12-13T13:57:28.375Z",
   "id": "FOQ8foX33kSuaZEJ",
   "name": "[04] Generate Video",
@@ -13,8 +13,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -192,
-        200
+        -224,
+        -128
       ],
       "id": "5ee1ed6d-b685-44f9-8e1f-400d0827b3ef",
       "name": "Process All Vehicles"
@@ -26,8 +26,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2496,
-        272
+        576,
+        160
       ],
       "id": "558fb222-cacc-4087-a229-4aa997b6777a",
       "name": "Wait for Render",
@@ -40,8 +40,8 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        4064,
-        104
+        1424,
+        -64
       ],
       "id": "923bb706-0c19-45b1-a658-170d42b39318",
       "name": "Stop and Error"
@@ -53,8 +53,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1376,
-        128
+        -240,
+        96
       ],
       "id": "6be976a7-570a-494c-b41c-72e758ede38f",
       "name": "Aggregate Vehicles"
@@ -66,8 +66,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1600,
-        128
+        -80,
+        96
       ],
       "id": "5df931bc-a974-4b08-88f6-d6006b054fc2",
       "name": "Aggregate Configs"
@@ -79,8 +79,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3392,
-        104
+        992,
+        -64
       ],
       "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
       "name": "Format Node Error"
@@ -89,13 +89,13 @@
       "parameters": {
         "content": "# #3 Generate Video",
         "height": 720,
-        "width": 2496,
+        "width": 2080,
         "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        624,
-        -288
+        -560,
+        -272
       ],
       "typeVersion": 1,
       "id": "cfb457e3-4e30-4045-916a-2c45b78a2cbf",
@@ -109,7 +109,7 @@
       "typeVersion": 1.1,
       "position": [
         -416,
-        200
+        -128
       ],
       "id": "febf4365-88f4-4424-a9d1-ab1dafbe1e95",
       "name": "When Executed by Orchestrate Video Creation"
@@ -142,8 +142,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        32,
-        200
+        -80,
+        -128
       ],
       "id": "d3c49706-9898-4e26-9cb1-65ebf9239b23",
       "name": "If: Has Vehicles"
@@ -155,8 +155,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        256,
-        128
+        80,
+        -144
       ],
       "id": "cabf3be1-d71f-4d05-a6fb-bd60c6480d77",
       "name": "Send Only Vehicles to Process"
@@ -189,8 +189,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1152,
-        56
+        736,
+        -160
       ],
       "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
       "name": "API: Cloudinary, Upload",
@@ -225,8 +225,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2048,
-        128
+        240,
+        96
       ],
       "id": "e31917be-d832-4f23-9f3a-8dfd718a570c",
       "name": "If: Test, Skip Video Creation"
@@ -238,8 +238,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2944,
-        -160
+        576,
+        32
       ],
       "id": "aa6dce6f-6e60-452b-a4aa-4a90ebd7214d",
       "name": "Skip Video Creation"
@@ -272,21 +272,21 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2944,
-        272
+        928,
+        128
       ],
       "id": "cdc69818-5724-4f8c-ae10-d81bdabc5677",
       "name": "If: Succeeded?"
     },
     {
       "parameters": {
-        "jsCode": "const apiResponse = $json;\nconst config = $('Aggregate Configs').first().json;\nconst buildTemplateOutput = $('Build Template JSON').first().json;\nconst videoUrl = apiResponse.url;\nconst videoDuration = apiResponse.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,\n    // Include _banner_config from Build Template JSON\n    _banner_config: buildTemplateOutput._banner_config,\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_creatomate_create_video: apiResponse })\n  }\n}];"
+        "jsCode": "const apiResponse = $json;\nconst config = $('Aggregate Configs').first().json;\nconst buildTemplateOutput = $('Build Template JSON').first().json;\nconst videoUrl = apiResponse.url;\nconst videoDuration = apiResponse.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,  // Preserves ALL previous api_* keys!\n    \n    // Include _banner_config from Build Template JSON\n    _banner_config: buildTemplateOutput._banner_config,\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_creatomate_create_video: apiResponse })\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3168,
-        -160
+        1312,
+        112
       ],
       "id": "94a3f672-71bd-4b34-a989-262f4bef3c0e",
       "name": "Parse Video Creation Response"
@@ -308,8 +308,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2720,
-        200
+        736,
+        144
       ],
       "id": "cfbd1219-c74c-4024-9f11-0aef6b6c211b",
       "name": "API: Creatomate, Check Status",
@@ -336,8 +336,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2272,
-        200
+        384,
+        176
       ],
       "id": "3e365a4a-5fa9-4942-827f-6f51a60a38c7",
       "name": "API: Creatomate, Create Video",
@@ -351,8 +351,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        928,
-        56
+        576,
+        -160
       ],
       "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
       "name": "Parse Remove.bg"
@@ -365,8 +365,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1824,
-        128
+        80,
+        96
       ],
       "id": "unified-build-template-json",
       "name": "Build Template JSON"
@@ -399,8 +399,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3168,
-        392
+        1072,
+        240
       ],
       "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
       "name": "If: Failed?"
@@ -412,8 +412,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3616,
-        104
+        1152,
+        -64
       ],
       "id": "prep-error-email",
       "name": "Prep: Error Email"
@@ -440,8 +440,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        3840,
-        104
+        1296,
+        -64
       ],
       "id": "call-email-error",
       "name": "Call: Email Error"
@@ -454,8 +454,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        480,
-        128
+        240,
+        -144
       ],
       "id": "prep-remove-bg",
       "name": "Prep: Remove BG"
@@ -482,8 +482,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        704,
-        128
+        400,
+        -144
       ],
       "id": "call-remove-bg",
       "name": "Call: Remove Background",
@@ -792,8 +792,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "dd588c18-7f7f-4191-bad2-4dbc65140793",
-  "activeVersionId": "dd588c18-7f7f-4191-bad2-4dbc65140793",
+  "versionId": "65e760ed-f7b8-40a6-a992-39ec375f736c",
+  "activeVersionId": "65e760ed-f7b8-40a6-a992-39ec375f736c",
   "triggerCount": 0,
   "shared": [
     {
@@ -805,9 +805,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-28T21:45:02.142Z",
-    "createdAt": "2026-01-28T21:44:42.815Z",
-    "versionId": "dd588c18-7f7f-4191-bad2-4dbc65140793",
+    "updatedAt": "2026-02-06T23:23:46.356Z",
+    "createdAt": "2026-02-06T23:23:46.356Z",
+    "versionId": "65e760ed-f7b8-40a6-a992-39ec375f736c",
     "workflowId": "FOQ8foX33kSuaZEJ",
     "nodes": [
       {
@@ -817,8 +817,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -192,
-          200
+          -224,
+          -128
         ],
         "id": "5ee1ed6d-b685-44f9-8e1f-400d0827b3ef",
         "name": "Process All Vehicles"
@@ -830,8 +830,8 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          2496,
-          272
+          576,
+          160
         ],
         "id": "558fb222-cacc-4087-a229-4aa997b6777a",
         "name": "Wait for Render",
@@ -844,8 +844,8 @@
         "type": "n8n-nodes-base.stopAndError",
         "typeVersion": 1,
         "position": [
-          4064,
-          104
+          1424,
+          -64
         ],
         "id": "923bb706-0c19-45b1-a658-170d42b39318",
         "name": "Stop and Error"
@@ -857,8 +857,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1376,
-          128
+          -240,
+          96
         ],
         "id": "6be976a7-570a-494c-b41c-72e758ede38f",
         "name": "Aggregate Vehicles"
@@ -870,8 +870,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1600,
-          128
+          -80,
+          96
         ],
         "id": "5df931bc-a974-4b08-88f6-d6006b054fc2",
         "name": "Aggregate Configs"
@@ -883,8 +883,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3392,
-          104
+          992,
+          -64
         ],
         "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
         "name": "Format Node Error"
@@ -893,13 +893,13 @@
         "parameters": {
           "content": "# #3 Generate Video",
           "height": 720,
-          "width": 2496,
+          "width": 2080,
           "color": 3
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          624,
-          -288
+          -560,
+          -272
         ],
         "typeVersion": 1,
         "id": "cfb457e3-4e30-4045-916a-2c45b78a2cbf",
@@ -913,7 +913,7 @@
         "typeVersion": 1.1,
         "position": [
           -416,
-          200
+          -128
         ],
         "id": "febf4365-88f4-4424-a9d1-ab1dafbe1e95",
         "name": "When Executed by Orchestrate Video Creation"
@@ -946,8 +946,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          32,
-          200
+          -80,
+          -128
         ],
         "id": "d3c49706-9898-4e26-9cb1-65ebf9239b23",
         "name": "If: Has Vehicles"
@@ -959,8 +959,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          256,
-          128
+          80,
+          -144
         ],
         "id": "cabf3be1-d71f-4d05-a6fb-bd60c6480d77",
         "name": "Send Only Vehicles to Process"
@@ -993,8 +993,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1152,
-          56
+          736,
+          -160
         ],
         "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
         "name": "API: Cloudinary, Upload",
@@ -1029,8 +1029,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2048,
-          128
+          240,
+          96
         ],
         "id": "e31917be-d832-4f23-9f3a-8dfd718a570c",
         "name": "If: Test, Skip Video Creation"
@@ -1042,8 +1042,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2944,
-          -160
+          576,
+          32
         ],
         "id": "aa6dce6f-6e60-452b-a4aa-4a90ebd7214d",
         "name": "Skip Video Creation"
@@ -1076,21 +1076,21 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2944,
-          272
+          928,
+          128
         ],
         "id": "cdc69818-5724-4f8c-ae10-d81bdabc5677",
         "name": "If: Succeeded?"
       },
       {
         "parameters": {
-          "jsCode": "const apiResponse = $json;\nconst config = $('Aggregate Configs').first().json;\nconst buildTemplateOutput = $('Build Template JSON').first().json;\nconst videoUrl = apiResponse.url;\nconst videoDuration = apiResponse.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,\n    // Include _banner_config from Build Template JSON\n    _banner_config: buildTemplateOutput._banner_config,\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_creatomate_create_video: apiResponse })\n  }\n}];"
+          "jsCode": "const apiResponse = $json;\nconst config = $('Aggregate Configs').first().json;\nconst buildTemplateOutput = $('Build Template JSON').first().json;\nconst videoUrl = apiResponse.url;\nconst videoDuration = apiResponse.duration;\n\nif (!videoUrl) {\n  throw new Error('Creatomate did not return a video URL');\n}\n\nreturn [{\n  json: {\n    ...config,  // Preserves ALL previous api_* keys!\n    \n    // Include _banner_config from Build Template JSON\n    _banner_config: buildTemplateOutput._banner_config,\n    \n    // new\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_creatomate_create_video: apiResponse })\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3168,
-          -160
+          1312,
+          112
         ],
         "id": "94a3f672-71bd-4b34-a989-262f4bef3c0e",
         "name": "Parse Video Creation Response"
@@ -1112,8 +1112,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2720,
-          200
+          736,
+          144
         ],
         "id": "cfbd1219-c74c-4024-9f11-0aef6b6c211b",
         "name": "API: Creatomate, Check Status",
@@ -1140,8 +1140,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2272,
-          200
+          384,
+          176
         ],
         "id": "3e365a4a-5fa9-4942-827f-6f51a60a38c7",
         "name": "API: Creatomate, Create Video",
@@ -1155,8 +1155,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          928,
-          56
+          576,
+          -160
         ],
         "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
         "name": "Parse Remove.bg"
@@ -1169,8 +1169,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1824,
-          128
+          80,
+          96
         ],
         "id": "unified-build-template-json",
         "name": "Build Template JSON"
@@ -1203,8 +1203,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.3,
         "position": [
-          3168,
-          392
+          1072,
+          240
         ],
         "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
         "name": "If: Failed?"
@@ -1216,8 +1216,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3616,
-          104
+          1152,
+          -64
         ],
         "id": "prep-error-email",
         "name": "Prep: Error Email"
@@ -1244,8 +1244,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          3840,
-          104
+          1296,
+          -64
         ],
         "id": "call-email-error",
         "name": "Call: Email Error"
@@ -1258,8 +1258,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          480,
-          128
+          240,
+          -144
         ],
         "id": "prep-remove-bg",
         "name": "Prep: Remove BG"
@@ -1286,8 +1286,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          704,
-          128
+          400,
+          -144
         ],
         "id": "call-remove-bg",
         "name": "Call: Remove Background",
@@ -1589,9 +1589,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version dd588c18",
-    "description": "",
-    "autosaved": true
+    "name": null,
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
