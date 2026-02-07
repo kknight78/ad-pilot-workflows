@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-12-28T20:57:21.165Z",
+  "updatedAt": "2026-02-06T23:23:50.633Z",
   "createdAt": "2025-12-28T20:42:25.302Z",
   "id": "JMsMz5PDsvEinNE2",
   "name": "[07] B-Roll Source Comparison",
@@ -11,7 +11,9 @@
         "httpMethod": "POST",
         "path": "broll-test",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "*"
+        }
       },
       "id": "webhook",
       "name": "Webhook",
@@ -486,8 +488,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "c263a789-7311-4987-b4e6-2fd584a0e063",
-  "activeVersionId": "c263a789-7311-4987-b4e6-2fd584a0e063",
+  "versionId": "9824415e-258e-4223-8018-c6c67788c135",
+  "activeVersionId": "9824415e-258e-4223-8018-c6c67788c135",
   "triggerCount": 1,
   "shared": [
     {
@@ -499,9 +501,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2025-12-28T20:57:21.171Z",
-    "createdAt": "2025-12-28T20:57:21.171Z",
-    "versionId": "c263a789-7311-4987-b4e6-2fd584a0e063",
+    "updatedAt": "2026-02-06T23:23:50.635Z",
+    "createdAt": "2026-02-06T23:23:50.635Z",
+    "versionId": "9824415e-258e-4223-8018-c6c67788c135",
     "workflowId": "JMsMz5PDsvEinNE2",
     "nodes": [
       {
@@ -509,7 +511,9 @@
           "httpMethod": "POST",
           "path": "broll-test",
           "responseMode": "responseNode",
-          "options": {}
+          "options": {
+            "allowedOrigins": "*"
+          }
         },
         "id": "webhook",
         "name": "Webhook",
