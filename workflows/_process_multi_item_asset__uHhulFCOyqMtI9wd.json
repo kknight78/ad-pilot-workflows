@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:54.686Z",
+  "updatedAt": "2026-02-08T20:49:49.790Z",
   "createdAt": "2026-01-21T22:10:59.608Z",
   "id": "uHhulFCOyqMtI9wd",
   "name": "[Process Multi-Item Asset]",
@@ -323,7 +323,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.themePackRequest) }}",
@@ -647,8 +647,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "a54a1702-0986-4b6d-bbb0-d2d63a5257a2",
-  "activeVersionId": "a54a1702-0986-4b6d-bbb0-d2d63a5257a2",
+  "versionId": "42511925-bd5b-4a65-b5eb-9640fe5099a7",
+  "activeVersionId": "42511925-bd5b-4a65-b5eb-9640fe5099a7",
   "triggerCount": 1,
   "shared": [
     {
@@ -660,9 +660,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:23:54.699Z",
-    "createdAt": "2026-02-06T23:23:54.699Z",
-    "versionId": "a54a1702-0986-4b6d-bbb0-d2d63a5257a2",
+    "updatedAt": "2026-02-08T20:49:49.794Z",
+    "createdAt": "2026-02-08T20:49:49.794Z",
+    "versionId": "42511925-bd5b-4a65-b5eb-9640fe5099a7",
     "workflowId": "uHhulFCOyqMtI9wd",
     "nodes": [
       {
@@ -982,7 +982,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+          "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ JSON.stringify($json.themePackRequest) }}",
