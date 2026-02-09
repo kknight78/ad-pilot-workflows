@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:47.261Z",
+  "updatedAt": "2026-02-08T19:35:35.601Z",
   "createdAt": "2025-12-17T14:15:04.048Z",
   "id": "FAvXS0078ZfxhOOu",
   "name": "[05] Process Avatar Photo",
@@ -19,7 +19,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        104
+        112
       ],
       "id": "webhook-trigger",
       "name": "Webhook: Process Avatar Photo",
@@ -33,7 +33,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        104
+        112
       ],
       "id": "parse-input",
       "name": "Parse Input"
@@ -67,7 +67,7 @@
       "typeVersion": 2.2,
       "position": [
         448,
-        104
+        112
       ],
       "id": "check-image-source",
       "name": "If: Has Image URL"
@@ -87,7 +87,7 @@
       "typeVersion": 4.2,
       "position": [
         672,
-        8
+        16
       ],
       "id": "download-image",
       "name": "Download Image from URL"
@@ -100,7 +100,7 @@
       "typeVersion": 2,
       "position": [
         896,
-        200
+        208
       ],
       "id": "use-base64",
       "name": "Use Base64 Image"
@@ -113,7 +113,7 @@
       "typeVersion": 2,
       "position": [
         896,
-        8
+        16
       ],
       "id": "convert-to-base64",
       "name": "Convert to Base64"
@@ -124,7 +124,7 @@
       "typeVersion": 3,
       "position": [
         1120,
-        104
+        112
       ],
       "id": "merge-paths",
       "name": "Merge Paths"
@@ -153,13 +153,17 @@
       "typeVersion": 4.2,
       "position": [
         1344,
-        104
+        112
       ],
       "id": "birefnet-start",
       "name": "API: Replicate BiRefNet Start",
       "credentials": {
         "httpHeaderAuth": {
           "id": "e1reYzNejHyRRGq0",
+          "name": "Replicate"
+        },
+        "httpBearerAuth": {
+          "id": "Cg4MVmFYrBVN7VDI",
           "name": "Replicate"
         }
       }
@@ -172,7 +176,7 @@
       "typeVersion": 1.1,
       "position": [
         1568,
-        104
+        112
       ],
       "id": "wait-birefnet",
       "name": "Wait 3s",
@@ -195,13 +199,17 @@
       "typeVersion": 4.2,
       "position": [
         1792,
-        104
+        112
       ],
       "id": "birefnet-check",
       "name": "API: Check BiRefNet Status",
       "credentials": {
         "httpHeaderAuth": {
           "id": "e1reYzNejHyRRGq0",
+          "name": "Replicate"
+        },
+        "httpBearerAuth": {
+          "id": "Cg4MVmFYrBVN7VDI",
           "name": "Replicate"
         }
       }
@@ -235,7 +243,7 @@
       "typeVersion": 2.2,
       "position": [
         2016,
-        8
+        16
       ],
       "id": "if-birefnet-done",
       "name": "If: BiRefNet Complete"
@@ -269,7 +277,7 @@
       "typeVersion": 2.2,
       "position": [
         2240,
-        248
+        256
       ],
       "id": "if-birefnet-pending",
       "name": "If: BiRefNet Still Processing"
@@ -282,7 +290,7 @@
       "typeVersion": 1.1,
       "position": [
         2464,
-        152
+        160
       ],
       "id": "wait-birefnet-retry",
       "name": "Wait 2s (Retry)",
@@ -316,7 +324,7 @@
       "typeVersion": 4.2,
       "position": [
         2912,
-        200
+        208
       ],
       "id": "download-bg-removed",
       "name": "Download BG Removed"
@@ -345,7 +353,7 @@
       "typeVersion": 4.2,
       "position": [
         3136,
-        104
+        112
       ],
       "id": "heygen-upload-asset",
       "name": "API: HeyGen Upload Asset",
@@ -364,7 +372,7 @@
       "typeVersion": 2,
       "position": [
         3360,
-        104
+        112
       ],
       "id": "extract-image-key",
       "name": "Extract Image Key"
@@ -457,7 +465,7 @@
       "typeVersion": 1.1,
       "position": [
         2464,
-        344
+        352
       ],
       "id": "respond-birefnet-error",
       "name": "Respond BiRefNet Error"
@@ -471,8 +479,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -122,
-        44
+        -128,
+        48
       ],
       "typeVersion": 1,
       "id": "sticky-intro",
@@ -502,7 +510,7 @@
       "typeVersion": 4.2,
       "position": [
         4704,
-        104
+        112
       ],
       "id": "add-look-to-group",
       "name": "API: Add Look to Group",
@@ -521,7 +529,7 @@
       "typeVersion": 2,
       "position": [
         4928,
-        104
+        112
       ],
       "id": "extract-photo-avatar-id",
       "name": "Extract Photo Avatar ID"
@@ -532,7 +540,7 @@
       "typeVersion": 1.1,
       "position": [
         5152,
-        104
+        112
       ],
       "id": "wait-photo-avatar",
       "name": "Wait 5s (Photo Avatar)",
@@ -555,7 +563,7 @@
       "typeVersion": 4.2,
       "position": [
         5376,
-        104
+        112
       ],
       "id": "check-photo-avatar-status",
       "name": "API: Check Photo Avatar Status",
@@ -595,7 +603,7 @@
       "typeVersion": 2.2,
       "position": [
         5600,
-        8
+        16
       ],
       "id": "if-photo-avatar-complete",
       "name": "If: Photo Avatar Complete"
@@ -639,7 +647,7 @@
       "typeVersion": 2.2,
       "position": [
         5824,
-        248
+        256
       ],
       "id": "if-photo-avatar-processing",
       "name": "If: Photo Avatar Processing"
@@ -652,7 +660,7 @@
       "typeVersion": 1.1,
       "position": [
         6048,
-        152
+        160
       ],
       "id": "wait-photo-avatar-retry",
       "name": "Wait 3s (Retry)",
@@ -683,7 +691,7 @@
       "typeVersion": 1.1,
       "position": [
         6048,
-        344
+        352
       ],
       "id": "respond-avatar-error",
       "name": "Respond Photo Avatar Error"
@@ -746,7 +754,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO avatars (\n  person_id,\n  style_name,\n  photo_avatar_id,\n  motion_avatar_id,\n  image_key,\n  motion_preset,\n  motion_prompt,\n  motion_engine,\n  motion_status,\n  notification_pref\n) VALUES (\n  '{{ $('Parse Input').first().json.person_id }}',\n  '{{ $('Parse Input').first().json.style_name }}',\n  '{{ $json.photo_avatar_id }}',\n  '{{ $json.motion_avatar_id }}',\n  '{{ $json.image_key }}',\n  '{{ $('Parse Input').first().json.motion_preset }}',\n  '{{ $('Parse Input').first().json.motion_prompt }}',\n  '{{ $('Parse Input').first().json.motion_engine }}',\n  'processing',\n  '{{ $('Parse Input').first().json.notification_pref }}'\n) RETURNING id;",
+        "query": "INSERT INTO avatars (\n  person_id,\n  style_name,\n  photo_avatar_id,\n  motion_avatar_id,\n  image_key,\n  motion_preset,\n  motion_prompt,\n  motion_engine,\n  motion_status,\n  notification_pref\n) VALUES (\n  '{{ $('Parse Input').first().json.person_id }}',\n  '{{ $('Parse Input').first().json.style_name.replace(/'/g, \"''\") }}',\n  {{ $json.photo_avatar_id ? \"'\" + $json.photo_avatar_id + \"'\" : 'NULL' }},\n  '{{ $json.motion_avatar_id }}',\n  '{{ $json.image_key }}',\n  '{{ $('Parse Input').first().json.motion_preset }}',\n  '{{ $('Parse Input').first().json.motion_prompt.replace(/'/g, \"''\") }}',\n  '{{ $('Parse Input').first().json.motion_engine }}',\n  'processing',\n  '{{ $('Parse Input').first().json.notification_pref }}'\n) RETURNING id;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -793,7 +801,7 @@
       "typeVersion": 2,
       "position": [
         2464,
-        536
+        544
       ],
       "id": "format-birefnet-error",
       "name": "Format BiRefNet Error"
@@ -806,7 +814,7 @@
       "typeVersion": 2,
       "position": [
         6048,
-        536
+        544
       ],
       "id": "format-photo-error",
       "name": "Format Photo Avatar Error"
@@ -824,7 +832,7 @@
       "typeVersion": 1.2,
       "position": [
         2688,
-        536
+        544
       ],
       "id": "call-error-birefnet",
       "name": "Call: Email Error (BiRefNet)"
@@ -842,7 +850,7 @@
       "typeVersion": 1.2,
       "position": [
         6272,
-        536
+        544
       ],
       "id": "call-error-photo",
       "name": "Call: Email Error (Photo)"
@@ -874,7 +882,7 @@
       "typeVersion": 2,
       "position": [
         3584,
-        104
+        112
       ],
       "id": "if-has-avatar-group",
       "name": "If: Has Avatar Group"
@@ -1475,8 +1483,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "1431cabc-371e-4a4e-bae6-f48f3a380f23",
-  "activeVersionId": "1431cabc-371e-4a4e-bae6-f48f3a380f23",
+  "versionId": "fa9db2db-628a-4fd3-a8b8-1923a17e74c4",
+  "activeVersionId": "fa9db2db-628a-4fd3-a8b8-1923a17e74c4",
   "triggerCount": 1,
   "shared": [
     {
@@ -1488,9 +1496,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:23:47.266Z",
-    "createdAt": "2026-02-06T23:23:47.266Z",
-    "versionId": "1431cabc-371e-4a4e-bae6-f48f3a380f23",
+    "updatedAt": "2026-02-08T19:35:35.605Z",
+    "createdAt": "2026-02-08T19:35:35.605Z",
+    "versionId": "fa9db2db-628a-4fd3-a8b8-1923a17e74c4",
     "workflowId": "FAvXS0078ZfxhOOu",
     "nodes": [
       {
@@ -1506,7 +1514,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          104
+          112
         ],
         "id": "webhook-trigger",
         "name": "Webhook: Process Avatar Photo",
@@ -1520,7 +1528,7 @@
         "typeVersion": 2,
         "position": [
           224,
-          104
+          112
         ],
         "id": "parse-input",
         "name": "Parse Input"
@@ -1554,7 +1562,7 @@
         "typeVersion": 2.2,
         "position": [
           448,
-          104
+          112
         ],
         "id": "check-image-source",
         "name": "If: Has Image URL"
@@ -1574,7 +1582,7 @@
         "typeVersion": 4.2,
         "position": [
           672,
-          8
+          16
         ],
         "id": "download-image",
         "name": "Download Image from URL"
@@ -1587,7 +1595,7 @@
         "typeVersion": 2,
         "position": [
           896,
-          200
+          208
         ],
         "id": "use-base64",
         "name": "Use Base64 Image"
@@ -1600,7 +1608,7 @@
         "typeVersion": 2,
         "position": [
           896,
-          8
+          16
         ],
         "id": "convert-to-base64",
         "name": "Convert to Base64"
@@ -1611,7 +1619,7 @@
         "typeVersion": 3,
         "position": [
           1120,
-          104
+          112
         ],
         "id": "merge-paths",
         "name": "Merge Paths"
@@ -1640,13 +1648,17 @@
         "typeVersion": 4.2,
         "position": [
           1344,
-          104
+          112
         ],
         "id": "birefnet-start",
         "name": "API: Replicate BiRefNet Start",
         "credentials": {
           "httpHeaderAuth": {
             "id": "e1reYzNejHyRRGq0",
+            "name": "Replicate"
+          },
+          "httpBearerAuth": {
+            "id": "Cg4MVmFYrBVN7VDI",
             "name": "Replicate"
           }
         }
@@ -1659,7 +1671,7 @@
         "typeVersion": 1.1,
         "position": [
           1568,
-          104
+          112
         ],
         "id": "wait-birefnet",
         "name": "Wait 3s",
@@ -1682,13 +1694,17 @@
         "typeVersion": 4.2,
         "position": [
           1792,
-          104
+          112
         ],
         "id": "birefnet-check",
         "name": "API: Check BiRefNet Status",
         "credentials": {
           "httpHeaderAuth": {
             "id": "e1reYzNejHyRRGq0",
+            "name": "Replicate"
+          },
+          "httpBearerAuth": {
+            "id": "Cg4MVmFYrBVN7VDI",
             "name": "Replicate"
           }
         }
@@ -1722,7 +1738,7 @@
         "typeVersion": 2.2,
         "position": [
           2016,
-          8
+          16
         ],
         "id": "if-birefnet-done",
         "name": "If: BiRefNet Complete"
@@ -1756,7 +1772,7 @@
         "typeVersion": 2.2,
         "position": [
           2240,
-          248
+          256
         ],
         "id": "if-birefnet-pending",
         "name": "If: BiRefNet Still Processing"
@@ -1769,7 +1785,7 @@
         "typeVersion": 1.1,
         "position": [
           2464,
-          152
+          160
         ],
         "id": "wait-birefnet-retry",
         "name": "Wait 2s (Retry)",
@@ -1803,7 +1819,7 @@
         "typeVersion": 4.2,
         "position": [
           2912,
-          200
+          208
         ],
         "id": "download-bg-removed",
         "name": "Download BG Removed"
@@ -1832,7 +1848,7 @@
         "typeVersion": 4.2,
         "position": [
           3136,
-          104
+          112
         ],
         "id": "heygen-upload-asset",
         "name": "API: HeyGen Upload Asset",
@@ -1851,7 +1867,7 @@
         "typeVersion": 2,
         "position": [
           3360,
-          104
+          112
         ],
         "id": "extract-image-key",
         "name": "Extract Image Key"
@@ -1944,7 +1960,7 @@
         "typeVersion": 1.1,
         "position": [
           2464,
-          344
+          352
         ],
         "id": "respond-birefnet-error",
         "name": "Respond BiRefNet Error"
@@ -1958,8 +1974,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          -122,
-          44
+          -128,
+          48
         ],
         "typeVersion": 1,
         "id": "sticky-intro",
@@ -1989,7 +2005,7 @@
         "typeVersion": 4.2,
         "position": [
           4704,
-          104
+          112
         ],
         "id": "add-look-to-group",
         "name": "API: Add Look to Group",
@@ -2008,7 +2024,7 @@
         "typeVersion": 2,
         "position": [
           4928,
-          104
+          112
         ],
         "id": "extract-photo-avatar-id",
         "name": "Extract Photo Avatar ID"
@@ -2019,7 +2035,7 @@
         "typeVersion": 1.1,
         "position": [
           5152,
-          104
+          112
         ],
         "id": "wait-photo-avatar",
         "name": "Wait 5s (Photo Avatar)",
@@ -2042,7 +2058,7 @@
         "typeVersion": 4.2,
         "position": [
           5376,
-          104
+          112
         ],
         "id": "check-photo-avatar-status",
         "name": "API: Check Photo Avatar Status",
@@ -2082,7 +2098,7 @@
         "typeVersion": 2.2,
         "position": [
           5600,
-          8
+          16
         ],
         "id": "if-photo-avatar-complete",
         "name": "If: Photo Avatar Complete"
@@ -2126,7 +2142,7 @@
         "typeVersion": 2.2,
         "position": [
           5824,
-          248
+          256
         ],
         "id": "if-photo-avatar-processing",
         "name": "If: Photo Avatar Processing"
@@ -2139,7 +2155,7 @@
         "typeVersion": 1.1,
         "position": [
           6048,
-          152
+          160
         ],
         "id": "wait-photo-avatar-retry",
         "name": "Wait 3s (Retry)",
@@ -2170,7 +2186,7 @@
         "typeVersion": 1.1,
         "position": [
           6048,
-          344
+          352
         ],
         "id": "respond-avatar-error",
         "name": "Respond Photo Avatar Error"
@@ -2233,7 +2249,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO avatars (\n  person_id,\n  style_name,\n  photo_avatar_id,\n  motion_avatar_id,\n  image_key,\n  motion_preset,\n  motion_prompt,\n  motion_engine,\n  motion_status,\n  notification_pref\n) VALUES (\n  '{{ $('Parse Input').first().json.person_id }}',\n  '{{ $('Parse Input').first().json.style_name }}',\n  '{{ $json.photo_avatar_id }}',\n  '{{ $json.motion_avatar_id }}',\n  '{{ $json.image_key }}',\n  '{{ $('Parse Input').first().json.motion_preset }}',\n  '{{ $('Parse Input').first().json.motion_prompt }}',\n  '{{ $('Parse Input').first().json.motion_engine }}',\n  'processing',\n  '{{ $('Parse Input').first().json.notification_pref }}'\n) RETURNING id;",
+          "query": "INSERT INTO avatars (\n  person_id,\n  style_name,\n  photo_avatar_id,\n  motion_avatar_id,\n  image_key,\n  motion_preset,\n  motion_prompt,\n  motion_engine,\n  motion_status,\n  notification_pref\n) VALUES (\n  '{{ $('Parse Input').first().json.person_id }}',\n  '{{ $('Parse Input').first().json.style_name.replace(/'/g, \"''\") }}',\n  {{ $json.photo_avatar_id ? \"'\" + $json.photo_avatar_id + \"'\" : 'NULL' }},\n  '{{ $json.motion_avatar_id }}',\n  '{{ $json.image_key }}',\n  '{{ $('Parse Input').first().json.motion_preset }}',\n  '{{ $('Parse Input').first().json.motion_prompt.replace(/'/g, \"''\") }}',\n  '{{ $('Parse Input').first().json.motion_engine }}',\n  'processing',\n  '{{ $('Parse Input').first().json.notification_pref }}'\n) RETURNING id;",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
@@ -2280,7 +2296,7 @@
         "typeVersion": 2,
         "position": [
           2464,
-          536
+          544
         ],
         "id": "format-birefnet-error",
         "name": "Format BiRefNet Error"
@@ -2293,7 +2309,7 @@
         "typeVersion": 2,
         "position": [
           6048,
-          536
+          544
         ],
         "id": "format-photo-error",
         "name": "Format Photo Avatar Error"
@@ -2311,7 +2327,7 @@
         "typeVersion": 1.2,
         "position": [
           2688,
-          536
+          544
         ],
         "id": "call-error-birefnet",
         "name": "Call: Email Error (BiRefNet)"
@@ -2329,7 +2345,7 @@
         "typeVersion": 1.2,
         "position": [
           6272,
-          536
+          544
         ],
         "id": "call-error-photo",
         "name": "Call: Email Error (Photo)"
@@ -2361,7 +2377,7 @@
         "typeVersion": 2,
         "position": [
           3584,
-          104
+          112
         ],
         "id": "if-has-avatar-group",
         "name": "If: Has Avatar Group"
