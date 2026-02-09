@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:53.969Z",
+  "updatedAt": "2026-02-08T20:49:52.552Z",
   "createdAt": "2026-01-21T22:11:40.503Z",
   "id": "ACWOGydrPbFmWRKG",
   "name": "[Process Educational Asset]",
@@ -62,7 +62,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ $json.themePackRequest }}",
@@ -202,8 +202,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "95cce314-f1ce-4a0b-a3f3-a951e1b533f3",
-  "activeVersionId": "95cce314-f1ce-4a0b-a3f3-a951e1b533f3",
+  "versionId": "080a0dee-63b9-4502-b31d-f4ad7c450113",
+  "activeVersionId": "080a0dee-63b9-4502-b31d-f4ad7c450113",
   "triggerCount": 1,
   "shared": [
     {
@@ -215,9 +215,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:23:53.972Z",
-    "createdAt": "2026-02-06T23:23:53.972Z",
-    "versionId": "95cce314-f1ce-4a0b-a3f3-a951e1b533f3",
+    "updatedAt": "2026-02-08T20:49:52.555Z",
+    "createdAt": "2026-02-08T20:49:52.555Z",
+    "versionId": "080a0dee-63b9-4502-b31d-f4ad7c450113",
     "workflowId": "ACWOGydrPbFmWRKG",
     "nodes": [
       {
@@ -276,7 +276,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+          "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ $json.themePackRequest }}",
