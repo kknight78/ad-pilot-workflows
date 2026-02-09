@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:43.496Z",
+  "updatedAt": "2026-02-08T23:21:29.847Z",
   "createdAt": "2025-12-13T13:57:29.218Z",
   "id": "cMoPonO0EPhbdXEj",
   "name": "[01] Orchestrate Video Creation",
@@ -629,7 +629,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"service_area\": \"{{ $json.service_area }}\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
@@ -694,7 +694,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-platform-copy",
+        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/generate-platform-copy",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.copy_request) }}",
@@ -1119,13 +1119,7 @@
             "node": "Update Script Ready",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Script Ready": {
-      "main": [
-        [
+          },
           {
             "node": "Respond - Script Preview",
             "type": "main",
@@ -1145,8 +1139,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "4dd9ab3b-86ef-4b92-a352-0d568bafa3c9",
-  "activeVersionId": "4dd9ab3b-86ef-4b92-a352-0d568bafa3c9",
+  "versionId": "13992949-b6d5-42db-b6f6-4be699d5ee14",
+  "activeVersionId": "13992949-b6d5-42db-b6f6-4be699d5ee14",
   "triggerCount": 1,
   "shared": [
     {
@@ -1158,9 +1152,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:23:43.500Z",
-    "createdAt": "2026-02-06T23:23:43.500Z",
-    "versionId": "4dd9ab3b-86ef-4b92-a352-0d568bafa3c9",
+    "updatedAt": "2026-02-08T23:21:29.850Z",
+    "createdAt": "2026-02-08T23:21:29.850Z",
+    "versionId": "13992949-b6d5-42db-b6f6-4be699d5ee14",
     "workflowId": "cMoPonO0EPhbdXEj",
     "nodes": [
       {
@@ -1786,7 +1780,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+          "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={\n  \"mode\": \"pack\",\n  \"theme_seed\": \"{{ $json.theme_pack.theme_seed || $json.theme_seed || 'Fresh Deals' }}\",\n  \"emoji\": \"{{ $json.theme_pack.emoji || $json.emoji || '🚗' }}\",\n  \"direction\": \"{{ $json.theme_pack.direction || $json.direction || '' }}\",\n  \"local_override_text\": \"{{ $json.theme_pack.local_override_text || $json.local_override_text || null }}\",\n  \"location\": \"{{ $json.location }}\",\n  \"service_area\": \"{{ $json.service_area }}\",\n  \"current_date\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"current_month\": \"{{ $now.format('MMMM') }}\",\n  \"item_summary\": \"{{ $json.template_id.includes('educational') ? 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice.' : $json.vins.length + ' vehicles: ' + $json.vins.join(', ') }}\"\n}",
@@ -1851,7 +1845,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-platform-copy",
+          "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/generate-platform-copy",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ JSON.stringify($json.copy_request) }}",
@@ -2276,13 +2270,7 @@
               "node": "Update Script Ready",
               "type": "main",
               "index": 0
-            }
-          ]
-        ]
-      },
-      "Update Script Ready": {
-        "main": [
-          [
+            },
             {
               "node": "Respond - Script Preview",
               "type": "main",
