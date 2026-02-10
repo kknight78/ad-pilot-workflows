@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T20:49:49.790Z",
+  "updatedAt": "2026-02-09T14:38:55.545Z",
   "createdAt": "2026-01-21T22:10:59.608Z",
   "id": "uHhulFCOyqMtI9wd",
   "name": "[Process Multi-Item Asset]",
@@ -60,7 +60,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT \n  v.*,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id AND i.is_primary = true LIMIT 1) as primary_image_url,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id ORDER BY sort_order LIMIT 1) as first_image_url\nFROM inventory_vehicles v\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+        "query": "=SELECT \n  v.*,\n  ii.hero_image_url as primary_image_url,\n  ii.hero_image_url as first_image_url\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
         "options": {}
       },
       "id": "fetch-vehicles-001",
@@ -340,7 +340,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const themePackResponse = $json;\nconst prevData = $('Select Result').first().json;\nconst { asset, processedItems } = prevData;\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build the processed_data to save\nconst processedData = {\n  items: processedItems.map(item => ({\n    item_id: item.item_id,\n    vin: item.vin,\n    year: item.year,\n    make: item.make,\n    model: item.model,\n    trim: item.trim,\n    body_style: item.body_style,\n    price: item.price,\n    mileage: item.mileage,\n    days_on_lot: item.days_on_lot,\n    mileage_category: item.mileage_category,\n    equipment_highlights: item.equipment_highlights,\n    photo_url: item.photo_url,\n    bg_removed: item.bg_removed || false,\n    sort_order: item.sort_order\n  })),\n  theme_pack: {\n    theme_name: themePackResponse.theme_name || asset.theme_seed,\n    hook: themePackResponse.hook,\n    talking_points: themePackResponse.talking_points,\n    cta: themePackResponse.cta,\n    emoji: themePackResponse.emoji || asset.theme_emoji\n  },\n  processed_at: new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_data: processedData,\n    status: 'processed'\n  }\n}];"
+        "jsCode": "const themePackResponse = $json;\nconst prevData = $('Select Result').first().json;\nconst { asset, processedItems } = prevData;\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items for save\nconst items = processedItems.map(item => ({\n  item_id: item.item_id,\n  vin: item.vin,\n  year: item.year,\n  make: item.make,\n  model: item.model,\n  trim: item.trim,\n  body_style: item.body_style,\n  price: item.price,\n  mileage: item.mileage,\n  days_on_lot: item.days_on_lot,\n  mileage_category: item.mileage_category,\n  equipment_highlights: item.equipment_highlights,\n  photo_url: item.photo_url,\n  bg_removed: item.bg_removed || false,\n  sort_order: item.sort_order\n}));\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_items: items,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
       },
       "id": "prepare-save-001",
       "name": "Prepare Save Data",
@@ -354,7 +354,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=UPDATE assets \nSET \n  processed_data = '{{ JSON.stringify($json.processed_data) }}'::jsonb,\n  status = '{{ $json.status }}',\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, status",
+        "query": "=UPDATE assets \nSET \n  processed_items = $pd${{ JSON.stringify($json.processed_items) }}$pd$::jsonb,\n  theme_pack = $pd${{ JSON.stringify($json.theme_pack) }}$pd$::jsonb,\n  processing_status = '{{ $json.processing_status }}',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, processing_status",
         "options": {}
       },
       "id": "save-asset-001",
@@ -647,8 +647,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "42511925-bd5b-4a65-b5eb-9640fe5099a7",
-  "activeVersionId": "42511925-bd5b-4a65-b5eb-9640fe5099a7",
+  "versionId": "d4e2b0d3-7f0f-454c-a5d4-61580846007c",
+  "activeVersionId": "d4e2b0d3-7f0f-454c-a5d4-61580846007c",
   "triggerCount": 1,
   "shared": [
     {
@@ -660,9 +660,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-08T20:49:49.794Z",
-    "createdAt": "2026-02-08T20:49:49.794Z",
-    "versionId": "42511925-bd5b-4a65-b5eb-9640fe5099a7",
+    "updatedAt": "2026-02-09T14:38:55.548Z",
+    "createdAt": "2026-02-09T14:38:55.548Z",
+    "versionId": "d4e2b0d3-7f0f-454c-a5d4-61580846007c",
     "workflowId": "uHhulFCOyqMtI9wd",
     "nodes": [
       {
@@ -719,7 +719,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=SELECT \n  v.*,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id AND i.is_primary = true LIMIT 1) as primary_image_url,\n  (SELECT url FROM inventory_images i WHERE i.item_id = v.item_id ORDER BY sort_order LIMIT 1) as first_image_url\nFROM inventory_vehicles v\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+          "query": "=SELECT \n  v.*,\n  ii.hero_image_url as primary_image_url,\n  ii.hero_image_url as first_image_url\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
           "options": {}
         },
         "id": "fetch-vehicles-001",
@@ -999,7 +999,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const themePackResponse = $json;\nconst prevData = $('Select Result').first().json;\nconst { asset, processedItems } = prevData;\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build the processed_data to save\nconst processedData = {\n  items: processedItems.map(item => ({\n    item_id: item.item_id,\n    vin: item.vin,\n    year: item.year,\n    make: item.make,\n    model: item.model,\n    trim: item.trim,\n    body_style: item.body_style,\n    price: item.price,\n    mileage: item.mileage,\n    days_on_lot: item.days_on_lot,\n    mileage_category: item.mileage_category,\n    equipment_highlights: item.equipment_highlights,\n    photo_url: item.photo_url,\n    bg_removed: item.bg_removed || false,\n    sort_order: item.sort_order\n  })),\n  theme_pack: {\n    theme_name: themePackResponse.theme_name || asset.theme_seed,\n    hook: themePackResponse.hook,\n    talking_points: themePackResponse.talking_points,\n    cta: themePackResponse.cta,\n    emoji: themePackResponse.emoji || asset.theme_emoji\n  },\n  processed_at: new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_data: processedData,\n    status: 'processed'\n  }\n}];"
+          "jsCode": "const themePackResponse = $json;\nconst prevData = $('Select Result').first().json;\nconst { asset, processedItems } = prevData;\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items for save\nconst items = processedItems.map(item => ({\n  item_id: item.item_id,\n  vin: item.vin,\n  year: item.year,\n  make: item.make,\n  model: item.model,\n  trim: item.trim,\n  body_style: item.body_style,\n  price: item.price,\n  mileage: item.mileage,\n  days_on_lot: item.days_on_lot,\n  mileage_category: item.mileage_category,\n  equipment_highlights: item.equipment_highlights,\n  photo_url: item.photo_url,\n  bg_removed: item.bg_removed || false,\n  sort_order: item.sort_order\n}));\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_items: items,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
         },
         "id": "prepare-save-001",
         "name": "Prepare Save Data",
@@ -1013,7 +1013,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=UPDATE assets \nSET \n  processed_data = '{{ JSON.stringify($json.processed_data) }}'::jsonb,\n  status = '{{ $json.status }}',\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, status",
+          "query": "=UPDATE assets \nSET \n  processed_items = $pd${{ JSON.stringify($json.processed_items) }}$pd$::jsonb,\n  theme_pack = $pd${{ JSON.stringify($json.theme_pack) }}$pd$::jsonb,\n  processing_status = '{{ $json.processing_status }}',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, processing_status",
           "options": {}
         },
         "id": "save-asset-001",
