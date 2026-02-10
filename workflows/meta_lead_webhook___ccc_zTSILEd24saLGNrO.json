@@ -1,0 +1,1421 @@
+{
+  "updatedAt": "2026-02-09T17:42:22.796Z",
+  "createdAt": "2026-02-09T17:42:22.796Z",
+  "id": "zTSILEd24saLGNrO",
+  "name": "Meta Lead Webhook - CCC",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "meta-leads-ccc",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-get",
+      "name": "Webhook: GET Verify",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -200
+      ],
+      "webhookId": "meta-leads-ccc-get"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "verify-token-check",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "rightValue": "adpilot_meta_leads_2026",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-verify-token",
+      "name": "IF Verify Token OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $('Webhook: GET Verify').first().json.query['hub.challenge'] }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-challenge",
+      "name": "Respond: Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Forbidden",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "id": "respond-forbidden",
+      "name": "Respond: Forbidden",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meta-leads-ccc",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-post",
+      "name": "Webhook: POST Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "meta-leads-ccc-post"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the Meta webhook payload\nconst input = $input.first().json;\nconst body = input.body || input;\n\ntry {\n  const entry = body.entry[0];\n  const change = entry.changes[0];\n  const value = change.value;\n\n  return [{\n    json: {\n      leadgen_id: value.leadgen_id,\n      form_id: value.form_id || null,\n      ad_id: value.ad_id || null,\n      adgroup_id: value.adgroup_id || null,\n      page_id: value.page_id || entry.id,\n      created_time: value.created_time,\n      raw_payload: body\n    }\n  }];\n} catch (err) {\n  // If payload doesn't match expected format, pass through what we have\n  return [{\n    json: {\n      leadgen_id: null,\n      error: 'Failed to parse webhook payload: ' + err.message,\n      raw_payload: body\n    }\n  }];\n}"
+      },
+      "id": "parse-payload",
+      "name": "Parse Webhook Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"received\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-ok",
+      "name": "Respond: OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-leadgen-id",
+              "leftValue": "={{ $json.leadgen_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-leadgen-id",
+      "name": "IF Has Lead ID",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        740,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT id FROM leads WHERE meta_lead_id = '{{ $('Parse Webhook Payload').first().json.leadgen_id }}' LIMIT 1",
+        "options": {}
+      },
+      "id": "check-duplicate",
+      "name": "Check Duplicate",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        100
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-new-lead",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-new-lead",
+      "name": "IF New Lead",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT access_token FROM meta_ad_accounts WHERE client_id = 'ccc' AND account_status = 1 AND access_token IS NOT NULL LIMIT 1",
+        "options": {}
+      },
+      "id": "get-access-token",
+      "name": "Get Meta Access Token",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1400,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Parse Webhook Payload').first().json.leadgen_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-meta-lead",
+      "name": "Fetch Lead from Meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1620,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 30000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "meta-api-ok",
+              "leftValue": "={{ $json.field_data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-meta-ok",
+      "name": "IF Meta API OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Try various field name formats Meta might use\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || '';\nconst lastName = getField('last_name') || '';\nconst contactName = fullName || [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    raw_payload: webhookData.raw_payload\n  }\n}];"
+      },
+      "id": "parse-contact",
+      "name": "Parse Contact Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2060,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT iv.stock_number, iv.vin, iv.year, iv.make, iv.model, iv.trim, iv.mileage, iv.body_style, iv.drivetrain, ii.price, ii.url, ii.hero_image_url, ii.hero_cloudinary_url FROM inventory_vehicles iv JOIN inventory_items ii ON iv.item_id = ii.id WHERE iv.vin = '{{ $json.retailer_item_id }}' OR iv.stock_number = '{{ $json.retailer_item_id }}' LIMIT 1",
+        "options": {}
+      },
+      "id": "lookup-vehicle",
+      "name": "Lookup Vehicle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2280,
+        -100
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// SQL escape helper\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\n\n// Build the final lead record and email content\nconst contact = $('Parse Contact Info').first().json;\nconst vehicleResult = $input.first().json;\n\n// Vehicle data (may be empty if no retailer_item_id or not found)\nconst hasVehicle = vehicleResult && vehicleResult.stock_number;\n\nconst vehicle = hasVehicle ? {\n  stock_number: vehicleResult.stock_number,\n  vin: vehicleResult.vin,\n  year: vehicleResult.year,\n  make: vehicleResult.make,\n  model: vehicleResult.model,\n  trim: vehicleResult.trim,\n  price: vehicleResult.price ? parseFloat(vehicleResult.price) : null,\n  mileage: vehicleResult.mileage,\n  url: vehicleResult.url || null,\n  photo_url: vehicleResult.hero_cloudinary_url || vehicleResult.hero_image_url || null\n} : null;\n\n// Format price\nconst priceStr = vehicle && vehicle.price\n  ? '$' + vehicle.price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })\n  : null;\n\n// Format mileage\nconst mileageStr = vehicle && vehicle.mileage\n  ? vehicle.mileage.toLocaleString('en-US') + ' mi'\n  : null;\n\n// Vehicle title\nconst vehicleTitle = vehicle\n  ? [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ')\n  : null;\n\n// Email subject\nconst subjectEmoji = vehicle ? '\\uD83D\\uDE97' : '\\uD83D\\uDCCB';\nconst subjectVehicle = vehicle && priceStr\n  ? vehicleTitle + ' (' + priceStr + ')'\n  : (vehicle ? vehicleTitle : 'General Inquiry');\nconst emailSubject = subjectEmoji + ' New Lead: ' + contact.contact_name + ' \\u2014 ' + subjectVehicle;\n\n// Format received time\nconst receivedAt = contact.lead_created_time\n  ? new Date(contact.lead_created_time).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n  : new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n\n// Build vehicle section HTML\nlet vehicleHtml = '';\nif (vehicle) {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px 8px; background: #f8f9fa; border-radius: 8px 8px 0 0;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle Interest</p></td></tr>';\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 4px; background: #f8f9fa;\"><p style=\"margin: 0; font-size: 18px; font-weight: 700; color: #111827;\">' + vehicleTitle + (vehicle.trim ? ' ' + vehicle.trim : '') + '</p></td></tr>';\n  if (vehicle.stock_number) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px; width: 100px;\">Stock #</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + vehicle.stock_number + '</td></tr>';\n  if (vehicle.vin) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">VIN</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-family: monospace;\">' + vehicle.vin + '</td></tr>';\n  if (priceStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Price</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-weight: 600;\">' + priceStr + '</td></tr>';\n  if (mileageStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Mileage</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + mileageStr + '</td></tr>';\n  if (vehicle.url) vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 16px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"><a href=\"' + vehicle.url + '\" style=\"color: #2563eb; font-size: 14px; text-decoration: none;\">View Vehicle on Website \\u2192</a></td></tr>';\n  else vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 0 0 8px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"></td></tr>';\n} else {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px; background: #f8f9fa; border-radius: 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Inquiry Type</p><p style=\"margin: 0; font-size: 16px; color: #111827;\">General \\u2014 no specific vehicle</p></td></tr>';\n}\n\n// Full email HTML\nconst emailHtml = '<div style=\"max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<div style=\"background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;\">' +\n  '<h2 style=\"margin: 0; color: #ffffff; font-size: 18px; font-weight: 600;\">New Lead \\u2014 Capitol Car Credit</h2></div>' +\n  '<div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px 0;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Contact</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px; width: 100px;\">Name</td><td style=\"padding: 2px 20px; font-size: 16px; font-weight: 600; color: #111827;\">' + contact.contact_name + '</td></tr>' +\n  (contact.contact_email ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Email</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"mailto:' + contact.contact_email + '\" style=\"color: #2563eb; text-decoration: none;\">' + contact.contact_email + '</a></td></tr>' : '') +\n  (contact.contact_phone ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Phone</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"tel:' + contact.contact_phone + '\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">' + (contact.contact_phone_display || contact.contact_phone) + '</a></td></tr>' : '') +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  vehicleHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Source</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Platform</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">Facebook</td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Received</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + receivedAt + ' CT</td></tr>' +\n  '</table></div>' +\n  '<p style=\"text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;\">Powered by Ad Pilot</p></div>';\n\n// Build SQL insert\nconst sql = 'INSERT INTO leads (client_id, source, platform, meta_lead_id, meta_ad_id, meta_form_id, contact_name, contact_email, contact_phone, vehicle_stock_number, vehicle_vin, vehicle_year, vehicle_make, vehicle_model, vehicle_trim, vehicle_price, vehicle_mileage, vehicle_url, vehicle_photo_url, raw_payload, lead_received_at) VALUES (' +\n  \"'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'meta_leadgen', 'facebook', \" +\n  esc(contact.meta_lead_id) + ', ' +\n  esc(contact.meta_ad_id) + ', ' +\n  esc(contact.meta_form_id) + ', ' +\n  esc(contact.contact_name) + ', ' +\n  esc(contact.contact_email) + ', ' +\n  esc(contact.contact_phone) + ', ' +\n  (vehicle ? esc(vehicle.stock_number) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.vin) : 'NULL') + ', ' +\n  (vehicle && vehicle.year ? vehicle.year : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.make) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.model) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.trim) : 'NULL') + ', ' +\n  (vehicle && vehicle.price ? vehicle.price : 'NULL') + ', ' +\n  (vehicle && vehicle.mileage ? vehicle.mileage : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.url) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.photo_url) : 'NULL') + ', ' +\n  esc(JSON.stringify(contact.raw_payload)) + '::jsonb, ' +\n  esc(contact.lead_created_time || new Date().toISOString()) + '::timestamptz' +\n  ') ON CONFLICT (meta_lead_id) DO NOTHING RETURNING id';\n\nreturn [{\n  json: {\n    email_subject: emailSubject,\n    email_html: emailHtml,\n    meta_lead_id: contact.meta_lead_id,\n    meta_ad_id: contact.meta_ad_id,\n    meta_form_id: contact.meta_form_id,\n    contact_name: contact.contact_name,\n    contact_email: contact.contact_email,\n    contact_phone: contact.contact_phone,\n    vehicle_stock_number: vehicle ? vehicle.stock_number : null,\n    vehicle_vin: vehicle ? vehicle.vin : null,\n    vehicle_year: vehicle ? vehicle.year : null,\n    vehicle_make: vehicle ? vehicle.make : null,\n    vehicle_model: vehicle ? vehicle.model : null,\n    vehicle_trim: vehicle ? vehicle.trim : null,\n    vehicle_price: vehicle ? vehicle.price : null,\n    vehicle_mileage: vehicle ? vehicle.mileage : null,\n    vehicle_url: vehicle ? vehicle.url : null,\n    vehicle_photo_url: vehicle ? vehicle.photo_url : null,\n    raw_payload: contact.raw_payload,\n    lead_received_at: contact.lead_created_time || new Date().toISOString(),\n    sql_insert: sql\n  }\n}];"
+      },
+      "id": "build-lead-record",
+      "name": "Build Lead Record & Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2500,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sql_insert }}",
+        "options": {}
+      },
+      "id": "insert-lead",
+      "name": "Insert Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2720,
+        -100
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": {{ JSON.stringify($json.email_subject) }},\n  \"html\": {{ JSON.stringify($json.email_html) }}\n}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Lead Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2940,
+        -100
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Meta API failed - store the raw payload for manual review\nconst webhookData = $('Parse Webhook Payload').first().json;\nconst errorInfo = $input.first().json;\n\n// Extract error message from various possible formats\nlet errorMsg = 'Meta Leads API call failed';\nif (errorInfo.error) {\n  if (typeof errorInfo.error === 'string') {\n    errorMsg = errorInfo.error;\n  } else if (errorInfo.error.message) {\n    errorMsg = errorInfo.error.message;\n  }\n} else if (errorInfo.message) {\n  errorMsg = errorInfo.message;\n}\n\nreturn [{\n  json: {\n    raw_payload: webhookData.raw_payload,\n    error_message: errorMsg,\n    leadgen_id: webhookData.leadgen_id\n  }\n}];"
+      },
+      "id": "handle-meta-error",
+      "name": "Handle Meta API Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2060,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO leads_failed (raw_payload, error_message) VALUES ('{{ JSON.stringify($json.raw_payload).replace(/'/g, \"''\") }}'::jsonb, '{{ ($json.error_message || '').replace(/'/g, \"''\") }}')",
+        "options": {}
+      },
+      "id": "store-failed-lead",
+      "name": "Store Failed Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2280,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": \"\\uD83D\\uDCCB New Meta Lead (details pending)\",\n  \"html\": \"<div style='max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;'><div style='background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;'><h2 style='margin: 0; color: #ffffff; font-size: 18px;'>New Lead \\u2014 Capitol Car Credit</h2></div><div style='border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;'><p style='margin: 0 0 8px; font-size: 14px; color: #111827;'>A new lead was received from Meta, but we couldn't retrieve the full details right now.</p><p style='margin: 0 0 8px; font-size: 14px; color: #6b7280;'>Lead ID: {{ $json.leadgen_id || 'Unknown' }}</p><p style='margin: 0; font-size: 14px; color: #6b7280;'>This has been logged and will be reviewed. Full details will follow once the issue is resolved.</p></div><p style='text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;'>Powered by Ad Pilot</p></div>\"\n}",
+        "options": {}
+      },
+      "id": "send-fallback-email",
+      "name": "Send Fallback Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2500,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// No leadgen_id in payload - log for review\nconst webhookData = $input.first().json;\nreturn [{ json: { message: 'No leadgen_id found in webhook payload', raw: webhookData.raw_payload } }];"
+      },
+      "id": "log-bad-payload",
+      "name": "Log: Bad Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: GET Verify": {
+      "main": [
+        [
+          {
+            "node": "IF Verify Token OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Verify Token OK": {
+      "main": [
+        [
+          {
+            "node": "Respond: Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Forbidden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: POST Lead": {
+      "main": [
+        [
+          {
+            "node": "Parse Webhook Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Webhook Payload": {
+      "main": [
+        [
+          {
+            "node": "Respond: OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond: OK": {
+      "main": [
+        [
+          {
+            "node": "IF Has Lead ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Has Lead ID": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log: Bad Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate": {
+      "main": [
+        [
+          {
+            "node": "IF New Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF New Lead": {
+      "main": [
+        [
+          {
+            "node": "Get Meta Access Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get Meta Access Token": {
+      "main": [
+        [
+          {
+            "node": "Fetch Lead from Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Lead from Meta": {
+      "main": [
+        [
+          {
+            "node": "IF Meta API OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Meta API OK": {
+      "main": [
+        [
+          {
+            "node": "Parse Contact Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Meta API Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Contact Info": {
+      "main": [
+        [
+          {
+            "node": "Lookup Vehicle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Vehicle": {
+      "main": [
+        [
+          {
+            "node": "Build Lead Record & Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Lead Record & Email": {
+      "main": [
+        [
+          {
+            "node": "Insert Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Lead": {
+      "main": [
+        [
+          {
+            "node": "Send Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Meta API Error": {
+      "main": [
+        [
+          {
+            "node": "Store Failed Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Failed Lead": {
+      "main": [
+        [
+          {
+            "node": "Send Fallback Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "a95eba40-18a3-4035-9fb1-d7a445eba0fc",
+  "activeVersionId": "a95eba40-18a3-4035-9fb1-d7a445eba0fc",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-02-09T17:42:22.796Z",
+      "createdAt": "2026-02-09T17:42:22.796Z",
+      "role": "workflow:owner",
+      "workflowId": "zTSILEd24saLGNrO",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-09T17:42:22.819Z",
+    "createdAt": "2026-02-09T17:42:22.819Z",
+    "versionId": "a95eba40-18a3-4035-9fb1-d7a445eba0fc",
+    "workflowId": "zTSILEd24saLGNrO",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "meta-leads-ccc",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook-get",
+        "name": "Webhook: GET Verify",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          -200
+        ],
+        "webhookId": "meta-leads-ccc-get"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "verify-token-check",
+                "leftValue": "={{ $json.query['hub.verify_token'] }}",
+                "rightValue": "adpilot_meta_leads_2026",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-verify-token",
+        "name": "IF Verify Token OK",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          260,
+          -200
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "={{ $('Webhook: GET Verify').first().json.query['hub.challenge'] }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "respond-challenge",
+        "name": "Respond: Challenge",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          520,
+          -300
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "Forbidden",
+          "options": {
+            "responseCode": 403
+          }
+        },
+        "id": "respond-forbidden",
+        "name": "Respond: Forbidden",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          520,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "meta-leads-ccc",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook-post",
+        "name": "Webhook: POST Lead",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "webhookId": "meta-leads-ccc-post"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse the Meta webhook payload\nconst input = $input.first().json;\nconst body = input.body || input;\n\ntry {\n  const entry = body.entry[0];\n  const change = entry.changes[0];\n  const value = change.value;\n\n  return [{\n    json: {\n      leadgen_id: value.leadgen_id,\n      form_id: value.form_id || null,\n      ad_id: value.ad_id || null,\n      adgroup_id: value.adgroup_id || null,\n      page_id: value.page_id || entry.id,\n      created_time: value.created_time,\n      raw_payload: body\n    }\n  }];\n} catch (err) {\n  // If payload doesn't match expected format, pass through what we have\n  return [{\n    json: {\n      leadgen_id: null,\n      error: 'Failed to parse webhook payload: ' + err.message,\n      raw_payload: body\n    }\n  }];\n}"
+        },
+        "id": "parse-payload",
+        "name": "Parse Webhook Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\"status\": \"received\"}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "respond-ok",
+        "name": "Respond: OK",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          520,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "has-leadgen-id",
+                "leftValue": "={{ $json.leadgen_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-has-leadgen-id",
+        "name": "IF Has Lead ID",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          740,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT id FROM leads WHERE meta_lead_id = '{{ $('Parse Webhook Payload').first().json.leadgen_id }}' LIMIT 1",
+          "options": {}
+        },
+        "id": "check-duplicate",
+        "name": "Check Duplicate",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          960,
+          100
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "is-new-lead",
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "empty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-new-lead",
+        "name": "IF New Lead",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1180,
+          100
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT access_token FROM meta_ad_accounts WHERE client_id = 'ccc' AND account_status = 1 AND access_token IS NOT NULL LIMIT 1",
+          "options": {}
+        },
+        "id": "get-access-token",
+        "name": "Get Meta Access Token",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1400,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "=https://graph.facebook.com/v21.0/{{ $('Parse Webhook Payload').first().json.leadgen_id }}",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "access_token",
+                "value": "={{ $json.access_token }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "fetch-meta-lead",
+        "name": "Fetch Lead from Meta",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1620,
+          0
+        ],
+        "onError": "continueRegularOutput",
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 30000
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "meta-api-ok",
+                "leftValue": "={{ $json.field_data }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-meta-ok",
+        "name": "IF Meta API OK",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1840,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Try various field name formats Meta might use\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || '';\nconst lastName = getField('last_name') || '';\nconst contactName = fullName || [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    raw_payload: webhookData.raw_payload\n  }\n}];"
+        },
+        "id": "parse-contact",
+        "name": "Parse Contact Info",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2060,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT iv.stock_number, iv.vin, iv.year, iv.make, iv.model, iv.trim, iv.mileage, iv.body_style, iv.drivetrain, ii.price, ii.url, ii.hero_image_url, ii.hero_cloudinary_url FROM inventory_vehicles iv JOIN inventory_items ii ON iv.item_id = ii.id WHERE iv.vin = '{{ $json.retailer_item_id }}' OR iv.stock_number = '{{ $json.retailer_item_id }}' LIMIT 1",
+          "options": {}
+        },
+        "id": "lookup-vehicle",
+        "name": "Lookup Vehicle",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2280,
+          -100
+        ],
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "// SQL escape helper\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\n\n// Build the final lead record and email content\nconst contact = $('Parse Contact Info').first().json;\nconst vehicleResult = $input.first().json;\n\n// Vehicle data (may be empty if no retailer_item_id or not found)\nconst hasVehicle = vehicleResult && vehicleResult.stock_number;\n\nconst vehicle = hasVehicle ? {\n  stock_number: vehicleResult.stock_number,\n  vin: vehicleResult.vin,\n  year: vehicleResult.year,\n  make: vehicleResult.make,\n  model: vehicleResult.model,\n  trim: vehicleResult.trim,\n  price: vehicleResult.price ? parseFloat(vehicleResult.price) : null,\n  mileage: vehicleResult.mileage,\n  url: vehicleResult.url || null,\n  photo_url: vehicleResult.hero_cloudinary_url || vehicleResult.hero_image_url || null\n} : null;\n\n// Format price\nconst priceStr = vehicle && vehicle.price\n  ? '$' + vehicle.price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })\n  : null;\n\n// Format mileage\nconst mileageStr = vehicle && vehicle.mileage\n  ? vehicle.mileage.toLocaleString('en-US') + ' mi'\n  : null;\n\n// Vehicle title\nconst vehicleTitle = vehicle\n  ? [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ')\n  : null;\n\n// Email subject\nconst subjectEmoji = vehicle ? '\\uD83D\\uDE97' : '\\uD83D\\uDCCB';\nconst subjectVehicle = vehicle && priceStr\n  ? vehicleTitle + ' (' + priceStr + ')'\n  : (vehicle ? vehicleTitle : 'General Inquiry');\nconst emailSubject = subjectEmoji + ' New Lead: ' + contact.contact_name + ' \\u2014 ' + subjectVehicle;\n\n// Format received time\nconst receivedAt = contact.lead_created_time\n  ? new Date(contact.lead_created_time).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n  : new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n\n// Build vehicle section HTML\nlet vehicleHtml = '';\nif (vehicle) {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px 8px; background: #f8f9fa; border-radius: 8px 8px 0 0;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle Interest</p></td></tr>';\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 4px; background: #f8f9fa;\"><p style=\"margin: 0; font-size: 18px; font-weight: 700; color: #111827;\">' + vehicleTitle + (vehicle.trim ? ' ' + vehicle.trim : '') + '</p></td></tr>';\n  if (vehicle.stock_number) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px; width: 100px;\">Stock #</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + vehicle.stock_number + '</td></tr>';\n  if (vehicle.vin) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">VIN</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-family: monospace;\">' + vehicle.vin + '</td></tr>';\n  if (priceStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Price</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-weight: 600;\">' + priceStr + '</td></tr>';\n  if (mileageStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Mileage</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + mileageStr + '</td></tr>';\n  if (vehicle.url) vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 16px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"><a href=\"' + vehicle.url + '\" style=\"color: #2563eb; font-size: 14px; text-decoration: none;\">View Vehicle on Website \\u2192</a></td></tr>';\n  else vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 0 0 8px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"></td></tr>';\n} else {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px; background: #f8f9fa; border-radius: 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Inquiry Type</p><p style=\"margin: 0; font-size: 16px; color: #111827;\">General \\u2014 no specific vehicle</p></td></tr>';\n}\n\n// Full email HTML\nconst emailHtml = '<div style=\"max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<div style=\"background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;\">' +\n  '<h2 style=\"margin: 0; color: #ffffff; font-size: 18px; font-weight: 600;\">New Lead \\u2014 Capitol Car Credit</h2></div>' +\n  '<div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px 0;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Contact</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px; width: 100px;\">Name</td><td style=\"padding: 2px 20px; font-size: 16px; font-weight: 600; color: #111827;\">' + contact.contact_name + '</td></tr>' +\n  (contact.contact_email ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Email</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"mailto:' + contact.contact_email + '\" style=\"color: #2563eb; text-decoration: none;\">' + contact.contact_email + '</a></td></tr>' : '') +\n  (contact.contact_phone ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Phone</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"tel:' + contact.contact_phone + '\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">' + (contact.contact_phone_display || contact.contact_phone) + '</a></td></tr>' : '') +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  vehicleHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Source</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Platform</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">Facebook</td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Received</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + receivedAt + ' CT</td></tr>' +\n  '</table></div>' +\n  '<p style=\"text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;\">Powered by Ad Pilot</p></div>';\n\n// Build SQL insert\nconst sql = 'INSERT INTO leads (client_id, source, platform, meta_lead_id, meta_ad_id, meta_form_id, contact_name, contact_email, contact_phone, vehicle_stock_number, vehicle_vin, vehicle_year, vehicle_make, vehicle_model, vehicle_trim, vehicle_price, vehicle_mileage, vehicle_url, vehicle_photo_url, raw_payload, lead_received_at) VALUES (' +\n  \"'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'meta_leadgen', 'facebook', \" +\n  esc(contact.meta_lead_id) + ', ' +\n  esc(contact.meta_ad_id) + ', ' +\n  esc(contact.meta_form_id) + ', ' +\n  esc(contact.contact_name) + ', ' +\n  esc(contact.contact_email) + ', ' +\n  esc(contact.contact_phone) + ', ' +\n  (vehicle ? esc(vehicle.stock_number) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.vin) : 'NULL') + ', ' +\n  (vehicle && vehicle.year ? vehicle.year : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.make) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.model) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.trim) : 'NULL') + ', ' +\n  (vehicle && vehicle.price ? vehicle.price : 'NULL') + ', ' +\n  (vehicle && vehicle.mileage ? vehicle.mileage : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.url) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.photo_url) : 'NULL') + ', ' +\n  esc(JSON.stringify(contact.raw_payload)) + '::jsonb, ' +\n  esc(contact.lead_created_time || new Date().toISOString()) + '::timestamptz' +\n  ') ON CONFLICT (meta_lead_id) DO NOTHING RETURNING id';\n\nreturn [{\n  json: {\n    email_subject: emailSubject,\n    email_html: emailHtml,\n    meta_lead_id: contact.meta_lead_id,\n    meta_ad_id: contact.meta_ad_id,\n    meta_form_id: contact.meta_form_id,\n    contact_name: contact.contact_name,\n    contact_email: contact.contact_email,\n    contact_phone: contact.contact_phone,\n    vehicle_stock_number: vehicle ? vehicle.stock_number : null,\n    vehicle_vin: vehicle ? vehicle.vin : null,\n    vehicle_year: vehicle ? vehicle.year : null,\n    vehicle_make: vehicle ? vehicle.make : null,\n    vehicle_model: vehicle ? vehicle.model : null,\n    vehicle_trim: vehicle ? vehicle.trim : null,\n    vehicle_price: vehicle ? vehicle.price : null,\n    vehicle_mileage: vehicle ? vehicle.mileage : null,\n    vehicle_url: vehicle ? vehicle.url : null,\n    vehicle_photo_url: vehicle ? vehicle.photo_url : null,\n    raw_payload: contact.raw_payload,\n    lead_received_at: contact.lead_created_time || new Date().toISOString(),\n    sql_insert: sql\n  }\n}];"
+        },
+        "id": "build-lead-record",
+        "name": "Build Lead Record & Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2500,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "={{ $json.sql_insert }}",
+          "options": {}
+        },
+        "id": "insert-lead",
+        "name": "Insert Lead",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2720,
+          -100
+        ],
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": {{ JSON.stringify($json.email_subject) }},\n  \"html\": {{ JSON.stringify($json.email_html) }}\n}",
+          "options": {}
+        },
+        "id": "send-email",
+        "name": "Send Lead Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2940,
+          -100
+        ],
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 5000,
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Meta API failed - store the raw payload for manual review\nconst webhookData = $('Parse Webhook Payload').first().json;\nconst errorInfo = $input.first().json;\n\n// Extract error message from various possible formats\nlet errorMsg = 'Meta Leads API call failed';\nif (errorInfo.error) {\n  if (typeof errorInfo.error === 'string') {\n    errorMsg = errorInfo.error;\n  } else if (errorInfo.error.message) {\n    errorMsg = errorInfo.error.message;\n  }\n} else if (errorInfo.message) {\n  errorMsg = errorInfo.message;\n}\n\nreturn [{\n  json: {\n    raw_payload: webhookData.raw_payload,\n    error_message: errorMsg,\n    leadgen_id: webhookData.leadgen_id\n  }\n}];"
+        },
+        "id": "handle-meta-error",
+        "name": "Handle Meta API Error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2060,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=INSERT INTO leads_failed (raw_payload, error_message) VALUES ('{{ JSON.stringify($json.raw_payload).replace(/'/g, \"''\") }}'::jsonb, '{{ ($json.error_message || '').replace(/'/g, \"''\") }}')",
+          "options": {}
+        },
+        "id": "store-failed-lead",
+        "name": "Store Failed Lead",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2280,
+          200
+        ],
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": \"\\uD83D\\uDCCB New Meta Lead (details pending)\",\n  \"html\": \"<div style='max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;'><div style='background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;'><h2 style='margin: 0; color: #ffffff; font-size: 18px;'>New Lead \\u2014 Capitol Car Credit</h2></div><div style='border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;'><p style='margin: 0 0 8px; font-size: 14px; color: #111827;'>A new lead was received from Meta, but we couldn't retrieve the full details right now.</p><p style='margin: 0 0 8px; font-size: 14px; color: #6b7280;'>Lead ID: {{ $json.leadgen_id || 'Unknown' }}</p><p style='margin: 0; font-size: 14px; color: #6b7280;'>This has been logged and will be reviewed. Full details will follow once the issue is resolved.</p></div><p style='text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;'>Powered by Ad Pilot</p></div>\"\n}",
+          "options": {}
+        },
+        "id": "send-fallback-email",
+        "name": "Send Fallback Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2500,
+          200
+        ],
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 5000,
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// No leadgen_id in payload - log for review\nconst webhookData = $input.first().json;\nreturn [{ json: { message: 'No leadgen_id found in webhook payload', raw: webhookData.raw_payload } }];"
+        },
+        "id": "log-bad-payload",
+        "name": "Log: Bad Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          400
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook: GET Verify": {
+        "main": [
+          [
+            {
+              "node": "IF Verify Token OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Verify Token OK": {
+        "main": [
+          [
+            {
+              "node": "Respond: Challenge",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond: Forbidden",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: POST Lead": {
+        "main": [
+          [
+            {
+              "node": "Parse Webhook Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Webhook Payload": {
+        "main": [
+          [
+            {
+              "node": "Respond: OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Respond: OK": {
+        "main": [
+          [
+            {
+              "node": "IF Has Lead ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Has Lead ID": {
+        "main": [
+          [
+            {
+              "node": "Check Duplicate",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Log: Bad Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Duplicate": {
+        "main": [
+          [
+            {
+              "node": "IF New Lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF New Lead": {
+        "main": [
+          [
+            {
+              "node": "Get Meta Access Token",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Get Meta Access Token": {
+        "main": [
+          [
+            {
+              "node": "Fetch Lead from Meta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Lead from Meta": {
+        "main": [
+          [
+            {
+              "node": "IF Meta API OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Meta API OK": {
+        "main": [
+          [
+            {
+              "node": "Parse Contact Info",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Handle Meta API Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Contact Info": {
+        "main": [
+          [
+            {
+              "node": "Lookup Vehicle",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Vehicle": {
+        "main": [
+          [
+            {
+              "node": "Build Lead Record & Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Lead Record & Email": {
+        "main": [
+          [
+            {
+              "node": "Insert Lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Lead": {
+        "main": [
+          [
+            {
+              "node": "Send Lead Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Handle Meta API Error": {
+        "main": [
+          [
+            {
+              "node": "Store Failed Lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Failed Lead": {
+        "main": [
+          [
+            {
+              "node": "Send Fallback Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
