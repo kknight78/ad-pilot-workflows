@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-09T00:06:54.918Z",
+  "updatedAt": "2026-02-09T14:51:33.933Z",
   "createdAt": "2025-12-13T13:57:36.843Z",
   "id": "gM6DTZfNbcSofqQO",
   "name": "[02] Generate Script",
@@ -370,7 +370,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{\n  json: {\n    spreadsheet_data: $input.all().map(item => item.json)\n  }\n}];"
+        "jsCode": "// Pass through DB rows in the same format downstream expects\nreturn [{\n  json: {\n    db_vehicles: $input.all().map(item => item.json)\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -379,11 +379,11 @@
         368
       ],
       "id": "c814151d-0bc4-4253-a0c8-11d92029f90d",
-      "name": "Combine Spreadsheet Data"
+      "name": "Combine DB Data"
     },
     {
       "parameters": {
-        "jsCode": "const allItems = $input.all();\nconst allVehicles = allItems[0].json.spreadsheet_data;\nconst config = allItems[1].json;\nconst requestedVins = config.vins;\nconst matchedVehicles = [];\n\n// Get template type from new format\nconst template = config.template_id || '';\n\nfor (const vehicle of allVehicles) {\n\n  if (vehicle.VIN && requestedVins.includes(vehicle.VIN)) {\n    console.log('✅ Match found:', vehicle.VIN);\n\n    // ad-multi-item-1 (was TEMP_001) - basic vehicle info\n    if(template === \"ad-multi-item-1\") {\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL,\n        features: [vehicle.Engine, vehicle.Drivetrain, vehicle.Exterior_Color].filter(Boolean)\n      });\n    }\n    // ad-single-item-spotlight-1 (was TEMP_002) - detailed vehicle info with all images\n    else if(template === \"ad-single-item-spotlight-1\"){\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        trim: vehicle.Trim,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        drivetrain: vehicle.Drivetrain,\n        transmission: vehicle.Transmission,\n        engine: vehicle.Engine,\n        exterior_color: vehicle.Exterior_Color,\n        equipment: vehicle.Equipment,\n        all_images: vehicle.All_Images.split(\"|\"),\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL\n      });\n    }\n    // social-educational-1 (was TEMP_003) - no vehicles needed, but include basic info if present\n    else if(template === \"social-educational-1\") {\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL\n      });\n    }\n    // Default fallback - basic vehicle info\n    else {\n      console.log(`⚠️ Unknown template \"${template}\", using basic vehicle info`);\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL,\n        features: [vehicle.Engine, vehicle.Drivetrain, vehicle.Exterior_Color].filter(Boolean)\n      });\n    }\n  }\n}\n\nconsole.log('🎯 Matched vehicles:', matchedVehicles.length);\n\nif (matchedVehicles.length === 0) {\n  throw new Error(`No vehicles found matching VINs: ${requestedVins.join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: matchedVehicles\n  }\n}];"
+        "jsCode": "const allItems = $input.all();\nconst allVehicles = allItems[0].json.db_vehicles;\nconst config = allItems[1].json;\nconst requestedVins = config.vins;\nconst matchedVehicles = [];\n\n// Get template type from new format\nconst template = config.template_id || '';\n\nfor (const vehicle of allVehicles) {\n  if (vehicle.vin && requestedVins.includes(vehicle.vin)) {\n    console.log('✅ Match found:', vehicle.vin);\n\n    // ad-multi-item-1 - basic vehicle info\n    if (template === \"ad-multi-item-1\") {\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url,\n        features: [vehicle.engine, vehicle.drivetrain, vehicle.exterior_color].filter(Boolean)\n      });\n    }\n    // ad-single-item-spotlight-1 - detailed vehicle info with all images\n    else if (template === \"ad-single-item-spotlight-1\") {\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        trim: vehicle.trim,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        drivetrain: vehicle.drivetrain,\n        transmission: vehicle.transmission,\n        engine: vehicle.engine,\n        exterior_color: vehicle.exterior_color,\n        equipment: vehicle.equipment,\n        all_images: vehicle.all_images ? vehicle.all_images.split(\"|\") : [],\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url\n      });\n    }\n    // social-educational-1 - basic info\n    else if (template === \"social-educational-1\") {\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url\n      });\n    }\n    // Default fallback - basic vehicle info\n    else {\n      console.log(`⚠️ Unknown template \"${template}\", using basic vehicle info`);\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url,\n        features: [vehicle.engine, vehicle.drivetrain, vehicle.exterior_color].filter(Boolean)\n      });\n    }\n  }\n}\n\nconsole.log('🎯 Matched vehicles:', matchedVehicles.length);\n\nif (matchedVehicles.length === 0) {\n  throw new Error(`No vehicles found matching VINs: ${requestedVins.join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: matchedVehicles\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -461,34 +461,22 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4",
-          "mode": "list",
-          "cachedResultName": "Inventory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 467345130,
-          "mode": "list",
-          "cachedResultName": "Spotlight_Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit#gid=467345130"
-        },
+        "operation": "executeQuery",
+        "query": "=SELECT \n  v.vin, v.year, v.make, v.model, v.trim, v.engine, v.transmission, v.drivetrain,\n  v.exterior_color, v.mileage, v.features,\n  v.raw_data->>'Equipment' as equipment,\n  v.raw_data->>'ImageUrlsDelimited' as all_images,\n  i.price, i.url, i.hero_image_url, i.hero_cloudinary_url\nFROM inventory_vehicles v\nJOIN inventory_items i ON i.id = v.item_id\nWHERE i.client_id = '{{ $json.client_id }}'\nAND i.status = 'active'",
         "options": {}
       },
       "id": "a0f82a94-8a1a-4b68-9d06-862507fe4e9f",
-      "name": "API: Sheets, Fetch Inventory",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.4,
+      "name": "Fetch Inventory from DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         2192,
         368
       ],
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "9WK1ZemzeOSj1j4A",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
         }
       }
     },
@@ -1049,7 +1037,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// PREPARE SCRIPT CONTEXT (FROM PROCESSED ASSET)\n// Pure data fetcher — asset already has processed_items + theme_pack\n// ═══════════════════════════════════════════════════════════════\n\nconst asset = $('Fetch Processed Asset').first().json;\nconst timingRow = $('Fetch Timing for Asset').first().json;\n\n// Parse JSONB fields if needed\nconst processedItems = typeof asset.processed_items === 'string'\n  ? JSON.parse(asset.processed_items)\n  : (asset.processed_items || []);\n\nconst themePack = typeof asset.theme_pack === 'string'\n  ? JSON.parse(asset.theme_pack)\n  : asset.theme_pack;\n\nconst themeModeRules = typeof asset.theme_mode_rules === 'string'\n  ? JSON.parse(asset.theme_mode_rules)\n  : asset.theme_mode_rules;\n\n// Build timing object\nconst timing = {\n  hook_words: timingRow?.hook_words || 12,\n  segment_words: timingRow?.segment_words || 15,\n  cta_words: timingRow?.cta_words || 12,\n  style: timingRow?.style || 'Standard timing',\n  code: timingRow?.code || 'standard'\n};\n\n// Build theme section (pure data, no instructions)\nlet themeSection = '';\nif (themePack) {\n  themeSection = `THEME PACK:\n- Theme: ${themePack.theme_name} ${themePack.emoji || ''}\n- Core tension: ${themePack.core_tension}\n- Ad angle: ${themePack.ad_angle}\n- Local micro-moments: ${JSON.stringify(themePack.local_micro_moments)}\n- Banned phrases: ${JSON.stringify(themePack.banned_phrases)}`;\n} else {\n  themeSection = 'THEME: None provided';\n}\n\n// Map processed_items to vehicles format (for compatibility with TEMP_001)\nconst vehicles = processedItems.map(item => ({\n  vin: item.vin,\n  year: item.year,\n  make: item.make,\n  model: item.model,\n  trim: item.trim,\n  mileage: item.mileage,\n  price: item.price,\n  image_url: item.photo_url,\n  features: item.equipment_highlights || [],\n  // Additional processed data\n  mileage_category: item.mileage_category,\n  equipment_summary: item.equipment_summary,\n  days_on_lot: item.days_on_lot\n}));\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('PREPARE SCRIPT CONTEXT (FROM ASSET)');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Asset ID: ${asset.id}`);\nconsole.log(`Template: ${asset.template_code}`);\nconsole.log(`Theme Mode: ${asset.theme_mode}`);\nconsole.log(`Items: ${processedItems.length}`);\nconsole.log(`Theme Pack: ${themePack ? themePack.theme_name : 'none'}`);\nconsole.log(`Timing: ${timing.code}`);\nconsole.log(`Client: ${asset.client_name}`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    // Asset info\n    asset_id: asset.id,\n    template_id: asset.template_id,\n    template_code: asset.template_code,\n    theme_mode: asset.theme_mode,\n\n    // Timing\n    timing,\n    script_length: asset.target_length || 'standard',\n\n    // Theme\n    theme_pack: themePack,\n    theme_section: themeSection,\n    theme_mode_rules: themeModeRules,\n\n    // Items (processed)\n    vehicles,\n    items: processedItems,\n    item_count: processedItems.length,\n\n    // Client info\n    client_id: asset.client_id,\n    client_name: asset.client_name,\n    client_location: asset.client_location || '',\n\n    // Other asset data\n    avatars: asset.avatars,\n    music_id: asset.music_id,\n    background_id: asset.background_id\n  }\n}];"
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// PREPARE SCRIPT CONTEXT (FROM PROCESSED ASSET)\n// Pure data fetcher — asset already has processed_items + theme_pack\n// ═══════════════════════════════════════════════════════════════\n\nconst asset = $('Fetch Processed Asset').first().json;\nconst timingRow = $('Fetch Timing for Asset').first().json;\n\n// Parse JSONB fields if needed\nconst processedItems = typeof asset.processed_items === 'string'\n  ? JSON.parse(asset.processed_items)\n  : (asset.processed_items || []);\n\nconst themePack = typeof asset.theme_pack === 'string'\n  ? JSON.parse(asset.theme_pack)\n  : asset.theme_pack;\n\nconst themeModeRules = typeof asset.theme_mode_rules === 'string'\n  ? JSON.parse(asset.theme_mode_rules)\n  : asset.theme_mode_rules;\n\n// Build timing object\nconst timing = {\n  hook_words: timingRow?.hook_words || 12,\n  segment_words: timingRow?.segment_words || 15,\n  cta_words: timingRow?.cta_words || 12,\n  style: timingRow?.style || 'Standard timing',\n  code: timingRow?.code || 'standard'\n};\n\n// Build theme section (pure data, no instructions)\nlet themeSection = '';\nif (themePack) {\n  themeSection = `THEME PACK:\n- Theme: ${themePack.theme_name} ${themePack.emoji || ''}\n- Core tension: ${themePack.core_tension}\n- Ad angle: ${themePack.ad_angle}\n- Local micro-moments: ${JSON.stringify(themePack.local_micro_moments)}\n- Banned phrases: ${JSON.stringify(themePack.banned_phrases)}`;\n} else {\n  themeSection = 'THEME: None provided';\n}\n\n// Map processed_items to vehicles format (for compatibility with TEMP_001)\nconst vehicles = processedItems.map(item => ({\n  vin: item.vin,\n  year: item.year,\n  make: item.make,\n  model: item.model,\n  trim: item.trim,\n  mileage: item.mileage,\n  price: item.price,\n  image_url: item.photo_url,\n  features: item.equipment_highlights || [],\n  // Additional processed data\n  mileage_category: item.mileage_category,\n  equipment_summary: item.equipment_summary,\n  days_on_lot: item.days_on_lot\n}));\n\n// Spotlight-specific data: stored inside processedItems[0] by [Process Spotlight Asset]\nconst firstItem = processedItems[0] || {};\nconst verifiedFeatures = firstItem.verified_features || {};\nconst selectedPhotos = firstItem.selected_photos || {};\nconst allImages = firstItem.all_images || [];\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('PREPARE SCRIPT CONTEXT (FROM ASSET)');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Asset ID: ${asset.id}`);\nconsole.log(`Template: ${asset.template_code}`);\nconsole.log(`Theme Mode: ${asset.theme_mode}`);\nconsole.log(`Items: ${processedItems.length}`);\nconsole.log(`Theme Pack: ${themePack ? themePack.theme_name : 'none'}`);\nconsole.log(`Timing: ${timing.code}`);\nconsole.log(`Client: ${asset.client_name}`);\nconsole.log(`Spotlight data: verified_features=${Object.keys(verifiedFeatures).length} categories, selected_photos=${Object.keys(selectedPhotos).length} photos, all_images=${allImages.length}`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    // Asset info\n    asset_id: asset.id,\n    template_id: asset.template_id,\n    template_code: asset.template_code,\n    theme_mode: asset.theme_mode,\n\n    // Timing\n    timing,\n    script_length: asset.target_length || 'standard',\n\n    // Theme\n    theme_pack: themePack,\n    theme_section: themeSection,\n    theme_mode_rules: themeModeRules,\n\n    // Items (processed)\n    vehicles,\n    items: processedItems,\n    item_count: processedItems.length,\n\n    // Client info\n    client_id: asset.client_id,\n    client_name: asset.client_name,\n    client_location: asset.client_location || '',\n\n    // Other asset data\n    avatars: asset.avatars,\n    music_id: asset.music_id,\n    background_id: asset.background_id,\n\n    // Spotlight-specific data (from processedItems[0])\n    verified_features: verifiedFeatures,\n    selected_photos: selectedPhotos,\n    all_images: allImages\n  }\n}];"
       },
       "id": "prepare-asset-context-001",
       "name": "Prepare Script Context (Asset)",
@@ -1062,41 +1050,84 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
+        "rules": {
+          "values": [
             {
-              "id": "multi-item",
-              "leftValue": "={{ $json.template_code }}",
-              "rightValue": "MULTI-ITEM",
-              "operator": {
-                "type": "string",
-                "operation": "contains"
-              }
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template_code }}",
+                    "rightValue": "MULTI-ITEM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Multi-Item"
             },
             {
-              "id": "spotlight",
-              "leftValue": "={{ $json.template_code }}",
-              "rightValue": "SPOTLIGHT",
-              "operator": {
-                "type": "string",
-                "operation": "contains"
-              }
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template_code }}",
+                    "rightValue": "SPOTLIGHT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Spotlight"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template_code }}",
+                    "rightValue": "EDUCATIONAL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Educational"
             }
-          ],
-          "combinator": "or"
+          ]
         },
-        "options": {}
+        "options": {
+          "fallbackOutput": "extra"
+        }
       },
       "id": "asset-router-001",
       "name": "Route by Template (Asset)",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
       "position": [
         6960,
         1056
@@ -1253,7 +1284,7 @@
       "main": [
         [
           {
-            "node": "API: Sheets, Fetch Inventory",
+            "node": "Fetch Inventory from DB",
             "type": "main",
             "index": 0
           },
@@ -1344,7 +1375,7 @@
         ]
       ]
     },
-    "Combine Spreadsheet Data": {
+    "Combine DB Data": {
       "main": [
         [
           {
@@ -1399,11 +1430,11 @@
         ]
       ]
     },
-    "API: Sheets, Fetch Inventory": {
+    "Fetch Inventory from DB": {
       "main": [
         [
           {
-            "node": "Combine Spreadsheet Data",
+            "node": "Combine DB Data",
             "type": "main",
             "index": 0
           }
@@ -1764,7 +1795,21 @@
         ],
         [
           {
+            "node": "Build Script Prompt TEMP_002",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Build Script Prompt TEMP_003",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Script Prompt TEMP_001",
             "type": "main",
             "index": 0
           }
@@ -1791,8 +1836,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "bdcc6794-da71-4c7f-bc64-e59a6598420a",
-  "activeVersionId": "bdcc6794-da71-4c7f-bc64-e59a6598420a",
+  "versionId": "06a24d5c-c703-491f-ac5c-a719dd83bc16",
+  "activeVersionId": "06a24d5c-c703-491f-ac5c-a719dd83bc16",
   "triggerCount": 1,
   "shared": [
     {
@@ -1804,9 +1849,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-09T00:06:54.923Z",
-    "createdAt": "2026-02-09T00:06:54.923Z",
-    "versionId": "bdcc6794-da71-4c7f-bc64-e59a6598420a",
+    "updatedAt": "2026-02-09T14:51:33.938Z",
+    "createdAt": "2026-02-09T14:51:33.938Z",
+    "versionId": "06a24d5c-c703-491f-ac5c-a719dd83bc16",
     "workflowId": "gM6DTZfNbcSofqQO",
     "nodes": [
       {
@@ -2173,7 +2218,7 @@
       },
       {
         "parameters": {
-          "jsCode": "return [{\n  json: {\n    spreadsheet_data: $input.all().map(item => item.json)\n  }\n}];"
+          "jsCode": "// Pass through DB rows in the same format downstream expects\nreturn [{\n  json: {\n    db_vehicles: $input.all().map(item => item.json)\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -2182,11 +2227,11 @@
           368
         ],
         "id": "c814151d-0bc4-4253-a0c8-11d92029f90d",
-        "name": "Combine Spreadsheet Data"
+        "name": "Combine DB Data"
       },
       {
         "parameters": {
-          "jsCode": "const allItems = $input.all();\nconst allVehicles = allItems[0].json.spreadsheet_data;\nconst config = allItems[1].json;\nconst requestedVins = config.vins;\nconst matchedVehicles = [];\n\n// Get template type from new format\nconst template = config.template_id || '';\n\nfor (const vehicle of allVehicles) {\n\n  if (vehicle.VIN && requestedVins.includes(vehicle.VIN)) {\n    console.log('✅ Match found:', vehicle.VIN);\n\n    // ad-multi-item-1 (was TEMP_001) - basic vehicle info\n    if(template === \"ad-multi-item-1\") {\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL,\n        features: [vehicle.Engine, vehicle.Drivetrain, vehicle.Exterior_Color].filter(Boolean)\n      });\n    }\n    // ad-single-item-spotlight-1 (was TEMP_002) - detailed vehicle info with all images\n    else if(template === \"ad-single-item-spotlight-1\"){\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        trim: vehicle.Trim,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        drivetrain: vehicle.Drivetrain,\n        transmission: vehicle.Transmission,\n        engine: vehicle.Engine,\n        exterior_color: vehicle.Exterior_Color,\n        equipment: vehicle.Equipment,\n        all_images: vehicle.All_Images.split(\"|\"),\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL\n      });\n    }\n    // social-educational-1 (was TEMP_003) - no vehicles needed, but include basic info if present\n    else if(template === \"social-educational-1\") {\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL\n      });\n    }\n    // Default fallback - basic vehicle info\n    else {\n      console.log(`⚠️ Unknown template \"${template}\", using basic vehicle info`);\n      matchedVehicles.push({\n        vin: vehicle.VIN,\n        year: vehicle.Year,\n        make: vehicle.Make,\n        model: vehicle.Model,\n        price: vehicle.Price,\n        mileage: vehicle.Mileage,\n        photo_url: vehicle.All_Images ? vehicle.All_Images.split(\"|\")[0] : null,\n        url: vehicle.VDP_URL,\n        features: [vehicle.Engine, vehicle.Drivetrain, vehicle.Exterior_Color].filter(Boolean)\n      });\n    }\n  }\n}\n\nconsole.log('🎯 Matched vehicles:', matchedVehicles.length);\n\nif (matchedVehicles.length === 0) {\n  throw new Error(`No vehicles found matching VINs: ${requestedVins.join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: matchedVehicles\n  }\n}];"
+          "jsCode": "const allItems = $input.all();\nconst allVehicles = allItems[0].json.db_vehicles;\nconst config = allItems[1].json;\nconst requestedVins = config.vins;\nconst matchedVehicles = [];\n\n// Get template type from new format\nconst template = config.template_id || '';\n\nfor (const vehicle of allVehicles) {\n  if (vehicle.vin && requestedVins.includes(vehicle.vin)) {\n    console.log('✅ Match found:', vehicle.vin);\n\n    // ad-multi-item-1 - basic vehicle info\n    if (template === \"ad-multi-item-1\") {\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url,\n        features: [vehicle.engine, vehicle.drivetrain, vehicle.exterior_color].filter(Boolean)\n      });\n    }\n    // ad-single-item-spotlight-1 - detailed vehicle info with all images\n    else if (template === \"ad-single-item-spotlight-1\") {\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        trim: vehicle.trim,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        drivetrain: vehicle.drivetrain,\n        transmission: vehicle.transmission,\n        engine: vehicle.engine,\n        exterior_color: vehicle.exterior_color,\n        equipment: vehicle.equipment,\n        all_images: vehicle.all_images ? vehicle.all_images.split(\"|\") : [],\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url\n      });\n    }\n    // social-educational-1 - basic info\n    else if (template === \"social-educational-1\") {\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url\n      });\n    }\n    // Default fallback - basic vehicle info\n    else {\n      console.log(`⚠️ Unknown template \"${template}\", using basic vehicle info`);\n      matchedVehicles.push({\n        vin: vehicle.vin,\n        year: vehicle.year,\n        make: vehicle.make,\n        model: vehicle.model,\n        price: vehicle.price,\n        mileage: vehicle.mileage,\n        photo_url: vehicle.hero_image_url || (vehicle.all_images ? vehicle.all_images.split(\"|\")[0] : null),\n        url: vehicle.url,\n        features: [vehicle.engine, vehicle.drivetrain, vehicle.exterior_color].filter(Boolean)\n      });\n    }\n  }\n}\n\nconsole.log('🎯 Matched vehicles:', matchedVehicles.length);\n\nif (matchedVehicles.length === 0) {\n  throw new Error(`No vehicles found matching VINs: ${requestedVins.join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    vehicles: matchedVehicles\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -2264,34 +2309,22 @@
       },
       {
         "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4",
-            "mode": "list",
-            "cachedResultName": "Inventory",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": 467345130,
-            "mode": "list",
-            "cachedResultName": "Spotlight_Data",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kgSVMgpWVSFeAAz4M2LpNmIbuhaJKds9gnbsvLdP-t4/edit#gid=467345130"
-          },
+          "operation": "executeQuery",
+          "query": "=SELECT \n  v.vin, v.year, v.make, v.model, v.trim, v.engine, v.transmission, v.drivetrain,\n  v.exterior_color, v.mileage, v.features,\n  v.raw_data->>'Equipment' as equipment,\n  v.raw_data->>'ImageUrlsDelimited' as all_images,\n  i.price, i.url, i.hero_image_url, i.hero_cloudinary_url\nFROM inventory_vehicles v\nJOIN inventory_items i ON i.id = v.item_id\nWHERE i.client_id = '{{ $json.client_id }}'\nAND i.status = 'active'",
           "options": {}
         },
         "id": "a0f82a94-8a1a-4b68-9d06-862507fe4e9f",
-        "name": "API: Sheets, Fetch Inventory",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.4,
+        "name": "Fetch Inventory from DB",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           2192,
           368
         ],
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "9WK1ZemzeOSj1j4A",
-            "name": "Google Sheets account"
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
           }
         }
       },
@@ -2852,7 +2885,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// ═══════════════════════════════════════════════════════════════\n// PREPARE SCRIPT CONTEXT (FROM PROCESSED ASSET)\n// Pure data fetcher — asset already has processed_items + theme_pack\n// ═══════════════════════════════════════════════════════════════\n\nconst asset = $('Fetch Processed Asset').first().json;\nconst timingRow = $('Fetch Timing for Asset').first().json;\n\n// Parse JSONB fields if needed\nconst processedItems = typeof asset.processed_items === 'string'\n  ? JSON.parse(asset.processed_items)\n  : (asset.processed_items || []);\n\nconst themePack = typeof asset.theme_pack === 'string'\n  ? JSON.parse(asset.theme_pack)\n  : asset.theme_pack;\n\nconst themeModeRules = typeof asset.theme_mode_rules === 'string'\n  ? JSON.parse(asset.theme_mode_rules)\n  : asset.theme_mode_rules;\n\n// Build timing object\nconst timing = {\n  hook_words: timingRow?.hook_words || 12,\n  segment_words: timingRow?.segment_words || 15,\n  cta_words: timingRow?.cta_words || 12,\n  style: timingRow?.style || 'Standard timing',\n  code: timingRow?.code || 'standard'\n};\n\n// Build theme section (pure data, no instructions)\nlet themeSection = '';\nif (themePack) {\n  themeSection = `THEME PACK:\n- Theme: ${themePack.theme_name} ${themePack.emoji || ''}\n- Core tension: ${themePack.core_tension}\n- Ad angle: ${themePack.ad_angle}\n- Local micro-moments: ${JSON.stringify(themePack.local_micro_moments)}\n- Banned phrases: ${JSON.stringify(themePack.banned_phrases)}`;\n} else {\n  themeSection = 'THEME: None provided';\n}\n\n// Map processed_items to vehicles format (for compatibility with TEMP_001)\nconst vehicles = processedItems.map(item => ({\n  vin: item.vin,\n  year: item.year,\n  make: item.make,\n  model: item.model,\n  trim: item.trim,\n  mileage: item.mileage,\n  price: item.price,\n  image_url: item.photo_url,\n  features: item.equipment_highlights || [],\n  // Additional processed data\n  mileage_category: item.mileage_category,\n  equipment_summary: item.equipment_summary,\n  days_on_lot: item.days_on_lot\n}));\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('PREPARE SCRIPT CONTEXT (FROM ASSET)');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Asset ID: ${asset.id}`);\nconsole.log(`Template: ${asset.template_code}`);\nconsole.log(`Theme Mode: ${asset.theme_mode}`);\nconsole.log(`Items: ${processedItems.length}`);\nconsole.log(`Theme Pack: ${themePack ? themePack.theme_name : 'none'}`);\nconsole.log(`Timing: ${timing.code}`);\nconsole.log(`Client: ${asset.client_name}`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    // Asset info\n    asset_id: asset.id,\n    template_id: asset.template_id,\n    template_code: asset.template_code,\n    theme_mode: asset.theme_mode,\n\n    // Timing\n    timing,\n    script_length: asset.target_length || 'standard',\n\n    // Theme\n    theme_pack: themePack,\n    theme_section: themeSection,\n    theme_mode_rules: themeModeRules,\n\n    // Items (processed)\n    vehicles,\n    items: processedItems,\n    item_count: processedItems.length,\n\n    // Client info\n    client_id: asset.client_id,\n    client_name: asset.client_name,\n    client_location: asset.client_location || '',\n\n    // Other asset data\n    avatars: asset.avatars,\n    music_id: asset.music_id,\n    background_id: asset.background_id\n  }\n}];"
+          "jsCode": "// ═══════════════════════════════════════════════════════════════\n// PREPARE SCRIPT CONTEXT (FROM PROCESSED ASSET)\n// Pure data fetcher — asset already has processed_items + theme_pack\n// ═══════════════════════════════════════════════════════════════\n\nconst asset = $('Fetch Processed Asset').first().json;\nconst timingRow = $('Fetch Timing for Asset').first().json;\n\n// Parse JSONB fields if needed\nconst processedItems = typeof asset.processed_items === 'string'\n  ? JSON.parse(asset.processed_items)\n  : (asset.processed_items || []);\n\nconst themePack = typeof asset.theme_pack === 'string'\n  ? JSON.parse(asset.theme_pack)\n  : asset.theme_pack;\n\nconst themeModeRules = typeof asset.theme_mode_rules === 'string'\n  ? JSON.parse(asset.theme_mode_rules)\n  : asset.theme_mode_rules;\n\n// Build timing object\nconst timing = {\n  hook_words: timingRow?.hook_words || 12,\n  segment_words: timingRow?.segment_words || 15,\n  cta_words: timingRow?.cta_words || 12,\n  style: timingRow?.style || 'Standard timing',\n  code: timingRow?.code || 'standard'\n};\n\n// Build theme section (pure data, no instructions)\nlet themeSection = '';\nif (themePack) {\n  themeSection = `THEME PACK:\n- Theme: ${themePack.theme_name} ${themePack.emoji || ''}\n- Core tension: ${themePack.core_tension}\n- Ad angle: ${themePack.ad_angle}\n- Local micro-moments: ${JSON.stringify(themePack.local_micro_moments)}\n- Banned phrases: ${JSON.stringify(themePack.banned_phrases)}`;\n} else {\n  themeSection = 'THEME: None provided';\n}\n\n// Map processed_items to vehicles format (for compatibility with TEMP_001)\nconst vehicles = processedItems.map(item => ({\n  vin: item.vin,\n  year: item.year,\n  make: item.make,\n  model: item.model,\n  trim: item.trim,\n  mileage: item.mileage,\n  price: item.price,\n  image_url: item.photo_url,\n  features: item.equipment_highlights || [],\n  // Additional processed data\n  mileage_category: item.mileage_category,\n  equipment_summary: item.equipment_summary,\n  days_on_lot: item.days_on_lot\n}));\n\n// Spotlight-specific data: stored inside processedItems[0] by [Process Spotlight Asset]\nconst firstItem = processedItems[0] || {};\nconst verifiedFeatures = firstItem.verified_features || {};\nconst selectedPhotos = firstItem.selected_photos || {};\nconst allImages = firstItem.all_images || [];\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('PREPARE SCRIPT CONTEXT (FROM ASSET)');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Asset ID: ${asset.id}`);\nconsole.log(`Template: ${asset.template_code}`);\nconsole.log(`Theme Mode: ${asset.theme_mode}`);\nconsole.log(`Items: ${processedItems.length}`);\nconsole.log(`Theme Pack: ${themePack ? themePack.theme_name : 'none'}`);\nconsole.log(`Timing: ${timing.code}`);\nconsole.log(`Client: ${asset.client_name}`);\nconsole.log(`Spotlight data: verified_features=${Object.keys(verifiedFeatures).length} categories, selected_photos=${Object.keys(selectedPhotos).length} photos, all_images=${allImages.length}`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    // Asset info\n    asset_id: asset.id,\n    template_id: asset.template_id,\n    template_code: asset.template_code,\n    theme_mode: asset.theme_mode,\n\n    // Timing\n    timing,\n    script_length: asset.target_length || 'standard',\n\n    // Theme\n    theme_pack: themePack,\n    theme_section: themeSection,\n    theme_mode_rules: themeModeRules,\n\n    // Items (processed)\n    vehicles,\n    items: processedItems,\n    item_count: processedItems.length,\n\n    // Client info\n    client_id: asset.client_id,\n    client_name: asset.client_name,\n    client_location: asset.client_location || '',\n\n    // Other asset data\n    avatars: asset.avatars,\n    music_id: asset.music_id,\n    background_id: asset.background_id,\n\n    // Spotlight-specific data (from processedItems[0])\n    verified_features: verifiedFeatures,\n    selected_photos: selectedPhotos,\n    all_images: allImages\n  }\n}];"
         },
         "id": "prepare-asset-context-001",
         "name": "Prepare Script Context (Asset)",
@@ -2865,41 +2898,84 @@
       },
       {
         "parameters": {
-          "conditions": {
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "strict",
-              "version": 2
-            },
-            "conditions": [
+          "rules": {
+            "values": [
               {
-                "id": "multi-item",
-                "leftValue": "={{ $json.template_code }}",
-                "rightValue": "MULTI-ITEM",
-                "operator": {
-                  "type": "string",
-                  "operation": "contains"
-                }
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template_code }}",
+                      "rightValue": "MULTI-ITEM",
+                      "operator": {
+                        "type": "string",
+                        "operation": "contains"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Multi-Item"
               },
               {
-                "id": "spotlight",
-                "leftValue": "={{ $json.template_code }}",
-                "rightValue": "SPOTLIGHT",
-                "operator": {
-                  "type": "string",
-                  "operation": "contains"
-                }
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template_code }}",
+                      "rightValue": "SPOTLIGHT",
+                      "operator": {
+                        "type": "string",
+                        "operation": "contains"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Spotlight"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template_code }}",
+                      "rightValue": "EDUCATIONAL",
+                      "operator": {
+                        "type": "string",
+                        "operation": "contains"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Educational"
               }
-            ],
-            "combinator": "or"
+            ]
           },
-          "options": {}
+          "options": {
+            "fallbackOutput": "extra"
+          }
         },
         "id": "asset-router-001",
         "name": "Route by Template (Asset)",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.2,
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
         "position": [
           6960,
           1056
@@ -3056,7 +3132,7 @@
         "main": [
           [
             {
-              "node": "API: Sheets, Fetch Inventory",
+              "node": "Fetch Inventory from DB",
               "type": "main",
               "index": 0
             },
@@ -3147,7 +3223,7 @@
           ]
         ]
       },
-      "Combine Spreadsheet Data": {
+      "Combine DB Data": {
         "main": [
           [
             {
@@ -3202,11 +3278,11 @@
           ]
         ]
       },
-      "API: Sheets, Fetch Inventory": {
+      "Fetch Inventory from DB": {
         "main": [
           [
             {
-              "node": "Combine Spreadsheet Data",
+              "node": "Combine DB Data",
               "type": "main",
               "index": 0
             }
@@ -3567,7 +3643,21 @@
           ],
           [
             {
+              "node": "Build Script Prompt TEMP_002",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
               "node": "Build Script Prompt TEMP_003",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build Script Prompt TEMP_001",
               "type": "main",
               "index": 0
             }
