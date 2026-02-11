@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-09T17:42:22.796Z",
+  "updatedAt": "2026-02-10T15:24:59.754Z",
   "createdAt": "2026-02-09T17:42:22.796Z",
   "id": "zTSILEd24saLGNrO",
   "name": "Meta Lead Webhook - CCC",
@@ -8,7 +8,6 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "GET",
         "path": "meta-leads-ccc",
         "responseMode": "responseNode",
         "options": {}
@@ -19,7 +18,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        -200
+        -208
       ],
       "webhookId": "meta-leads-ccc-get"
     },
@@ -53,8 +52,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        260,
-        -200
+        272,
+        -208
       ]
     },
     {
@@ -70,8 +69,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        520,
-        -300
+        528,
+        -304
       ]
     },
     {
@@ -87,8 +86,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        520,
-        -100
+        528,
+        -96
       ]
     },
     {
@@ -104,7 +103,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        200
+        208
       ],
       "webhookId": "meta-leads-ccc-post"
     },
@@ -117,8 +116,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        260,
-        200
+        272,
+        208
       ]
     },
     {
@@ -134,8 +133,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        520,
-        200
+        528,
+        208
       ]
     },
     {
@@ -167,8 +166,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        740,
-        200
+        752,
+        208
       ]
     },
     {
@@ -183,15 +182,15 @@
       "typeVersion": 2.5,
       "position": [
         960,
-        100
+        112
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
         }
-      },
-      "alwaysOutputData": true
+      }
     },
     {
       "parameters": {
@@ -222,8 +221,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1180,
-        100
+        1184,
+        112
       ]
     },
     {
@@ -237,7 +236,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1400,
+        1408,
         0
       ],
       "credentials": {
@@ -266,13 +265,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1620,
+        1632,
         0
       ],
-      "onError": "continueRegularOutput",
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 30000
+      "waitBetweenTries": 30000,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -309,15 +308,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Try various field name formats Meta might use\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || '';\nconst lastName = getField('last_name') || '';\nconst contactName = fullName || [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    raw_payload: webhookData.raw_payload\n  }\n}];"
+        "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Known standard fields — include both underscore and space variants\nconst standardFields = new Set([\n  'full_name', 'name', 'first_name', 'last_name',\n  'first name', 'last name',\n  'email', 'email_address',\n  'phone_number', 'phone'\n]);\n\n// Try various field name formats Meta might use (underscore AND space)\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || getField('first name') || '';\nconst lastName = getField('last_name') || getField('last name') || '';\n\n// Prefer explicit first+last when available, then fall back to full_name\nconst contactName = (firstName && lastName)\n  ? firstName + ' ' + lastName\n  : (firstName || lastName)\n    ? (fullName || firstName || lastName)\n    : (fullName || 'Unknown');\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\n// Capture any extra form fields beyond standard contact fields\nconst extraFields = fieldData\n  .filter(f => !standardFields.has(f.name))\n  .map(f => ({\n    name: f.name,\n    value: f.values ? f.values[0] : null\n  }));\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    extra_fields: extraFields,\n    raw_payload: webhookData.raw_payload\n  }\n}];\n"
       },
       "id": "parse-contact",
       "name": "Parse Contact Info",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2060,
-        -100
+        2064,
+        -96
       ]
     },
     {
@@ -331,29 +330,29 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2280,
-        -100
+        2288,
+        -96
       ],
-      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
         }
       },
-      "alwaysOutputData": true
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// SQL escape helper\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\n\n// Build the final lead record and email content\nconst contact = $('Parse Contact Info').first().json;\nconst vehicleResult = $input.first().json;\n\n// Vehicle data (may be empty if no retailer_item_id or not found)\nconst hasVehicle = vehicleResult && vehicleResult.stock_number;\n\nconst vehicle = hasVehicle ? {\n  stock_number: vehicleResult.stock_number,\n  vin: vehicleResult.vin,\n  year: vehicleResult.year,\n  make: vehicleResult.make,\n  model: vehicleResult.model,\n  trim: vehicleResult.trim,\n  price: vehicleResult.price ? parseFloat(vehicleResult.price) : null,\n  mileage: vehicleResult.mileage,\n  url: vehicleResult.url || null,\n  photo_url: vehicleResult.hero_cloudinary_url || vehicleResult.hero_image_url || null\n} : null;\n\n// Format price\nconst priceStr = vehicle && vehicle.price\n  ? '$' + vehicle.price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })\n  : null;\n\n// Format mileage\nconst mileageStr = vehicle && vehicle.mileage\n  ? vehicle.mileage.toLocaleString('en-US') + ' mi'\n  : null;\n\n// Vehicle title\nconst vehicleTitle = vehicle\n  ? [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ')\n  : null;\n\n// Email subject\nconst subjectEmoji = vehicle ? '\\uD83D\\uDE97' : '\\uD83D\\uDCCB';\nconst subjectVehicle = vehicle && priceStr\n  ? vehicleTitle + ' (' + priceStr + ')'\n  : (vehicle ? vehicleTitle : 'General Inquiry');\nconst emailSubject = subjectEmoji + ' New Lead: ' + contact.contact_name + ' \\u2014 ' + subjectVehicle;\n\n// Format received time\nconst receivedAt = contact.lead_created_time\n  ? new Date(contact.lead_created_time).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n  : new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n\n// Build vehicle section HTML\nlet vehicleHtml = '';\nif (vehicle) {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px 8px; background: #f8f9fa; border-radius: 8px 8px 0 0;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle Interest</p></td></tr>';\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 4px; background: #f8f9fa;\"><p style=\"margin: 0; font-size: 18px; font-weight: 700; color: #111827;\">' + vehicleTitle + (vehicle.trim ? ' ' + vehicle.trim : '') + '</p></td></tr>';\n  if (vehicle.stock_number) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px; width: 100px;\">Stock #</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + vehicle.stock_number + '</td></tr>';\n  if (vehicle.vin) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">VIN</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-family: monospace;\">' + vehicle.vin + '</td></tr>';\n  if (priceStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Price</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-weight: 600;\">' + priceStr + '</td></tr>';\n  if (mileageStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Mileage</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + mileageStr + '</td></tr>';\n  if (vehicle.url) vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 16px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"><a href=\"' + vehicle.url + '\" style=\"color: #2563eb; font-size: 14px; text-decoration: none;\">View Vehicle on Website \\u2192</a></td></tr>';\n  else vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 0 0 8px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"></td></tr>';\n} else {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px; background: #f8f9fa; border-radius: 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Inquiry Type</p><p style=\"margin: 0; font-size: 16px; color: #111827;\">General \\u2014 no specific vehicle</p></td></tr>';\n}\n\n// Full email HTML\nconst emailHtml = '<div style=\"max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<div style=\"background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;\">' +\n  '<h2 style=\"margin: 0; color: #ffffff; font-size: 18px; font-weight: 600;\">New Lead \\u2014 Capitol Car Credit</h2></div>' +\n  '<div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px 0;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Contact</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px; width: 100px;\">Name</td><td style=\"padding: 2px 20px; font-size: 16px; font-weight: 600; color: #111827;\">' + contact.contact_name + '</td></tr>' +\n  (contact.contact_email ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Email</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"mailto:' + contact.contact_email + '\" style=\"color: #2563eb; text-decoration: none;\">' + contact.contact_email + '</a></td></tr>' : '') +\n  (contact.contact_phone ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Phone</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"tel:' + contact.contact_phone + '\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">' + (contact.contact_phone_display || contact.contact_phone) + '</a></td></tr>' : '') +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  vehicleHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Source</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Platform</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">Facebook</td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Received</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + receivedAt + ' CT</td></tr>' +\n  '</table></div>' +\n  '<p style=\"text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;\">Powered by Ad Pilot</p></div>';\n\n// Build SQL insert\nconst sql = 'INSERT INTO leads (client_id, source, platform, meta_lead_id, meta_ad_id, meta_form_id, contact_name, contact_email, contact_phone, vehicle_stock_number, vehicle_vin, vehicle_year, vehicle_make, vehicle_model, vehicle_trim, vehicle_price, vehicle_mileage, vehicle_url, vehicle_photo_url, raw_payload, lead_received_at) VALUES (' +\n  \"'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'meta_leadgen', 'facebook', \" +\n  esc(contact.meta_lead_id) + ', ' +\n  esc(contact.meta_ad_id) + ', ' +\n  esc(contact.meta_form_id) + ', ' +\n  esc(contact.contact_name) + ', ' +\n  esc(contact.contact_email) + ', ' +\n  esc(contact.contact_phone) + ', ' +\n  (vehicle ? esc(vehicle.stock_number) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.vin) : 'NULL') + ', ' +\n  (vehicle && vehicle.year ? vehicle.year : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.make) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.model) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.trim) : 'NULL') + ', ' +\n  (vehicle && vehicle.price ? vehicle.price : 'NULL') + ', ' +\n  (vehicle && vehicle.mileage ? vehicle.mileage : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.url) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.photo_url) : 'NULL') + ', ' +\n  esc(JSON.stringify(contact.raw_payload)) + '::jsonb, ' +\n  esc(contact.lead_created_time || new Date().toISOString()) + '::timestamptz' +\n  ') ON CONFLICT (meta_lead_id) DO NOTHING RETURNING id';\n\nreturn [{\n  json: {\n    email_subject: emailSubject,\n    email_html: emailHtml,\n    meta_lead_id: contact.meta_lead_id,\n    meta_ad_id: contact.meta_ad_id,\n    meta_form_id: contact.meta_form_id,\n    contact_name: contact.contact_name,\n    contact_email: contact.contact_email,\n    contact_phone: contact.contact_phone,\n    vehicle_stock_number: vehicle ? vehicle.stock_number : null,\n    vehicle_vin: vehicle ? vehicle.vin : null,\n    vehicle_year: vehicle ? vehicle.year : null,\n    vehicle_make: vehicle ? vehicle.make : null,\n    vehicle_model: vehicle ? vehicle.model : null,\n    vehicle_trim: vehicle ? vehicle.trim : null,\n    vehicle_price: vehicle ? vehicle.price : null,\n    vehicle_mileage: vehicle ? vehicle.mileage : null,\n    vehicle_url: vehicle ? vehicle.url : null,\n    vehicle_photo_url: vehicle ? vehicle.photo_url : null,\n    raw_payload: contact.raw_payload,\n    lead_received_at: contact.lead_created_time || new Date().toISOString(),\n    sql_insert: sql\n  }\n}];"
+        "jsCode": "// SQL escape helper\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\n\n// Gather data from previous nodes\nconst contact = $('Parse Contact Info').first().json;\nconst vehicleResult = $('Lookup Vehicle').first().json;\nconst adDetailsRaw = $('Fetch Ad Details').first().json;\nconst adStatsRaw = $('Fetch Ad Stats').first().json;\nconst repeatLeadRows = $input.all().map(i => i.json);\n\n// Vehicle data (may be empty if no retailer_item_id or not found)\nconst hasVehicle = vehicleResult && vehicleResult.stock_number;\nconst vehicle = hasVehicle ? {\n  stock_number: vehicleResult.stock_number,\n  vin: vehicleResult.vin,\n  year: vehicleResult.year,\n  make: vehicleResult.make,\n  model: vehicleResult.model,\n  trim: vehicleResult.trim,\n  price: vehicleResult.price ? parseFloat(vehicleResult.price) : null,\n  mileage: vehicleResult.mileage,\n  body_style: vehicleResult.body_style || null,\n  drivetrain: vehicleResult.drivetrain || null,\n  url: vehicleResult.url || null,\n  photo_url: vehicleResult.hero_cloudinary_url || vehicleResult.hero_image_url || null\n} : null;\n\n// Ad details (may be null if ad_id was missing or API call failed)\nconst hasAdDetails = adDetailsRaw && adDetailsRaw.campaign && !adDetailsRaw.error;\nconst ad = hasAdDetails ? {\n  name: adDetailsRaw.name || null,\n  created_time: adDetailsRaw.created_time || null,\n  campaign_name: adDetailsRaw.campaign ? adDetailsRaw.campaign.name : null,\n  adset_name: adDetailsRaw.adset ? adDetailsRaw.adset.name : null,\n  daily_budget: adDetailsRaw.adset && adDetailsRaw.adset.daily_budget\n    ? '$' + (parseFloat(adDetailsRaw.adset.daily_budget) / 100).toFixed(0) + '/day'\n    : null,\n  thumbnail_url: adDetailsRaw.creative && adDetailsRaw.creative.thumbnail_url\n    ? adDetailsRaw.creative.thumbnail_url : null\n} : null;\n\n// Ad stats (may be null if API call failed)\nconst statsData = adStatsRaw && adStatsRaw.data && adStatsRaw.data[0] ? adStatsRaw.data[0] : null;\nlet adStats = null;\nif (statsData) {\n  const actions = statsData.actions || [];\n  const leadAction = actions.find(a => a.action_type === 'lead' || a.action_type === 'onsite_conversion.lead_grouped');\n  const leadCount = leadAction ? parseInt(leadAction.value) : 0;\n  const spend = statsData.spend ? parseFloat(statsData.spend) : 0;\n  const cpl = leadCount > 0 ? (spend / leadCount) : null;\n\n  // Compute avg spend per day using date_start from insights\n  const insightsStart = statsData.date_start ? new Date(statsData.date_start) : null;\n  const daysSinceStart = insightsStart ? Math.max(1, Math.ceil((Date.now() - insightsStart.getTime()) / (1000 * 60 * 60 * 24))) : null;\n  const avgPerDay = daysSinceStart && spend > 0 ? (spend / daysSinceStart) : null;\n\n  adStats = {\n    leads: leadCount,\n    avgPerDay: avgPerDay !== null ? '$' + avgPerDay.toFixed(2) + '/day' : null,\n    cpl: cpl !== null ? '$' + cpl.toFixed(2) : null,\n    impressions: statsData.impressions ? parseInt(statsData.impressions).toLocaleString('en-US') : null\n  };\n}\n\n// Compute ad age and serving-since from ad created_time\nlet adServingSince = null;\nlet adAgeDays = null;\nif (ad && ad.created_time) {\n  const created = new Date(ad.created_time);\n  adServingSince = created.toLocaleString('en-US', {\n    timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric',\n    hour: 'numeric', minute: '2-digit', hour12: true\n  });\n  // Use calendar dates (CT timezone) for age, not elapsed hours\n  const nowCT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));\n  const createdCT = new Date(created.toLocaleString('en-US', { timeZone: 'America/Chicago' }));\n  nowCT.setHours(0, 0, 0, 0);\n  createdCT.setHours(0, 0, 0, 0);\n  adAgeDays = Math.round((nowCT - createdCT) / (1000 * 60 * 60 * 24));\n}\n\n// Repeat lead detection\nconst previousLeads = repeatLeadRows.filter(r => r.id && r.meta_lead_id !== contact.meta_lead_id);\nconst isRepeatLead = previousLeads.length > 0;\n\n// Format price\nconst priceStr = vehicle && vehicle.price\n  ? '$' + vehicle.price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })\n  : null;\n\n// Format mileage\nconst mileageStr = vehicle && vehicle.mileage\n  ? vehicle.mileage.toLocaleString('en-US') + ' mi'\n  : null;\n\n// Vehicle title\nconst vehicleTitle = vehicle\n  ? [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ')\n  : null;\n\n// Email subject\nconst subjectEmoji = vehicle ? '\\uD83D\\uDE97' : '\\uD83D\\uDCCB';\nconst repeatTag = isRepeatLead ? '\\uD83D\\uDD01 ' : '';\nconst subjectVehicle = vehicle && priceStr\n  ? vehicleTitle + ' (' + priceStr + ')'\n  : (vehicle ? vehicleTitle : 'General Inquiry');\nconst emailSubject = repeatTag + subjectEmoji + ' New Lead: ' + contact.contact_name + ' \\u2014 ' + subjectVehicle;\n\n// Format received time\nconst receivedAt = contact.lead_created_time\n  ? new Date(contact.lead_created_time).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n  : new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n\n// ========== BUILD EMAIL HTML ==========\n\n// --- Repeat Lead Banner ---\nlet repeatHtml = '';\nif (isRepeatLead) {\n  repeatHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 12px;\"><div style=\"background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px;\">';\n  repeatHtml += '<p style=\"margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #92400e;\">\\uD83D\\uDD01 Repeat Lead \\u2014 ' + previousLeads.length + ' previous submission' + (previousLeads.length > 1 ? 's' : '') + '</p>';\n  for (const prev of previousLeads) {\n    const prevDate = prev.lead_received_at\n      ? new Date(prev.lead_received_at).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n      : 'Unknown date';\n    const prevVehicle = prev.vehicle_year && prev.vehicle_make\n      ? [prev.vehicle_year, prev.vehicle_make, prev.vehicle_model].filter(Boolean).join(' ')\n      : null;\n    const prevPrice = prev.vehicle_price ? ' ($' + parseFloat(prev.vehicle_price).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ')' : '';\n    const prevDesc = prevVehicle ? prevVehicle + prevPrice : 'General Inquiry';\n    repeatHtml += '<p style=\"margin: 4px 0 0; font-size: 13px; color: #92400e;\">\\u2022 ' + prevDate + ' \\u2014 ' + prevDesc + '</p>';\n  }\n  repeatHtml += '</div></td></tr>';\n}\n\n// --- Contact Section ---\nlet contactHtml = '';\ncontactHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Contact</p></td></tr>';\ncontactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px; width: 100px;\">Name</td><td style=\"padding: 2px 20px; font-size: 16px; font-weight: 600; color: #111827;\">' + contact.contact_name + '</td></tr>';\nif (contact.contact_phone) {\n  contactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Phone</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"tel:' + contact.contact_phone + '\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">' + (contact.contact_phone_display || contact.contact_phone) + '</a></td></tr>';\n}\nif (contact.contact_email) {\n  contactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Email</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"mailto:' + contact.contact_email + '\" style=\"color: #2563eb; text-decoration: none;\">' + contact.contact_email + '</a></td></tr>';\n}\n\n// Extra form fields (anything beyond name/email/phone)\nconst extraFields = contact.extra_fields || [];\nif (extraFields.length > 0) {\n  for (const field of extraFields) {\n    const label = field.name.replace(/_/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());\n    contactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">' + label + '</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + (field.value || '\\u2014') + '</td></tr>';\n  }\n}\n\n// --- Vehicle Section ---\nlet vehicleHtml = '';\nif (vehicle) {\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 16px 20px 8px; background: #f8f9fa; border-radius: 8px 8px 0 0;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle Interest</p></td></tr>';\n\n  if (vehicle.photo_url) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px; background: #f8f9fa;\"><img src=\"' + vehicle.photo_url + '\" alt=\"' + vehicleTitle + '\" style=\"width: 100%; max-width: 460px; border-radius: 6px; display: block;\" /></td></tr>';\n  }\n\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 4px; background: #f8f9fa;\"><p style=\"margin: 0; font-size: 18px; font-weight: 700; color: #111827;\">' + vehicleTitle + (vehicle.trim ? ' ' + vehicle.trim : '') + '</p></td></tr>';\n\n  let idParts = [];\n  if (vehicle.stock_number) idParts.push('Stock #' + vehicle.stock_number);\n  if (vehicle.vin) idParts.push(vehicle.vin);\n  if (idParts.length > 0) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 2px 20px; background: #f8f9fa; font-size: 13px; color: #6b7280; font-family: monospace;\">' + idParts.join(' \\u00B7 ') + '</td></tr>';\n  }\n\n  let specParts = [];\n  if (priceStr) specParts.push('<strong>' + priceStr + '</strong>');\n  if (mileageStr) specParts.push(mileageStr);\n  if (vehicle.body_style) specParts.push(vehicle.body_style);\n  if (vehicle.drivetrain) specParts.push(vehicle.drivetrain);\n  if (specParts.length > 0) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 4px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + specParts.join(' \\u2022 ') + '</td></tr>';\n  }\n\n  if (vehicle.url) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 16px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"><a href=\"' + vehicle.url + '\" style=\"color: #2563eb; font-size: 14px; text-decoration: none;\">View on Website \\u2192</a></td></tr>';\n  } else {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"></td></tr>';\n  }\n} else {\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 16px 20px; background: #f8f9fa; border-radius: 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle</p><p style=\"margin: 0; font-size: 14px; color: #6b7280;\">No specific vehicle indicated for this lead.</p></td></tr>';\n}\n\n// --- Ad Source Section ---\nlet adHtml = '';\nadHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Ad Source</p></td></tr>';\n\nif (ad) {\n  if (ad.thumbnail_url) {\n    adHtml += '<tr><td colspan=\"2\" style=\"padding: 4px 20px;\"><table cellpadding=\"0\" cellspacing=\"0\"><tr>';\n    adHtml += '<td style=\"vertical-align: top; padding-right: 12px;\"><img src=\"' + ad.thumbnail_url + '\" alt=\"\" style=\"width: 64px; height: 64px; border-radius: 6px; object-fit: cover; display: block;\" /></td>';\n    adHtml += '<td style=\"vertical-align: top;\">';\n    adHtml += '<p style=\"margin: 0 0 2px; font-size: 15px; font-weight: 600; color: #111827;\">' + ad.name + '</p>';\n    if (ad.campaign_name) {\n      adHtml += '<p style=\"margin: 0 0 2px; font-size: 13px; color: #6b7280;\">' + ad.campaign_name + '</p>';\n    }\n    if (ad.daily_budget) {\n      adHtml += '<p style=\"margin: 0; font-size: 13px; color: #6b7280;\">Budget: ' + ad.daily_budget + '</p>';\n    }\n    adHtml += '</td></tr></table></td></tr>';\n  } else {\n    adHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Ad</td><td style=\"padding: 2px 20px; font-size: 15px; font-weight: 600; color: #111827;\">' + ad.name + '</td></tr>';\n    if (ad.campaign_name) {\n      adHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Campaign</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + ad.campaign_name + '</td></tr>';\n    }\n    if (ad.daily_budget) {\n      adHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Budget</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + ad.daily_budget + '</td></tr>';\n    }\n  }\n\n  // Ad performance stats\n  if (adStats) {\n    let statParts = [];\n    if (adStats.leads) statParts.push(adStats.leads + ' leads');\n    if (adStats.cpl) statParts.push(adStats.cpl + ' CPL');\n    if (adStats.avgPerDay) statParts.push('~' + adStats.avgPerDay + ' avg');\n    if (statParts.length > 0) {\n      adHtml += '<tr><td colspan=\"2\" style=\"padding: 6px 20px 2px;\"><p style=\"margin: 0; font-size: 13px; color: #6b7280;\">' + statParts.join(' \\u00B7 ') + '</p></td></tr>';\n    }\n  }\n\n  // Serving since with time (from ad created_time)\n  if (adServingSince) {\n    adHtml += '<tr><td colspan=\"2\" style=\"padding: 2px 20px;\"><p style=\"margin: 0; font-size: 13px; color: #6b7280;\">Serving since ' + adServingSince + ' CT</p></td></tr>';\n  }\n\n  // Learning phase messaging (time-based only)\n  if (adAgeDays !== null && adAgeDays <= 7) {\n    let learningMsg = '';\n    if (adAgeDays <= 1) {\n      learningMsg = 'This ad just launched today \\u2014 give it 5\\u20137 days for Meta to optimize delivery.';\n    } else if (adAgeDays <= 3) {\n      learningMsg = 'This ad launched ' + adAgeDays + ' days ago \\u2014 give it a few more days for Meta to optimize delivery.';\n    } else {\n      learningMsg = 'This ad is ' + adAgeDays + ' days old and still in Meta\\u2019s learning phase \\u2014 performance typically improves over the first week.';\n    }\n    adHtml += '<tr><td colspan=\"2\" style=\"padding: 4px 20px 2px;\"><p style=\"margin: 0; font-size: 13px; font-style: italic; color: #d97706;\">\\u26A0\\uFE0F ' + learningMsg + '</p></td></tr>';\n  }\n} else {\n  adHtml += '<tr><td colspan=\"2\" style=\"padding: 2px 20px;\"><p style=\"margin: 0; font-size: 14px; color: #6b7280;\">Ad details unavailable \\u2014 the ad may have been archived or removed.</p></td></tr>';\n}\n\nadHtml += '<tr><td style=\"padding: 6px 20px 2px; color: #6b7280; font-size: 14px;\">Platform</td><td style=\"padding: 6px 20px 2px; font-size: 14px; color: #111827;\">Facebook</td></tr>';\nadHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Received</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + receivedAt + ' CT</td></tr>';\n\n// --- Assemble Full Email ---\nconst emailHtml =\n  '<div style=\"max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<div style=\"background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;\">' +\n  '<h2 style=\"margin: 0; color: #ffffff; font-size: 18px; font-weight: 600;\">New Lead \\u2014 Capitol Car Credit</h2></div>' +\n  '<div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px 0;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  repeatHtml +\n  contactHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  vehicleHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  adHtml +\n  '</table></div>' +\n  '<p style=\"text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;\">Powered by Ad Pilot</p></div>';\n\n// ========== BUILD SQL INSERT ==========\nconst sql = 'INSERT INTO leads (client_id, source, platform, meta_lead_id, meta_ad_id, meta_form_id, contact_name, contact_email, contact_phone, vehicle_stock_number, vehicle_vin, vehicle_year, vehicle_make, vehicle_model, vehicle_trim, vehicle_price, vehicle_mileage, vehicle_url, vehicle_photo_url, raw_payload, lead_received_at) VALUES (' +\n  \"'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'meta_leadgen', 'facebook', \" +\n  esc(contact.meta_lead_id) + ', ' +\n  esc(contact.meta_ad_id) + ', ' +\n  esc(contact.meta_form_id) + ', ' +\n  esc(contact.contact_name) + ', ' +\n  esc(contact.contact_email) + ', ' +\n  esc(contact.contact_phone) + ', ' +\n  (vehicle ? esc(vehicle.stock_number) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.vin) : 'NULL') + ', ' +\n  (vehicle && vehicle.year ? vehicle.year : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.make) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.model) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.trim) : 'NULL') + ', ' +\n  (vehicle && vehicle.price ? vehicle.price : 'NULL') + ', ' +\n  (vehicle && vehicle.mileage ? vehicle.mileage : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.url) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.photo_url) : 'NULL') + ', ' +\n  esc(JSON.stringify(contact.raw_payload)) + '::jsonb, ' +\n  esc(contact.lead_created_time || new Date().toISOString()) + '::timestamptz' +\n  ') ON CONFLICT (meta_lead_id) DO NOTHING RETURNING id';\n\nreturn [{\n  json: {\n    email_subject: emailSubject,\n    email_html: emailHtml,\n    meta_lead_id: contact.meta_lead_id,\n    meta_ad_id: contact.meta_ad_id,\n    meta_form_id: contact.meta_form_id,\n    contact_name: contact.contact_name,\n    contact_email: contact.contact_email,\n    contact_phone: contact.contact_phone,\n    vehicle_stock_number: vehicle ? vehicle.stock_number : null,\n    vehicle_vin: vehicle ? vehicle.vin : null,\n    vehicle_year: vehicle ? vehicle.year : null,\n    vehicle_make: vehicle ? vehicle.make : null,\n    vehicle_model: vehicle ? vehicle.model : null,\n    vehicle_trim: vehicle ? vehicle.trim : null,\n    vehicle_price: vehicle ? vehicle.price : null,\n    vehicle_mileage: vehicle ? vehicle.mileage : null,\n    vehicle_url: vehicle ? vehicle.url : null,\n    vehicle_photo_url: vehicle ? vehicle.photo_url : null,\n    ad_name: ad ? ad.name : null,\n    ad_campaign_name: ad ? ad.campaign_name : null,\n    ad_thumbnail_url: ad ? ad.thumbnail_url : null,\n    is_repeat_lead: isRepeatLead,\n    previous_lead_count: previousLeads.length,\n    raw_payload: contact.raw_payload,\n    lead_received_at: contact.lead_created_time || new Date().toISOString(),\n    sql_insert: sql,\n    resend_body: JSON.stringify({\n      from: \"Ad Pilot <notification@ad-pilot.ai>\",\n      to: [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n      cc: \"kelly@ad-pilot.ai\",\n      subject: emailSubject,\n      html: emailHtml\n    })\n  }\n}];\n"
       },
       "id": "build-lead-record",
       "name": "Build Lead Record & Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2500,
-        -100
+        3184,
+        -96
       ]
     },
     {
@@ -367,16 +366,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2720,
-        -100
+        3408,
+        -96
       ],
-      "onError": "continueRegularOutput",
       "credentials": {
         "postgres": {
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -386,7 +385,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": {{ JSON.stringify($json.email_subject) }},\n  \"html\": {{ JSON.stringify($json.email_html) }}\n}",
+        "jsonBody": "={{ $('Build Lead Record & Email').item.json.resend_body }}",
         "options": {}
       },
       "id": "send-email",
@@ -394,8 +393,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2940,
-        -100
+        3632,
+        -96
       ],
       "retryOnFail": true,
       "maxTries": 2,
@@ -416,8 +415,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2060,
-        200
+        2064,
+        208
       ]
     },
     {
@@ -431,16 +430,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2280,
-        200
+        2288,
+        208
       ],
-      "onError": "continueRegularOutput",
       "credentials": {
         "postgres": {
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -458,8 +457,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2500,
-        200
+        2512,
+        208
       ],
       "retryOnFail": true,
       "maxTries": 2,
@@ -483,6 +482,91 @@
         960,
         400
       ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Parse Webhook Payload').first().json.ad_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "name,created_time,campaign{name,id},adset{name,id,daily_budget},creative{thumbnail_url}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Get Meta Access Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-ad-details",
+      "name": "Fetch Ad Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2512,
+        -96
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Parse Webhook Payload').first().json.ad_id }}/insights",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "impressions,spend,actions,date_start"
+            },
+            {
+              "name": "date_preset",
+              "value": "maximum"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Get Meta Access Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2736,
+        -96
+      ],
+      "id": "fetch-ad-stats-001",
+      "name": "Fetch Ad Stats",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, meta_lead_id, contact_name, contact_email, contact_phone, vehicle_year, vehicle_make, vehicle_model, vehicle_price, meta_ad_id, lead_received_at FROM leads WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' AND ((contact_email IS NOT NULL AND contact_email = '{{ $('Parse Contact Info').first().json.contact_email }}') OR (contact_phone IS NOT NULL AND contact_phone = '{{ $('Parse Contact Info').first().json.contact_phone }}')) ORDER BY lead_received_at DESC LIMIT 5",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2960,
+        -96
+      ],
+      "id": "check-repeat-lead-001",
+      "name": "Check Repeat Lead",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -644,7 +728,7 @@
       "main": [
         [
           {
-            "node": "Build Lead Record & Email",
+            "node": "Fetch Ad Details",
             "type": "main",
             "index": 0
           }
@@ -694,6 +778,39 @@
           }
         ]
       ]
+    },
+    "Fetch Ad Details": {
+      "main": [
+        [
+          {
+            "node": "Fetch Ad Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Ad Stats": {
+      "main": [
+        [
+          {
+            "node": "Check Repeat Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Repeat Lead": {
+      "main": [
+        [
+          {
+            "node": "Build Lead Record & Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -703,9 +820,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "a95eba40-18a3-4035-9fb1-d7a445eba0fc",
-  "activeVersionId": "a95eba40-18a3-4035-9fb1-d7a445eba0fc",
+  "pinData": {},
+  "versionId": "2d8af078-6440-4570-bd66-a0f44e72a87e",
+  "activeVersionId": "2d8af078-6440-4570-bd66-a0f44e72a87e",
   "triggerCount": 2,
   "shared": [
     {
@@ -717,14 +834,13 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-09T17:42:22.819Z",
-    "createdAt": "2026-02-09T17:42:22.819Z",
-    "versionId": "a95eba40-18a3-4035-9fb1-d7a445eba0fc",
+    "updatedAt": "2026-02-10T15:24:59.757Z",
+    "createdAt": "2026-02-10T15:24:59.757Z",
+    "versionId": "2d8af078-6440-4570-bd66-a0f44e72a87e",
     "workflowId": "zTSILEd24saLGNrO",
     "nodes": [
       {
         "parameters": {
-          "httpMethod": "GET",
           "path": "meta-leads-ccc",
           "responseMode": "responseNode",
           "options": {}
@@ -735,7 +851,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          -200
+          -208
         ],
         "webhookId": "meta-leads-ccc-get"
       },
@@ -769,8 +885,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          260,
-          -200
+          272,
+          -208
         ]
       },
       {
@@ -786,8 +902,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          520,
-          -300
+          528,
+          -304
         ]
       },
       {
@@ -803,8 +919,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          520,
-          -100
+          528,
+          -96
         ]
       },
       {
@@ -820,7 +936,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          200
+          208
         ],
         "webhookId": "meta-leads-ccc-post"
       },
@@ -833,8 +949,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          260,
-          200
+          272,
+          208
         ]
       },
       {
@@ -850,8 +966,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          520,
-          200
+          528,
+          208
         ]
       },
       {
@@ -883,8 +999,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          740,
-          200
+          752,
+          208
         ]
       },
       {
@@ -899,15 +1015,15 @@
         "typeVersion": 2.5,
         "position": [
           960,
-          100
+          112
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
           }
-        },
-        "alwaysOutputData": true
+        }
       },
       {
         "parameters": {
@@ -938,8 +1054,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1180,
-          100
+          1184,
+          112
         ]
       },
       {
@@ -953,7 +1069,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1400,
+          1408,
           0
         ],
         "credentials": {
@@ -982,13 +1098,13 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          1620,
+          1632,
           0
         ],
-        "onError": "continueRegularOutput",
         "retryOnFail": true,
         "maxTries": 2,
-        "waitBetweenTries": 30000
+        "waitBetweenTries": 30000,
+        "onError": "continueRegularOutput"
       },
       {
         "parameters": {
@@ -1025,15 +1141,15 @@
       },
       {
         "parameters": {
-          "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Try various field name formats Meta might use\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || '';\nconst lastName = getField('last_name') || '';\nconst contactName = fullName || [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    raw_payload: webhookData.raw_payload\n  }\n}];"
+          "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Known standard fields — include both underscore and space variants\nconst standardFields = new Set([\n  'full_name', 'name', 'first_name', 'last_name',\n  'first name', 'last name',\n  'email', 'email_address',\n  'phone_number', 'phone'\n]);\n\n// Try various field name formats Meta might use (underscore AND space)\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || getField('first name') || '';\nconst lastName = getField('last_name') || getField('last name') || '';\n\n// Prefer explicit first+last when available, then fall back to full_name\nconst contactName = (firstName && lastName)\n  ? firstName + ' ' + lastName\n  : (firstName || lastName)\n    ? (fullName || firstName || lastName)\n    : (fullName || 'Unknown');\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\n// Capture any extra form fields beyond standard contact fields\nconst extraFields = fieldData\n  .filter(f => !standardFields.has(f.name))\n  .map(f => ({\n    name: f.name,\n    value: f.values ? f.values[0] : null\n  }));\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    extra_fields: extraFields,\n    raw_payload: webhookData.raw_payload\n  }\n}];\n"
         },
         "id": "parse-contact",
         "name": "Parse Contact Info",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2060,
-          -100
+          2064,
+          -96
         ]
       },
       {
@@ -1047,29 +1163,29 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2280,
-          -100
+          2288,
+          -96
         ],
-        "onError": "continueRegularOutput",
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
           }
         },
-        "alwaysOutputData": true
+        "onError": "continueRegularOutput"
       },
       {
         "parameters": {
-          "jsCode": "// SQL escape helper\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\n\n// Build the final lead record and email content\nconst contact = $('Parse Contact Info').first().json;\nconst vehicleResult = $input.first().json;\n\n// Vehicle data (may be empty if no retailer_item_id or not found)\nconst hasVehicle = vehicleResult && vehicleResult.stock_number;\n\nconst vehicle = hasVehicle ? {\n  stock_number: vehicleResult.stock_number,\n  vin: vehicleResult.vin,\n  year: vehicleResult.year,\n  make: vehicleResult.make,\n  model: vehicleResult.model,\n  trim: vehicleResult.trim,\n  price: vehicleResult.price ? parseFloat(vehicleResult.price) : null,\n  mileage: vehicleResult.mileage,\n  url: vehicleResult.url || null,\n  photo_url: vehicleResult.hero_cloudinary_url || vehicleResult.hero_image_url || null\n} : null;\n\n// Format price\nconst priceStr = vehicle && vehicle.price\n  ? '$' + vehicle.price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })\n  : null;\n\n// Format mileage\nconst mileageStr = vehicle && vehicle.mileage\n  ? vehicle.mileage.toLocaleString('en-US') + ' mi'\n  : null;\n\n// Vehicle title\nconst vehicleTitle = vehicle\n  ? [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ')\n  : null;\n\n// Email subject\nconst subjectEmoji = vehicle ? '\\uD83D\\uDE97' : '\\uD83D\\uDCCB';\nconst subjectVehicle = vehicle && priceStr\n  ? vehicleTitle + ' (' + priceStr + ')'\n  : (vehicle ? vehicleTitle : 'General Inquiry');\nconst emailSubject = subjectEmoji + ' New Lead: ' + contact.contact_name + ' \\u2014 ' + subjectVehicle;\n\n// Format received time\nconst receivedAt = contact.lead_created_time\n  ? new Date(contact.lead_created_time).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n  : new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n\n// Build vehicle section HTML\nlet vehicleHtml = '';\nif (vehicle) {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px 8px; background: #f8f9fa; border-radius: 8px 8px 0 0;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle Interest</p></td></tr>';\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 4px; background: #f8f9fa;\"><p style=\"margin: 0; font-size: 18px; font-weight: 700; color: #111827;\">' + vehicleTitle + (vehicle.trim ? ' ' + vehicle.trim : '') + '</p></td></tr>';\n  if (vehicle.stock_number) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px; width: 100px;\">Stock #</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + vehicle.stock_number + '</td></tr>';\n  if (vehicle.vin) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">VIN</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-family: monospace;\">' + vehicle.vin + '</td></tr>';\n  if (priceStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Price</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827; font-weight: 600;\">' + priceStr + '</td></tr>';\n  if (mileageStr) vehicleHtml += '<tr><td style=\"padding: 2px 20px; background: #f8f9fa; color: #6b7280; font-size: 14px;\">Mileage</td><td style=\"padding: 2px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + mileageStr + '</td></tr>';\n  if (vehicle.url) vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 16px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"><a href=\"' + vehicle.url + '\" style=\"color: #2563eb; font-size: 14px; text-decoration: none;\">View Vehicle on Website \\u2192</a></td></tr>';\n  else vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 0 0 8px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"></td></tr>';\n} else {\n  vehicleHtml = '<tr><td colspan=\"2\" style=\"padding: 16px 20px; background: #f8f9fa; border-radius: 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Inquiry Type</p><p style=\"margin: 0; font-size: 16px; color: #111827;\">General \\u2014 no specific vehicle</p></td></tr>';\n}\n\n// Full email HTML\nconst emailHtml = '<div style=\"max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<div style=\"background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;\">' +\n  '<h2 style=\"margin: 0; color: #ffffff; font-size: 18px; font-weight: 600;\">New Lead \\u2014 Capitol Car Credit</h2></div>' +\n  '<div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px 0;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Contact</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px; width: 100px;\">Name</td><td style=\"padding: 2px 20px; font-size: 16px; font-weight: 600; color: #111827;\">' + contact.contact_name + '</td></tr>' +\n  (contact.contact_email ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Email</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"mailto:' + contact.contact_email + '\" style=\"color: #2563eb; text-decoration: none;\">' + contact.contact_email + '</a></td></tr>' : '') +\n  (contact.contact_phone ? '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Phone</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"tel:' + contact.contact_phone + '\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">' + (contact.contact_phone_display || contact.contact_phone) + '</a></td></tr>' : '') +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  vehicleHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Source</p></td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Platform</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">Facebook</td></tr>' +\n  '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Received</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + receivedAt + ' CT</td></tr>' +\n  '</table></div>' +\n  '<p style=\"text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;\">Powered by Ad Pilot</p></div>';\n\n// Build SQL insert\nconst sql = 'INSERT INTO leads (client_id, source, platform, meta_lead_id, meta_ad_id, meta_form_id, contact_name, contact_email, contact_phone, vehicle_stock_number, vehicle_vin, vehicle_year, vehicle_make, vehicle_model, vehicle_trim, vehicle_price, vehicle_mileage, vehicle_url, vehicle_photo_url, raw_payload, lead_received_at) VALUES (' +\n  \"'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'meta_leadgen', 'facebook', \" +\n  esc(contact.meta_lead_id) + ', ' +\n  esc(contact.meta_ad_id) + ', ' +\n  esc(contact.meta_form_id) + ', ' +\n  esc(contact.contact_name) + ', ' +\n  esc(contact.contact_email) + ', ' +\n  esc(contact.contact_phone) + ', ' +\n  (vehicle ? esc(vehicle.stock_number) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.vin) : 'NULL') + ', ' +\n  (vehicle && vehicle.year ? vehicle.year : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.make) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.model) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.trim) : 'NULL') + ', ' +\n  (vehicle && vehicle.price ? vehicle.price : 'NULL') + ', ' +\n  (vehicle && vehicle.mileage ? vehicle.mileage : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.url) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.photo_url) : 'NULL') + ', ' +\n  esc(JSON.stringify(contact.raw_payload)) + '::jsonb, ' +\n  esc(contact.lead_created_time || new Date().toISOString()) + '::timestamptz' +\n  ') ON CONFLICT (meta_lead_id) DO NOTHING RETURNING id';\n\nreturn [{\n  json: {\n    email_subject: emailSubject,\n    email_html: emailHtml,\n    meta_lead_id: contact.meta_lead_id,\n    meta_ad_id: contact.meta_ad_id,\n    meta_form_id: contact.meta_form_id,\n    contact_name: contact.contact_name,\n    contact_email: contact.contact_email,\n    contact_phone: contact.contact_phone,\n    vehicle_stock_number: vehicle ? vehicle.stock_number : null,\n    vehicle_vin: vehicle ? vehicle.vin : null,\n    vehicle_year: vehicle ? vehicle.year : null,\n    vehicle_make: vehicle ? vehicle.make : null,\n    vehicle_model: vehicle ? vehicle.model : null,\n    vehicle_trim: vehicle ? vehicle.trim : null,\n    vehicle_price: vehicle ? vehicle.price : null,\n    vehicle_mileage: vehicle ? vehicle.mileage : null,\n    vehicle_url: vehicle ? vehicle.url : null,\n    vehicle_photo_url: vehicle ? vehicle.photo_url : null,\n    raw_payload: contact.raw_payload,\n    lead_received_at: contact.lead_created_time || new Date().toISOString(),\n    sql_insert: sql\n  }\n}];"
+          "jsCode": "// SQL escape helper\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\n\n// Gather data from previous nodes\nconst contact = $('Parse Contact Info').first().json;\nconst vehicleResult = $('Lookup Vehicle').first().json;\nconst adDetailsRaw = $('Fetch Ad Details').first().json;\nconst adStatsRaw = $('Fetch Ad Stats').first().json;\nconst repeatLeadRows = $input.all().map(i => i.json);\n\n// Vehicle data (may be empty if no retailer_item_id or not found)\nconst hasVehicle = vehicleResult && vehicleResult.stock_number;\nconst vehicle = hasVehicle ? {\n  stock_number: vehicleResult.stock_number,\n  vin: vehicleResult.vin,\n  year: vehicleResult.year,\n  make: vehicleResult.make,\n  model: vehicleResult.model,\n  trim: vehicleResult.trim,\n  price: vehicleResult.price ? parseFloat(vehicleResult.price) : null,\n  mileage: vehicleResult.mileage,\n  body_style: vehicleResult.body_style || null,\n  drivetrain: vehicleResult.drivetrain || null,\n  url: vehicleResult.url || null,\n  photo_url: vehicleResult.hero_cloudinary_url || vehicleResult.hero_image_url || null\n} : null;\n\n// Ad details (may be null if ad_id was missing or API call failed)\nconst hasAdDetails = adDetailsRaw && adDetailsRaw.campaign && !adDetailsRaw.error;\nconst ad = hasAdDetails ? {\n  name: adDetailsRaw.name || null,\n  created_time: adDetailsRaw.created_time || null,\n  campaign_name: adDetailsRaw.campaign ? adDetailsRaw.campaign.name : null,\n  adset_name: adDetailsRaw.adset ? adDetailsRaw.adset.name : null,\n  daily_budget: adDetailsRaw.adset && adDetailsRaw.adset.daily_budget\n    ? '$' + (parseFloat(adDetailsRaw.adset.daily_budget) / 100).toFixed(0) + '/day'\n    : null,\n  thumbnail_url: adDetailsRaw.creative && adDetailsRaw.creative.thumbnail_url\n    ? adDetailsRaw.creative.thumbnail_url : null\n} : null;\n\n// Ad stats (may be null if API call failed)\nconst statsData = adStatsRaw && adStatsRaw.data && adStatsRaw.data[0] ? adStatsRaw.data[0] : null;\nlet adStats = null;\nif (statsData) {\n  const actions = statsData.actions || [];\n  const leadAction = actions.find(a => a.action_type === 'lead' || a.action_type === 'onsite_conversion.lead_grouped');\n  const leadCount = leadAction ? parseInt(leadAction.value) : 0;\n  const spend = statsData.spend ? parseFloat(statsData.spend) : 0;\n  const cpl = leadCount > 0 ? (spend / leadCount) : null;\n\n  // Compute avg spend per day using date_start from insights\n  const insightsStart = statsData.date_start ? new Date(statsData.date_start) : null;\n  const daysSinceStart = insightsStart ? Math.max(1, Math.ceil((Date.now() - insightsStart.getTime()) / (1000 * 60 * 60 * 24))) : null;\n  const avgPerDay = daysSinceStart && spend > 0 ? (spend / daysSinceStart) : null;\n\n  adStats = {\n    leads: leadCount,\n    avgPerDay: avgPerDay !== null ? '$' + avgPerDay.toFixed(2) + '/day' : null,\n    cpl: cpl !== null ? '$' + cpl.toFixed(2) : null,\n    impressions: statsData.impressions ? parseInt(statsData.impressions).toLocaleString('en-US') : null\n  };\n}\n\n// Compute ad age and serving-since from ad created_time\nlet adServingSince = null;\nlet adAgeDays = null;\nif (ad && ad.created_time) {\n  const created = new Date(ad.created_time);\n  adServingSince = created.toLocaleString('en-US', {\n    timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric',\n    hour: 'numeric', minute: '2-digit', hour12: true\n  });\n  // Use calendar dates (CT timezone) for age, not elapsed hours\n  const nowCT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));\n  const createdCT = new Date(created.toLocaleString('en-US', { timeZone: 'America/Chicago' }));\n  nowCT.setHours(0, 0, 0, 0);\n  createdCT.setHours(0, 0, 0, 0);\n  adAgeDays = Math.round((nowCT - createdCT) / (1000 * 60 * 60 * 24));\n}\n\n// Repeat lead detection\nconst previousLeads = repeatLeadRows.filter(r => r.id && r.meta_lead_id !== contact.meta_lead_id);\nconst isRepeatLead = previousLeads.length > 0;\n\n// Format price\nconst priceStr = vehicle && vehicle.price\n  ? '$' + vehicle.price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })\n  : null;\n\n// Format mileage\nconst mileageStr = vehicle && vehicle.mileage\n  ? vehicle.mileage.toLocaleString('en-US') + ' mi'\n  : null;\n\n// Vehicle title\nconst vehicleTitle = vehicle\n  ? [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ')\n  : null;\n\n// Email subject\nconst subjectEmoji = vehicle ? '\\uD83D\\uDE97' : '\\uD83D\\uDCCB';\nconst repeatTag = isRepeatLead ? '\\uD83D\\uDD01 ' : '';\nconst subjectVehicle = vehicle && priceStr\n  ? vehicleTitle + ' (' + priceStr + ')'\n  : (vehicle ? vehicleTitle : 'General Inquiry');\nconst emailSubject = repeatTag + subjectEmoji + ' New Lead: ' + contact.contact_name + ' \\u2014 ' + subjectVehicle;\n\n// Format received time\nconst receivedAt = contact.lead_created_time\n  ? new Date(contact.lead_created_time).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n  : new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n\n// ========== BUILD EMAIL HTML ==========\n\n// --- Repeat Lead Banner ---\nlet repeatHtml = '';\nif (isRepeatLead) {\n  repeatHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 12px;\"><div style=\"background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px;\">';\n  repeatHtml += '<p style=\"margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #92400e;\">\\uD83D\\uDD01 Repeat Lead \\u2014 ' + previousLeads.length + ' previous submission' + (previousLeads.length > 1 ? 's' : '') + '</p>';\n  for (const prev of previousLeads) {\n    const prevDate = prev.lead_received_at\n      ? new Date(prev.lead_received_at).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })\n      : 'Unknown date';\n    const prevVehicle = prev.vehicle_year && prev.vehicle_make\n      ? [prev.vehicle_year, prev.vehicle_make, prev.vehicle_model].filter(Boolean).join(' ')\n      : null;\n    const prevPrice = prev.vehicle_price ? ' ($' + parseFloat(prev.vehicle_price).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ')' : '';\n    const prevDesc = prevVehicle ? prevVehicle + prevPrice : 'General Inquiry';\n    repeatHtml += '<p style=\"margin: 4px 0 0; font-size: 13px; color: #92400e;\">\\u2022 ' + prevDate + ' \\u2014 ' + prevDesc + '</p>';\n  }\n  repeatHtml += '</div></td></tr>';\n}\n\n// --- Contact Section ---\nlet contactHtml = '';\ncontactHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Contact</p></td></tr>';\ncontactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px; width: 100px;\">Name</td><td style=\"padding: 2px 20px; font-size: 16px; font-weight: 600; color: #111827;\">' + contact.contact_name + '</td></tr>';\nif (contact.contact_phone) {\n  contactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Phone</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"tel:' + contact.contact_phone + '\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">' + (contact.contact_phone_display || contact.contact_phone) + '</a></td></tr>';\n}\nif (contact.contact_email) {\n  contactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Email</td><td style=\"padding: 2px 20px; font-size: 14px;\"><a href=\"mailto:' + contact.contact_email + '\" style=\"color: #2563eb; text-decoration: none;\">' + contact.contact_email + '</a></td></tr>';\n}\n\n// Extra form fields (anything beyond name/email/phone)\nconst extraFields = contact.extra_fields || [];\nif (extraFields.length > 0) {\n  for (const field of extraFields) {\n    const label = field.name.replace(/_/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());\n    contactHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">' + label + '</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + (field.value || '\\u2014') + '</td></tr>';\n  }\n}\n\n// --- Vehicle Section ---\nlet vehicleHtml = '';\nif (vehicle) {\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 16px 20px 8px; background: #f8f9fa; border-radius: 8px 8px 0 0;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle Interest</p></td></tr>';\n\n  if (vehicle.photo_url) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px; background: #f8f9fa;\"><img src=\"' + vehicle.photo_url + '\" alt=\"' + vehicleTitle + '\" style=\"width: 100%; max-width: 460px; border-radius: 6px; display: block;\" /></td></tr>';\n  }\n\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 4px; background: #f8f9fa;\"><p style=\"margin: 0; font-size: 18px; font-weight: 700; color: #111827;\">' + vehicleTitle + (vehicle.trim ? ' ' + vehicle.trim : '') + '</p></td></tr>';\n\n  let idParts = [];\n  if (vehicle.stock_number) idParts.push('Stock #' + vehicle.stock_number);\n  if (vehicle.vin) idParts.push(vehicle.vin);\n  if (idParts.length > 0) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 2px 20px; background: #f8f9fa; font-size: 13px; color: #6b7280; font-family: monospace;\">' + idParts.join(' \\u00B7 ') + '</td></tr>';\n  }\n\n  let specParts = [];\n  if (priceStr) specParts.push('<strong>' + priceStr + '</strong>');\n  if (mileageStr) specParts.push(mileageStr);\n  if (vehicle.body_style) specParts.push(vehicle.body_style);\n  if (vehicle.drivetrain) specParts.push(vehicle.drivetrain);\n  if (specParts.length > 0) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 4px 20px; background: #f8f9fa; font-size: 14px; color: #111827;\">' + specParts.join(' \\u2022 ') + '</td></tr>';\n  }\n\n  if (vehicle.url) {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 8px 20px 16px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"><a href=\"' + vehicle.url + '\" style=\"color: #2563eb; font-size: 14px; text-decoration: none;\">View on Website \\u2192</a></td></tr>';\n  } else {\n    vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px; background: #f8f9fa; border-radius: 0 0 8px 8px;\"></td></tr>';\n  }\n} else {\n  vehicleHtml += '<tr><td colspan=\"2\" style=\"padding: 16px 20px; background: #f8f9fa; border-radius: 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Vehicle</p><p style=\"margin: 0; font-size: 14px; color: #6b7280;\">No specific vehicle indicated for this lead.</p></td></tr>';\n}\n\n// --- Ad Source Section ---\nlet adHtml = '';\nadHtml += '<tr><td colspan=\"2\" style=\"padding: 0 20px 8px;\"><p style=\"margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;\">Ad Source</p></td></tr>';\n\nif (ad) {\n  if (ad.thumbnail_url) {\n    adHtml += '<tr><td colspan=\"2\" style=\"padding: 4px 20px;\"><table cellpadding=\"0\" cellspacing=\"0\"><tr>';\n    adHtml += '<td style=\"vertical-align: top; padding-right: 12px;\"><img src=\"' + ad.thumbnail_url + '\" alt=\"\" style=\"width: 64px; height: 64px; border-radius: 6px; object-fit: cover; display: block;\" /></td>';\n    adHtml += '<td style=\"vertical-align: top;\">';\n    adHtml += '<p style=\"margin: 0 0 2px; font-size: 15px; font-weight: 600; color: #111827;\">' + ad.name + '</p>';\n    if (ad.campaign_name) {\n      adHtml += '<p style=\"margin: 0 0 2px; font-size: 13px; color: #6b7280;\">' + ad.campaign_name + '</p>';\n    }\n    if (ad.daily_budget) {\n      adHtml += '<p style=\"margin: 0; font-size: 13px; color: #6b7280;\">Budget: ' + ad.daily_budget + '</p>';\n    }\n    adHtml += '</td></tr></table></td></tr>';\n  } else {\n    adHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Ad</td><td style=\"padding: 2px 20px; font-size: 15px; font-weight: 600; color: #111827;\">' + ad.name + '</td></tr>';\n    if (ad.campaign_name) {\n      adHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Campaign</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + ad.campaign_name + '</td></tr>';\n    }\n    if (ad.daily_budget) {\n      adHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Budget</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + ad.daily_budget + '</td></tr>';\n    }\n  }\n\n  // Ad performance stats\n  if (adStats) {\n    let statParts = [];\n    if (adStats.leads) statParts.push(adStats.leads + ' leads');\n    if (adStats.cpl) statParts.push(adStats.cpl + ' CPL');\n    if (adStats.avgPerDay) statParts.push('~' + adStats.avgPerDay + ' avg');\n    if (statParts.length > 0) {\n      adHtml += '<tr><td colspan=\"2\" style=\"padding: 6px 20px 2px;\"><p style=\"margin: 0; font-size: 13px; color: #6b7280;\">' + statParts.join(' \\u00B7 ') + '</p></td></tr>';\n    }\n  }\n\n  // Serving since with time (from ad created_time)\n  if (adServingSince) {\n    adHtml += '<tr><td colspan=\"2\" style=\"padding: 2px 20px;\"><p style=\"margin: 0; font-size: 13px; color: #6b7280;\">Serving since ' + adServingSince + ' CT</p></td></tr>';\n  }\n\n  // Learning phase messaging (time-based only)\n  if (adAgeDays !== null && adAgeDays <= 7) {\n    let learningMsg = '';\n    if (adAgeDays <= 1) {\n      learningMsg = 'This ad just launched today \\u2014 give it 5\\u20137 days for Meta to optimize delivery.';\n    } else if (adAgeDays <= 3) {\n      learningMsg = 'This ad launched ' + adAgeDays + ' days ago \\u2014 give it a few more days for Meta to optimize delivery.';\n    } else {\n      learningMsg = 'This ad is ' + adAgeDays + ' days old and still in Meta\\u2019s learning phase \\u2014 performance typically improves over the first week.';\n    }\n    adHtml += '<tr><td colspan=\"2\" style=\"padding: 4px 20px 2px;\"><p style=\"margin: 0; font-size: 13px; font-style: italic; color: #d97706;\">\\u26A0\\uFE0F ' + learningMsg + '</p></td></tr>';\n  }\n} else {\n  adHtml += '<tr><td colspan=\"2\" style=\"padding: 2px 20px;\"><p style=\"margin: 0; font-size: 14px; color: #6b7280;\">Ad details unavailable \\u2014 the ad may have been archived or removed.</p></td></tr>';\n}\n\nadHtml += '<tr><td style=\"padding: 6px 20px 2px; color: #6b7280; font-size: 14px;\">Platform</td><td style=\"padding: 6px 20px 2px; font-size: 14px; color: #111827;\">Facebook</td></tr>';\nadHtml += '<tr><td style=\"padding: 2px 20px; color: #6b7280; font-size: 14px;\">Received</td><td style=\"padding: 2px 20px; font-size: 14px; color: #111827;\">' + receivedAt + ' CT</td></tr>';\n\n// --- Assemble Full Email ---\nconst emailHtml =\n  '<div style=\"max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  '<div style=\"background: #111827; padding: 16px 20px; border-radius: 8px 8px 0 0;\">' +\n  '<h2 style=\"margin: 0; color: #ffffff; font-size: 18px; font-weight: 600;\">New Lead \\u2014 Capitol Car Credit</h2></div>' +\n  '<div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px 0;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;\">' +\n  repeatHtml +\n  contactHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  vehicleHtml +\n  '<tr><td colspan=\"2\" style=\"padding: 12px 0;\"></td></tr>' +\n  adHtml +\n  '</table></div>' +\n  '<p style=\"text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;\">Powered by Ad Pilot</p></div>';\n\n// ========== BUILD SQL INSERT ==========\nconst sql = 'INSERT INTO leads (client_id, source, platform, meta_lead_id, meta_ad_id, meta_form_id, contact_name, contact_email, contact_phone, vehicle_stock_number, vehicle_vin, vehicle_year, vehicle_make, vehicle_model, vehicle_trim, vehicle_price, vehicle_mileage, vehicle_url, vehicle_photo_url, raw_payload, lead_received_at) VALUES (' +\n  \"'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'meta_leadgen', 'facebook', \" +\n  esc(contact.meta_lead_id) + ', ' +\n  esc(contact.meta_ad_id) + ', ' +\n  esc(contact.meta_form_id) + ', ' +\n  esc(contact.contact_name) + ', ' +\n  esc(contact.contact_email) + ', ' +\n  esc(contact.contact_phone) + ', ' +\n  (vehicle ? esc(vehicle.stock_number) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.vin) : 'NULL') + ', ' +\n  (vehicle && vehicle.year ? vehicle.year : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.make) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.model) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.trim) : 'NULL') + ', ' +\n  (vehicle && vehicle.price ? vehicle.price : 'NULL') + ', ' +\n  (vehicle && vehicle.mileage ? vehicle.mileage : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.url) : 'NULL') + ', ' +\n  (vehicle ? esc(vehicle.photo_url) : 'NULL') + ', ' +\n  esc(JSON.stringify(contact.raw_payload)) + '::jsonb, ' +\n  esc(contact.lead_created_time || new Date().toISOString()) + '::timestamptz' +\n  ') ON CONFLICT (meta_lead_id) DO NOTHING RETURNING id';\n\nreturn [{\n  json: {\n    email_subject: emailSubject,\n    email_html: emailHtml,\n    meta_lead_id: contact.meta_lead_id,\n    meta_ad_id: contact.meta_ad_id,\n    meta_form_id: contact.meta_form_id,\n    contact_name: contact.contact_name,\n    contact_email: contact.contact_email,\n    contact_phone: contact.contact_phone,\n    vehicle_stock_number: vehicle ? vehicle.stock_number : null,\n    vehicle_vin: vehicle ? vehicle.vin : null,\n    vehicle_year: vehicle ? vehicle.year : null,\n    vehicle_make: vehicle ? vehicle.make : null,\n    vehicle_model: vehicle ? vehicle.model : null,\n    vehicle_trim: vehicle ? vehicle.trim : null,\n    vehicle_price: vehicle ? vehicle.price : null,\n    vehicle_mileage: vehicle ? vehicle.mileage : null,\n    vehicle_url: vehicle ? vehicle.url : null,\n    vehicle_photo_url: vehicle ? vehicle.photo_url : null,\n    ad_name: ad ? ad.name : null,\n    ad_campaign_name: ad ? ad.campaign_name : null,\n    ad_thumbnail_url: ad ? ad.thumbnail_url : null,\n    is_repeat_lead: isRepeatLead,\n    previous_lead_count: previousLeads.length,\n    raw_payload: contact.raw_payload,\n    lead_received_at: contact.lead_created_time || new Date().toISOString(),\n    sql_insert: sql,\n    resend_body: JSON.stringify({\n      from: \"Ad Pilot <notification@ad-pilot.ai>\",\n      to: [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n      cc: \"kelly@ad-pilot.ai\",\n      subject: emailSubject,\n      html: emailHtml\n    })\n  }\n}];\n"
         },
         "id": "build-lead-record",
         "name": "Build Lead Record & Email",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2500,
-          -100
+          3184,
+          -96
         ]
       },
       {
@@ -1083,16 +1199,16 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2720,
-          -100
+          3408,
+          -96
         ],
-        "onError": "continueRegularOutput",
         "credentials": {
           "postgres": {
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
           }
-        }
+        },
+        "onError": "continueRegularOutput"
       },
       {
         "parameters": {
@@ -1102,7 +1218,7 @@
           "genericAuthType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": {{ JSON.stringify($json.email_subject) }},\n  \"html\": {{ JSON.stringify($json.email_html) }}\n}",
+          "jsonBody": "={{ $('Build Lead Record & Email').item.json.resend_body }}",
           "options": {}
         },
         "id": "send-email",
@@ -1110,8 +1226,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          2940,
-          -100
+          3632,
+          -96
         ],
         "retryOnFail": true,
         "maxTries": 2,
@@ -1132,8 +1248,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2060,
-          200
+          2064,
+          208
         ]
       },
       {
@@ -1147,16 +1263,16 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2280,
-          200
+          2288,
+          208
         ],
-        "onError": "continueRegularOutput",
         "credentials": {
           "postgres": {
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
           }
-        }
+        },
+        "onError": "continueRegularOutput"
       },
       {
         "parameters": {
@@ -1174,8 +1290,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          2500,
-          200
+          2512,
+          208
         ],
         "retryOnFail": true,
         "maxTries": 2,
@@ -1199,6 +1315,91 @@
           960,
           400
         ]
+      },
+      {
+        "parameters": {
+          "url": "=https://graph.facebook.com/v21.0/{{ $('Parse Webhook Payload').first().json.ad_id }}",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "name,created_time,campaign{name,id},adset{name,id,daily_budget},creative{thumbnail_url}"
+              },
+              {
+                "name": "access_token",
+                "value": "={{ $('Get Meta Access Token').first().json.access_token }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "fetch-ad-details",
+        "name": "Fetch Ad Details",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2512,
+          -96
+        ],
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "url": "=https://graph.facebook.com/v21.0/{{ $('Parse Webhook Payload').first().json.ad_id }}/insights",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "impressions,spend,actions,date_start"
+              },
+              {
+                "name": "date_preset",
+                "value": "maximum"
+              },
+              {
+                "name": "access_token",
+                "value": "={{ $('Get Meta Access Token').first().json.access_token }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2736,
+          -96
+        ],
+        "id": "fetch-ad-stats-001",
+        "name": "Fetch Ad Stats",
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id, meta_lead_id, contact_name, contact_email, contact_phone, vehicle_year, vehicle_make, vehicle_model, vehicle_price, meta_ad_id, lead_received_at FROM leads WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' AND ((contact_email IS NOT NULL AND contact_email = '{{ $('Parse Contact Info').first().json.contact_email }}') OR (contact_phone IS NOT NULL AND contact_phone = '{{ $('Parse Contact Info').first().json.contact_phone }}')) ORDER BY lead_received_at DESC LIMIT 5",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2960,
+          -96
+        ],
+        "id": "check-repeat-lead-001",
+        "name": "Check Repeat Lead",
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        },
+        "onError": "continueRegularOutput"
       }
     ],
     "connections": {
@@ -1360,7 +1561,7 @@
         "main": [
           [
             {
-              "node": "Build Lead Record & Email",
+              "node": "Fetch Ad Details",
               "type": "main",
               "index": 0
             }
@@ -1405,6 +1606,39 @@
           [
             {
               "node": "Send Fallback Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Ad Details": {
+        "main": [
+          [
+            {
+              "node": "Fetch Ad Stats",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Ad Stats": {
+        "main": [
+          [
+            {
+              "node": "Check Repeat Lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Repeat Lead": {
+        "main": [
+          [
+            {
+              "node": "Build Lead Record & Email",
               "type": "main",
               "index": 0
             }
