@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T13:26:56.098Z",
+  "updatedAt": "2026-02-10T14:05:23.258Z",
   "createdAt": "2026-02-06T23:25:10.831Z",
   "id": "jfZ06gcNZ5ooTfMM",
   "name": "[SYNC] Meta Ad Insights",
@@ -19,7 +19,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        208
+        192
       ],
       "id": "webhook-trigger",
       "name": "Webhook Trigger",
@@ -52,7 +52,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        400
+        384
       ],
       "id": "manual-trigger",
       "name": "Manual Trigger"
@@ -66,8 +66,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        304,
-        208
+        224,
+        192
       ],
       "id": "get-active-accounts",
       "name": "Get Active Accounts",
@@ -103,8 +103,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        512,
-        208
+        672,
+        192
       ],
       "id": "get-ads-list",
       "name": "Get Ads List"
@@ -116,8 +116,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        704,
-        208
+        896,
+        192
       ],
       "id": "parse-ads",
       "name": "Parse Ad Names"
@@ -149,8 +149,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        912,
-        208
+        1120,
+        192
       ],
       "id": "has-ads",
       "name": "Has Ads?"
@@ -164,8 +164,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1104,
-        112
+        1344,
+        96
       ],
       "id": "upsert-ads",
       "name": "Upsert Ads",
@@ -183,8 +183,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1312,
-        112
+        1568,
+        96
       ],
       "id": "group-by-account",
       "name": "Group by Account"
@@ -226,8 +226,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1504,
-        112
+        1792,
+        96
       ],
       "id": "get-insights",
       "name": "Get Insights"
@@ -239,8 +239,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1712,
-        112
+        2016,
+        96
       ],
       "id": "transform-insights",
       "name": "Transform Insights"
@@ -272,8 +272,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1904,
-        112
+        2240,
+        96
       ],
       "id": "has-insights",
       "name": "Has Insights?"
@@ -287,7 +287,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2112,
+        2464,
         0
       ],
       "id": "upsert-insights",
@@ -307,8 +307,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        2304,
-        112
+        2688,
+        0
       ],
       "id": "aggregate-results",
       "name": "Aggregate Results"
@@ -320,8 +320,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2512,
-        112
+        2912,
+        0
       ],
       "id": "format-response",
       "name": "Format Response"
@@ -335,8 +335,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2704,
-        208
+        3136,
+        192
       ],
       "id": "respond",
       "name": "Respond"
@@ -348,8 +348,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        304
+        2912,
+        384
       ],
       "id": "no-ads-response",
       "name": "No Ads Response"
@@ -361,8 +361,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2112,
-        208
+        2912,
+        192
       ],
       "id": "no-insights-response",
       "name": "No Insights Response"
@@ -374,8 +374,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        400,
-        208
+        448,
+        192
       ],
       "id": "prepare-date-params",
       "name": "Prepare Date Params"
@@ -605,7 +605,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "3ab76a60-790a-4523-8dd6-9eafc27bfe5c",
+  "versionId": "b277fe98-450b-4cfd-827a-6d1ea49257c1",
   "activeVersionId": "3ab76a60-790a-4523-8dd6-9eafc27bfe5c",
   "triggerCount": 1,
   "shared": [
