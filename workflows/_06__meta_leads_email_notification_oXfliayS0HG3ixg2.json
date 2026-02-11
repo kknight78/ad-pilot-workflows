@@ -3,7 +3,7 @@
   "createdAt": "2025-12-25T19:55:35.815Z",
   "id": "oXfliayS0HG3ixg2",
   "name": "[06] Meta Leads Email Notification",
-  "active": true,
+  "active": false,
   "isArchived": false,
   "nodes": [
     {
@@ -98,7 +98,7 @@
     "node:Google Sheets Trigger": {
       "documentId": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
       "sheetId": 444479958,
-      "lastIndexChecked": 103
+      "lastIndexChecked": 107
     }
   },
   "meta": {
@@ -106,7 +106,7 @@
   },
   "pinData": {},
   "versionId": "667a647c-7c02-4831-a62a-1a4e3af68169",
-  "activeVersionId": "667a647c-7c02-4831-a62a-1a4e3af68169",
+  "activeVersionId": null,
   "triggerCount": 1,
   "shared": [
     {
@@ -117,99 +117,6 @@
       "projectId": "VF66NQc9R74tCdyG"
     }
   ],
-  "activeVersion": {
-    "updatedAt": "2026-02-08T22:53:44.398Z",
-    "createdAt": "2026-02-08T22:52:35.710Z",
-    "versionId": "667a647c-7c02-4831-a62a-1a4e3af68169",
-    "workflowId": "oXfliayS0HG3ixg2",
-    "nodes": [
-      {
-        "parameters": {
-          "pollTimes": {
-            "item": [
-              {
-                "mode": "everyMinute"
-              }
-            ]
-          },
-          "documentId": {
-            "__rl": true,
-            "value": "1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4",
-            "mode": "list",
-            "cachedResultName": "CCC Meta Leads",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": 444479958,
-            "mode": "list",
-            "cachedResultName": "CCC_2026-01_LEADS",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit#gid=444479958"
-          },
-          "event": "rowAdded",
-          "options": {}
-        },
-        "id": "trigger-sheets",
-        "name": "Google Sheets Trigger",
-        "type": "n8n-nodes-base.googleSheetsTrigger",
-        "typeVersion": 1,
-        "position": [
-          0,
-          0
-        ],
-        "credentials": {
-          "googleSheetsTriggerOAuth2Api": {
-            "id": "zKXLgM7UKR3DQtdL",
-            "name": "Google Sheets Trigger account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.resend.com/emails",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpBearerAuth",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"from\": \"notification@ad-pilot.ai\",\n  \"to\": [\"garyknight@carmackcars.com\", \"wedin95@aol.com\"],\n  \"cc\": \"kelly@ad-pilot.ai\",\n  \"subject\": \"🚗 New Meta Lead: {{ $json['first name'] }} {{ $json.last_name }}\",\n  \"html\": \"<h2>🚗 New Lead from Meta!</h2><p><strong>Name:</strong> {{ $json['first name'] }} {{ $json.last_name }}</p><p><strong>Phone:</strong> {{ $json.phone }}</p><p><strong>Email:</strong> {{ $json.email }}</p><p><strong>Timeline:</strong> {{ $json.when_do_you_want_to_get_started }}</p><p><strong>Campaign:</strong> {{ $json.campaign_name }}</p><br/><p><a href='https://docs.google.com/spreadsheets/d/1JUCLDTvcXT9gx1au_8dI-906EsWeB-Q2Bj0hVh4U6L4/edit' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>📊 View Leads Spreadsheet</a></p>\"\n}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.3,
-        "position": [
-          304,
-          0
-        ],
-        "id": "d2f11c32-c1dd-40c7-9120-43bfd68448df",
-        "name": "Send Meta Lead Email",
-        "retryOnFail": true,
-        "waitBetweenTries": 5000,
-        "credentials": {
-          "httpBearerAuth": {
-            "id": "vdxOfyrKMfWKSmAH",
-            "name": "Resend"
-          }
-        }
-      }
-    ],
-    "connections": {
-      "Google Sheets Trigger": {
-        "main": [
-          [
-            {
-              "node": "Send Meta Lead Email",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Kelly Knight",
-    "name": "Version 667a647c",
-    "description": "",
-    "autosaved": true
-  },
+  "activeVersion": null,
   "tags": []
 }
