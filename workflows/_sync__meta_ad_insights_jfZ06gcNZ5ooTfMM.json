@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-10T14:05:23.258Z",
+  "updatedAt": "2026-02-11T23:44:57.551Z",
   "createdAt": "2026-02-06T23:25:10.831Z",
   "id": "jfZ06gcNZ5ooTfMM",
   "name": "[SYNC] Meta Ad Insights",
@@ -111,7 +111,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes: MULTI=multi-item, SPOT=spotlight, EDU=educational, \n//                 CAROUSEL=carousel, IMAGE=single-image, BUY=acquisition\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -605,8 +605,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "b277fe98-450b-4cfd-827a-6d1ea49257c1",
-  "activeVersionId": "3ab76a60-790a-4523-8dd6-9eafc27bfe5c",
+  "versionId": "b104850f-7168-4e70-9a8b-c8e5e79de7b7",
+  "activeVersionId": "b104850f-7168-4e70-9a8b-c8e5e79de7b7",
   "triggerCount": 1,
   "shared": [
     {
@@ -618,9 +618,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-08T13:27:08.321Z",
-    "createdAt": "2026-02-08T13:26:56.102Z",
-    "versionId": "3ab76a60-790a-4523-8dd6-9eafc27bfe5c",
+    "updatedAt": "2026-02-11T23:44:57.554Z",
+    "createdAt": "2026-02-11T23:44:57.554Z",
+    "versionId": "b104850f-7168-4e70-9a8b-c8e5e79de7b7",
     "workflowId": "jfZ06gcNZ5ooTfMM",
     "nodes": [
       {
@@ -636,7 +636,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          208
+          192
         ],
         "id": "webhook-trigger",
         "name": "Webhook Trigger",
@@ -669,7 +669,7 @@
         "typeVersion": 1,
         "position": [
           0,
-          400
+          384
         ],
         "id": "manual-trigger",
         "name": "Manual Trigger"
@@ -683,8 +683,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          304,
-          208
+          224,
+          192
         ],
         "id": "get-active-accounts",
         "name": "Get Active Accounts",
@@ -720,21 +720,21 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          512,
-          208
+          672,
+          192
         ],
         "id": "get-ads-list",
         "name": "Get Ads List"
       },
       {
         "parameters": {
-          "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes: MULTI=multi-item, SPOT=spotlight, EDU=educational, \n//                 CAROUSEL=carousel, IMAGE=single-image, BUY=acquisition\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+          "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          704,
-          208
+          896,
+          192
         ],
         "id": "parse-ads",
         "name": "Parse Ad Names"
@@ -766,8 +766,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          912,
-          208
+          1120,
+          192
         ],
         "id": "has-ads",
         "name": "Has Ads?"
@@ -781,8 +781,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1104,
-          112
+          1344,
+          96
         ],
         "id": "upsert-ads",
         "name": "Upsert Ads",
@@ -800,8 +800,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1312,
-          112
+          1568,
+          96
         ],
         "id": "group-by-account",
         "name": "Group by Account"
@@ -843,8 +843,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1504,
-          112
+          1792,
+          96
         ],
         "id": "get-insights",
         "name": "Get Insights"
@@ -856,8 +856,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1712,
-          112
+          2016,
+          96
         ],
         "id": "transform-insights",
         "name": "Transform Insights"
@@ -889,8 +889,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1904,
-          112
+          2240,
+          96
         ],
         "id": "has-insights",
         "name": "Has Insights?"
@@ -904,7 +904,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2112,
+          2464,
           0
         ],
         "id": "upsert-insights",
@@ -924,8 +924,8 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          2304,
-          112
+          2688,
+          0
         ],
         "id": "aggregate-results",
         "name": "Aggregate Results"
@@ -937,8 +937,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2512,
-          112
+          2912,
+          0
         ],
         "id": "format-response",
         "name": "Format Response"
@@ -952,8 +952,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          2704,
-          208
+          3136,
+          192
         ],
         "id": "respond",
         "name": "Respond"
@@ -965,8 +965,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1104,
-          304
+          2912,
+          384
         ],
         "id": "no-ads-response",
         "name": "No Ads Response"
@@ -978,8 +978,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2112,
-          208
+          2912,
+          192
         ],
         "id": "no-insights-response",
         "name": "No Insights Response"
@@ -991,8 +991,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          400,
-          208
+          448,
+          192
         ],
         "id": "prepare-date-params",
         "name": "Prepare Date Params"
@@ -1213,9 +1213,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 3ab76a60",
-    "description": "",
-    "autosaved": true
+    "name": null,
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
