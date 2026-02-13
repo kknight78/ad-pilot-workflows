@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-11T23:44:57.551Z",
+  "updatedAt": "2026-02-12T23:18:57.217Z",
   "createdAt": "2026-02-06T23:25:10.831Z",
   "id": "jfZ06gcNZ5ooTfMM",
   "name": "[SYNC] Meta Ad Insights",
@@ -111,7 +111,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -315,12 +315,12 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insightsCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insightsCount += data.filter(d => d && d.id).length;\n}\n\n// Get ad count from earlier in flow\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\n// Get backfill status from Group by Account (it has _isBackfill)\nconst groupData = $('Group by Account').first()?.json || {};\nconst isBackfill = groupData._isBackfill || false;\n\nreturn [{\n  json: {\n    success: true,\n    message: isBackfill \n      ? `Backfill complete: synced ${adsCount} ads and ${insightsCount} insight records from Meta`\n      : `Synced ${adsCount} ads and ${insightsCount} insight records from Meta`,\n    mode: isBackfill ? 'backfill' : 'daily',\n    ads_synced: adsCount,\n    insights_synced: insightsCount,\n    synced_at: new Date().toISOString()\n  }\n}];"
+        "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insightsCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insightsCount += data.filter(d => d && d.id).length;\n}\n\n// Get ad count from earlier in flow\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\n// Get placement insights count\nlet placementCount = 0;\ntry {\n  const placementData = $('Upsert Placement Insights').all();\n  placementCount = placementData.filter(d => d.json && d.json.id).length;\n} catch(e) {\n  // Placement branch may not have executed (no data case)\n}\n\n// Get backfill status from Group by Account (it has _isBackfill)\nconst groupData = $('Group by Account').first()?.json || {};\nconst isBackfill = groupData._isBackfill || false;\n\nreturn [{\n  json: {\n    success: true,\n    message: isBackfill \n      ? 'Backfill complete: synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from Meta'\n      : 'Synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from Meta',\n    mode: isBackfill ? 'backfill' : 'daily',\n    ads_synced: adsCount,\n    insights_synced: insightsCount,\n    placement_insights_synced: placementCount,\n    synced_at: new Date().toISOString()\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2912,
+        4256,
         0
       ],
       "id": "format-response",
@@ -335,7 +335,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3136,
+        4480,
         192
       ],
       "id": "respond",
@@ -348,7 +348,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2912,
+        4256,
         384
       ],
       "id": "no-ads-response",
@@ -361,7 +361,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2912,
+        4256,
         192
       ],
       "id": "no-insights-response",
@@ -379,6 +379,146 @@
       ],
       "id": "prepare-date-params",
       "name": "Prepare Date Params"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Re-emit one item per account for placement insights fetch\n// Reads account data from Group by Account node\nconst accounts = $('Group by Account').all();\nreturn accounts.map(a => ({ json: a.json }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        0
+      ],
+      "id": "prep-placement-requests",
+      "name": "Prepare Placement Requests"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/act_{{ $json.account_id }}/insights",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "ad"
+            },
+            {
+              "name": "fields",
+              "value": "ad_id,ad_name,spend,impressions,clicks,ctr,cpc,cpm,actions"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            },
+            {
+              "name": "={{ $json._dateParams.date_preset ? 'date_preset' : 'time_range' }}",
+              "value": "={{ $json._dateParams.date_preset || $json._dateParams.time_range }}"
+            },
+            {
+              "name": "={{ $json._dateParams.time_increment ? 'time_increment' : '' }}",
+              "value": "={{ $json._dateParams.time_increment || '' }}"
+            },
+            {
+              "name": "breakdowns",
+              "value": "publisher_platform,platform_position"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3136,
+        0
+      ],
+      "id": "get-placement-insights",
+      "name": "Get Placement Insights"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Meta actions and map publisher_platform+platform_position to our placement codes\n// Filter out audience_network and messenger\n\nconst PLACEMENT_MAP = {\n  'facebook:feed': 'fb_feed',\n  'facebook:marketplace': 'fb_feed',\n  'facebook:search': 'fb_feed',\n  'facebook:instream_video': 'fb_video',\n  'facebook:facebook_stories': 'fb_stories',\n  'facebook:facebook_reels': 'fb_reels',\n  'facebook:facebook_reels_overlay': 'fb_reels',\n  'instagram:feed': 'ig_feed',\n  'instagram:instagram_explore_grid_home': 'ig_feed',\n  'instagram:instagram_explore': 'ig_feed',\n  'instagram:instagram_search': 'ig_feed',\n  'instagram:instagram_reels': 'ig_reels',\n  'instagram:instagram_stories': 'ig_stories'\n};\n\nfunction parseActions(actions) {\n  const actionMap = {};\n  (actions || []).forEach(a => {\n    actionMap[a.action_type] = parseInt(a.value);\n  });\n  return {\n    leads: actionMap['lead'] || 0,\n    video_views: actionMap['video_view'] || 0,\n    link_clicks: actionMap['link_click'] || 0\n  };\n}\n\nconst accountsData = $('Prepare Placement Requests').all();\nconst responses = $input.all();\nconst results = [];\n\nfor (let i = 0; i < responses.length; i++) {\n  const account = accountsData[i]?.json;\n  const responseData = responses[i]?.json;\n\n  if (!account || !responseData?.data) continue;\n\n  for (const row of responseData.data) {\n    const pub = row.publisher_platform || '';\n    const pos = row.platform_position || '';\n    \n    // Skip audience_network and messenger\n    if (pub === 'audience_network' || pub === 'messenger') continue;\n    \n    const key = pub + ':' + pos;\n    const placementCode = PLACEMENT_MAP[key] || null;\n    \n    const parsed = parseActions(row.actions);\n    const spend = parseFloat(row.spend || 0);\n    const costPerLead = parsed.leads > 0 ? (spend / parsed.leads) : null;\n\n    results.push({\n      json: {\n        meta_ad_id: row.ad_id,\n        account_id: account.account_id,\n        date_start: row.date_start,\n        date_stop: row.date_stop,\n        publisher_platform: pub,\n        platform_position: pos,\n        placement_code: placementCode,\n        spend: spend,\n        impressions: parseInt(row.impressions || 0),\n        clicks: parseInt(row.clicks || 0),\n        ctr: parseFloat(row.ctr || 0),\n        cpc: parseFloat(row.cpc || 0),\n        cpm: parseFloat(row.cpm || 0),\n        video_views: parsed.video_views,\n        link_clicks: parsed.link_clicks,\n        leads: parsed.leads,\n        cost_per_lead: costPerLead,\n        actions_raw: JSON.stringify(row.actions || [])\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no placement insights' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        0
+      ],
+      "id": "transform-placement-insights",
+      "name": "Transform Placement Insights"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check-placement",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3584,
+        0
+      ],
+      "id": "has-placement-insights",
+      "name": "Has Placement Insights?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meta_placement_insights (\n  meta_ad_id, account_id, date_start, date_stop,\n  publisher_platform, platform_position, placement_code,\n  spend, impressions, clicks, ctr, cpc, cpm,\n  video_views, link_clicks, leads, cost_per_lead, actions_raw\n)\nVALUES (\n  '{{ $json.meta_ad_id }}',\n  '{{ $json.account_id }}',\n  '{{ $json.date_start }}',\n  '{{ $json.date_stop }}',\n  '{{ $json.publisher_platform }}',\n  '{{ $json.platform_position }}',\n  {{ $json.placement_code ? \"'\" + $json.placement_code + \"'\" : 'NULL' }},\n  {{ $json.spend }},\n  {{ $json.impressions }},\n  {{ $json.clicks }},\n  {{ $json.ctr }},\n  {{ $json.cpc }},\n  {{ $json.cpm }},\n  {{ $json.video_views }},\n  {{ $json.link_clicks }},\n  {{ $json.leads }},\n  {{ $json.cost_per_lead !== null ? $json.cost_per_lead : 'NULL' }},\n  '{{ $json.actions_raw }}'::jsonb\n)\nON CONFLICT (meta_ad_id, date_start, date_stop, publisher_platform, platform_position) DO NOTHING\nRETURNING id, meta_ad_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3808,
+        -60
+      ],
+      "id": "upsert-placement-insights",
+      "name": "Upsert Placement Insights",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// No placement insights — pass through to Format Response\nreturn [{ json: { _placementSkipped: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        120
+      ],
+      "id": "no-placement-response",
+      "name": "No Placement Response"
     }
   ],
   "connections": {
@@ -543,7 +683,7 @@
       "main": [
         [
           {
-            "node": "Format Response",
+            "node": "Prepare Placement Requests",
             "type": "main",
             "index": 0
           }
@@ -593,6 +733,79 @@
           }
         ]
       ]
+    },
+    "Prepare Placement Requests": {
+      "main": [
+        [
+          {
+            "node": "Get Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Transform Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Has Placement Insights?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Placement Insights?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Placement Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Placement Response": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -605,8 +818,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "b104850f-7168-4e70-9a8b-c8e5e79de7b7",
-  "activeVersionId": "b104850f-7168-4e70-9a8b-c8e5e79de7b7",
+  "versionId": "6f89962e-dafd-457a-b0d7-40b6e12340db",
+  "activeVersionId": "6f89962e-dafd-457a-b0d7-40b6e12340db",
   "triggerCount": 1,
   "shared": [
     {
@@ -618,9 +831,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-11T23:44:57.554Z",
-    "createdAt": "2026-02-11T23:44:57.554Z",
-    "versionId": "b104850f-7168-4e70-9a8b-c8e5e79de7b7",
+    "updatedAt": "2026-02-12T23:18:57.222Z",
+    "createdAt": "2026-02-12T23:18:57.222Z",
+    "versionId": "6f89962e-dafd-457a-b0d7-40b6e12340db",
     "workflowId": "jfZ06gcNZ5ooTfMM",
     "nodes": [
       {
@@ -728,7 +941,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+          "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -932,12 +1145,12 @@
       },
       {
         "parameters": {
-          "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insightsCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insightsCount += data.filter(d => d && d.id).length;\n}\n\n// Get ad count from earlier in flow\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\n// Get backfill status from Group by Account (it has _isBackfill)\nconst groupData = $('Group by Account').first()?.json || {};\nconst isBackfill = groupData._isBackfill || false;\n\nreturn [{\n  json: {\n    success: true,\n    message: isBackfill \n      ? `Backfill complete: synced ${adsCount} ads and ${insightsCount} insight records from Meta`\n      : `Synced ${adsCount} ads and ${insightsCount} insight records from Meta`,\n    mode: isBackfill ? 'backfill' : 'daily',\n    ads_synced: adsCount,\n    insights_synced: insightsCount,\n    synced_at: new Date().toISOString()\n  }\n}];"
+          "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insightsCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insightsCount += data.filter(d => d && d.id).length;\n}\n\n// Get ad count from earlier in flow\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\n// Get placement insights count\nlet placementCount = 0;\ntry {\n  const placementData = $('Upsert Placement Insights').all();\n  placementCount = placementData.filter(d => d.json && d.json.id).length;\n} catch(e) {\n  // Placement branch may not have executed (no data case)\n}\n\n// Get backfill status from Group by Account (it has _isBackfill)\nconst groupData = $('Group by Account').first()?.json || {};\nconst isBackfill = groupData._isBackfill || false;\n\nreturn [{\n  json: {\n    success: true,\n    message: isBackfill \n      ? 'Backfill complete: synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from Meta'\n      : 'Synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from Meta',\n    mode: isBackfill ? 'backfill' : 'daily',\n    ads_synced: adsCount,\n    insights_synced: insightsCount,\n    placement_insights_synced: placementCount,\n    synced_at: new Date().toISOString()\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2912,
+          4256,
           0
         ],
         "id": "format-response",
@@ -952,7 +1165,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          3136,
+          4480,
           192
         ],
         "id": "respond",
@@ -965,7 +1178,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2912,
+          4256,
           384
         ],
         "id": "no-ads-response",
@@ -978,7 +1191,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2912,
+          4256,
           192
         ],
         "id": "no-insights-response",
@@ -996,6 +1209,146 @@
         ],
         "id": "prepare-date-params",
         "name": "Prepare Date Params"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Re-emit one item per account for placement insights fetch\n// Reads account data from Group by Account node\nconst accounts = $('Group by Account').all();\nreturn accounts.map(a => ({ json: a.json }));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2912,
+          0
+        ],
+        "id": "prep-placement-requests",
+        "name": "Prepare Placement Requests"
+      },
+      {
+        "parameters": {
+          "url": "=https://graph.facebook.com/v21.0/act_{{ $json.account_id }}/insights",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "level",
+                "value": "ad"
+              },
+              {
+                "name": "fields",
+                "value": "ad_id,ad_name,spend,impressions,clicks,ctr,cpc,cpm,actions"
+              },
+              {
+                "name": "limit",
+                "value": "500"
+              },
+              {
+                "name": "access_token",
+                "value": "={{ $json.access_token }}"
+              },
+              {
+                "name": "={{ $json._dateParams.date_preset ? 'date_preset' : 'time_range' }}",
+                "value": "={{ $json._dateParams.date_preset || $json._dateParams.time_range }}"
+              },
+              {
+                "name": "={{ $json._dateParams.time_increment ? 'time_increment' : '' }}",
+                "value": "={{ $json._dateParams.time_increment || '' }}"
+              },
+              {
+                "name": "breakdowns",
+                "value": "publisher_platform,platform_position"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3136,
+          0
+        ],
+        "id": "get-placement-insights",
+        "name": "Get Placement Insights"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse Meta actions and map publisher_platform+platform_position to our placement codes\n// Filter out audience_network and messenger\n\nconst PLACEMENT_MAP = {\n  'facebook:feed': 'fb_feed',\n  'facebook:marketplace': 'fb_feed',\n  'facebook:search': 'fb_feed',\n  'facebook:instream_video': 'fb_video',\n  'facebook:facebook_stories': 'fb_stories',\n  'facebook:facebook_reels': 'fb_reels',\n  'facebook:facebook_reels_overlay': 'fb_reels',\n  'instagram:feed': 'ig_feed',\n  'instagram:instagram_explore_grid_home': 'ig_feed',\n  'instagram:instagram_explore': 'ig_feed',\n  'instagram:instagram_search': 'ig_feed',\n  'instagram:instagram_reels': 'ig_reels',\n  'instagram:instagram_stories': 'ig_stories'\n};\n\nfunction parseActions(actions) {\n  const actionMap = {};\n  (actions || []).forEach(a => {\n    actionMap[a.action_type] = parseInt(a.value);\n  });\n  return {\n    leads: actionMap['lead'] || 0,\n    video_views: actionMap['video_view'] || 0,\n    link_clicks: actionMap['link_click'] || 0\n  };\n}\n\nconst accountsData = $('Prepare Placement Requests').all();\nconst responses = $input.all();\nconst results = [];\n\nfor (let i = 0; i < responses.length; i++) {\n  const account = accountsData[i]?.json;\n  const responseData = responses[i]?.json;\n\n  if (!account || !responseData?.data) continue;\n\n  for (const row of responseData.data) {\n    const pub = row.publisher_platform || '';\n    const pos = row.platform_position || '';\n    \n    // Skip audience_network and messenger\n    if (pub === 'audience_network' || pub === 'messenger') continue;\n    \n    const key = pub + ':' + pos;\n    const placementCode = PLACEMENT_MAP[key] || null;\n    \n    const parsed = parseActions(row.actions);\n    const spend = parseFloat(row.spend || 0);\n    const costPerLead = parsed.leads > 0 ? (spend / parsed.leads) : null;\n\n    results.push({\n      json: {\n        meta_ad_id: row.ad_id,\n        account_id: account.account_id,\n        date_start: row.date_start,\n        date_stop: row.date_stop,\n        publisher_platform: pub,\n        platform_position: pos,\n        placement_code: placementCode,\n        spend: spend,\n        impressions: parseInt(row.impressions || 0),\n        clicks: parseInt(row.clicks || 0),\n        ctr: parseFloat(row.ctr || 0),\n        cpc: parseFloat(row.cpc || 0),\n        cpm: parseFloat(row.cpm || 0),\n        video_views: parsed.video_views,\n        link_clicks: parsed.link_clicks,\n        leads: parsed.leads,\n        cost_per_lead: costPerLead,\n        actions_raw: JSON.stringify(row.actions || [])\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no placement insights' } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3360,
+          0
+        ],
+        "id": "transform-placement-insights",
+        "name": "Transform Placement Insights"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "skip-check-placement",
+                "leftValue": "={{ $json.skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "notEquals"
+                }
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3584,
+          0
+        ],
+        "id": "has-placement-insights",
+        "name": "Has Placement Insights?"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO meta_placement_insights (\n  meta_ad_id, account_id, date_start, date_stop,\n  publisher_platform, platform_position, placement_code,\n  spend, impressions, clicks, ctr, cpc, cpm,\n  video_views, link_clicks, leads, cost_per_lead, actions_raw\n)\nVALUES (\n  '{{ $json.meta_ad_id }}',\n  '{{ $json.account_id }}',\n  '{{ $json.date_start }}',\n  '{{ $json.date_stop }}',\n  '{{ $json.publisher_platform }}',\n  '{{ $json.platform_position }}',\n  {{ $json.placement_code ? \"'\" + $json.placement_code + \"'\" : 'NULL' }},\n  {{ $json.spend }},\n  {{ $json.impressions }},\n  {{ $json.clicks }},\n  {{ $json.ctr }},\n  {{ $json.cpc }},\n  {{ $json.cpm }},\n  {{ $json.video_views }},\n  {{ $json.link_clicks }},\n  {{ $json.leads }},\n  {{ $json.cost_per_lead !== null ? $json.cost_per_lead : 'NULL' }},\n  '{{ $json.actions_raw }}'::jsonb\n)\nON CONFLICT (meta_ad_id, date_start, date_stop, publisher_platform, platform_position) DO NOTHING\nRETURNING id, meta_ad_id;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3808,
+          -60
+        ],
+        "id": "upsert-placement-insights",
+        "name": "Upsert Placement Insights",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// No placement insights — pass through to Format Response\nreturn [{ json: { _placementSkipped: true } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3808,
+          120
+        ],
+        "id": "no-placement-response",
+        "name": "No Placement Response"
       }
     ],
     "connections": {
@@ -1160,7 +1513,7 @@
         "main": [
           [
             {
-              "node": "Format Response",
+              "node": "Prepare Placement Requests",
               "type": "main",
               "index": 0
             }
@@ -1205,6 +1558,79 @@
           [
             {
               "node": "Get Ads List",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Placement Requests": {
+        "main": [
+          [
+            {
+              "node": "Get Placement Insights",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Placement Insights": {
+        "main": [
+          [
+            {
+              "node": "Transform Placement Insights",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Transform Placement Insights": {
+        "main": [
+          [
+            {
+              "node": "Has Placement Insights?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Placement Insights?": {
+        "main": [
+          [
+            {
+              "node": "Upsert Placement Insights",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Placement Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Placement Insights": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "No Placement Response": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
               "type": "main",
               "index": 0
             }
