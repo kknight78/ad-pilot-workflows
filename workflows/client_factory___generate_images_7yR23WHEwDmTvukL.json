@@ -1,0 +1,549 @@
+{
+  "updatedAt": "2026-02-08T17:02:52.434Z",
+  "createdAt": "2026-02-08T15:19:48.079Z",
+  "id": "7yR23WHEwDmTvukL",
+  "name": "Client Factory - Generate Images",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-factory-images",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "client-factory-images"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse incoming items and build individual tasks\nconst body = $input.first().json.body;\nconst clientId = body.client_id;\nconst items = body.items || [];\n\nconst results = [];\nfor (const item of items) {\n  // Build Gemini prompt based on industry\n  let prompt = '';\n  const industry = item.industry;\n  const title = item.title || '';\n  const desc = item.description || '';\n\n  switch (industry) {\n    case 'auto':\n      prompt = `Professional dealership photo of a ${title}. ${desc}. The vehicle is on a clean dealer lot, well-lit, clear sky, slightly angled front 3/4 view. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    case 'realty':\n      prompt = `Professional real estate listing photo. ${title}. ${desc}. Front exterior view, bright sunny day, manicured lawn, inviting curb appeal. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    case 'restaurant':\n      prompt = `Professional food photography of ${title}. ${desc}. Beautifully plated, restaurant setting with soft lighting, shallow depth of field. Overhead or 45-degree angle. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    case 'retail':\n      prompt = `Professional product photo of ${title}. ${desc}. Clean white background, e-commerce style, well-lit, centered composition. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    default:\n      prompt = `Professional photo of ${title}. ${desc}. Clean, well-lit, high resolution, no text or watermarks.`;\n  }\n\n  results.push({\n    json: {\n      item_id: item.item_id,\n      client_id: clientId,\n      industry,\n      title,\n      prompt,\n      requestBody: {\n        contents: [{\n          parts: [{ text: prompt }]\n        }],\n        generationConfig: {\n          responseModalities: [\"TEXT\", \"IMAGE\"],\n          temperature: 1.0\n        }\n      }\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "build-prompts",
+      "name": "Build Prompts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {
+          "timeout": 60000,
+          "batching": {
+            "batch": {
+              "batchSize": 2,
+              "batchInterval": 3000
+            }
+          }
+        }
+      },
+      "id": "gemini-gen",
+      "name": "Gemini Image Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g3uUNUN8DLHbJv5q",
+          "name": "Google API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst itemData = $('Build Prompts').item.json;\nconst itemId = itemData.item_id;\nconst clientId = itemData.client_id;\n\nlet imageData = null;\nlet mimeType = 'image/png';\n\n// Check if Gemini returned an error\nif (response.error) {\n  console.log(`Gemini failed for item ${itemId}: ${response.error.message || JSON.stringify(response.error)}`);\n  return { json: { success: false, item_id: itemId, error: response.error.message || 'Gemini error' } };\n}\n\nif (response.candidates && response.candidates[0]) {\n  const parts = response.candidates[0].content?.parts || [];\n  for (const part of parts) {\n    if (part.inlineData) {\n      imageData = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nif (!imageData) {\n  console.log(`No image in Gemini response for item ${itemId}`);\n  return { json: { success: false, item_id: itemId, error: 'No image in response' } };\n}\n\nreturn { json: { \n  success: true,\n  item_id: itemId, \n  client_id: clientId,\n  imageData, \n  mimeType \n} };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "extract-image",
+      "name": "Extract Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-check",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-success",
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file\": \"data:{{ $json.mimeType }};base64,{{ $json.imageData }}\",\n  \"upload_preset\": \"ad_pilot_backgrounds\",\n  \"folder\": \"inventory/{{ $json.client_id }}/{{ $json.item_id }}\",\n  \"public_id\": \"hero_{{ Date.now() }}\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "cloudinary-upload",
+      "name": "Upload to Cloudinary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        200
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE inventory_items SET hero_cloudinary_url = '{{ $json.secure_url }}', hero_cloudinary_public_id = '{{ $json.public_id }}', hero_processed_at = NOW() WHERE id = '{{ $('Extract Image').item.json.item_id }}';\n\nINSERT INTO inventory_images (item_id, url, cloudinary_url, cloudinary_public_id, is_primary, sort_order)\nVALUES ('{{ $('Extract Image').item.json.item_id }}', '{{ $json.secure_url }}', '{{ $json.secure_url }}', '{{ $json.public_id }}', true, 0);",
+        "options": {}
+      },
+      "id": "update-db",
+      "name": "Update DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1540,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log the skipped item\nconst data = $input.item.json;\nconsole.log(`Skipped image gen for item ${data.item_id}: ${data.error}`);\nreturn { json: { skipped: true, item_id: data.item_id, reason: data.error } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "log-skip",
+      "name": "Log Skip",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompts": {
+      "main": [
+        [
+          {
+            "node": "Gemini Image Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Image Gen": {
+      "main": [
+        [
+          {
+            "node": "Extract Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image": {
+      "main": [
+        [
+          {
+            "node": "Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Image?": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Update DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update DB": {
+      "main": [
+        []
+      ]
+    },
+    "Log Skip": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "aa7f7cd7-ca77-4fb0-8384-910cbd8724c3",
+  "activeVersionId": "aa7f7cd7-ca77-4fb0-8384-910cbd8724c3",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-08T15:19:48.079Z",
+      "createdAt": "2026-02-08T15:19:48.079Z",
+      "role": "workflow:owner",
+      "workflowId": "7yR23WHEwDmTvukL",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-08T17:02:52.436Z",
+    "createdAt": "2026-02-08T17:02:52.436Z",
+    "versionId": "aa7f7cd7-ca77-4fb0-8384-910cbd8724c3",
+    "workflowId": "7yR23WHEwDmTvukL",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "client-factory-images",
+          "responseMode": "onReceived",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          220,
+          300
+        ],
+        "webhookId": "client-factory-images"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse incoming items and build individual tasks\nconst body = $input.first().json.body;\nconst clientId = body.client_id;\nconst items = body.items || [];\n\nconst results = [];\nfor (const item of items) {\n  // Build Gemini prompt based on industry\n  let prompt = '';\n  const industry = item.industry;\n  const title = item.title || '';\n  const desc = item.description || '';\n\n  switch (industry) {\n    case 'auto':\n      prompt = `Professional dealership photo of a ${title}. ${desc}. The vehicle is on a clean dealer lot, well-lit, clear sky, slightly angled front 3/4 view. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    case 'realty':\n      prompt = `Professional real estate listing photo. ${title}. ${desc}. Front exterior view, bright sunny day, manicured lawn, inviting curb appeal. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    case 'restaurant':\n      prompt = `Professional food photography of ${title}. ${desc}. Beautifully plated, restaurant setting with soft lighting, shallow depth of field. Overhead or 45-degree angle. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    case 'retail':\n      prompt = `Professional product photo of ${title}. ${desc}. Clean white background, e-commerce style, well-lit, centered composition. Photorealistic, high resolution, no text or watermarks.`;\n      break;\n    default:\n      prompt = `Professional photo of ${title}. ${desc}. Clean, well-lit, high resolution, no text or watermarks.`;\n  }\n\n  results.push({\n    json: {\n      item_id: item.item_id,\n      client_id: clientId,\n      industry,\n      title,\n      prompt,\n      requestBody: {\n        contents: [{\n          parts: [{ text: prompt }]\n        }],\n        generationConfig: {\n          responseModalities: [\"TEXT\", \"IMAGE\"],\n          temperature: 1.0\n        }\n      }\n    }\n  });\n}\n\nreturn results;"
+        },
+        "id": "build-prompts",
+        "name": "Build Prompts",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+          "options": {
+            "timeout": 60000,
+            "batching": {
+              "batch": {
+                "batchSize": 2,
+                "batchInterval": 3000
+              }
+            }
+          }
+        },
+        "id": "gemini-gen",
+        "name": "Gemini Image Gen",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          660,
+          300
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "g3uUNUN8DLHbJv5q",
+            "name": "Google API"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.item.json;\nconst itemData = $('Build Prompts').item.json;\nconst itemId = itemData.item_id;\nconst clientId = itemData.client_id;\n\nlet imageData = null;\nlet mimeType = 'image/png';\n\n// Check if Gemini returned an error\nif (response.error) {\n  console.log(`Gemini failed for item ${itemId}: ${response.error.message || JSON.stringify(response.error)}`);\n  return { json: { success: false, item_id: itemId, error: response.error.message || 'Gemini error' } };\n}\n\nif (response.candidates && response.candidates[0]) {\n  const parts = response.candidates[0].content?.parts || [];\n  for (const part of parts) {\n    if (part.inlineData) {\n      imageData = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nif (!imageData) {\n  console.log(`No image in Gemini response for item ${itemId}`);\n  return { json: { success: false, item_id: itemId, error: 'No image in response' } };\n}\n\nreturn { json: { \n  success: true,\n  item_id: itemId, \n  client_id: clientId,\n  imageData, \n  mimeType \n} };",
+          "mode": "runOnceForEachItem"
+        },
+        "id": "extract-image",
+        "name": "Extract Image",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "success-check",
+                "leftValue": "={{ $json.success }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-success",
+        "name": "Has Image?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"file\": \"data:{{ $json.mimeType }};base64,{{ $json.imageData }}\",\n  \"upload_preset\": \"ad_pilot_backgrounds\",\n  \"folder\": \"inventory/{{ $json.client_id }}/{{ $json.item_id }}\",\n  \"public_id\": \"hero_{{ Date.now() }}\"\n}",
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "cloudinary-upload",
+        "name": "Upload to Cloudinary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1320,
+          200
+        ],
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE inventory_items SET hero_cloudinary_url = '{{ $json.secure_url }}', hero_cloudinary_public_id = '{{ $json.public_id }}', hero_processed_at = NOW() WHERE id = '{{ $('Extract Image').item.json.item_id }}';\n\nINSERT INTO inventory_images (item_id, url, cloudinary_url, cloudinary_public_id, is_primary, sort_order)\nVALUES ('{{ $('Extract Image').item.json.item_id }}', '{{ $json.secure_url }}', '{{ $json.secure_url }}', '{{ $json.public_id }}', true, 0);",
+          "options": {}
+        },
+        "id": "update-db",
+        "name": "Update DB",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1540,
+          200
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "jsCode": "// Log the skipped item\nconst data = $input.item.json;\nconsole.log(`Skipped image gen for item ${data.item_id}: ${data.error}`);\nreturn { json: { skipped: true, item_id: data.item_id, reason: data.error } };",
+          "mode": "runOnceForEachItem"
+        },
+        "id": "log-skip",
+        "name": "Log Skip",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          400
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build Prompts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Prompts": {
+        "main": [
+          [
+            {
+              "node": "Gemini Image Gen",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Image Gen": {
+        "main": [
+          [
+            {
+              "node": "Extract Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Image": {
+        "main": [
+          [
+            {
+              "node": "Has Image?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Image?": {
+        "main": [
+          [
+            {
+              "node": "Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Log Skip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Update DB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update DB": {
+        "main": [
+          []
+        ]
+      },
+      "Log Skip": {
+        "main": [
+          []
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
