@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:12.017Z",
+  "updatedAt": "2026-02-09T12:02:28.497Z",
   "createdAt": "2026-01-26T23:34:46.284Z",
   "id": "cs4hIlOJIQLgqcNV",
   "name": "Inventory API v2",
@@ -28,7 +28,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT \n  i.id,\n  i.external_id,\n  i.item_type,\n  i.status,\n  i.title,\n  i.description,\n  i.price,\n  i.currency,\n  i.url,\n  i.is_featured,\n  i.priority,\n  i.tags,\n  i.first_seen_at,\n  i.last_seen_at,\n  v.vin,\n  v.stock_number,\n  v.year,\n  v.make,\n  v.model,\n  v.trim,\n  v.body_style,\n  v.exterior_color,\n  v.interior_color,\n  v.mileage,\n  v.mileage_unit,\n  v.transmission,\n  v.drivetrain,\n  v.fuel_type,\n  v.engine,\n  v.doors,\n  v.condition,\n  v.days_on_lot,\n  v.features,\n  c.name as client_name,\n  c.slug as client_slug,\n  (SELECT json_agg(json_build_object('url', img.url, 'is_primary', img.is_primary) ORDER BY img.sort_order)\n   FROM inventory_images img WHERE img.item_id = i.id) as images\nFROM inventory_items i\nJOIN clients c ON c.id = i.client_id\nLEFT JOIN inventory_vehicles v ON v.item_id = i.id\nWHERE (c.slug = '{{ $json.query.client }}' OR i.client_id::text = '{{ $json.query.client }}')\n  AND i.status = '{{ $json.query.status || \"active\" }}'\nORDER BY i.priority DESC, i.last_seen_at DESC\nLIMIT {{ parseInt($json.query.limit) || 100 }}\nOFFSET {{ parseInt($json.query.offset) || 0 }}",
+        "query": "=SELECT \n  i.id,\n  i.external_id,\n  i.item_type,\n  i.status,\n  i.title,\n  i.description,\n  i.price,\n  i.currency,\n  i.url,\n  i.is_featured,\n  i.priority,\n  i.tags,\n  i.first_seen_at,\n  i.last_seen_at,\n  v.vin,\n  v.stock_number,\n  v.year,\n  v.make,\n  v.model,\n  v.trim,\n  v.body_style,\n  v.exterior_color,\n  v.interior_color,\n  v.mileage,\n  v.mileage_unit,\n  v.transmission,\n  v.drivetrain,\n  v.fuel_type,\n  v.engine,\n  v.doors,\n  v.condition,\n  v.days_on_lot,\n  v.features,\n  c.name as client_name,\n  c.slug as client_slug,\n  i.hero_image_url\nFROM inventory_items i\nJOIN clients c ON c.id = i.client_id\nLEFT JOIN inventory_vehicles v ON v.item_id = i.id\nWHERE (c.slug = '{{ $json.query.client }}' OR i.client_id::text = '{{ $json.query.client }}')\n  AND i.status = '{{ $json.query.status || \"active\" }}'\nORDER BY i.priority DESC, i.last_seen_at DESC\nLIMIT {{ parseInt($json.query.limit) || 100 }}\nOFFSET {{ parseInt($json.query.offset) || 0 }}",
         "options": {}
       },
       "id": "postgres-query",
@@ -119,8 +119,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "7f2532ed-a030-4aca-8f3e-bb297080186b",
-  "activeVersionId": "7f2532ed-a030-4aca-8f3e-bb297080186b",
+  "versionId": "192b0005-ab69-476e-9842-471269caa2b1",
+  "activeVersionId": "192b0005-ab69-476e-9842-471269caa2b1",
   "triggerCount": 1,
   "shared": [
     {
@@ -132,9 +132,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T01:12:12.023Z",
-    "createdAt": "2026-01-30T01:12:12.023Z",
-    "versionId": "7f2532ed-a030-4aca-8f3e-bb297080186b",
+    "updatedAt": "2026-02-09T12:02:28.501Z",
+    "createdAt": "2026-02-09T12:02:28.501Z",
+    "versionId": "192b0005-ab69-476e-9842-471269caa2b1",
     "workflowId": "cs4hIlOJIQLgqcNV",
     "nodes": [
       {
@@ -159,7 +159,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=SELECT \n  i.id,\n  i.external_id,\n  i.item_type,\n  i.status,\n  i.title,\n  i.description,\n  i.price,\n  i.currency,\n  i.url,\n  i.is_featured,\n  i.priority,\n  i.tags,\n  i.first_seen_at,\n  i.last_seen_at,\n  v.vin,\n  v.stock_number,\n  v.year,\n  v.make,\n  v.model,\n  v.trim,\n  v.body_style,\n  v.exterior_color,\n  v.interior_color,\n  v.mileage,\n  v.mileage_unit,\n  v.transmission,\n  v.drivetrain,\n  v.fuel_type,\n  v.engine,\n  v.doors,\n  v.condition,\n  v.days_on_lot,\n  v.features,\n  c.name as client_name,\n  c.slug as client_slug,\n  (SELECT json_agg(json_build_object('url', img.url, 'is_primary', img.is_primary) ORDER BY img.sort_order)\n   FROM inventory_images img WHERE img.item_id = i.id) as images\nFROM inventory_items i\nJOIN clients c ON c.id = i.client_id\nLEFT JOIN inventory_vehicles v ON v.item_id = i.id\nWHERE (c.slug = '{{ $json.query.client }}' OR i.client_id::text = '{{ $json.query.client }}')\n  AND i.status = '{{ $json.query.status || \"active\" }}'\nORDER BY i.priority DESC, i.last_seen_at DESC\nLIMIT {{ parseInt($json.query.limit) || 100 }}\nOFFSET {{ parseInt($json.query.offset) || 0 }}",
+          "query": "=SELECT \n  i.id,\n  i.external_id,\n  i.item_type,\n  i.status,\n  i.title,\n  i.description,\n  i.price,\n  i.currency,\n  i.url,\n  i.is_featured,\n  i.priority,\n  i.tags,\n  i.first_seen_at,\n  i.last_seen_at,\n  v.vin,\n  v.stock_number,\n  v.year,\n  v.make,\n  v.model,\n  v.trim,\n  v.body_style,\n  v.exterior_color,\n  v.interior_color,\n  v.mileage,\n  v.mileage_unit,\n  v.transmission,\n  v.drivetrain,\n  v.fuel_type,\n  v.engine,\n  v.doors,\n  v.condition,\n  v.days_on_lot,\n  v.features,\n  c.name as client_name,\n  c.slug as client_slug,\n  i.hero_image_url\nFROM inventory_items i\nJOIN clients c ON c.id = i.client_id\nLEFT JOIN inventory_vehicles v ON v.item_id = i.id\nWHERE (c.slug = '{{ $json.query.client }}' OR i.client_id::text = '{{ $json.query.client }}')\n  AND i.status = '{{ $json.query.status || \"active\" }}'\nORDER BY i.priority DESC, i.last_seen_at DESC\nLIMIT {{ parseInt($json.query.limit) || 100 }}\nOFFSET {{ parseInt($json.query.offset) || 0 }}",
           "options": {}
         },
         "id": "postgres-query",
