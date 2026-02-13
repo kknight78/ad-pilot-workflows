@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-31T01:54:11.727Z",
+  "updatedAt": "2026-02-09T03:17:32.018Z",
   "createdAt": "2026-01-29T15:03:42.069Z",
   "id": "3ds9Y97qpRjTI63Y",
   "name": "[GENERATE] Platform Copy",
@@ -86,7 +86,8 @@
           "id": "ZUwzqy3kvUJpXrDM",
           "name": "Postgres (Dev)"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -500,8 +501,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "d904322a-04c3-471d-b87b-f780a4a0f20a",
-  "activeVersionId": "d904322a-04c3-471d-b87b-f780a4a0f20a",
+  "versionId": "3923da63-5db7-4ba2-8190-d50d5385afc2",
+  "activeVersionId": "3923da63-5db7-4ba2-8190-d50d5385afc2",
   "triggerCount": 1,
   "shared": [
     {
@@ -513,9 +514,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-31T01:54:11.730Z",
-    "createdAt": "2026-01-31T01:54:11.730Z",
-    "versionId": "d904322a-04c3-471d-b87b-f780a4a0f20a",
+    "updatedAt": "2026-02-09T03:17:32.024Z",
+    "createdAt": "2026-02-09T03:17:32.024Z",
+    "versionId": "3923da63-5db7-4ba2-8190-d50d5385afc2",
     "workflowId": "3ds9Y97qpRjTI63Y",
     "nodes": [
       {
@@ -598,7 +599,8 @@
             "id": "ZUwzqy3kvUJpXrDM",
             "name": "Postgres (Dev)"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "parameters": {
