@@ -1,0 +1,468 @@
+{
+  "updatedAt": "2026-02-12T14:59:33.391Z",
+  "createdAt": "2026-02-12T14:59:33.391Z",
+  "id": "6IDQYW3hmzu6rZFf",
+  "name": "[HEALTH] Meta Token Check",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 8am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT access_token, account_id, account_name FROM meta_ad_accounts WHERE client_id = 'ccc' AND account_status = 1 AND access_token IS NOT NULL LIMIT 1",
+        "options": {}
+      },
+      "id": "get-token",
+      "name": "Get Meta Token",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/me?access_token={{ $json.access_token }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "test-token",
+      "name": "Test Token (GET /me)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst token = $('Get Meta Token').first().json;\n\n// Check if the API returned an error\nconst hasError = response.error || !response.id;\nconst errorMsg = response.error ? response.error.message : 'No user ID returned';\n\nreturn [{\n  json: {\n    healthy: !hasError,\n    account_name: token.account_name,\n    account_id: token.account_id,\n    error_message: hasError ? errorMsg : null,\n    meta_user_id: response.id || null,\n    meta_user_name: response.name || null,\n    checked_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "evaluate",
+      "name": "Evaluate Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-healthy",
+              "leftValue": "={{ $json.healthy }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-healthy",
+      "name": "IF Token OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Ad Pilot <notification@ad-pilot.ai>\",\n  \"to\": [\"kelly@ad-pilot.ai\"],\n  \"subject\": \"\\u26A0\\uFE0F Meta Token EXPIRED — Capitol Car Credit\",\n  \"html\": \"<div style='max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;'><div style='background: #dc2626; padding: 16px 20px; border-radius: 8px 8px 0 0;'><h2 style='margin: 0; color: #ffffff; font-size: 18px;'>Meta Token Alert</h2></div><div style='border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;'><p style='margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #111827;'>The Meta access token for Capitol Car Credit is no longer working.</p><p style='margin: 0 0 8px; font-size: 14px; color: #111827;'><strong>Error:</strong> {{ $json.error_message }}</p><p style='margin: 0 0 8px; font-size: 14px; color: #111827;'><strong>Account:</strong> {{ $json.account_name }} ({{ $json.account_id }})</p><p style='margin: 0 0 16px; font-size: 14px; color: #6b7280;'>New leads will NOT have full details until this is fixed. They will still be logged with the fallback path.</p><p style='margin: 0; font-size: 14px; font-weight: 600; color: #111827;'>To fix: Generate a new System User token in Meta Business Manager and update the meta_ad_accounts table.</p></div><p style='text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;'>Ad Pilot Health Check</p></div>\"\n}",
+        "options": {}
+      },
+      "id": "send-alert",
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1100,
+        200
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Token is healthy — just log it\nreturn [{ json: { status: 'ok', message: 'Meta token is valid', checked_at: $json.checked_at, meta_user: $json.meta_user_name } }];"
+      },
+      "id": "log-ok",
+      "name": "Log: Token OK",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -100
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 8am CT": {
+      "main": [
+        [
+          {
+            "node": "Get Meta Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Meta Token": {
+      "main": [
+        [
+          {
+            "node": "Test Token (GET /me)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Token (GET /me)": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Response": {
+      "main": [
+        [
+          {
+            "node": "IF Token OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Token OK": {
+      "main": [
+        [
+          {
+            "node": "Log: Token OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Daily 8am CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "826eecce-1c9c-40d3-8314-4065eb22b8f4",
+  "activeVersionId": "826eecce-1c9c-40d3-8314-4065eb22b8f4",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-12T14:59:33.391Z",
+      "createdAt": "2026-02-12T14:59:33.391Z",
+      "role": "workflow:owner",
+      "workflowId": "6IDQYW3hmzu6rZFf",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-12T14:59:33.428Z",
+    "createdAt": "2026-02-12T14:59:33.428Z",
+    "versionId": "826eecce-1c9c-40d3-8314-4065eb22b8f4",
+    "workflowId": "6IDQYW3hmzu6rZFf",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 8 * * *"
+              }
+            ]
+          }
+        },
+        "id": "schedule-trigger",
+        "name": "Daily 8am CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT access_token, account_id, account_name FROM meta_ad_accounts WHERE client_id = 'ccc' AND account_status = 1 AND access_token IS NOT NULL LIMIT 1",
+          "options": {}
+        },
+        "id": "get-token",
+        "name": "Get Meta Token",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          220,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "=https://graph.facebook.com/v21.0/me?access_token={{ $json.access_token }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "test-token",
+        "name": "Test Token (GET /me)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          440,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst token = $('Get Meta Token').first().json;\n\n// Check if the API returned an error\nconst hasError = response.error || !response.id;\nconst errorMsg = response.error ? response.error.message : 'No user ID returned';\n\nreturn [{\n  json: {\n    healthy: !hasError,\n    account_name: token.account_name,\n    account_id: token.account_id,\n    error_message: hasError ? errorMsg : null,\n    meta_user_id: response.id || null,\n    meta_user_name: response.name || null,\n    checked_at: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "evaluate",
+        "name": "Evaluate Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "is-healthy",
+                "leftValue": "={{ $json.healthy }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-healthy",
+        "name": "IF Token OK",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          880,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"from\": \"Ad Pilot <notification@ad-pilot.ai>\",\n  \"to\": [\"kelly@ad-pilot.ai\"],\n  \"subject\": \"\\u26A0\\uFE0F Meta Token EXPIRED — Capitol Car Credit\",\n  \"html\": \"<div style='max-width: 500px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;'><div style='background: #dc2626; padding: 16px 20px; border-radius: 8px 8px 0 0;'><h2 style='margin: 0; color: #ffffff; font-size: 18px;'>Meta Token Alert</h2></div><div style='border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;'><p style='margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #111827;'>The Meta access token for Capitol Car Credit is no longer working.</p><p style='margin: 0 0 8px; font-size: 14px; color: #111827;'><strong>Error:</strong> {{ $json.error_message }}</p><p style='margin: 0 0 8px; font-size: 14px; color: #111827;'><strong>Account:</strong> {{ $json.account_name }} ({{ $json.account_id }})</p><p style='margin: 0 0 16px; font-size: 14px; color: #6b7280;'>New leads will NOT have full details until this is fixed. They will still be logged with the fallback path.</p><p style='margin: 0; font-size: 14px; font-weight: 600; color: #111827;'>To fix: Generate a new System User token in Meta Business Manager and update the meta_ad_accounts table.</p></div><p style='text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px;'>Ad Pilot Health Check</p></div>\"\n}",
+          "options": {}
+        },
+        "id": "send-alert",
+        "name": "Send Alert Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1100,
+          200
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Token is healthy — just log it\nreturn [{ json: { status: 'ok', message: 'Meta token is valid', checked_at: $json.checked_at, meta_user: $json.meta_user_name } }];"
+        },
+        "id": "log-ok",
+        "name": "Log: Token OK",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          -100
+        ]
+      }
+    ],
+    "connections": {
+      "Daily 8am CT": {
+        "main": [
+          [
+            {
+              "node": "Get Meta Token",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Meta Token": {
+        "main": [
+          [
+            {
+              "node": "Test Token (GET /me)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Test Token (GET /me)": {
+        "main": [
+          [
+            {
+              "node": "Evaluate Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Evaluate Response": {
+        "main": [
+          [
+            {
+              "node": "IF Token OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Token OK": {
+        "main": [
+          [
+            {
+              "node": "Log: Token OK",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Send Alert Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
