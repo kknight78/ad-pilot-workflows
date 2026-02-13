@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:08.787Z",
+  "updatedAt": "2026-02-08T15:28:48.584Z",
   "createdAt": "2026-01-26T23:34:58.134Z",
   "id": "ibc27Op1U5nPUtVV",
   "name": "Guidance Rules API",
@@ -126,7 +126,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body;\n\n// Check if this is an update (rule_id provided) or create (no rule_id)\nconst isUpdate = body.rule_id && body.rule_id.startsWith('rule_');\n\nlet rule_id, created_at;\n\nif (isUpdate) {\n  // Use existing rule_id for update\n  rule_id = body.rule_id;\n  created_at = body.created_at || new Date().toISOString();\n} else {\n  // Generate new rule_id with simple sequential format\n  const now = new Date();\n  const dateStr = now.toISOString().slice(0,10).replace(/-/g, '');\n  const timeStr = now.toISOString().slice(11,19).replace(/:/g, '');\n  rule_id = 'rule_' + dateStr + '_' + timeStr;\n  created_at = now.toISOString();\n}\n\nreturn [{\n  json: {\n    rule_id: rule_id,\n    client_id: body.client_id || 'ccc',\n    avatar_name: body.avatar_name || '*',\n    rule_text: body.rule_text || '',\n    category: body.category || 'facts',\n    active: body.active !== false ? 'TRUE' : 'FALSE',\n    created_at: created_at,\n    is_update: isUpdate\n  }\n}];\n"
+        "jsCode": "const body = $input.first().json.body;\n\n// Check if this is an update (rule_id provided) or create (no rule_id)\nconst isUpdate = body.rule_id && body.rule_id.startsWith('rule_');\n\nlet rule_id, created_at;\n\nif (isUpdate) {\n  // Use existing rule_id for update\n  rule_id = body.rule_id;\n  created_at = body.created_at || new Date().toISOString();\n} else {\n  // Generate new rule_id with simple sequential format\n  const now = new Date();\n  const dateStr = now.toISOString().slice(0,10).replace(/-/g, '');\n  const timeStr = now.toISOString().slice(11,19).replace(/:/g, '');\n  rule_id = 'rule_' + dateStr + '_' + timeStr;\n  created_at = now.toISOString();\n}\n\nif (!body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed');\n\nreturn [{\n  json: {\n    rule_id: rule_id,\n    client_id: body.client_id,\n    avatar_name: body.avatar_name || '*',\n    rule_text: body.rule_text || '',\n    category: body.category || 'facts',\n    active: body.active !== false ? 'TRUE' : 'FALSE',\n    created_at: created_at,\n    is_update: isUpdate\n  }\n}];\n"
       },
       "id": "prepare-new-rule",
       "name": "Prepare New Rule",
@@ -691,8 +691,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "c292e95b-3d47-4696-9b8f-efdaf2d8decf",
-  "activeVersionId": "c292e95b-3d47-4696-9b8f-efdaf2d8decf",
+  "versionId": "832fb062-f9ff-4175-aed6-6ec5ac7d04f6",
+  "activeVersionId": "832fb062-f9ff-4175-aed6-6ec5ac7d04f6",
   "triggerCount": 3,
   "shared": [
     {
@@ -704,9 +704,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T01:12:08.790Z",
-    "createdAt": "2026-01-30T01:12:08.790Z",
-    "versionId": "c292e95b-3d47-4696-9b8f-efdaf2d8decf",
+    "updatedAt": "2026-02-08T15:28:48.585Z",
+    "createdAt": "2026-02-08T15:28:48.585Z",
+    "versionId": "832fb062-f9ff-4175-aed6-6ec5ac7d04f6",
     "workflowId": "ibc27Op1U5nPUtVV",
     "nodes": [
       {
@@ -829,7 +829,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const body = $input.first().json.body;\n\n// Check if this is an update (rule_id provided) or create (no rule_id)\nconst isUpdate = body.rule_id && body.rule_id.startsWith('rule_');\n\nlet rule_id, created_at;\n\nif (isUpdate) {\n  // Use existing rule_id for update\n  rule_id = body.rule_id;\n  created_at = body.created_at || new Date().toISOString();\n} else {\n  // Generate new rule_id with simple sequential format\n  const now = new Date();\n  const dateStr = now.toISOString().slice(0,10).replace(/-/g, '');\n  const timeStr = now.toISOString().slice(11,19).replace(/:/g, '');\n  rule_id = 'rule_' + dateStr + '_' + timeStr;\n  created_at = now.toISOString();\n}\n\nreturn [{\n  json: {\n    rule_id: rule_id,\n    client_id: body.client_id || 'ccc',\n    avatar_name: body.avatar_name || '*',\n    rule_text: body.rule_text || '',\n    category: body.category || 'facts',\n    active: body.active !== false ? 'TRUE' : 'FALSE',\n    created_at: created_at,\n    is_update: isUpdate\n  }\n}];\n"
+          "jsCode": "const body = $input.first().json.body;\n\n// Check if this is an update (rule_id provided) or create (no rule_id)\nconst isUpdate = body.rule_id && body.rule_id.startsWith('rule_');\n\nlet rule_id, created_at;\n\nif (isUpdate) {\n  // Use existing rule_id for update\n  rule_id = body.rule_id;\n  created_at = body.created_at || new Date().toISOString();\n} else {\n  // Generate new rule_id with simple sequential format\n  const now = new Date();\n  const dateStr = now.toISOString().slice(0,10).replace(/-/g, '');\n  const timeStr = now.toISOString().slice(11,19).replace(/:/g, '');\n  rule_id = 'rule_' + dateStr + '_' + timeStr;\n  created_at = now.toISOString();\n}\n\nif (!body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed');\n\nreturn [{\n  json: {\n    rule_id: rule_id,\n    client_id: body.client_id,\n    avatar_name: body.avatar_name || '*',\n    rule_text: body.rule_text || '',\n    category: body.category || 'facts',\n    active: body.active !== false ? 'TRUE' : 'FALSE',\n    created_at: created_at,\n    is_update: isUpdate\n  }\n}];\n"
         },
         "id": "prepare-new-rule",
         "name": "Prepare New Rule",
