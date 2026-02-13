@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T00:04:20.787Z",
+  "updatedAt": "2026-02-12T18:53:01.157Z",
   "createdAt": "2026-01-26T23:34:56.704Z",
   "id": "hqfMwxKgqE3DD8VZ",
   "name": "[Service] Send User Notification",
@@ -113,20 +113,6 @@
     },
     {
       "parameters": {
-        "mode": "chooseBranch",
-        "output": "empty"
-      },
-      "id": "merge-paths",
-      "name": "Merge Paths",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.1,
-      "position": [
-        1120,
-        64
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody\n  }\n}];"
       },
       "id": "prepare-messages",
@@ -231,7 +217,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const preparedData = $('Prepare Messages').item.json;\nconst emailResult = $('Send Email (Resend)').item?.json;\nconst smsResult = $('Send SMS (Twilio)').item?.json;\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
+        "jsCode": "const preparedData = $('Prepare Messages').item.json;\n\nlet emailResult = null;\ntry { emailResult = $('Send Email (Resend)').item?.json; } catch(e) {}\n\nlet smsResult = null;\ntry { smsResult = $('Send an SMS/MMS/WhatsApp message').item?.json; } catch(e) {}\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
       },
       "id": "return-result",
       "name": "Return Result",
@@ -266,34 +252,6 @@
       "position": [
         1792,
         352
-      ]
-    },
-    {
-      "parameters": {
-        "mode": "chooseBranch",
-        "output": "empty"
-      },
-      "id": "merge-email",
-      "name": "Merge Email",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.1,
-      "position": [
-        2016,
-        -128
-      ]
-    },
-    {
-      "parameters": {
-        "mode": "chooseBranch",
-        "output": "empty"
-      },
-      "id": "merge-sms",
-      "name": "Merge SMS",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.1,
-      "position": [
-        2016,
-        256
       ]
     },
     {
@@ -375,7 +333,7 @@
       "main": [
         [
           {
-            "node": "Merge Paths",
+            "node": "Prepare Messages",
             "type": "main",
             "index": 0
           }
@@ -383,17 +341,6 @@
       ]
     },
     "Use Direct Contact": {
-      "main": [
-        [
-          {
-            "node": "Merge Paths",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge Paths": {
       "main": [
         [
           {
@@ -442,14 +389,14 @@
       "main": [
         [
           {
-            "node": "Merge Email",
+            "node": "Return Result",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Merge Email",
+            "node": "Return Result",
             "type": "main",
             "index": 0
           }
@@ -460,9 +407,9 @@
       "main": [
         [
           {
-            "node": "Merge Email",
+            "node": "Return Result",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
@@ -489,28 +436,6 @@
       "main": [
         [
           {
-            "node": "Merge SMS",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge Email": {
-      "main": [
-        [
-          {
-            "node": "Return Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge SMS": {
-      "main": [
-        [
-          {
             "node": "Return Result",
             "type": "main",
             "index": 0
@@ -522,7 +447,7 @@
       "main": [
         [
           {
-            "node": "Merge SMS",
+            "node": "Return Result",
             "type": "main",
             "index": 0
           }
@@ -538,8 +463,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "14ccd5de-3521-4917-bee1-8e33bcbdc88a",
-  "activeVersionId": "14ccd5de-3521-4917-bee1-8e33bcbdc88a",
+  "versionId": "b6b34f01-4644-4a16-a986-6d15ecd3ad0c",
+  "activeVersionId": "b6b34f01-4644-4a16-a986-6d15ecd3ad0c",
   "triggerCount": 0,
   "shared": [
     {
@@ -551,9 +476,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T00:04:20.790Z",
-    "createdAt": "2026-01-30T00:04:20.790Z",
-    "versionId": "14ccd5de-3521-4917-bee1-8e33bcbdc88a",
+    "updatedAt": "2026-02-12T18:53:01.159Z",
+    "createdAt": "2026-02-12T18:53:01.159Z",
+    "versionId": "b6b34f01-4644-4a16-a986-6d15ecd3ad0c",
     "workflowId": "hqfMwxKgqE3DD8VZ",
     "nodes": [
       {
@@ -663,20 +588,6 @@
       },
       {
         "parameters": {
-          "mode": "chooseBranch",
-          "output": "empty"
-        },
-        "id": "merge-paths",
-        "name": "Merge Paths",
-        "type": "n8n-nodes-base.merge",
-        "typeVersion": 3.1,
-        "position": [
-          1120,
-          64
-        ]
-      },
-      {
-        "parameters": {
           "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody\n  }\n}];"
         },
         "id": "prepare-messages",
@@ -781,7 +692,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const preparedData = $('Prepare Messages').item.json;\nconst emailResult = $('Send Email (Resend)').item?.json;\nconst smsResult = $('Send SMS (Twilio)').item?.json;\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
+          "jsCode": "const preparedData = $('Prepare Messages').item.json;\n\nlet emailResult = null;\ntry { emailResult = $('Send Email (Resend)').item?.json; } catch(e) {}\n\nlet smsResult = null;\ntry { smsResult = $('Send an SMS/MMS/WhatsApp message').item?.json; } catch(e) {}\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
         },
         "id": "return-result",
         "name": "Return Result",
@@ -816,34 +727,6 @@
         "position": [
           1792,
           352
-        ]
-      },
-      {
-        "parameters": {
-          "mode": "chooseBranch",
-          "output": "empty"
-        },
-        "id": "merge-email",
-        "name": "Merge Email",
-        "type": "n8n-nodes-base.merge",
-        "typeVersion": 3.1,
-        "position": [
-          2016,
-          -128
-        ]
-      },
-      {
-        "parameters": {
-          "mode": "chooseBranch",
-          "output": "empty"
-        },
-        "id": "merge-sms",
-        "name": "Merge SMS",
-        "type": "n8n-nodes-base.merge",
-        "typeVersion": 3.1,
-        "position": [
-          2016,
-          256
         ]
       },
       {
@@ -925,7 +808,7 @@
         "main": [
           [
             {
-              "node": "Merge Paths",
+              "node": "Prepare Messages",
               "type": "main",
               "index": 0
             }
@@ -933,17 +816,6 @@
         ]
       },
       "Use Direct Contact": {
-        "main": [
-          [
-            {
-              "node": "Merge Paths",
-              "type": "main",
-              "index": 1
-            }
-          ]
-        ]
-      },
-      "Merge Paths": {
         "main": [
           [
             {
@@ -992,14 +864,14 @@
         "main": [
           [
             {
-              "node": "Merge Email",
+              "node": "Return Result",
               "type": "main",
               "index": 0
             }
           ],
           [
             {
-              "node": "Merge Email",
+              "node": "Return Result",
               "type": "main",
               "index": 0
             }
@@ -1010,9 +882,9 @@
         "main": [
           [
             {
-              "node": "Merge Email",
+              "node": "Return Result",
               "type": "main",
-              "index": 1
+              "index": 0
             }
           ]
         ]
@@ -1039,28 +911,6 @@
         "main": [
           [
             {
-              "node": "Merge SMS",
-              "type": "main",
-              "index": 1
-            }
-          ]
-        ]
-      },
-      "Merge Email": {
-        "main": [
-          [
-            {
-              "node": "Return Result",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Merge SMS": {
-        "main": [
-          [
-            {
               "node": "Return Result",
               "type": "main",
               "index": 0
@@ -1072,7 +922,7 @@
         "main": [
           [
             {
-              "node": "Merge SMS",
+              "node": "Return Result",
               "type": "main",
               "index": 0
             }
