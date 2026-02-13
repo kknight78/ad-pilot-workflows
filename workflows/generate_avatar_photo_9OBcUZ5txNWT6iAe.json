@@ -1,0 +1,647 @@
+{
+  "updatedAt": "2026-02-11T01:36:17.674Z",
+  "createdAt": "2026-02-10T23:57:16.138Z",
+  "id": "9OBcUZ5txNWT6iAe",
+  "name": "Generate Avatar Photo",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-0001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "generate-avatar-photo",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-avatar-photo",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-0002",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.body.image_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-0003",
+      "name": "Build Gemini Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst item = items[0];\nconst webhookBody = $('Webhook').item.json.body;\nconst { job_id, prompt, person_id, client_slug } = webhookBody;\n\n// Read binary data buffer using n8n helper (handles filesystem-v2 storage)\nconst binaryBuffer = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst base64 = binaryBuffer.toString('base64');\nconst mimeType = item.binary.data.mimeType || 'image/jpeg';\n\nconst systemPrompt = \"You are an AI image editor for avatar photos. The user wants to modify this photo of a person. CRITICAL: Preserve the person's face, facial features, and identity exactly. Generate a high-quality 9:16 portrait aspect ratio image. The result should look professional and suitable for use as a video avatar photo. Follow the user's instructions exactly.\";\n\nconst requestBody = {\n  contents: [{\n    parts: [\n      {\n        inlineData: {\n          mimeType: mimeType,\n          data: base64\n        }\n      },\n      {\n        text: systemPrompt + \"\\n\\nUser request: \" + prompt\n      }\n    ]\n  }],\n  generationConfig: {\n    responseModalities: [\"TEXT\", \"IMAGE\"]\n  }\n};\n\nreturn [{ json: { requestBody, job_id, person_id, client_slug } }];"
+      }
+    },
+    {
+      "id": "node-0004",
+      "name": "Gemini Image Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g3uUNUN8DLHbJv5q",
+          "name": "Google API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-0005",
+      "name": "Extract Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst responseData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nconst candidates = responseData.candidates;\nif (!candidates || candidates.length === 0) {\n  throw new Error('No candidates in Gemini response');\n}\n\nconst parts = candidates[0].content.parts;\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nfor (const part of parts) {\n  if (part.inlineData) {\n    imageBase64 = part.inlineData.data;\n    mimeType = part.inlineData.mimeType || 'image/png';\n  }\n}\n\nif (!imageBase64) {\n  throw new Error('No image found in Gemini response');\n}\n\nreturn [{ json: {\n  file: 'data:' + mimeType + ';base64,' + imageBase64,\n  folder: 'avatars/' + (webhookBody.client_slug || 'general') + '/ai-generated',\n  public_id: 'ai_gen_' + Date.now(),\n  job_id: webhookBody.job_id\n} }];"
+      }
+    },
+    {
+      "id": "node-0006",
+      "name": "Upload to Cloudinary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json.file }}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "ad_pilot_unsigned"
+            },
+            {
+              "name": "folder",
+              "value": "={{ $json.folder }}"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.public_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-0007",
+      "name": "Format Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst uploadData = items[0].json;\nconst extractData = $('Extract Image').item.json;\n\nif (!uploadData.secure_url) {\n  throw new Error('Cloudinary upload failed: ' + JSON.stringify(uploadData));\n}\n\nreturn [{ json: {\n  job_id: extractData.job_id,\n  cloudinary_url: uploadData.secure_url,\n  public_id: uploadData.public_id\n} }];"
+      }
+    },
+    {
+      "id": "node-0008",
+      "name": "Update Job Complete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1540,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE ai_photo_jobs SET status = 'complete', cloudinary_url = '{{ $json.cloudinary_url }}', public_id = '{{ $json.public_id }}', updated_at = NOW() WHERE id = '{{ $json.job_id }}'::uuid;",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "node-0009",
+      "name": "Build Error Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        540
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst errorData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nlet errorMessage = 'Gemini image generation failed';\n\nif (errorData.error) {\n  if (typeof errorData.error === 'string') {\n    errorMessage = errorData.error;\n  } else if (errorData.error.message) {\n    errorMessage = errorData.error.message;\n  }\n} else if (errorData.message) {\n  errorMessage = errorData.message;\n}\n\nreturn [{ json: {\n  job_id: webhookBody.job_id,\n  error: errorMessage\n} }];"
+      }
+    },
+    {
+      "id": "node-0010",
+      "name": "Update Job Failed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1100,
+        540
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE ai_photo_jobs SET status = 'failed', error = '{{ $json.error.replace(/'/g, \"''\") }}', updated_at = NOW() WHERE id = '{{ $json.job_id }}'::uuid;",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini Request": {
+      "main": [
+        [
+          {
+            "node": "Gemini Image Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Image Gen": {
+      "main": [
+        [
+          {
+            "node": "Extract Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Error Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Format Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Result": {
+      "main": [
+        [
+          {
+            "node": "Update Job Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Error Info": {
+      "main": [
+        [
+          {
+            "node": "Update Job Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "1e593eb5-efc2-49c8-abae-c2dca7adfd0a",
+  "activeVersionId": "1e593eb5-efc2-49c8-abae-c2dca7adfd0a",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-10T23:57:16.138Z",
+      "createdAt": "2026-02-10T23:57:16.138Z",
+      "role": "workflow:owner",
+      "workflowId": "9OBcUZ5txNWT6iAe",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-11T01:36:17.678Z",
+    "createdAt": "2026-02-11T01:36:17.678Z",
+    "versionId": "1e593eb5-efc2-49c8-abae-c2dca7adfd0a",
+    "workflowId": "9OBcUZ5txNWT6iAe",
+    "nodes": [
+      {
+        "id": "node-0001",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          300
+        ],
+        "webhookId": "generate-avatar-photo",
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "generate-avatar-photo",
+          "responseMode": "onReceived",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-0002",
+        "name": "Download Image",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          220,
+          300
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $json.body.image_url }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            },
+            "timeout": 30000
+          }
+        }
+      },
+      {
+        "id": "node-0003",
+        "name": "Build Gemini Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          300
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "jsCode": "const items = $input.all();\nconst item = items[0];\nconst webhookBody = $('Webhook').item.json.body;\nconst { job_id, prompt, person_id, client_slug } = webhookBody;\n\n// Read binary data buffer using n8n helper (handles filesystem-v2 storage)\nconst binaryBuffer = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst base64 = binaryBuffer.toString('base64');\nconst mimeType = item.binary.data.mimeType || 'image/jpeg';\n\nconst systemPrompt = \"You are an AI image editor for avatar photos. The user wants to modify this photo of a person. CRITICAL: Preserve the person's face, facial features, and identity exactly. Generate a high-quality 9:16 portrait aspect ratio image. The result should look professional and suitable for use as a video avatar photo. Follow the user's instructions exactly.\";\n\nconst requestBody = {\n  contents: [{\n    parts: [\n      {\n        inlineData: {\n          mimeType: mimeType,\n          data: base64\n        }\n      },\n      {\n        text: systemPrompt + \"\\n\\nUser request: \" + prompt\n      }\n    ]\n  }],\n  generationConfig: {\n    responseModalities: [\"TEXT\", \"IMAGE\"]\n  }\n};\n\nreturn [{ json: { requestBody, job_id, person_id, client_slug } }];"
+        }
+      },
+      {
+        "id": "node-0004",
+        "name": "Gemini Image Gen",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          660,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "g3uUNUN8DLHbJv5q",
+            "name": "Google API"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "id": "node-0005",
+        "name": "Extract Image",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          300
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "jsCode": "const items = $input.all();\nconst responseData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nconst candidates = responseData.candidates;\nif (!candidates || candidates.length === 0) {\n  throw new Error('No candidates in Gemini response');\n}\n\nconst parts = candidates[0].content.parts;\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nfor (const part of parts) {\n  if (part.inlineData) {\n    imageBase64 = part.inlineData.data;\n    mimeType = part.inlineData.mimeType || 'image/png';\n  }\n}\n\nif (!imageBase64) {\n  throw new Error('No image found in Gemini response');\n}\n\nreturn [{ json: {\n  file: 'data:' + mimeType + ';base64,' + imageBase64,\n  folder: 'avatars/' + (webhookBody.client_slug || 'general') + '/ai-generated',\n  public_id: 'ai_gen_' + Date.now(),\n  job_id: webhookBody.job_id\n} }];"
+        }
+      },
+      {
+        "id": "node-0006",
+        "name": "Upload to Cloudinary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "file",
+                "value": "={{ $json.file }}"
+              },
+              {
+                "name": "upload_preset",
+                "value": "ad_pilot_unsigned"
+              },
+              {
+                "name": "folder",
+                "value": "={{ $json.folder }}"
+              },
+              {
+                "name": "public_id",
+                "value": "={{ $json.public_id }}"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        }
+      },
+      {
+        "id": "node-0007",
+        "name": "Format Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          300
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "jsCode": "const items = $input.all();\nconst uploadData = items[0].json;\nconst extractData = $('Extract Image').item.json;\n\nif (!uploadData.secure_url) {\n  throw new Error('Cloudinary upload failed: ' + JSON.stringify(uploadData));\n}\n\nreturn [{ json: {\n  job_id: extractData.job_id,\n  cloudinary_url: uploadData.secure_url,\n  public_id: uploadData.public_id\n} }];"
+        }
+      },
+      {
+        "id": "node-0008",
+        "name": "Update Job Complete",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1540,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE ai_photo_jobs SET status = 'complete', cloudinary_url = '{{ $json.cloudinary_url }}', public_id = '{{ $json.public_id }}', updated_at = NOW() WHERE id = '{{ $json.job_id }}'::uuid;",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "node-0009",
+        "name": "Build Error Info",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          540
+        ],
+        "parameters": {
+          "language": "javaScript",
+          "jsCode": "const items = $input.all();\nconst errorData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nlet errorMessage = 'Gemini image generation failed';\n\nif (errorData.error) {\n  if (typeof errorData.error === 'string') {\n    errorMessage = errorData.error;\n  } else if (errorData.error.message) {\n    errorMessage = errorData.error.message;\n  }\n} else if (errorData.message) {\n  errorMessage = errorData.message;\n}\n\nreturn [{ json: {\n  job_id: webhookBody.job_id,\n  error: errorMessage\n} }];"
+        }
+      },
+      {
+        "id": "node-0010",
+        "name": "Update Job Failed",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1100,
+          540
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE ai_photo_jobs SET status = 'failed', error = '{{ $json.error.replace(/'/g, \"''\") }}', updated_at = NOW() WHERE id = '{{ $json.job_id }}'::uuid;",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Download Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download Image": {
+        "main": [
+          [
+            {
+              "node": "Build Gemini Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Gemini Request": {
+        "main": [
+          [
+            {
+              "node": "Gemini Image Gen",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Image Gen": {
+        "main": [
+          [
+            {
+              "node": "Extract Image",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build Error Info",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Image": {
+        "main": [
+          [
+            {
+              "node": "Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Format Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Result": {
+        "main": [
+          [
+            {
+              "node": "Update Job Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Error Info": {
+        "main": [
+          [
+            {
+              "node": "Update Job Failed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
