@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-26T23:34:45.891Z",
+  "updatedAt": "2026-02-08T15:28:50.080Z",
   "createdAt": "2026-01-26T23:34:45.891Z",
   "id": "CSZLClT81tnTS3Fy",
   "name": "Direction Generator",
@@ -44,7 +44,7 @@
             {
               "id": "client_id",
               "name": "client_id",
-              "value": "={{ $json.body.client_id || 'ccc' }}",
+              "value": "={{ (() => { if (!$json.body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed'); return $json.body.client_id; })() }}",
               "type": "string"
             },
             {
@@ -218,7 +218,7 @@
             {
               "id": "prompt",
               "name": "prompt",
-              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═══════════════════════════════════════════════════════════════\n\nGenerate ONE creative direction/theme for this week's content.\n\nThis direction will be used to create BOTH:\n- A paid ad with a hook that uses this theme\n- An educational video topic that ties into this theme\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nGood directions are:\n- Timely (holidays, seasons, current events, weather)\n- Relatable to everyday life\n- Can connect to BOTH car buying AND car ownership/maintenance\n- Creative and unexpected angles work great\n\nExamples of good directions:\n- \"Groundhog Day\" (February timing, repetition theme)\n- \"Tax Refund Season\" (Spring, money theme)\n- \"Back to School\" (August, family/reliability theme)\n- \"New Year, New Ride\" (January, fresh start theme)\n- \"Summer Road Trip\" (June-August, adventure theme)\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest directions about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\nOutput ONLY valid JSON:\n{\n  \"direction\": \"Short Direction Name (2-4 words)\",\n  \"emoji\": \"🎯\",\n  \"why\": \"Brief explanation of why this direction works for both ads and education\"\n}\n\nNo explanations outside the JSON. Generate now:",
+              "value": "=You are a creative marketing strategist for Ad Pilot.\n\n═══════════════════════════════════════════════════════════════\n🎯 WHO WE ARE:\n═══════════════════════════════════════════════════════════════\n\nAd Pilot creates video ads for Capitol Car Credit, a local \ndealership serving Central Illinois (Rantoul, Champaign-Urbana, \nDanville area). We REJECT traditional used car salesman tactics.\n\nOur philosophy: Help small businesses talk to their community \nauthentically — like neighbors, not salespeople.\n\n═══════════════════════════════════════════════════════════════\n📋 YOUR TASK:\n═════════════════════════════��═════════════════════════════════\n\nGenerate ONE creative direction/theme for this week's content.\n\nThis direction will be used to create BOTH:\n- A paid ad with a hook that uses this theme\n- An educational video topic that ties into this theme\n\nContext:\n- Location: {{ $json.location }}\n- Date: {{ $json.current_date }}\n- Month: {{ $json.current_month }}\n\nGood directions are:\n- Timely (holidays, seasons, current events, weather)\n- Relatable to everyday life\n- Can connect to BOTH car buying AND car ownership/maintenance\n- Creative and unexpected angles work great\n\nExamples of good directions:\n- \"Groundhog Day\" (February timing, repetition theme)\n- \"Tax Refund Season\" (Spring, money theme)\n- \"Back to School\" (August, family/reliability theme)\n- \"New Year, New Ride\" (January, fresh start theme)\n- \"Summer Road Trip\" (June-August, adventure theme)\n\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL COMPLIANCE (CRITICAL):\n═══════════════════════════════════════════════════════════════\n\n❌ NEVER suggest directions about:\n- \"Guaranteed approval\"\n- \"Anyone can get financed\"  \n- \"Bad credit? No problem!\"\n- Any promise of financing approval\n\nOutput ONLY valid JSON:\n{\n  \"direction\": \"Short Direction Name (2-4 words)\",\n  \"emoji\": \"🎯\",\n  \"why\": \"Brief explanation of why this direction works for both ads and education\"\n}\n\nNo explanations outside the JSON. Generate now:",
               "type": "string"
             }
           ]
@@ -271,7 +271,7 @@
       ],
       "credentials": {
         "googlePalmApi": {
-          "id": "prVNksIVEgzVrhKB",
+          "id": "4ayLTz1aZXMGf1GO",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -502,7 +502,7 @@
       ],
       "credentials": {
         "googlePalmApi": {
-          "id": "prVNksIVEgzVrhKB",
+          "id": "4ayLTz1aZXMGf1GO",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -544,7 +544,7 @@
       ],
       "credentials": {
         "googlePalmApi": {
-          "id": "prVNksIVEgzVrhKB",
+          "id": "4ayLTz1aZXMGf1GO",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -1165,7 +1165,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "eb444d5f-c19a-41d1-b1c6-a0869f7edf9a",
+  "versionId": "975f3bca-7a17-4dc4-b537-54bcf56ac3aa",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
