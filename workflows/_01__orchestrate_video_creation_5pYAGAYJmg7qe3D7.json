@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T22:49:25.700Z",
+  "updatedAt": "2026-02-09T03:19:38.466Z",
   "createdAt": "2026-01-26T23:34:50.230Z",
   "id": "5pYAGAYJmg7qe3D7",
   "name": "[01] Orchestrate Video Creation",
@@ -1119,13 +1119,7 @@
             "node": "Update Script Ready",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Script Ready": {
-      "main": [
-        [
+          },
           {
             "node": "Respond - Script Preview",
             "type": "main",
@@ -1143,8 +1137,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b564d2da-c6d5-4bf0-a986-74a9944c7265",
-  "activeVersionId": "b564d2da-c6d5-4bf0-a986-74a9944c7265",
+  "versionId": "7df2cd44-1879-443f-ada7-75189dc589cb",
+  "activeVersionId": "7df2cd44-1879-443f-ada7-75189dc589cb",
   "triggerCount": 1,
   "shared": [
     {
@@ -1156,9 +1150,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T22:49:25.703Z",
-    "createdAt": "2026-01-30T22:49:25.703Z",
-    "versionId": "b564d2da-c6d5-4bf0-a986-74a9944c7265",
+    "updatedAt": "2026-02-09T03:19:38.557Z",
+    "createdAt": "2026-02-09T03:19:38.557Z",
+    "versionId": "7df2cd44-1879-443f-ada7-75189dc589cb",
     "workflowId": "5pYAGAYJmg7qe3D7",
     "nodes": [
       {
@@ -2274,13 +2268,7 @@
               "node": "Update Script Ready",
               "type": "main",
               "index": 0
-            }
-          ]
-        ]
-      },
-      "Update Script Ready": {
-        "main": [
-          [
+            },
             {
               "node": "Respond - Script Preview",
               "type": "main",
