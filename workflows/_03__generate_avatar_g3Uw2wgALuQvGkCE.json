@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:14:00.247Z",
+  "updatedAt": "2026-02-11T19:37:04.000Z",
   "createdAt": "2026-01-26T23:34:49.477Z",
   "id": "g3Uw2wgALuQvGkCE",
   "name": "[03] Generate Avatar",
@@ -580,7 +580,7 @@
         "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+        "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": .5\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -917,9 +917,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "d0be88b4-dd41-402b-ad6e-56e05819f412",
-  "activeVersionId": "d0be88b4-dd41-402b-ad6e-56e05819f412",
+  "pinData": {},
+  "versionId": "9600887a-80c4-4b2f-83dc-529dee795cbf",
+  "activeVersionId": "9600887a-80c4-4b2f-83dc-529dee795cbf",
   "triggerCount": 0,
   "shared": [
     {
@@ -931,9 +931,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T01:14:00.250Z",
-    "createdAt": "2026-01-30T01:14:00.250Z",
-    "versionId": "d0be88b4-dd41-402b-ad6e-56e05819f412",
+    "updatedAt": "2026-02-11T19:37:08.358Z",
+    "createdAt": "2026-02-11T19:37:04.006Z",
+    "versionId": "9600887a-80c4-4b2f-83dc-529dee795cbf",
     "workflowId": "g3Uw2wgALuQvGkCE",
     "nodes": [
       {
@@ -1510,7 +1510,7 @@
           "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+          "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": .5\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
@@ -1841,9 +1841,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "name": "Version 9600887a",
+    "description": "",
+    "autosaved": true
   },
   "tags": []
 }
