@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-03T22:21:07.213Z",
+  "updatedAt": "2026-02-11T03:04:51.094Z",
   "createdAt": "2026-01-26T23:34:44.106Z",
   "id": "d7gwJvT7f9pk9O6O",
   "name": "Generate Themed Background",
@@ -139,7 +139,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -245,8 +245,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "1d1dafe0-ec6b-48fb-b865-0f4ef1029dd2",
-  "activeVersionId": "1d1dafe0-ec6b-48fb-b865-0f4ef1029dd2",
+  "versionId": "1a815f10-2aed-4af1-bf67-9552ba4896f4",
+  "activeVersionId": "1a815f10-2aed-4af1-bf67-9552ba4896f4",
   "triggerCount": 1,
   "shared": [
     {
@@ -258,9 +258,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-03T22:21:16.256Z",
-    "createdAt": "2026-02-03T22:21:07.214Z",
-    "versionId": "1d1dafe0-ec6b-48fb-b865-0f4ef1029dd2",
+    "updatedAt": "2026-02-11T03:04:55.298Z",
+    "createdAt": "2026-02-11T03:04:51.096Z",
+    "versionId": "1a815f10-2aed-4af1-bf67-9552ba4896f4",
     "workflowId": "d7gwJvT7f9pk9O6O",
     "nodes": [
       {
@@ -396,7 +396,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
           "authentication": "genericCredentialType",
           "genericAuthType": "httpHeaderAuth",
           "sendBody": true,
@@ -495,7 +495,7 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 1d1dafe0",
+    "name": "Version 1a815f10",
     "description": "",
     "autosaved": true
   },
