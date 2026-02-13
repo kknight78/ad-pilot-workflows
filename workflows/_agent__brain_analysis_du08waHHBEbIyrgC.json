@@ -1,0 +1,1281 @@
+{
+  "updatedAt": "2026-02-13T01:00:56.249Z",
+  "createdAt": "2026-02-12T14:28:30.580Z",
+  "id": "du08waHHBEbIyrgC",
+  "name": "[AGENT] Brain Analysis",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "Monday 6am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brain-analysis",
+        "responseMode": "onReceived",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "trigger-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "brain-analysis"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DISTINCT mac.client_id, c.name as client_name, \n  c.monthly_budget, c.timezone,\n  mac.ig_account_id,\n  (SELECT string_agg(DISTINCT cp.platform, ', ') \n   FROM client_platforms cp \n   JOIN clients cl ON cp.client_id = cl.id \n   WHERE cl.slug = mac.client_id AND cp.is_enabled = true\n  ) as active_platforms\nFROM meta_ad_accounts mac\nJOIN clients c ON mac.client_id = c.slug\nWHERE mac.account_status = 1 \n  AND mac.access_token IS NOT NULL\n  AND (mac.token_expires_at IS NULL OR mac.token_expires_at > NOW())",
+        "options": {}
+      },
+      "id": "get-clients",
+      "name": "Get Active Clients",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through clients with webhook params\nconst clients = $input.all();\nlet force = false;\ntry {\n  const webhookData = $('Webhook Trigger').first().json?.body || {};\n  force = webhookData.force === true;\n} catch(e) {}\n\nreturn clients.map(item => ({\n  json: { ...item.json, _force: force }\n}));"
+      },
+      "id": "add-params",
+      "name": "Add Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assemble Brain analysis prompt from query results\nconst client = $('Add Params').first().json;\nconst q = $('Run All Queries').first().json;\n\nconst templatePerf = q.template_perf || [];\nconst themePerf = q.theme_perf || [];\nconst weeklyTrends = q.weekly_trends || [];\nconst activeAds = q.active_ads || [];\nconst boostCandidates = q.boost_candidates || [];\nconst seriesPerf = q.series_perf || [];\nconst prevBrain = q.prev_brain || null;\nconst placementPerf = q.placement_perf || [];\nconst placementWeekly = q.placement_weekly || [];\n\n// Data quality check\nconst totalWeeks = weeklyTrends.length;\nlet dataQuality = 'good';\nif (totalWeeks < 2) dataQuality = 'insufficient';\nelse if (totalWeeks < 4) dataQuality = 'limited';\n\n// Seasonal context\nconst now = new Date();\nconst month = now.getMonth() + 1;\nconst day = now.getDate();\nconst events = [];\nif (month === 1) events.push('New Year / Fresh Start season');\nif (month === 2 && day < 15) events.push(\"Valentine's Day approaching\");\nif (month === 2 || month === 3) events.push('Tax refund season - buyers have cash');\nif (month === 3 || month === 4) events.push('Spring - winter vehicle swap time');\nif (month === 5) events.push('Memorial Day sales, graduation gifts');\nif (month === 6 || month === 7) events.push('Summer road trip season');\nif (month === 7) events.push('4th of July sales');\nif (month === 8) events.push('Back to school - first car season');\nif (month === 9) events.push('Labor Day sales, model year turnover');\nif (month === 10 || month === 11) events.push('Year-end deals approaching');\nif (month === 11) events.push('Black Friday / Cyber Monday');\nif (month === 12) events.push('Holiday gifts, year-end clearance, tax planning');\nconst seasonalContext = events.join('; ') || 'No major seasonal events';\n\n// Week start\nconst weekStart = new Date(now);\nweekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);\nconst weekStartStr = weekStart.toISOString().split('T')[0];\n\n// Organic sections\nlet organicSection = '';\nif (boostCandidates.length === 0 && seriesPerf.length === 0) {\n  organicSection = '\\n## Organic Content\\nNo organic content data available yet. Skip organic recommendations.\\n';\n} else {\n  organicSection = '\\n## Organic Content - Boost Candidates\\n' + \n    (boostCandidates.length > 0 ? JSON.stringify(boostCandidates, null, 2) : 'No boost candidates (no posts >2% engagement in last 14 days).') +\n    '\\n\\n## Organic Content - Series Performance\\n' +\n    (seriesPerf.length > 0 ? JSON.stringify(seriesPerf, null, 2) : 'No series data yet.');\n}\n\nconst prevSection = prevBrain \n  ? JSON.stringify(prevBrain, null, 2) \n  : 'No previous Brain analysis. This is the first run.';\n\nconst userPrompt = 'Analyze the following performance data for client ' + client.client_id + ' (' + client.client_name + ') and generate insights for the week of ' + weekStartStr + '.\\n\\n' +\n  '## Paid Ad Performance by Template (Last 30 Days)\\n' + JSON.stringify(templatePerf, null, 2) + '\\n\\n' +\n  '## Paid Ad Performance by Theme (Last 30 Days)\\n' + JSON.stringify(themePerf, null, 2) + '\\n\\n' +\n  '## Week-over-Week Trends (Last 8 Weeks)\\n' + JSON.stringify(weeklyTrends, null, 2) + '\\n\\n' +\n  '## This Week\\'s Active Ads\\n' + JSON.stringify(activeAds, null, 2) + '\\n' +\n  '## Paid Ad Performance by Placement (Last 30 Days)\\n' + \n  (placementPerf.length > 0 ? JSON.stringify(placementPerf, null, 2) : 'No placement-level data available yet.') + '\\n\\n' +\n  '## Placement Performance Week-over-Week (Last 4 Weeks)\\n' + \n  (placementWeekly.length > 0 ? JSON.stringify(placementWeekly, null, 2) : 'No weekly placement data yet.') + '\\n\\n' +\n  organicSection + '\\n\\n' +\n  '## Previous Week\\'s Brain Insights\\n' + prevSection + '\\n\\n' +\n  '## Client Context\\n' +\n  '- Monthly ad budget: $' + (client.monthly_budget || 'unknown') + '\\n' +\n  '- Active platforms: ' + (client.active_platforms || 'meta') + '\\n' +\n  '- Current date: ' + now.toISOString().split('T')[0] + '\\n' +\n  '- Season/events: ' + seasonalContext + '\\n' +\n  '- Data quality: ' + dataQuality;\n\nreturn [{\n  json: {\n    client_id: client.client_id,\n    client_name: client.client_name,\n    week_start: weekStartStr,\n    _force: client._force,\n    _dataQuality: dataQuality,\n    userPrompt: userPrompt\n  }\n}];"
+      },
+      "id": "assemble-prompt",
+      "name": "Assemble Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "not-skip",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-run",
+      "name": "Run Analysis?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._claudeBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "call-llm",
+      "name": "Call Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1860,
+        -60
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "Cias5aAJewPKMMCa",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and validate the LLM response\nconst promptData = $('Prepare Claude Request').first().json;\nconst response = $input.first().json;\n\nlet insights = null;\nlet parseError = '';\n\ntry {\n  let text = '';\n  if (response.content && response.content[0]) {\n    text = response.content[0].text || '';\n  } else if (response.error) {\n    throw new Error('API error: ' + JSON.stringify(response.error));\n  }\n\n  // Clean up markdown fences if present\n  text = text.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n\n  insights = JSON.parse(text);\n\n  const required = ['summary', 'recommendations', 'trends', 'meta'];\n  const missing = required.filter(f => !insights[f]);\n  if (missing.length > 0) {\n    throw new Error('Missing required fields: ' + missing.join(', '));\n  }\n} catch(e) {\n  parseError = e.message;\n}\n\nreturn [{\n  json: {\n    client_id: promptData.client_id,\n    client_name: promptData.client_name,\n    week_start: promptData.week_start,\n    _existingId: promptData._existingId,\n    insights: insights,\n    _isValid: parseError === '',\n    _parseError: parseError,\n    _rawResponse: parseError ? (response.content?.[0]?.text || JSON.stringify(response)).substring(0, 2000) : null\n  }\n}];"
+      },
+      "id": "validate-json",
+      "name": "Validate JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2060,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "is-valid",
+              "leftValue": "={{ $json._isValid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-parsed",
+      "name": "Parse OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2260,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO brain_insights (client_id, week_start, insights)\nVALUES ('{{ $json.client_id }}', '{{ $json.week_start }}', '{{ JSON.stringify($json.insights).replace(/'/g, \"''\") }}'::jsonb)\nON CONFLICT (client_id, week_start) DO UPDATE SET\n  insights = EXCLUDED.insights,\n  created_at = NOW()\nRETURNING id",
+        "options": {}
+      },
+      "id": "store-insights",
+      "name": "Store Insights",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2460,
+        -120
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "email-kelly",
+      "name": "Email Kelly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2760,
+        -120
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log parse error — alert Kelly\nconst data = $input.first().json;\nreturn [{\n  json: {\n    error: true,\n    client_id: data.client_id,\n    week_start: data.week_start,\n    parse_error: data._parseError,\n    raw_response: data._rawResponse,\n    message: 'Brain analysis failed for ' + data.client_id + ': ' + data._parseError\n  }\n}];"
+      },
+      "id": "handle-error",
+      "name": "Handle Parse Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2460,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "error-email",
+      "name": "Error Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2760,
+        60
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH\ntemplate_perf AS (\n  SELECT template_type, COUNT(DISTINCT meta_ad_id) as ad_count,\n    SUM(leads) as total_leads, ROUND(SUM(spend)::numeric, 2) as total_spend,\n    ROUND(SUM(spend) / NULLIF(SUM(leads), 0), 2) as avg_cpl,\n    ROUND(AVG(ctr), 4) as avg_ctr, SUM(video_views) as total_video_views\n  FROM ad_performance_summary\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND date_start > NOW() - INTERVAL '30 days'\n  GROUP BY template_type ORDER BY avg_cpl ASC\n),\ntheme_perf AS (\n  SELECT theme, COUNT(DISTINCT meta_ad_id) as ad_count,\n    SUM(leads) as total_leads, ROUND(SUM(spend)::numeric, 2) as total_spend,\n    ROUND(SUM(spend) / NULLIF(SUM(leads), 0), 2) as avg_cpl,\n    SUM(video_views) as total_views\n  FROM ad_performance_summary\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND theme IS NOT NULL AND date_start > NOW() - INTERVAL '30 days'\n  GROUP BY theme ORDER BY avg_cpl ASC LIMIT 10\n),\nweekly_trends AS (\n  SELECT DATE_TRUNC('week', mi.date_start)::date as week,\n    ROUND(SUM(mi.spend)::numeric, 2) as spend, SUM(mi.leads) as leads,\n    ROUND(SUM(mi.spend) / NULLIF(SUM(mi.leads), 0), 2) as cpl,\n    SUM(mi.video_views) as views, ROUND(AVG(mi.ctr), 4) as avg_ctr\n  FROM meta_ad_insights mi\n  JOIN meta_ads ma ON mi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n  GROUP BY week ORDER BY week DESC LIMIT 8\n),\nactive_ads AS (\n  SELECT ma.name as ad_name, ma.template_type, ma.theme,\n    ROUND(SUM(mi.spend)::numeric, 2) as spend, SUM(mi.leads) as leads,\n    ROUND(AVG(mi.ctr), 4) as ctr, SUM(mi.video_views) as video_views,\n    ROUND(SUM(mi.spend) / NULLIF(SUM(mi.leads), 0), 2) as cpl\n  FROM meta_ad_insights mi\n  JOIN meta_ads ma ON mi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND mi.date_start >= DATE_TRUNC('week', NOW())\n  GROUP BY ma.name, ma.template_type, ma.theme ORDER BY spend DESC\n),\nboost_candidates AS (\n  SELECT platform, content_label, series, posted_at::text, reach,\n    video_views, likes, comments, shares, saves, engagement_rate\n  FROM organic_content_insights\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND engagement_rate > 0.02 AND was_boosted = false\n    AND posted_at > NOW() - INTERVAL '14 days'\n  ORDER BY engagement_rate DESC LIMIT 5\n),\nseries_perf AS (\n  SELECT series, COUNT(*) as post_count,\n    ROUND(AVG(engagement_rate), 4) as avg_engagement,\n    SUM(reach) as total_reach, SUM(video_views) as total_views\n  FROM organic_content_insights\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND series IS NOT NULL AND posted_at > NOW() - INTERVAL '30 days'\n  GROUP BY series ORDER BY avg_engagement DESC\n),\nplacement_perf AS (\n  SELECT \n    mpi.placement_code,\n    p.label AS placement_label,\n    COUNT(DISTINCT mpi.meta_ad_id) AS ad_count,\n    SUM(mpi.leads) AS total_leads,\n    ROUND(SUM(mpi.spend)::numeric, 2) AS total_spend,\n    ROUND(SUM(mpi.spend) / NULLIF(SUM(mpi.leads), 0), 2) AS avg_cpl,\n    ROUND(AVG(mpi.ctr), 4) AS avg_ctr,\n    SUM(mpi.video_views) AS total_video_views,\n    ROUND(AVG(mpi.cpm), 4) AS avg_cpm,\n    ROUND((SUM(mpi.spend) / NULLIF((SELECT SUM(spend) FROM meta_placement_insights mpi2 \n      JOIN meta_ads ma2 ON mpi2.meta_ad_id = ma2.meta_ad_id \n      JOIN meta_ad_accounts mac2 ON ma2.account_id = mac2.account_id \n      WHERE mac2.client_id = '{{ $('Add Params').first().json.client_id }}' \n      AND mpi2.date_start > NOW() - INTERVAL '30 days'), 0)) * 100, 1) AS spend_pct\n  FROM meta_placement_insights mpi\n  JOIN meta_ads ma ON mpi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  LEFT JOIN placements p ON mpi.placement_code = p.code\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND mpi.placement_code IS NOT NULL\n    AND mpi.date_start > NOW() - INTERVAL '30 days'\n  GROUP BY mpi.placement_code, p.label\n  ORDER BY total_spend DESC\n),\nplacement_weekly AS (\n  SELECT\n    DATE_TRUNC('week', mpi.date_start)::date AS week,\n    mpi.placement_code,\n    p.label AS placement_label,\n    ROUND(SUM(mpi.spend)::numeric, 2) AS spend,\n    SUM(mpi.leads) AS leads,\n    ROUND(SUM(mpi.spend) / NULLIF(SUM(mpi.leads), 0), 2) AS cpl,\n    SUM(mpi.video_views) AS views\n  FROM meta_placement_insights mpi\n  JOIN meta_ads ma ON mpi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  LEFT JOIN placements p ON mpi.placement_code = p.code\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND mpi.placement_code IS NOT NULL\n    AND mpi.date_start > NOW() - INTERVAL '28 days'\n  GROUP BY week, mpi.placement_code, p.label\n  ORDER BY week DESC, spend DESC\n),\nprev_brain AS (\n  SELECT insights FROM brain_insights\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n  ORDER BY week_start DESC LIMIT 1\n)\nSELECT \n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM template_perf t) as template_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM theme_perf t) as theme_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM weekly_trends t) as weekly_trends,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM active_ads t) as active_ads,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM boost_candidates t) as boost_candidates,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM series_perf t) as series_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM placement_perf t) as placement_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM placement_weekly t) as placement_weekly,\n  (SELECT insights FROM prev_brain LIMIT 1) as prev_brain",
+        "options": {}
+      },
+      "id": "run-queries",
+      "name": "Run All Queries",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        680,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM brain_insights \nWHERE client_id = '{{ $json.client_id }}' \n  AND week_start = '{{ $json.week_start }}'\nLIMIT 1",
+        "options": {
+          "queryBatching": "independently"
+        }
+      },
+      "id": "check-dup-v2",
+      "name": "Check Duplicate",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1160,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check duplicate and decide whether to run\nconst prompt = $('Assemble Prompt').first().json;\nconst dupResults = $input.all();\n\n// Check if duplicate exists\nconst isDuplicate = dupResults.length > 0 && dupResults[0].json && dupResults[0].json.id;\nconst force = prompt._force === true;\n\nif (isDuplicate && !force) {\n  return [{ json: { \n    _skip: true, \n    client_id: prompt.client_id,\n    message: 'Brain analysis already exists for ' + prompt.client_id + ' week of ' + prompt.week_start\n  }}];\n}\n\nreturn [{ json: { \n  ...prompt, \n  _existingId: isDuplicate ? dupResults[0].json.id : null \n}}];"
+      },
+      "id": "should-run-v2",
+      "name": "Should Run?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the Claude API request body as a JSON object\nconst data = $input.first().json;\n\nreturn [{\n  json: {\n    ...data,\n    _claudeBody: {\n      model: 'claude-sonnet-4-20250514',\n      max_tokens: 2000,\n      temperature: 0.3,\n      system: \"You are the Brain \\u2014 Ad Pilot's performance analysis agent for local business advertising.\\n\\nYour job is to analyze advertising performance data and generate actionable insights that a content planning agent can use to build next week's ad plan.\\n\\n## Your analysis covers:\\n\\n**Paid ad performance:**\\n- Which template types (multi_item, spotlight, education, carousel, image, aia) perform best by CPL, CTR, and video views?\\n- Which themes are driving results vs. wasting budget?\\n- Week-over-week trends \\u2014 is performance improving or declining?\\n- Budget efficiency \\u2014 where is money being well spent vs. wasted?\\n- CPL by placement \\u2014 which placements (IG Reels, FB Feed, FB Stories, etc.) drive leads cheapest?\\n- Spend distribution \\u2014 are we over-investing in low-performing placements?\\n- Which placements to focus on, reduce budget for, or exclude entirely?\\n- Placement trends \\u2014 is spend shifting toward better-performing placements week over week? Flag any placement whose CPL improved or worsened significantly.\\n\\n**Organic content performance:**\\n- Which posts got the most reach and engagement without ad spend?\\n- Which content series (Capitol Smarts, Just Arrived, etc.) resonates most?\\n- Which posts are strong candidates for boosting (paid amplification)?\\n\\n**Recommendations:**\\n- Suggest a template mix for next week (how many of each type)\\n- Suggest 2-3 theme directions based on what's working\\n- Identify any content types to pause or reduce\\n- Recommend budget allocation percentages across ad types\\n- Flag any boost-worthy organic content\\n\\n## Rules:\\n- Be specific and data-driven. Don't make vague claims \\u2014 cite numbers.\\n- If a template type has fewer than 3 ads or < $50 spend, note the small sample size.\\n- Always include warnings for underperforming areas.\\n- Compare this week to previous weeks when possible.\\n- If previous Brain output is provided, note whether last week's recommendations were followed and how they performed.\\n- Keep recommendations practical \\u2014 this feeds an automated planner, not a human strategist.\\n\\n## Output format:\\nRespond with ONLY a valid JSON object. No markdown, no explanation, no code fences, just the raw JSON object matching this schema:\\n{\\n  \\\"summary\\\": \\\"2-3 sentence executive summary\\\",\\n  \\\"top_performers\\\": [{\\\"ad_name\\\": \\\"...\\\", \\\"metric\\\": \\\"cpl\\\", \\\"value\\\": 0.00, \\\"why\\\": \\\"...\\\"}],\\n  \\\"underperformers\\\": [{\\\"ad_name\\\": \\\"...\\\", \\\"metric\\\": \\\"cpl\\\", \\\"value\\\": 0.00, \\\"recommendation\\\": \\\"pause|reduce_budget|iterate\\\"}],\\n  \\\"recommendations\\\": {\\n    \\\"template_mix\\\": {\\\"multi_item\\\": 0, \\\"aia\\\": 0, \\\"education\\\": 0, \\\"carousel\\\": 0, \\\"image\\\": 0, \\\"spotlight\\\": 0, \\\"custom\\\": 0},\\n    \\\"themes\\\": [{\\\"name\\\": \\\"...\\\", \\\"rationale\\\": \\\"...\\\"}],\\n    \\\"budget_allocation\\\": {\\\"video_ads\\\": 0.00, \\\"aia_catalog\\\": 0.00, \\\"carousel_catalog\\\": 0.00, \\\"boost\\\": 0.00},\\n    \\\"placement_mix\\\": {\\\"focus\\\": [], \\\"reduce\\\": [], \\\"exclude\\\": [], \\\"notes\\\": \\\"Data-backed rationale\\\"},\\n    \\\"boost_candidates\\\": []\\n  },\\n  \\\"warnings\\\": [\\\"...\\\"],\\n  \\\"trends\\\": {\\n    \\\"cpl_trend\\\": \\\"improving|stable|declining\\\",\\n    \\\"engagement_trend\\\": \\\"improving|stable|declining\\\",\\n    \\\"organic_reach_trend\\\": \\\"improving|stable|declining\\\",\\n    \\\"spend_trend\\\": \\\"on_pace|over_pace|under_pace\\\",\\n    \\\"placement_trend\\\": {\\\"shifting_to\\\": \\\"placement_code|null\\\", \\\"shifting_from\\\": \\\"placement_code|null\\\", \\\"summary\\\": \\\"Spend shifting from X to Y as CPL improves\\\"}\\n  },\\n  \\\"meta\\\": {\\n    \\\"data_quality\\\": \\\"good|limited|insufficient\\\",\\n    \\\"data_quality_notes\\\": \\\"...\\\"\\n  }\\n}\",\n      messages: [{ role: 'user', content: data.userPrompt }]\n    }\n  }\n}];"
+      },
+      "id": "prep-claude",
+      "name": "Prepare Claude Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build email from validated insights (reference Validate JSON, not Store Insights output)\nconst data = $('Validate JSON').first().json;\nconst insights = data.insights || {};\n\nconst topPerf = (insights.top_performers || [])\n  .map(p => '<li><strong>' + p.ad_name + '</strong> (' + p.metric + ': $' + p.value + ') - ' + p.why + '</li>')\n  .join('') || '<li>None identified</li>';\n\nconst warnings = (insights.warnings || [])\n  .map(w => '<li>' + w + '</li>')\n  .join('') || '<li>No warnings</li>';\n\nconst underPerf = (insights.underperformers || [])\n  .map(u => '<li><strong>' + u.ad_name + '</strong> ($' + u.value + ' CPL) - ' + u.recommendation + '</li>')\n  .join('') || '<li>None</li>';\n\nconst placementMix = insights.recommendations?.placement_mix || {};\nconst focusPlacements = (placementMix.focus || []).join(', ') || 'None specified';\nconst reducePlacements = (placementMix.reduce || []).join(', ') || 'None';\nconst excludePlacements = (placementMix.exclude || []).join(', ') || 'None';\nconst placementNotes = placementMix.notes || '';\n\nconst themes = (insights.recommendations?.themes || [])\n  .map(t => '<li><strong>' + t.name + '</strong>: ' + t.rationale + '</li>')\n  .join('') || '<li>None</li>';\n\nconst templateMix = insights.recommendations?.template_mix || {};\nconst mixLines = Object.entries(templateMix)\n  .filter(([k, v]) => v > 0)\n  .map(([k, v]) => k + ': ' + v)\n  .join(', ') || 'No recommendations';\n\nconst budget = insights.recommendations?.budget_allocation || {};\nconst budgetLines = Object.entries(budget)\n  .map(([k, v]) => k.replace(/_/g, ' ') + ': ' + Math.round(v * 100) + '%')\n  .join(', ') || 'No allocation';\n\nconst trends = insights.trends || {};\nconst trendEmoji = { improving: '📈', stable: '➡️', declining: '📉', on_pace: '✅', over_pace: '⚠️', under_pace: '🔻', ig_reels_growing: '📈', distributed: '➡️', no_data: '❓' };\n\nreturn [{\n  json: {\n    _emailBody: {\n      from: 'Ad Pilot <notifications@ad-pilot.ai>',\n      to: ['kelly@ad-pilot.ai'],\n      subject: '🧠 Brain Analysis: ' + data.client_name + ' — Week of ' + data.week_start,\n      html: '<div style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto;\">' +\n        '<h2 style=\"color: #1a1a2e;\">🧠 Brain Analysis: ' + data.client_name + '</h2>' +\n        '<p style=\"color: #666;\">Week of ' + data.week_start + ' | Data quality: ' + (insights.meta?.data_quality || 'unknown') + '</p>' +\n        '<div style=\"background: #f0f4ff; padding: 16px; border-radius: 8px; margin: 16px 0;\">' +\n        '<h3 style=\"margin-top:0;\">Summary</h3>' +\n        '<p>' + (insights.summary || 'N/A') + '</p>' +\n        '</div>' +\n        '<h3>📊 Trends</h3>' +\n        '<p>' +\n        (trendEmoji[trends.cpl_trend] || '') + ' CPL: ' + (trends.cpl_trend || 'unknown') + ' &nbsp; ' +\n        (trendEmoji[trends.spend_trend] || '') + ' Spend: ' + (trends.spend_trend || 'unknown') + ' &nbsp; ' +\n        (trendEmoji[trends.engagement_trend] || '') + ' Engagement: ' + (trends.engagement_trend || 'unknown') + ' &nbsp; ' +\n        (trendEmoji[trends.placement_trend] || '📍') + ' Placements: ' + (trends.placement_trend || 'no_data') +\n        '</p>' +\n        '<h3>🏆 Top Performers</h3><ul>' + topPerf + '</ul>' +\n        '<h3>⚠️ Underperformers</h3><ul>' + underPerf + '</ul>' +\n        '<h3>📍 Placement Mix</h3>' +\n        '<p><strong>Focus:</strong> ' + focusPlacements + '</p>' +\n        '<p><strong>Reduce:</strong> ' + reducePlacements + '</p>' +\n        (excludePlacements !== 'None' ? '<p><strong>Exclude:</strong> ' + excludePlacements + '</p>' : '') +\n        (placementNotes ? '<p><em>' + placementNotes + '</em></p>' : '') +\n        (typeof insights.trends?.placement_trend === 'object' && insights.trends.placement_trend?.summary ? '<p><strong>Trend:</strong> ' + insights.trends.placement_trend.summary + '</p>' : '') +\n        '<h3>🚨 Warnings</h3><ul>' + warnings + '</ul>' +\n        '<h3>📋 Recommendations</h3>' +\n        '<p><strong>Template mix:</strong> ' + mixLines + '</p>' +\n        '<p><strong>Budget allocation:</strong> ' + budgetLines + '</p>' +\n        '<p><strong>Theme directions:</strong></p><ul>' + themes + '</ul>' +\n        '<hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">' +\n        '<p style=\"color: #999; font-size: 12px;\"><em>Full insights stored in brain_insights table.</em></p>' +\n        '</div>'\n    }\n  }\n}];"
+      },
+      "id": "prep-email",
+      "name": "Prepare Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build error notification email\nconst data = $('Validate JSON').first().json;\n\nreturn [{\n  json: {\n    _emailBody: {\n      from: 'Ad Pilot <notifications@ad-pilot.ai>',\n      to: ['kelly@ad-pilot.ai'],\n      subject: '⚠️ Brain Analysis Error: ' + (data.client_name || 'Unknown') + ' — Week of ' + (data.week_start || 'unknown'),\n      html: '<div style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px;\">' +\n        '<h2 style=\"color: #d32f2f;\">⚠️ Brain Analysis Error</h2>' +\n        '<p><strong>Client:</strong> ' + (data.client_name || 'Unknown') + '</p>' +\n        '<p><strong>Week:</strong> ' + (data.week_start || 'unknown') + '</p>' +\n        '<p><strong>Error:</strong> ' + (data._parseError || 'Unknown parse error') + '</p>' +\n        (data._rawResponse ? '<h3>Raw Response (first 500 chars)</h3><pre style=\"background:#f5f5f5; padding:12px; border-radius:4px; overflow-x:auto; font-size:12px;\">' + (data._rawResponse || '').substring(0, 500) + '</pre>' : '') +\n        '<p style=\"color: #999; font-size: 12px;\"><em>Check n8n execution logs for details.</em></p>' +\n        '</div>'\n    }\n  }\n}];"
+      },
+      "id": "prep-error-email",
+      "name": "Prepare Error Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        60
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monday 6am CT": {
+      "main": [
+        [
+          {
+            "node": "Get Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Clients": {
+      "main": [
+        [
+          {
+            "node": "Add Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Params": {
+      "main": [
+        [
+          {
+            "node": "Run All Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Prompt": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Analysis?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Claude Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Call Claude": {
+      "main": [
+        [
+          {
+            "node": "Validate JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate JSON": {
+      "main": [
+        [
+          {
+            "node": "Parse OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse OK?": {
+      "main": [
+        [
+          {
+            "node": "Store Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Parse Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Insights": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Parse Error": {
+      "main": [
+        [
+          {
+            "node": "Prepare Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run All Queries": {
+      "main": [
+        [
+          {
+            "node": "Assemble Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Should Run?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Run?": {
+      "main": [
+        [
+          {
+            "node": "Run Analysis?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Claude Request": {
+      "main": [
+        [
+          {
+            "node": "Call Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Error Email": {
+      "main": [
+        [
+          {
+            "node": "Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Monday 6am CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "3e3196fe-aa41-44d4-9703-9502614d72f9",
+  "activeVersionId": "3e3196fe-aa41-44d4-9703-9502614d72f9",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-02-12T14:28:30.580Z",
+      "createdAt": "2026-02-12T14:28:30.580Z",
+      "role": "workflow:owner",
+      "workflowId": "du08waHHBEbIyrgC",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-13T01:00:56.253Z",
+    "createdAt": "2026-02-13T01:00:56.253Z",
+    "versionId": "3e3196fe-aa41-44d4-9703-9502614d72f9",
+    "workflowId": "du08waHHBEbIyrgC",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "trigger-manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "triggerAtHour": 6,
+                "triggerAtMinute": 0
+              }
+            ]
+          }
+        },
+        "id": "trigger-cron",
+        "name": "Monday 6am CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          -200
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "brain-analysis",
+          "responseMode": "onReceived",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "trigger-webhook",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "webhookId": "brain-analysis"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT DISTINCT mac.client_id, c.name as client_name, \n  c.monthly_budget, c.timezone,\n  mac.ig_account_id,\n  (SELECT string_agg(DISTINCT cp.platform, ', ') \n   FROM client_platforms cp \n   JOIN clients cl ON cp.client_id = cl.id \n   WHERE cl.slug = mac.client_id AND cp.is_enabled = true\n  ) as active_platforms\nFROM meta_ad_accounts mac\nJOIN clients c ON mac.client_id = c.slug\nWHERE mac.account_status = 1 \n  AND mac.access_token IS NOT NULL\n  AND (mac.token_expires_at IS NULL OR mac.token_expires_at > NOW())",
+          "options": {}
+        },
+        "id": "get-clients",
+        "name": "Get Active Clients",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          240,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pass through clients with webhook params\nconst clients = $input.all();\nlet force = false;\ntry {\n  const webhookData = $('Webhook Trigger').first().json?.body || {};\n  force = webhookData.force === true;\n} catch(e) {}\n\nreturn clients.map(item => ({\n  json: { ...item.json, _force: force }\n}));"
+        },
+        "id": "add-params",
+        "name": "Add Params",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Assemble Brain analysis prompt from query results\nconst client = $('Add Params').first().json;\nconst q = $('Run All Queries').first().json;\n\nconst templatePerf = q.template_perf || [];\nconst themePerf = q.theme_perf || [];\nconst weeklyTrends = q.weekly_trends || [];\nconst activeAds = q.active_ads || [];\nconst boostCandidates = q.boost_candidates || [];\nconst seriesPerf = q.series_perf || [];\nconst prevBrain = q.prev_brain || null;\nconst placementPerf = q.placement_perf || [];\nconst placementWeekly = q.placement_weekly || [];\n\n// Data quality check\nconst totalWeeks = weeklyTrends.length;\nlet dataQuality = 'good';\nif (totalWeeks < 2) dataQuality = 'insufficient';\nelse if (totalWeeks < 4) dataQuality = 'limited';\n\n// Seasonal context\nconst now = new Date();\nconst month = now.getMonth() + 1;\nconst day = now.getDate();\nconst events = [];\nif (month === 1) events.push('New Year / Fresh Start season');\nif (month === 2 && day < 15) events.push(\"Valentine's Day approaching\");\nif (month === 2 || month === 3) events.push('Tax refund season - buyers have cash');\nif (month === 3 || month === 4) events.push('Spring - winter vehicle swap time');\nif (month === 5) events.push('Memorial Day sales, graduation gifts');\nif (month === 6 || month === 7) events.push('Summer road trip season');\nif (month === 7) events.push('4th of July sales');\nif (month === 8) events.push('Back to school - first car season');\nif (month === 9) events.push('Labor Day sales, model year turnover');\nif (month === 10 || month === 11) events.push('Year-end deals approaching');\nif (month === 11) events.push('Black Friday / Cyber Monday');\nif (month === 12) events.push('Holiday gifts, year-end clearance, tax planning');\nconst seasonalContext = events.join('; ') || 'No major seasonal events';\n\n// Week start\nconst weekStart = new Date(now);\nweekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);\nconst weekStartStr = weekStart.toISOString().split('T')[0];\n\n// Organic sections\nlet organicSection = '';\nif (boostCandidates.length === 0 && seriesPerf.length === 0) {\n  organicSection = '\\n## Organic Content\\nNo organic content data available yet. Skip organic recommendations.\\n';\n} else {\n  organicSection = '\\n## Organic Content - Boost Candidates\\n' + \n    (boostCandidates.length > 0 ? JSON.stringify(boostCandidates, null, 2) : 'No boost candidates (no posts >2% engagement in last 14 days).') +\n    '\\n\\n## Organic Content - Series Performance\\n' +\n    (seriesPerf.length > 0 ? JSON.stringify(seriesPerf, null, 2) : 'No series data yet.');\n}\n\nconst prevSection = prevBrain \n  ? JSON.stringify(prevBrain, null, 2) \n  : 'No previous Brain analysis. This is the first run.';\n\nconst userPrompt = 'Analyze the following performance data for client ' + client.client_id + ' (' + client.client_name + ') and generate insights for the week of ' + weekStartStr + '.\\n\\n' +\n  '## Paid Ad Performance by Template (Last 30 Days)\\n' + JSON.stringify(templatePerf, null, 2) + '\\n\\n' +\n  '## Paid Ad Performance by Theme (Last 30 Days)\\n' + JSON.stringify(themePerf, null, 2) + '\\n\\n' +\n  '## Week-over-Week Trends (Last 8 Weeks)\\n' + JSON.stringify(weeklyTrends, null, 2) + '\\n\\n' +\n  '## This Week\\'s Active Ads\\n' + JSON.stringify(activeAds, null, 2) + '\\n' +\n  '## Paid Ad Performance by Placement (Last 30 Days)\\n' + \n  (placementPerf.length > 0 ? JSON.stringify(placementPerf, null, 2) : 'No placement-level data available yet.') + '\\n\\n' +\n  '## Placement Performance Week-over-Week (Last 4 Weeks)\\n' + \n  (placementWeekly.length > 0 ? JSON.stringify(placementWeekly, null, 2) : 'No weekly placement data yet.') + '\\n\\n' +\n  organicSection + '\\n\\n' +\n  '## Previous Week\\'s Brain Insights\\n' + prevSection + '\\n\\n' +\n  '## Client Context\\n' +\n  '- Monthly ad budget: $' + (client.monthly_budget || 'unknown') + '\\n' +\n  '- Active platforms: ' + (client.active_platforms || 'meta') + '\\n' +\n  '- Current date: ' + now.toISOString().split('T')[0] + '\\n' +\n  '- Season/events: ' + seasonalContext + '\\n' +\n  '- Data quality: ' + dataQuality;\n\nreturn [{\n  json: {\n    client_id: client.client_id,\n    client_name: client.client_name,\n    week_start: weekStartStr,\n    _force: client._force,\n    _dataQuality: dataQuality,\n    userPrompt: userPrompt\n  }\n}];"
+        },
+        "id": "assemble-prompt",
+        "name": "Assemble Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "not-skip",
+                "leftValue": "={{ $json._skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "id": "if-run",
+        "name": "Run Analysis?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1540,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._claudeBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "call-llm",
+        "name": "Call Claude",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1860,
+          -60
+        ],
+        "credentials": {
+          "anthropicApi": {
+            "id": "Cias5aAJewPKMMCa",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse and validate the LLM response\nconst promptData = $('Prepare Claude Request').first().json;\nconst response = $input.first().json;\n\nlet insights = null;\nlet parseError = '';\n\ntry {\n  let text = '';\n  if (response.content && response.content[0]) {\n    text = response.content[0].text || '';\n  } else if (response.error) {\n    throw new Error('API error: ' + JSON.stringify(response.error));\n  }\n\n  // Clean up markdown fences if present\n  text = text.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n\n  insights = JSON.parse(text);\n\n  const required = ['summary', 'recommendations', 'trends', 'meta'];\n  const missing = required.filter(f => !insights[f]);\n  if (missing.length > 0) {\n    throw new Error('Missing required fields: ' + missing.join(', '));\n  }\n} catch(e) {\n  parseError = e.message;\n}\n\nreturn [{\n  json: {\n    client_id: promptData.client_id,\n    client_name: promptData.client_name,\n    week_start: promptData.week_start,\n    _existingId: promptData._existingId,\n    insights: insights,\n    _isValid: parseError === '',\n    _parseError: parseError,\n    _rawResponse: parseError ? (response.content?.[0]?.text || JSON.stringify(response)).substring(0, 2000) : null\n  }\n}];"
+        },
+        "id": "validate-json",
+        "name": "Validate JSON",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2060,
+          -60
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "is-valid",
+                "leftValue": "={{ $json._isValid }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "id": "if-parsed",
+        "name": "Parse OK?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2260,
+          -60
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO brain_insights (client_id, week_start, insights)\nVALUES ('{{ $json.client_id }}', '{{ $json.week_start }}', '{{ JSON.stringify($json.insights).replace(/'/g, \"''\") }}'::jsonb)\nON CONFLICT (client_id, week_start) DO UPDATE SET\n  insights = EXCLUDED.insights,\n  created_at = NOW()\nRETURNING id",
+          "options": {}
+        },
+        "id": "store-insights",
+        "name": "Store Insights",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2460,
+          -120
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "email-kelly",
+        "name": "Email Kelly",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2760,
+          -120
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Log parse error — alert Kelly\nconst data = $input.first().json;\nreturn [{\n  json: {\n    error: true,\n    client_id: data.client_id,\n    week_start: data.week_start,\n    parse_error: data._parseError,\n    raw_response: data._rawResponse,\n    message: 'Brain analysis failed for ' + data.client_id + ': ' + data._parseError\n  }\n}];"
+        },
+        "id": "handle-error",
+        "name": "Handle Parse Error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2460,
+          60
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "error-email",
+        "name": "Error Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2760,
+          60
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH\ntemplate_perf AS (\n  SELECT template_type, COUNT(DISTINCT meta_ad_id) as ad_count,\n    SUM(leads) as total_leads, ROUND(SUM(spend)::numeric, 2) as total_spend,\n    ROUND(SUM(spend) / NULLIF(SUM(leads), 0), 2) as avg_cpl,\n    ROUND(AVG(ctr), 4) as avg_ctr, SUM(video_views) as total_video_views\n  FROM ad_performance_summary\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND date_start > NOW() - INTERVAL '30 days'\n  GROUP BY template_type ORDER BY avg_cpl ASC\n),\ntheme_perf AS (\n  SELECT theme, COUNT(DISTINCT meta_ad_id) as ad_count,\n    SUM(leads) as total_leads, ROUND(SUM(spend)::numeric, 2) as total_spend,\n    ROUND(SUM(spend) / NULLIF(SUM(leads), 0), 2) as avg_cpl,\n    SUM(video_views) as total_views\n  FROM ad_performance_summary\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND theme IS NOT NULL AND date_start > NOW() - INTERVAL '30 days'\n  GROUP BY theme ORDER BY avg_cpl ASC LIMIT 10\n),\nweekly_trends AS (\n  SELECT DATE_TRUNC('week', mi.date_start)::date as week,\n    ROUND(SUM(mi.spend)::numeric, 2) as spend, SUM(mi.leads) as leads,\n    ROUND(SUM(mi.spend) / NULLIF(SUM(mi.leads), 0), 2) as cpl,\n    SUM(mi.video_views) as views, ROUND(AVG(mi.ctr), 4) as avg_ctr\n  FROM meta_ad_insights mi\n  JOIN meta_ads ma ON mi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n  GROUP BY week ORDER BY week DESC LIMIT 8\n),\nactive_ads AS (\n  SELECT ma.name as ad_name, ma.template_type, ma.theme,\n    ROUND(SUM(mi.spend)::numeric, 2) as spend, SUM(mi.leads) as leads,\n    ROUND(AVG(mi.ctr), 4) as ctr, SUM(mi.video_views) as video_views,\n    ROUND(SUM(mi.spend) / NULLIF(SUM(mi.leads), 0), 2) as cpl\n  FROM meta_ad_insights mi\n  JOIN meta_ads ma ON mi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND mi.date_start >= DATE_TRUNC('week', NOW())\n  GROUP BY ma.name, ma.template_type, ma.theme ORDER BY spend DESC\n),\nboost_candidates AS (\n  SELECT platform, content_label, series, posted_at::text, reach,\n    video_views, likes, comments, shares, saves, engagement_rate\n  FROM organic_content_insights\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND engagement_rate > 0.02 AND was_boosted = false\n    AND posted_at > NOW() - INTERVAL '14 days'\n  ORDER BY engagement_rate DESC LIMIT 5\n),\nseries_perf AS (\n  SELECT series, COUNT(*) as post_count,\n    ROUND(AVG(engagement_rate), 4) as avg_engagement,\n    SUM(reach) as total_reach, SUM(video_views) as total_views\n  FROM organic_content_insights\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND series IS NOT NULL AND posted_at > NOW() - INTERVAL '30 days'\n  GROUP BY series ORDER BY avg_engagement DESC\n),\nplacement_perf AS (\n  SELECT \n    mpi.placement_code,\n    p.label AS placement_label,\n    COUNT(DISTINCT mpi.meta_ad_id) AS ad_count,\n    SUM(mpi.leads) AS total_leads,\n    ROUND(SUM(mpi.spend)::numeric, 2) AS total_spend,\n    ROUND(SUM(mpi.spend) / NULLIF(SUM(mpi.leads), 0), 2) AS avg_cpl,\n    ROUND(AVG(mpi.ctr), 4) AS avg_ctr,\n    SUM(mpi.video_views) AS total_video_views,\n    ROUND(AVG(mpi.cpm), 4) AS avg_cpm,\n    ROUND((SUM(mpi.spend) / NULLIF((SELECT SUM(spend) FROM meta_placement_insights mpi2 \n      JOIN meta_ads ma2 ON mpi2.meta_ad_id = ma2.meta_ad_id \n      JOIN meta_ad_accounts mac2 ON ma2.account_id = mac2.account_id \n      WHERE mac2.client_id = '{{ $('Add Params').first().json.client_id }}' \n      AND mpi2.date_start > NOW() - INTERVAL '30 days'), 0)) * 100, 1) AS spend_pct\n  FROM meta_placement_insights mpi\n  JOIN meta_ads ma ON mpi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  LEFT JOIN placements p ON mpi.placement_code = p.code\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND mpi.placement_code IS NOT NULL\n    AND mpi.date_start > NOW() - INTERVAL '30 days'\n  GROUP BY mpi.placement_code, p.label\n  ORDER BY total_spend DESC\n),\nplacement_weekly AS (\n  SELECT\n    DATE_TRUNC('week', mpi.date_start)::date AS week,\n    mpi.placement_code,\n    p.label AS placement_label,\n    ROUND(SUM(mpi.spend)::numeric, 2) AS spend,\n    SUM(mpi.leads) AS leads,\n    ROUND(SUM(mpi.spend) / NULLIF(SUM(mpi.leads), 0), 2) AS cpl,\n    SUM(mpi.video_views) AS views\n  FROM meta_placement_insights mpi\n  JOIN meta_ads ma ON mpi.meta_ad_id = ma.meta_ad_id\n  JOIN meta_ad_accounts mac ON ma.account_id = mac.account_id\n  LEFT JOIN placements p ON mpi.placement_code = p.code\n  WHERE mac.client_id = '{{ $('Add Params').first().json.client_id }}'\n    AND mpi.placement_code IS NOT NULL\n    AND mpi.date_start > NOW() - INTERVAL '28 days'\n  GROUP BY week, mpi.placement_code, p.label\n  ORDER BY week DESC, spend DESC\n),\nprev_brain AS (\n  SELECT insights FROM brain_insights\n  WHERE client_id = '{{ $('Add Params').first().json.client_id }}'\n  ORDER BY week_start DESC LIMIT 1\n)\nSELECT \n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM template_perf t) as template_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM theme_perf t) as theme_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM weekly_trends t) as weekly_trends,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM active_ads t) as active_ads,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM boost_candidates t) as boost_candidates,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM series_perf t) as series_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM placement_perf t) as placement_perf,\n  (SELECT COALESCE(json_agg(t), '[]'::json) FROM placement_weekly t) as placement_weekly,\n  (SELECT insights FROM prev_brain LIMIT 1) as prev_brain",
+          "options": {}
+        },
+        "id": "run-queries",
+        "name": "Run All Queries",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          680,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id FROM brain_insights \nWHERE client_id = '{{ $json.client_id }}' \n  AND week_start = '{{ $json.week_start }}'\nLIMIT 1",
+          "options": {
+            "queryBatching": "independently"
+          }
+        },
+        "id": "check-dup-v2",
+        "name": "Check Duplicate",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1160,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "// Check duplicate and decide whether to run\nconst prompt = $('Assemble Prompt').first().json;\nconst dupResults = $input.all();\n\n// Check if duplicate exists\nconst isDuplicate = dupResults.length > 0 && dupResults[0].json && dupResults[0].json.id;\nconst force = prompt._force === true;\n\nif (isDuplicate && !force) {\n  return [{ json: { \n    _skip: true, \n    client_id: prompt.client_id,\n    message: 'Brain analysis already exists for ' + prompt.client_id + ' week of ' + prompt.week_start\n  }}];\n}\n\nreturn [{ json: { \n  ...prompt, \n  _existingId: isDuplicate ? dupResults[0].json.id : null \n}}];"
+        },
+        "id": "should-run-v2",
+        "name": "Should Run?",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1360,
+          0
+        ],
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build the Claude API request body as a JSON object\nconst data = $input.first().json;\n\nreturn [{\n  json: {\n    ...data,\n    _claudeBody: {\n      model: 'claude-sonnet-4-20250514',\n      max_tokens: 2000,\n      temperature: 0.3,\n      system: \"You are the Brain \\u2014 Ad Pilot's performance analysis agent for local business advertising.\\n\\nYour job is to analyze advertising performance data and generate actionable insights that a content planning agent can use to build next week's ad plan.\\n\\n## Your analysis covers:\\n\\n**Paid ad performance:**\\n- Which template types (multi_item, spotlight, education, carousel, image, aia) perform best by CPL, CTR, and video views?\\n- Which themes are driving results vs. wasting budget?\\n- Week-over-week trends \\u2014 is performance improving or declining?\\n- Budget efficiency \\u2014 where is money being well spent vs. wasted?\\n- CPL by placement \\u2014 which placements (IG Reels, FB Feed, FB Stories, etc.) drive leads cheapest?\\n- Spend distribution \\u2014 are we over-investing in low-performing placements?\\n- Which placements to focus on, reduce budget for, or exclude entirely?\\n- Placement trends \\u2014 is spend shifting toward better-performing placements week over week? Flag any placement whose CPL improved or worsened significantly.\\n\\n**Organic content performance:**\\n- Which posts got the most reach and engagement without ad spend?\\n- Which content series (Capitol Smarts, Just Arrived, etc.) resonates most?\\n- Which posts are strong candidates for boosting (paid amplification)?\\n\\n**Recommendations:**\\n- Suggest a template mix for next week (how many of each type)\\n- Suggest 2-3 theme directions based on what's working\\n- Identify any content types to pause or reduce\\n- Recommend budget allocation percentages across ad types\\n- Flag any boost-worthy organic content\\n\\n## Rules:\\n- Be specific and data-driven. Don't make vague claims \\u2014 cite numbers.\\n- If a template type has fewer than 3 ads or < $50 spend, note the small sample size.\\n- Always include warnings for underperforming areas.\\n- Compare this week to previous weeks when possible.\\n- If previous Brain output is provided, note whether last week's recommendations were followed and how they performed.\\n- Keep recommendations practical \\u2014 this feeds an automated planner, not a human strategist.\\n\\n## Output format:\\nRespond with ONLY a valid JSON object. No markdown, no explanation, no code fences, just the raw JSON object matching this schema:\\n{\\n  \\\"summary\\\": \\\"2-3 sentence executive summary\\\",\\n  \\\"top_performers\\\": [{\\\"ad_name\\\": \\\"...\\\", \\\"metric\\\": \\\"cpl\\\", \\\"value\\\": 0.00, \\\"why\\\": \\\"...\\\"}],\\n  \\\"underperformers\\\": [{\\\"ad_name\\\": \\\"...\\\", \\\"metric\\\": \\\"cpl\\\", \\\"value\\\": 0.00, \\\"recommendation\\\": \\\"pause|reduce_budget|iterate\\\"}],\\n  \\\"recommendations\\\": {\\n    \\\"template_mix\\\": {\\\"multi_item\\\": 0, \\\"aia\\\": 0, \\\"education\\\": 0, \\\"carousel\\\": 0, \\\"image\\\": 0, \\\"spotlight\\\": 0, \\\"custom\\\": 0},\\n    \\\"themes\\\": [{\\\"name\\\": \\\"...\\\", \\\"rationale\\\": \\\"...\\\"}],\\n    \\\"budget_allocation\\\": {\\\"video_ads\\\": 0.00, \\\"aia_catalog\\\": 0.00, \\\"carousel_catalog\\\": 0.00, \\\"boost\\\": 0.00},\\n    \\\"placement_mix\\\": {\\\"focus\\\": [], \\\"reduce\\\": [], \\\"exclude\\\": [], \\\"notes\\\": \\\"Data-backed rationale\\\"},\\n    \\\"boost_candidates\\\": []\\n  },\\n  \\\"warnings\\\": [\\\"...\\\"],\\n  \\\"trends\\\": {\\n    \\\"cpl_trend\\\": \\\"improving|stable|declining\\\",\\n    \\\"engagement_trend\\\": \\\"improving|stable|declining\\\",\\n    \\\"organic_reach_trend\\\": \\\"improving|stable|declining\\\",\\n    \\\"spend_trend\\\": \\\"on_pace|over_pace|under_pace\\\",\\n    \\\"placement_trend\\\": {\\\"shifting_to\\\": \\\"placement_code|null\\\", \\\"shifting_from\\\": \\\"placement_code|null\\\", \\\"summary\\\": \\\"Spend shifting from X to Y as CPL improves\\\"}\\n  },\\n  \\\"meta\\\": {\\n    \\\"data_quality\\\": \\\"good|limited|insufficient\\\",\\n    \\\"data_quality_notes\\\": \\\"...\\\"\\n  }\\n}\",\n      messages: [{ role: 'user', content: data.userPrompt }]\n    }\n  }\n}];"
+        },
+        "id": "prep-claude",
+        "name": "Prepare Claude Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1660,
+          -60
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build email from validated insights (reference Validate JSON, not Store Insights output)\nconst data = $('Validate JSON').first().json;\nconst insights = data.insights || {};\n\nconst topPerf = (insights.top_performers || [])\n  .map(p => '<li><strong>' + p.ad_name + '</strong> (' + p.metric + ': $' + p.value + ') - ' + p.why + '</li>')\n  .join('') || '<li>None identified</li>';\n\nconst warnings = (insights.warnings || [])\n  .map(w => '<li>' + w + '</li>')\n  .join('') || '<li>No warnings</li>';\n\nconst underPerf = (insights.underperformers || [])\n  .map(u => '<li><strong>' + u.ad_name + '</strong> ($' + u.value + ' CPL) - ' + u.recommendation + '</li>')\n  .join('') || '<li>None</li>';\n\nconst placementMix = insights.recommendations?.placement_mix || {};\nconst focusPlacements = (placementMix.focus || []).join(', ') || 'None specified';\nconst reducePlacements = (placementMix.reduce || []).join(', ') || 'None';\nconst excludePlacements = (placementMix.exclude || []).join(', ') || 'None';\nconst placementNotes = placementMix.notes || '';\n\nconst themes = (insights.recommendations?.themes || [])\n  .map(t => '<li><strong>' + t.name + '</strong>: ' + t.rationale + '</li>')\n  .join('') || '<li>None</li>';\n\nconst templateMix = insights.recommendations?.template_mix || {};\nconst mixLines = Object.entries(templateMix)\n  .filter(([k, v]) => v > 0)\n  .map(([k, v]) => k + ': ' + v)\n  .join(', ') || 'No recommendations';\n\nconst budget = insights.recommendations?.budget_allocation || {};\nconst budgetLines = Object.entries(budget)\n  .map(([k, v]) => k.replace(/_/g, ' ') + ': ' + Math.round(v * 100) + '%')\n  .join(', ') || 'No allocation';\n\nconst trends = insights.trends || {};\nconst trendEmoji = { improving: '📈', stable: '➡️', declining: '📉', on_pace: '✅', over_pace: '⚠️', under_pace: '🔻', ig_reels_growing: '📈', distributed: '➡️', no_data: '❓' };\n\nreturn [{\n  json: {\n    _emailBody: {\n      from: 'Ad Pilot <notifications@ad-pilot.ai>',\n      to: ['kelly@ad-pilot.ai'],\n      subject: '🧠 Brain Analysis: ' + data.client_name + ' — Week of ' + data.week_start,\n      html: '<div style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto;\">' +\n        '<h2 style=\"color: #1a1a2e;\">🧠 Brain Analysis: ' + data.client_name + '</h2>' +\n        '<p style=\"color: #666;\">Week of ' + data.week_start + ' | Data quality: ' + (insights.meta?.data_quality || 'unknown') + '</p>' +\n        '<div style=\"background: #f0f4ff; padding: 16px; border-radius: 8px; margin: 16px 0;\">' +\n        '<h3 style=\"margin-top:0;\">Summary</h3>' +\n        '<p>' + (insights.summary || 'N/A') + '</p>' +\n        '</div>' +\n        '<h3>📊 Trends</h3>' +\n        '<p>' +\n        (trendEmoji[trends.cpl_trend] || '') + ' CPL: ' + (trends.cpl_trend || 'unknown') + ' &nbsp; ' +\n        (trendEmoji[trends.spend_trend] || '') + ' Spend: ' + (trends.spend_trend || 'unknown') + ' &nbsp; ' +\n        (trendEmoji[trends.engagement_trend] || '') + ' Engagement: ' + (trends.engagement_trend || 'unknown') + ' &nbsp; ' +\n        (trendEmoji[trends.placement_trend] || '📍') + ' Placements: ' + (trends.placement_trend || 'no_data') +\n        '</p>' +\n        '<h3>🏆 Top Performers</h3><ul>' + topPerf + '</ul>' +\n        '<h3>⚠️ Underperformers</h3><ul>' + underPerf + '</ul>' +\n        '<h3>📍 Placement Mix</h3>' +\n        '<p><strong>Focus:</strong> ' + focusPlacements + '</p>' +\n        '<p><strong>Reduce:</strong> ' + reducePlacements + '</p>' +\n        (excludePlacements !== 'None' ? '<p><strong>Exclude:</strong> ' + excludePlacements + '</p>' : '') +\n        (placementNotes ? '<p><em>' + placementNotes + '</em></p>' : '') +\n        (typeof insights.trends?.placement_trend === 'object' && insights.trends.placement_trend?.summary ? '<p><strong>Trend:</strong> ' + insights.trends.placement_trend.summary + '</p>' : '') +\n        '<h3>🚨 Warnings</h3><ul>' + warnings + '</ul>' +\n        '<h3>📋 Recommendations</h3>' +\n        '<p><strong>Template mix:</strong> ' + mixLines + '</p>' +\n        '<p><strong>Budget allocation:</strong> ' + budgetLines + '</p>' +\n        '<p><strong>Theme directions:</strong></p><ul>' + themes + '</ul>' +\n        '<hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">' +\n        '<p style=\"color: #999; font-size: 12px;\"><em>Full insights stored in brain_insights table.</em></p>' +\n        '</div>'\n    }\n  }\n}];"
+        },
+        "id": "prep-email",
+        "name": "Prepare Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2560,
+          -120
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build error notification email\nconst data = $('Validate JSON').first().json;\n\nreturn [{\n  json: {\n    _emailBody: {\n      from: 'Ad Pilot <notifications@ad-pilot.ai>',\n      to: ['kelly@ad-pilot.ai'],\n      subject: '⚠️ Brain Analysis Error: ' + (data.client_name || 'Unknown') + ' — Week of ' + (data.week_start || 'unknown'),\n      html: '<div style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px;\">' +\n        '<h2 style=\"color: #d32f2f;\">⚠️ Brain Analysis Error</h2>' +\n        '<p><strong>Client:</strong> ' + (data.client_name || 'Unknown') + '</p>' +\n        '<p><strong>Week:</strong> ' + (data.week_start || 'unknown') + '</p>' +\n        '<p><strong>Error:</strong> ' + (data._parseError || 'Unknown parse error') + '</p>' +\n        (data._rawResponse ? '<h3>Raw Response (first 500 chars)</h3><pre style=\"background:#f5f5f5; padding:12px; border-radius:4px; overflow-x:auto; font-size:12px;\">' + (data._rawResponse || '').substring(0, 500) + '</pre>' : '') +\n        '<p style=\"color: #999; font-size: 12px;\"><em>Check n8n execution logs for details.</em></p>' +\n        '</div>'\n    }\n  }\n}];"
+        },
+        "id": "prep-error-email",
+        "name": "Prepare Error Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2560,
+          60
+        ]
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Monday 6am CT": {
+        "main": [
+          [
+            {
+              "node": "Get Active Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Active Clients": {
+        "main": [
+          [
+            {
+              "node": "Add Params",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add Params": {
+        "main": [
+          [
+            {
+              "node": "Run All Queries",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Assemble Prompt": {
+        "main": [
+          [
+            {
+              "node": "Check Duplicate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run Analysis?": {
+        "main": [
+          [
+            {
+              "node": "Prepare Claude Request",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Call Claude": {
+        "main": [
+          [
+            {
+              "node": "Validate JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate JSON": {
+        "main": [
+          [
+            {
+              "node": "Parse OK?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse OK?": {
+        "main": [
+          [
+            {
+              "node": "Store Insights",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Handle Parse Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Insights": {
+        "main": [
+          [
+            {
+              "node": "Prepare Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Handle Parse Error": {
+        "main": [
+          [
+            {
+              "node": "Prepare Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run All Queries": {
+        "main": [
+          [
+            {
+              "node": "Assemble Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Duplicate": {
+        "main": [
+          [
+            {
+              "node": "Should Run?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Should Run?": {
+        "main": [
+          [
+            {
+              "node": "Run Analysis?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Claude Request": {
+        "main": [
+          [
+            {
+              "node": "Call Claude",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Email": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Error Email": {
+        "main": [
+          [
+            {
+              "node": "Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
