@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-20T12:30:44.863Z",
+  "updatedAt": "2026-02-12T19:13:43.291Z",
   "createdAt": "2026-01-16T16:05:47.665Z",
   "id": "kd7uDJETbUifZeNK",
   "name": "[Service] Send User Notification",
@@ -231,7 +231,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const preparedData = $('Prepare Messages').item.json;\nconst emailResult = $('Send Email (Resend)').item?.json;\nconst smsResult = $('Send SMS (Twilio)').item?.json;\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
+        "jsCode": "const preparedData = $('Prepare Messages').item.json;\n\nlet emailResult = null;\ntry { emailResult = $('Send Email (Resend)').item?.json; } catch(e) {}\n\nlet smsResult = null;\ntry { smsResult = $('Send an SMS/MMS/WhatsApp message').item?.json; } catch(e) {}\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
       },
       "id": "return-result",
       "name": "Return Result",
@@ -540,8 +540,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "29220c2e-0741-41f7-8b3f-9a1127cd7a59",
-  "activeVersionId": "29220c2e-0741-41f7-8b3f-9a1127cd7a59",
+  "versionId": "85e489f7-997c-4c50-a916-3bd61217fd79",
+  "activeVersionId": "85e489f7-997c-4c50-a916-3bd61217fd79",
   "triggerCount": 0,
   "shared": [
     {
@@ -553,9 +553,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-20T12:30:58.396Z",
-    "createdAt": "2026-01-20T12:30:44.868Z",
-    "versionId": "29220c2e-0741-41f7-8b3f-9a1127cd7a59",
+    "updatedAt": "2026-02-12T19:13:43.298Z",
+    "createdAt": "2026-02-12T19:13:43.298Z",
+    "versionId": "85e489f7-997c-4c50-a916-3bd61217fd79",
     "workflowId": "kd7uDJETbUifZeNK",
     "nodes": [
       {
@@ -783,7 +783,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const preparedData = $('Prepare Messages').item.json;\nconst emailResult = $('Send Email (Resend)').item?.json;\nconst smsResult = $('Send SMS (Twilio)').item?.json;\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
+          "jsCode": "const preparedData = $('Prepare Messages').item.json;\n\nlet emailResult = null;\ntry { emailResult = $('Send Email (Resend)').item?.json; } catch(e) {}\n\nlet smsResult = null;\ntry { smsResult = $('Send an SMS/MMS/WhatsApp message').item?.json; } catch(e) {}\n\nreturn [{\n  json: {\n    success: true,\n    email_sent: preparedData.should_send_email && !!emailResult?.id,\n    email_id: emailResult?.id || null,\n    sms_sent: preparedData.should_send_sms && !!smsResult?.sid,\n    sms_sid: smsResult?.sid || null\n  }\n}];"
         },
         "id": "return-result",
         "name": "Return Result",
@@ -1083,8 +1083,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "update to twilio node",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false
   },
   "tags": []
