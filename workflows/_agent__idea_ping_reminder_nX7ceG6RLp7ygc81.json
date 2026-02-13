@@ -1,0 +1,529 @@
+{
+  "updatedAt": "2026-02-12T19:13:39.791Z",
+  "createdAt": "2026-02-12T19:13:39.791Z",
+  "id": "nX7ceG6RLp7ygc81",
+  "name": "[AGENT] Idea Ping Reminder",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "trigger-cron",
+      "name": "Wednesday 10am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        500
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 3"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "find-pending",
+      "name": "Find Pending Pings",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DISTINCT ON (wp.id, p.id)\n  ipr.id, ipr.plan_id, ipr.auth_token, wp.client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name,\n  p.email AS approver_email, p.first_name AS approver_name,\n  p.id AS approver_person_id\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nJOIN client_persons cp ON cp.client_id = c.id AND cp.can_approve_plans = true AND cp.is_active = true\nJOIN persons p ON cp.person_id = p.id\nWHERE ipr.responded_at IS NULL\n  AND ipr.token_expires_at > NOW()\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'draft'\nORDER BY wp.id, p.id, ipr.created_at DESC",
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "id": "check-any",
+      "name": "Any Pending?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "check",
+              "leftValue": "={{ $json.plan_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "prep-reminder",
+      "name": "Prepare Reminder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        750,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const d = item.json;\n  const reviewUrl = 'https://app.ad-pilot.ai/review/' + d.plan_id + '?token=' + d.auth_token;\n\n  return {\n    json: {\n      person_id: d.approver_person_id || null,\n      email: d.approver_email,\n      notification_type: 'email',\n      subject: d.theme_emoji + ' Reminder: ' + d.client_name + ' weekly plan needs your OK',\n      message: 'Hey ' + (d.approver_name || 'there') + ', quick reminder — the ' + d.theme_name + ' plan for ' + d.client_name + ' is still waiting for your approval. If we don\\'t hear back by tonight, we\\'ll go ahead with it.',\n      link: reviewUrl\n    }\n  };\n});"
+      }
+    },
+    {
+      "id": "send-reminder",
+      "name": "Call: Send Notification",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1000,
+        200
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "kd7uDJETbUifZeNK",
+          "mode": "list"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "admin-notify",
+      "name": "Notify Kelly",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst count = items.length;\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Sent ' + count + ' reminder(s)',\n    html: '<p>Sent reminders for ' + count + ' pending plan approval(s).</p>'\n  }\n}}];"
+      }
+    },
+    {
+      "id": "send-admin-email",
+      "name": "Email Kelly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Pings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wednesday 10am CT": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Pings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Pings": {
+      "main": [
+        [
+          {
+            "node": "Any Pending?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Pending?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prepare Reminder": {
+      "main": [
+        [
+          {
+            "node": "Call: Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Send Notification": {
+      "main": [
+        [
+          {
+            "node": "Notify Kelly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Kelly": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Wednesday 10am CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "ac0b3260-19e0-405f-a457-799174288201",
+  "activeVersionId": "ac0b3260-19e0-405f-a457-799174288201",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-12T19:13:39.791Z",
+      "createdAt": "2026-02-12T19:13:39.791Z",
+      "role": "workflow:owner",
+      "workflowId": "nX7ceG6RLp7ygc81",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-12T19:13:39.815Z",
+    "createdAt": "2026-02-12T19:13:39.815Z",
+    "versionId": "ac0b3260-19e0-405f-a457-799174288201",
+    "workflowId": "nX7ceG6RLp7ygc81",
+    "nodes": [
+      {
+        "id": "trigger-manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "trigger-cron",
+        "name": "Wednesday 10am CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          500
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 * * 3"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "find-pending",
+        "name": "Find Pending Pings",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          250,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT DISTINCT ON (wp.id, p.id)\n  ipr.id, ipr.plan_id, ipr.auth_token, wp.client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name,\n  p.email AS approver_email, p.first_name AS approver_name,\n  p.id AS approver_person_id\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nJOIN client_persons cp ON cp.client_id = c.id AND cp.can_approve_plans = true AND cp.is_active = true\nJOIN persons p ON cp.person_id = p.id\nWHERE ipr.responded_at IS NULL\n  AND ipr.token_expires_at > NOW()\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'draft'\nORDER BY wp.id, p.id, ipr.created_at DESC",
+          "options": {
+            "alwaysOutputData": true
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "id": "check-any",
+        "name": "Any Pending?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "check",
+                "leftValue": "={{ $json.plan_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "isNotEmpty"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "prep-reminder",
+        "name": "Prepare Reminder",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          750,
+          200
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const d = item.json;\n  const reviewUrl = 'https://app.ad-pilot.ai/review/' + d.plan_id + '?token=' + d.auth_token;\n\n  return {\n    json: {\n      person_id: d.approver_person_id || null,\n      email: d.approver_email,\n      notification_type: 'email',\n      subject: d.theme_emoji + ' Reminder: ' + d.client_name + ' weekly plan needs your OK',\n      message: 'Hey ' + (d.approver_name || 'there') + ', quick reminder — the ' + d.theme_name + ' plan for ' + d.client_name + ' is still waiting for your approval. If we don\\'t hear back by tonight, we\\'ll go ahead with it.',\n      link: reviewUrl\n    }\n  };\n});"
+        }
+      },
+      {
+        "id": "send-reminder",
+        "name": "Call: Send Notification",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1000,
+          200
+        ],
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "kd7uDJETbUifZeNK",
+            "mode": "list"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "admin-notify",
+        "name": "Notify Kelly",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1250,
+          200
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst count = items.length;\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Sent ' + count + ' reminder(s)',\n    html: '<p>Sent reminders for ' + count + ' pending plan approval(s).</p>'\n  }\n}}];"
+        }
+      },
+      {
+        "id": "send-admin-email",
+        "name": "Email Kelly",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1500,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Find Pending Pings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wednesday 10am CT": {
+        "main": [
+          [
+            {
+              "node": "Find Pending Pings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Pending Pings": {
+        "main": [
+          [
+            {
+              "node": "Any Pending?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Any Pending?": {
+        "main": [
+          [
+            {
+              "node": "Prepare Reminder",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Prepare Reminder": {
+        "main": [
+          [
+            {
+              "node": "Call: Send Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Send Notification": {
+        "main": [
+          [
+            {
+              "node": "Notify Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notify Kelly": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
