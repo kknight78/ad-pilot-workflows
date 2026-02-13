@@ -1,0 +1,1117 @@
+{
+  "updatedAt": "2026-02-12T02:01:15.065Z",
+  "createdAt": "2026-02-12T00:16:55.022Z",
+  "id": "b0rGNpvAQ5IcJ8vy",
+  "name": "[SYNC] Organic Content Insights",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "Daily 6:30am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-organic-insights",
+        "responseMode": "onReceived",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "trigger-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "sync-organic-insights"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, client_id, account_id, page_id, ig_account_id, access_token, token_expires_at\nFROM meta_ad_accounts\nWHERE account_status = 1\n  AND access_token IS NOT NULL\n  AND page_id IS NOT NULL\n  AND (token_expires_at IS NULL OR token_expires_at > NOW())",
+        "options": {}
+      },
+      "id": "get-accounts",
+      "name": "Get Active Accounts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        300,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare parameters for each client\nconst accounts = $input.all();\n\n// Try to get webhook data for backfill mode\nlet webhookData = {};\ntry {\n  const webhookNode = $('Webhook Trigger').first();\n  if (webhookNode) {\n    webhookData = webhookNode.json?.body || webhookNode.json || {};\n  }\n} catch(e) {}\n\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 30, 180);\n\n// Calculate since timestamp\nconst now = new Date();\nconst sinceDays = isBackfill ? backfillDays : 7;\nconst since = new Date(now.getTime() - sinceDays * 24 * 60 * 60 * 1000);\nconst sinceUnix = Math.floor(since.getTime() / 1000);\n\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _sinceUnix: sinceUnix,\n    _sinceDays: sinceDays,\n    _isBackfill: isBackfill\n  }\n}));"
+      },
+      "id": "prepare-params",
+      "name": "Prepare Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v21.0/me/accounts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,access_token"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "get-user-pages",
+      "name": "Get User Pages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Find the page token for this client's page\nconst account = $('Prepare Params').first().json;\nconst pagesData = $input.first().json;\nconst pageId = account.page_id;\n\nlet pageToken = account.access_token; // fallback\n\nif (pagesData.data) {\n  const page = pagesData.data.find(p => p.id === pageId);\n  if (page && page.access_token) {\n    pageToken = page.access_token;\n  }\n}\n\nreturn [{\n  json: {\n    client_id: account.client_id,\n    account_id: account.account_id,\n    page_id: pageId,\n    ig_account_id: account.ig_account_id || null,\n    page_token: pageToken,\n    access_token: account.access_token,\n    _sinceUnix: account._sinceUnix,\n    _sinceDays: account._sinceDays,\n    _isBackfill: account._isBackfill\n  }\n}];"
+      },
+      "id": "resolve-page-token",
+      "name": "Resolve Page Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.page_id }}/published_posts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,message,created_time,permalink_url,full_picture"
+            },
+            {
+              "name": "since",
+              "value": "={{ $json._sinceUnix }}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.page_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "get-posts",
+      "name": "Get FB Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Resolve Page Token').first().json.page_id }}/videos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,title,description,created_time,length,views,likes.summary(true),comments.summary(true),permalink_url"
+            },
+            {
+              "name": "since",
+              "value": "={{ $('Resolve Page Token').first().json._sinceUnix }}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Resolve Page Token').first().json.page_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "get-videos",
+      "name": "Get FB Videos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform posts + videos + IG media into organic_content_insights records\nconst context = $('Resolve Page Token').first().json;\nconst postsData = $('Get FB Posts').first().json;\nconst videosData = $('Get FB Videos').first().json;\n\n// Try to get IG data if available\nlet igMedia = [];\ntry {\n  const igData = $('Get IG Media').first().json;\n  igMedia = igData.data || [];\n} catch(e) {\n  // No IG data node — skip\n}\n\nconst posts = postsData.data || [];\nconst videos = videosData.data || [];\n\n// Build video lookup by matching timestamps (within 5 min)\nconst videoMap = new Map();\nfor (const v of videos) {\n  const videoTime = new Date(v.created_time).getTime();\n  videoMap.set(videoTime, v);\n}\n\nfunction detectSeries(message) {\n  if (!message) return null;\n  const msg = message.toLowerCase();\n  if (msg.includes('capitol smarts') || msg.includes('capitol smart')) return 'capitol_smarts';\n  if (msg.includes('just arrived') || msg.includes('new on the lot') || msg.includes('new arrival')) return 'just_arrived';\n  if (msg.includes('customer spotlight') || msg.includes('customer story')) return 'customer_spotlight';\n  if (msg.includes('community') || msg.includes('local event')) return 'community';\n  return null;\n}\n\nfunction detectContentLabel(message, series) {\n  if (!message) return null;\n  const firstLine = message.split('\\n')[0].trim();\n  if (firstLine.length > 10 && firstLine.length < 200) {\n    return firstLine.substring(0, 255);\n  }\n  return null;\n}\n\nfunction detectPostType(post, matchedVideo) {\n  if (matchedVideo) return 'video';\n  if (post.full_picture) return 'image';\n  return 'text';\n}\n\nconst results = [];\n\n// Process Facebook posts\nfor (const post of posts) {\n  const postTime = new Date(post.created_time).getTime();\n  \n  let matchedVideo = null;\n  for (const [vTime, video] of videoMap.entries()) {\n    if (Math.abs(postTime - vTime) < 5 * 60 * 1000) {\n      matchedVideo = video;\n      videoMap.delete(vTime);\n      break;\n    }\n  }\n  \n  const message = post.message || '';\n  const series = detectSeries(message);\n  const contentLabel = detectContentLabel(message, series);\n  const postType = detectPostType(post, matchedVideo);\n  \n  const videoViews = matchedVideo ? (matchedVideo.views || 0) : null;\n  const likes = matchedVideo ? (matchedVideo.likes?.summary?.total_count || 0) : 0;\n  const comments = matchedVideo ? (matchedVideo.comments?.summary?.total_count || 0) : 0;\n  \n  const reach = videoViews || 0;\n  const totalEngagement = likes + comments;\n  const engagementRate = reach > 0 ? totalEngagement / reach : null;\n  \n  const daysSincePost = (Date.now() - postTime) / (1000 * 60 * 60 * 24);\n  const isBoostCandidate = engagementRate !== null && engagementRate > 0.02 && daysSincePost < 14;\n  \n  results.push({\n    json: {\n      client_id: context.client_id,\n      platform: 'facebook',\n      post_id: post.id,\n      post_type: postType,\n      content_label: contentLabel,\n      series: series,\n      posted_at: post.created_time,\n      message: message.replace(/'/g, \"''\").substring(0, 5000),\n      reach: reach,\n      impressions: 0,\n      video_views: videoViews,\n      likes: likes,\n      comments: comments,\n      shares: 0,\n      saves: 0,\n      reactions_total: likes,\n      engagement_rate: engagementRate,\n      is_boost_candidate: isBoostCandidate,\n      permalink_url: post.permalink_url || null\n    }\n  });\n}\n\n// Add unmatched videos\nfor (const [vTime, video] of videoMap.entries()) {\n  const message = video.description || video.title || '';\n  const series = detectSeries(message);\n  const contentLabel = detectContentLabel(message, series);\n  const views = video.views || 0;\n  const likes = video.likes?.summary?.total_count || 0;\n  const comments = video.comments?.summary?.total_count || 0;\n  const engagementRate = views > 0 ? (likes + comments) / views : null;\n  const daysSincePost = (Date.now() - vTime) / (1000 * 60 * 60 * 24);\n  \n  results.push({\n    json: {\n      client_id: context.client_id,\n      platform: 'facebook',\n      post_id: video.id,\n      post_type: 'video',\n      content_label: contentLabel,\n      series: series,\n      posted_at: video.created_time,\n      message: message.replace(/'/g, \"''\").substring(0, 5000),\n      reach: views,\n      impressions: 0,\n      video_views: views,\n      likes: likes,\n      comments: comments,\n      shares: 0,\n      saves: 0,\n      reactions_total: likes,\n      engagement_rate: engagementRate,\n      is_boost_candidate: engagementRate !== null && engagementRate > 0.02 && daysSincePost < 14,\n      permalink_url: video.permalink_url || null\n    }\n  });\n}\n\n// Process Instagram media\nfor (const media of igMedia) {\n  const caption = media.caption || '';\n  const series = detectSeries(caption);\n  const contentLabel = detectContentLabel(caption, series);\n  \n  const mediaTypeMap = {\n    'IMAGE': 'image',\n    'VIDEO': 'video',\n    'CAROUSEL_ALBUM': 'carousel'\n  };\n  const postType = mediaTypeMap[media.media_type] || 'image';\n  \n  const likes = media.like_count || 0;\n  const comments = media.comments_count || 0;\n  const reach = media.reach || 0;\n  const impressions = media.impressions || 0;\n  const saves = media.saved || 0;\n  const shares = media.shares || 0;\n  const videoViews = postType === 'video' ? (media.video_views || media.plays || null) : null;\n  \n  const totalEngagement = likes + comments + saves + shares;\n  const engagementRate = reach > 0 ? totalEngagement / reach : null;\n  \n  const postTime = new Date(media.timestamp).getTime();\n  const daysSincePost = (Date.now() - postTime) / (1000 * 60 * 60 * 24);\n  const isBoostCandidate = engagementRate !== null && engagementRate > 0.02 && daysSincePost < 14;\n  \n  results.push({\n    json: {\n      client_id: context.client_id,\n      platform: 'instagram',\n      post_id: media.id,\n      post_type: postType,\n      content_label: contentLabel,\n      series: series,\n      posted_at: media.timestamp,\n      message: caption.replace(/'/g, \"''\").substring(0, 5000),\n      reach: reach,\n      impressions: impressions,\n      video_views: videoViews,\n      likes: likes,\n      comments: comments,\n      shares: shares,\n      saves: saves,\n      reactions_total: likes,\n      engagement_rate: engagementRate,\n      is_boost_candidate: isBoostCandidate,\n      permalink_url: media.permalink || null\n    }\n  });\n}\n\nif (results.length === 0) {\n  return [{ json: { _skip: true, _message: 'No organic posts found' } }];\n}\n\nreturn results;"
+      },
+      "id": "transform",
+      "name": "Transform Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "not-skip",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "has-posts",
+      "name": "Has Posts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2060,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO organic_content_insights (\n  client_id, platform, post_id, post_type, content_label, series,\n  posted_at, message, reach, impressions, video_views,\n  likes, comments, shares, saves, reactions_total,\n  engagement_rate, is_boost_candidate, last_synced_at, updated_at\n)\nVALUES (\n  '{{ $json.client_id }}',\n  '{{ $json.platform }}',\n  '{{ $json.post_id }}',\n  {{ $json.post_type ? \"'\" + $json.post_type + \"'\" : 'NULL' }},\n  {{ $json.content_label ? \"'\" + $json.content_label.replace(/'/g, \"''\") + \"'\" : 'NULL' }},\n  {{ $json.series ? \"'\" + $json.series + \"'\" : 'NULL' }},\n  '{{ $json.posted_at }}',\n  {{ $json.message ? \"'\" + $json.message + \"'\" : 'NULL' }},\n  {{ $json.reach }},\n  {{ $json.impressions }},\n  {{ $json.video_views !== null ? $json.video_views : 'NULL' }},\n  {{ $json.likes }},\n  {{ $json.comments }},\n  {{ $json.shares }},\n  {{ $json.saves }},\n  {{ $json.reactions_total }},\n  {{ $json.engagement_rate !== null ? $json.engagement_rate : 'NULL' }},\n  {{ $json.is_boost_candidate }},\n  NOW(),\n  NOW()\n)\nON CONFLICT (platform, post_id) DO UPDATE SET\n  reach = EXCLUDED.reach,\n  impressions = EXCLUDED.impressions,\n  video_views = EXCLUDED.video_views,\n  likes = EXCLUDED.likes,\n  comments = EXCLUDED.comments,\n  shares = EXCLUDED.shares,\n  saves = EXCLUDED.saves,\n  reactions_total = EXCLUDED.reactions_total,\n  engagement_rate = EXCLUDED.engagement_rate,\n  is_boost_candidate = EXCLUDED.is_boost_candidate,\n  last_synced_at = NOW(),\n  updated_at = NOW()\nRETURNING id, post_id;",
+        "options": {}
+      },
+      "id": "upsert",
+      "name": "Upsert Organic Insights",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2280,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "aggregate",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insertedCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insertedCount += data.filter(d => d && d.id).length;\n}\n\nconst isBackfill = $('Prepare Params').first()?.json?._isBackfill || false;\nconst msg = isBackfill \n  ? 'Backfill complete: synced ' + insertedCount + ' organic posts'\n  : 'Synced ' + insertedCount + ' organic posts';\n\nreturn [{\n  json: {\n    success: true,\n    message: msg,\n    mode: isBackfill ? 'backfill' : 'daily',\n    posts_synced: insertedCount,\n    synced_at: new Date().toISOString(),\n    note: 'Video engagement available. Non-video post engagement requires Page Public Content Access feature approval from Meta.'\n  }\n}];"
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// No posts found\nreturn [{\n  json: {\n    success: true,\n    message: 'No organic posts found for active accounts',\n    posts_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "no-posts",
+      "name": "No Posts Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Resolve Page Token').first().json.ig_account_id || 'skip' }}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,caption,timestamp,media_type,thumbnail_url,permalink,like_count,comments_count"
+            },
+            {
+              "name": "since",
+              "value": "={{ $('Resolve Page Token').first().json._sinceUnix }}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Resolve Page Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "get-ig-media",
+      "name": "Get IG Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 6:30am CT": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Accounts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Params": {
+      "main": [
+        [
+          {
+            "node": "Get User Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get User Pages": {
+      "main": [
+        [
+          {
+            "node": "Resolve Page Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Page Token": {
+      "main": [
+        [
+          {
+            "node": "Get FB Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get FB Posts": {
+      "main": [
+        [
+          {
+            "node": "Get FB Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get FB Videos": {
+      "main": [
+        [
+          {
+            "node": "Get IG Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Posts": {
+      "main": [
+        [
+          {
+            "node": "Has Posts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Posts?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Organic Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Posts Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Organic Insights": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        []
+      ]
+    },
+    "No Posts Response": {
+      "main": [
+        []
+      ]
+    },
+    "Get IG Media": {
+      "main": [
+        [
+          {
+            "node": "Transform Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Daily 6:30am CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "7bde674c-5212-46f1-9fa6-839a9d1962cf",
+  "activeVersionId": "7bde674c-5212-46f1-9fa6-839a9d1962cf",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-02-12T00:16:55.022Z",
+      "createdAt": "2026-02-12T00:16:55.022Z",
+      "role": "workflow:owner",
+      "workflowId": "b0rGNpvAQ5IcJ8vy",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-12T02:01:15.073Z",
+    "createdAt": "2026-02-12T02:01:15.073Z",
+    "versionId": "7bde674c-5212-46f1-9fa6-839a9d1962cf",
+    "workflowId": "b0rGNpvAQ5IcJ8vy",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "trigger-manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 6 * * *"
+              }
+            ]
+          }
+        },
+        "id": "trigger-cron",
+        "name": "Daily 6:30am CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          500
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sync-organic-insights",
+          "responseMode": "onReceived",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "trigger-webhook",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          100
+        ],
+        "webhookId": "sync-organic-insights"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id, client_id, account_id, page_id, ig_account_id, access_token, token_expires_at\nFROM meta_ad_accounts\nWHERE account_status = 1\n  AND access_token IS NOT NULL\n  AND page_id IS NOT NULL\n  AND (token_expires_at IS NULL OR token_expires_at > NOW())",
+          "options": {}
+        },
+        "id": "get-accounts",
+        "name": "Get Active Accounts",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          300,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare parameters for each client\nconst accounts = $input.all();\n\n// Try to get webhook data for backfill mode\nlet webhookData = {};\ntry {\n  const webhookNode = $('Webhook Trigger').first();\n  if (webhookNode) {\n    webhookData = webhookNode.json?.body || webhookNode.json || {};\n  }\n} catch(e) {}\n\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 30, 180);\n\n// Calculate since timestamp\nconst now = new Date();\nconst sinceDays = isBackfill ? backfillDays : 7;\nconst since = new Date(now.getTime() - sinceDays * 24 * 60 * 60 * 1000);\nconst sinceUnix = Math.floor(since.getTime() / 1000);\n\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _sinceUnix: sinceUnix,\n    _sinceDays: sinceDays,\n    _isBackfill: isBackfill\n  }\n}));"
+        },
+        "id": "prepare-params",
+        "name": "Prepare Params",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          520,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/me/accounts",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "id,access_token"
+              },
+              {
+                "name": "access_token",
+                "value": "={{ $json.access_token }}"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "get-user-pages",
+        "name": "Get User Pages",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1180,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Find the page token for this client's page\nconst account = $('Prepare Params').first().json;\nconst pagesData = $input.first().json;\nconst pageId = account.page_id;\n\nlet pageToken = account.access_token; // fallback\n\nif (pagesData.data) {\n  const page = pagesData.data.find(p => p.id === pageId);\n  if (page && page.access_token) {\n    pageToken = page.access_token;\n  }\n}\n\nreturn [{\n  json: {\n    client_id: account.client_id,\n    account_id: account.account_id,\n    page_id: pageId,\n    ig_account_id: account.ig_account_id || null,\n    page_token: pageToken,\n    access_token: account.access_token,\n    _sinceUnix: account._sinceUnix,\n    _sinceDays: account._sinceDays,\n    _isBackfill: account._isBackfill\n  }\n}];"
+        },
+        "id": "resolve-page-token",
+        "name": "Resolve Page Token",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1400,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.page_id }}/published_posts",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "id,message,created_time,permalink_url,full_picture"
+              },
+              {
+                "name": "since",
+                "value": "={{ $json._sinceUnix }}"
+              },
+              {
+                "name": "limit",
+                "value": "100"
+              },
+              {
+                "name": "access_token",
+                "value": "={{ $json.page_token }}"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "get-posts",
+        "name": "Get FB Posts",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1620,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('Resolve Page Token').first().json.page_id }}/videos",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "id,title,description,created_time,length,views,likes.summary(true),comments.summary(true),permalink_url"
+              },
+              {
+                "name": "since",
+                "value": "={{ $('Resolve Page Token').first().json._sinceUnix }}"
+              },
+              {
+                "name": "limit",
+                "value": "100"
+              },
+              {
+                "name": "access_token",
+                "value": "={{ $('Resolve Page Token').first().json.page_token }}"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "get-videos",
+        "name": "Get FB Videos",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1620,
+          500
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Transform posts + videos + IG media into organic_content_insights records\nconst context = $('Resolve Page Token').first().json;\nconst postsData = $('Get FB Posts').first().json;\nconst videosData = $('Get FB Videos').first().json;\n\n// Try to get IG data if available\nlet igMedia = [];\ntry {\n  const igData = $('Get IG Media').first().json;\n  igMedia = igData.data || [];\n} catch(e) {\n  // No IG data node — skip\n}\n\nconst posts = postsData.data || [];\nconst videos = videosData.data || [];\n\n// Build video lookup by matching timestamps (within 5 min)\nconst videoMap = new Map();\nfor (const v of videos) {\n  const videoTime = new Date(v.created_time).getTime();\n  videoMap.set(videoTime, v);\n}\n\nfunction detectSeries(message) {\n  if (!message) return null;\n  const msg = message.toLowerCase();\n  if (msg.includes('capitol smarts') || msg.includes('capitol smart')) return 'capitol_smarts';\n  if (msg.includes('just arrived') || msg.includes('new on the lot') || msg.includes('new arrival')) return 'just_arrived';\n  if (msg.includes('customer spotlight') || msg.includes('customer story')) return 'customer_spotlight';\n  if (msg.includes('community') || msg.includes('local event')) return 'community';\n  return null;\n}\n\nfunction detectContentLabel(message, series) {\n  if (!message) return null;\n  const firstLine = message.split('\\n')[0].trim();\n  if (firstLine.length > 10 && firstLine.length < 200) {\n    return firstLine.substring(0, 255);\n  }\n  return null;\n}\n\nfunction detectPostType(post, matchedVideo) {\n  if (matchedVideo) return 'video';\n  if (post.full_picture) return 'image';\n  return 'text';\n}\n\nconst results = [];\n\n// Process Facebook posts\nfor (const post of posts) {\n  const postTime = new Date(post.created_time).getTime();\n  \n  let matchedVideo = null;\n  for (const [vTime, video] of videoMap.entries()) {\n    if (Math.abs(postTime - vTime) < 5 * 60 * 1000) {\n      matchedVideo = video;\n      videoMap.delete(vTime);\n      break;\n    }\n  }\n  \n  const message = post.message || '';\n  const series = detectSeries(message);\n  const contentLabel = detectContentLabel(message, series);\n  const postType = detectPostType(post, matchedVideo);\n  \n  const videoViews = matchedVideo ? (matchedVideo.views || 0) : null;\n  const likes = matchedVideo ? (matchedVideo.likes?.summary?.total_count || 0) : 0;\n  const comments = matchedVideo ? (matchedVideo.comments?.summary?.total_count || 0) : 0;\n  \n  const reach = videoViews || 0;\n  const totalEngagement = likes + comments;\n  const engagementRate = reach > 0 ? totalEngagement / reach : null;\n  \n  const daysSincePost = (Date.now() - postTime) / (1000 * 60 * 60 * 24);\n  const isBoostCandidate = engagementRate !== null && engagementRate > 0.02 && daysSincePost < 14;\n  \n  results.push({\n    json: {\n      client_id: context.client_id,\n      platform: 'facebook',\n      post_id: post.id,\n      post_type: postType,\n      content_label: contentLabel,\n      series: series,\n      posted_at: post.created_time,\n      message: message.replace(/'/g, \"''\").substring(0, 5000),\n      reach: reach,\n      impressions: 0,\n      video_views: videoViews,\n      likes: likes,\n      comments: comments,\n      shares: 0,\n      saves: 0,\n      reactions_total: likes,\n      engagement_rate: engagementRate,\n      is_boost_candidate: isBoostCandidate,\n      permalink_url: post.permalink_url || null\n    }\n  });\n}\n\n// Add unmatched videos\nfor (const [vTime, video] of videoMap.entries()) {\n  const message = video.description || video.title || '';\n  const series = detectSeries(message);\n  const contentLabel = detectContentLabel(message, series);\n  const views = video.views || 0;\n  const likes = video.likes?.summary?.total_count || 0;\n  const comments = video.comments?.summary?.total_count || 0;\n  const engagementRate = views > 0 ? (likes + comments) / views : null;\n  const daysSincePost = (Date.now() - vTime) / (1000 * 60 * 60 * 24);\n  \n  results.push({\n    json: {\n      client_id: context.client_id,\n      platform: 'facebook',\n      post_id: video.id,\n      post_type: 'video',\n      content_label: contentLabel,\n      series: series,\n      posted_at: video.created_time,\n      message: message.replace(/'/g, \"''\").substring(0, 5000),\n      reach: views,\n      impressions: 0,\n      video_views: views,\n      likes: likes,\n      comments: comments,\n      shares: 0,\n      saves: 0,\n      reactions_total: likes,\n      engagement_rate: engagementRate,\n      is_boost_candidate: engagementRate !== null && engagementRate > 0.02 && daysSincePost < 14,\n      permalink_url: video.permalink_url || null\n    }\n  });\n}\n\n// Process Instagram media\nfor (const media of igMedia) {\n  const caption = media.caption || '';\n  const series = detectSeries(caption);\n  const contentLabel = detectContentLabel(caption, series);\n  \n  const mediaTypeMap = {\n    'IMAGE': 'image',\n    'VIDEO': 'video',\n    'CAROUSEL_ALBUM': 'carousel'\n  };\n  const postType = mediaTypeMap[media.media_type] || 'image';\n  \n  const likes = media.like_count || 0;\n  const comments = media.comments_count || 0;\n  const reach = media.reach || 0;\n  const impressions = media.impressions || 0;\n  const saves = media.saved || 0;\n  const shares = media.shares || 0;\n  const videoViews = postType === 'video' ? (media.video_views || media.plays || null) : null;\n  \n  const totalEngagement = likes + comments + saves + shares;\n  const engagementRate = reach > 0 ? totalEngagement / reach : null;\n  \n  const postTime = new Date(media.timestamp).getTime();\n  const daysSincePost = (Date.now() - postTime) / (1000 * 60 * 60 * 24);\n  const isBoostCandidate = engagementRate !== null && engagementRate > 0.02 && daysSincePost < 14;\n  \n  results.push({\n    json: {\n      client_id: context.client_id,\n      platform: 'instagram',\n      post_id: media.id,\n      post_type: postType,\n      content_label: contentLabel,\n      series: series,\n      posted_at: media.timestamp,\n      message: caption.replace(/'/g, \"''\").substring(0, 5000),\n      reach: reach,\n      impressions: impressions,\n      video_views: videoViews,\n      likes: likes,\n      comments: comments,\n      shares: shares,\n      saves: saves,\n      reactions_total: likes,\n      engagement_rate: engagementRate,\n      is_boost_candidate: isBoostCandidate,\n      permalink_url: media.permalink || null\n    }\n  });\n}\n\nif (results.length === 0) {\n  return [{ json: { _skip: true, _message: 'No organic posts found' } }];\n}\n\nreturn results;"
+        },
+        "id": "transform",
+        "name": "Transform Posts",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1840,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "not-skip",
+                "leftValue": "={{ $json._skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "id": "has-posts",
+        "name": "Has Posts?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2060,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO organic_content_insights (\n  client_id, platform, post_id, post_type, content_label, series,\n  posted_at, message, reach, impressions, video_views,\n  likes, comments, shares, saves, reactions_total,\n  engagement_rate, is_boost_candidate, last_synced_at, updated_at\n)\nVALUES (\n  '{{ $json.client_id }}',\n  '{{ $json.platform }}',\n  '{{ $json.post_id }}',\n  {{ $json.post_type ? \"'\" + $json.post_type + \"'\" : 'NULL' }},\n  {{ $json.content_label ? \"'\" + $json.content_label.replace(/'/g, \"''\") + \"'\" : 'NULL' }},\n  {{ $json.series ? \"'\" + $json.series + \"'\" : 'NULL' }},\n  '{{ $json.posted_at }}',\n  {{ $json.message ? \"'\" + $json.message + \"'\" : 'NULL' }},\n  {{ $json.reach }},\n  {{ $json.impressions }},\n  {{ $json.video_views !== null ? $json.video_views : 'NULL' }},\n  {{ $json.likes }},\n  {{ $json.comments }},\n  {{ $json.shares }},\n  {{ $json.saves }},\n  {{ $json.reactions_total }},\n  {{ $json.engagement_rate !== null ? $json.engagement_rate : 'NULL' }},\n  {{ $json.is_boost_candidate }},\n  NOW(),\n  NOW()\n)\nON CONFLICT (platform, post_id) DO UPDATE SET\n  reach = EXCLUDED.reach,\n  impressions = EXCLUDED.impressions,\n  video_views = EXCLUDED.video_views,\n  likes = EXCLUDED.likes,\n  comments = EXCLUDED.comments,\n  shares = EXCLUDED.shares,\n  saves = EXCLUDED.saves,\n  reactions_total = EXCLUDED.reactions_total,\n  engagement_rate = EXCLUDED.engagement_rate,\n  is_boost_candidate = EXCLUDED.is_boost_candidate,\n  last_synced_at = NOW(),\n  updated_at = NOW()\nRETURNING id, post_id;",
+          "options": {}
+        },
+        "id": "upsert",
+        "name": "Upsert Organic Insights",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2280,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "options": {}
+        },
+        "id": "aggregate",
+        "name": "Aggregate Results",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          2500,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insertedCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insertedCount += data.filter(d => d && d.id).length;\n}\n\nconst isBackfill = $('Prepare Params').first()?.json?._isBackfill || false;\nconst msg = isBackfill \n  ? 'Backfill complete: synced ' + insertedCount + ' organic posts'\n  : 'Synced ' + insertedCount + ' organic posts';\n\nreturn [{\n  json: {\n    success: true,\n    message: msg,\n    mode: isBackfill ? 'backfill' : 'daily',\n    posts_synced: insertedCount,\n    synced_at: new Date().toISOString(),\n    note: 'Video engagement available. Non-video post engagement requires Page Public Content Access feature approval from Meta.'\n  }\n}];"
+        },
+        "id": "format-response",
+        "name": "Format Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2720,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// No posts found\nreturn [{\n  json: {\n    success: true,\n    message: 'No organic posts found for active accounts',\n    posts_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "no-posts",
+        "name": "No Posts Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2280,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('Resolve Page Token').first().json.ig_account_id || 'skip' }}/media",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "id,caption,timestamp,media_type,thumbnail_url,permalink,like_count,comments_count"
+              },
+              {
+                "name": "since",
+                "value": "={{ $('Resolve Page Token').first().json._sinceUnix }}"
+              },
+              {
+                "name": "limit",
+                "value": "100"
+              },
+              {
+                "name": "access_token",
+                "value": "={{ $('Resolve Page Token').first().json.access_token }}"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "get-ig-media",
+        "name": "Get IG Media",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1060,
+          200
+        ]
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Accounts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Daily 6:30am CT": {
+        "main": [
+          [
+            {
+              "node": "Get Active Accounts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Accounts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Active Accounts": {
+        "main": [
+          [
+            {
+              "node": "Prepare Params",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Params": {
+        "main": [
+          [
+            {
+              "node": "Get User Pages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get User Pages": {
+        "main": [
+          [
+            {
+              "node": "Resolve Page Token",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resolve Page Token": {
+        "main": [
+          [
+            {
+              "node": "Get FB Posts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get FB Posts": {
+        "main": [
+          [
+            {
+              "node": "Get FB Videos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get FB Videos": {
+        "main": [
+          [
+            {
+              "node": "Get IG Media",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Transform Posts": {
+        "main": [
+          [
+            {
+              "node": "Has Posts?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Posts?": {
+        "main": [
+          [
+            {
+              "node": "Upsert Organic Insights",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Posts Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Organic Insights": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Results": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          []
+        ]
+      },
+      "No Posts Response": {
+        "main": [
+          []
+        ]
+      },
+      "Get IG Media": {
+        "main": [
+          [
+            {
+              "node": "Transform Posts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
