@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:04.557Z",
+  "updatedAt": "2026-02-08T13:38:53.497Z",
   "createdAt": "2026-01-26T23:34:50.982Z",
   "id": "yqw6OsqdPKXdRJQx",
   "name": "Sync HeyGen Avatars to DB",
@@ -130,7 +130,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid,\n  '{{ $json.id }}'::uuid,\n  true\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n)\nRETURNING avatar_id;",
+        "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active)\nSELECT cp.client_id, '{{ $json.id }}'::uuid, true\nFROM client_persons cp\nWHERE cp.person_id = '{{ $json.person_id }}'::uuid\n  AND cp.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM client_avatars ca\n    WHERE ca.client_id = cp.client_id\n      AND ca.avatar_id = '{{ $json.id }}'::uuid\n  );",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -140,7 +140,7 @@
         100
       ],
       "id": "link-to-client",
-      "name": "Link to CCC Client",
+      "name": "Link Avatar to Client(s)",
       "credentials": {
         "postgres": {
           "id": "ZUwzqy3kvUJpXrDM",
@@ -265,17 +265,6 @@
         ]
       ]
     },
-    "Link to CCC Client": {
-      "main": [
-        [
-          {
-            "node": "Aggregate Results",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Aggregate Results": {
       "main": [
         [
@@ -297,6 +286,17 @@
           }
         ]
       ]
+    },
+    "Link Avatar to Client(s)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -307,8 +307,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "01af6b64-e17c-4728-b662-c459946282df",
-  "activeVersionId": "01af6b64-e17c-4728-b662-c459946282df",
+  "versionId": "9681dcb4-4f25-47fe-9b9f-6645d1dae161",
+  "activeVersionId": "9681dcb4-4f25-47fe-9b9f-6645d1dae161",
   "triggerCount": 1,
   "shared": [
     {
@@ -320,9 +320,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T01:12:04.560Z",
-    "createdAt": "2026-01-30T01:12:04.560Z",
-    "versionId": "01af6b64-e17c-4728-b662-c459946282df",
+    "updatedAt": "2026-02-08T13:38:53.499Z",
+    "createdAt": "2026-02-08T13:38:53.499Z",
+    "versionId": "9681dcb4-4f25-47fe-9b9f-6645d1dae161",
     "workflowId": "yqw6OsqdPKXdRJQx",
     "nodes": [
       {
@@ -449,7 +449,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid,\n  '{{ $json.id }}'::uuid,\n  true\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n)\nRETURNING avatar_id;",
+          "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active)\nSELECT cp.client_id, '{{ $json.id }}'::uuid, true\nFROM client_persons cp\nWHERE cp.person_id = '{{ $json.person_id }}'::uuid\n  AND cp.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM client_avatars ca\n    WHERE ca.client_id = cp.client_id\n      AND ca.avatar_id = '{{ $json.id }}'::uuid\n  );",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
@@ -459,7 +459,7 @@
           100
         ],
         "id": "link-to-client",
-        "name": "Link to CCC Client",
+        "name": "Link Avatar to Client(s)",
         "credentials": {
           "postgres": {
             "id": "ZUwzqy3kvUJpXrDM",
@@ -584,17 +584,6 @@
           ]
         ]
       },
-      "Link to CCC Client": {
-        "main": [
-          [
-            {
-              "node": "Aggregate Results",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Aggregate Results": {
         "main": [
           [
@@ -611,6 +600,17 @@
           [
             {
               "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Link Avatar to Client(s)": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
               "type": "main",
               "index": 0
             }
