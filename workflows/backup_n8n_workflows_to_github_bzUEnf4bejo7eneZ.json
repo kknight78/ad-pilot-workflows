@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T20:53:41.584Z",
+  "updatedAt": "2026-02-13T13:21:52.273Z",
   "createdAt": "2026-01-26T23:34:47.996Z",
   "id": "bzUEnf4bejo7eneZ",
   "name": "Backup n8n Workflows to GitHub",
@@ -23,30 +23,8 @@
       "typeVersion": 1.2,
       "position": [
         -1536,
-        96
+        32
       ]
-    },
-    {
-      "parameters": {
-        "url": "https://ad-pilot-n8n-development.up.railway.app/api/v1/workflows",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {}
-      },
-      "id": "39ec583e-87f1-4f3c-8d15-d257e505bd16",
-      "name": "Get All Workflows",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1312,
-        96
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "b1OrgqNsUXGMEANF",
-          "name": "N8N"
-        }
-      }
     },
     {
       "parameters": {
@@ -58,8 +36,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -880,
-        96
+        -864,
+        32
       ]
     },
     {
@@ -93,8 +71,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -656,
-        96
+        -640,
+        32
       ],
       "retryOnFail": false,
       "waitBetweenTries": 2000,
@@ -121,8 +99,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -432,
-        96
+        -416,
+        128
       ]
     },
     {
@@ -141,8 +119,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -208,
-        96
+        -192,
+        128
       ]
     },
     {
@@ -172,8 +150,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -16,
-        -16
+        32,
+        56
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -217,8 +195,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        416,
-        -32
+        704,
+        -16
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -238,8 +216,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        576,
-        112
+        928,
+        128
       ],
       "id": "5d9bea72-51b4-4ee0-9267-a6c57301477a",
       "name": "Aggregate Results"
@@ -273,8 +251,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        720,
-        112
+        1152,
+        128
       ],
       "id": "7940083a-972c-4589-becf-7da2615885d9",
       "name": "If"
@@ -284,8 +262,8 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        944,
-        192
+        1376,
+        224
       ],
       "id": "ec514100-f164-46dd-866d-424a59b5f24c",
       "name": "No Operation, do nothing"
@@ -298,8 +276,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        128,
-        -16
+        256,
+        56
       ],
       "id": "compare-content-node",
       "name": "Compare Content"
@@ -312,8 +290,8 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        -1104,
-        96
+        -1088,
+        32
       ],
       "id": "f360cbde-c656-4301-899f-f9159123f054",
       "name": "Split Out"
@@ -346,8 +324,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        272,
-        -16
+        480,
+        56
       ],
       "id": "c5dc8ca3-ae2b-4a13-8365-211a7c66023f",
       "name": "If1"
@@ -366,8 +344,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        928,
-        16
+        1376,
+        32
       ],
       "id": "2497f8ea-debd-4eaa-9695-dc07c5366636",
       "name": "Email Errors",
@@ -383,11 +361,33 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        -432,
+        -416,
         -64
       ],
       "id": "068778e4-cca2-4540-b1a2-b250eac5f73f",
       "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "url": "https://ad-pilot-n8n-development.up.railway.app/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "f6cb2e6b-169e-48b7-9471-b4ad5d78aceb",
+      "name": "Get All Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1312,
+        32
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "px0cxeOtxtBNiekC",
+          "name": "N8N"
+        }
+      }
     }
   ],
   "connections": {
@@ -396,17 +396,6 @@
         [
           {
             "node": "Get All Workflows",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get All Workflows": {
-      "main": [
-        [
-          {
-            "node": "Split Out",
             "type": "main",
             "index": 0
           }
@@ -561,6 +550,17 @@
           }
         ]
       ]
+    },
+    "Get All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -574,9 +574,9 @@
     }
   },
   "meta": null,
-  "pinData": null,
-  "versionId": "f5955474-80df-476e-bf5c-0b1106c7e4ff",
-  "activeVersionId": "f5955474-80df-476e-bf5c-0b1106c7e4ff",
+  "pinData": {},
+  "versionId": "ba31a550-8019-4b6e-b853-970f8d618a2f",
+  "activeVersionId": "ba31a550-8019-4b6e-b853-970f8d618a2f",
   "triggerCount": 1,
   "shared": [
     {
@@ -588,9 +588,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T20:53:41.588Z",
-    "createdAt": "2026-02-06T20:53:41.588Z",
-    "versionId": "f5955474-80df-476e-bf5c-0b1106c7e4ff",
+    "updatedAt": "2026-02-13T13:21:55.586Z",
+    "createdAt": "2026-02-13T13:21:52.275Z",
+    "versionId": "ba31a550-8019-4b6e-b853-970f8d618a2f",
     "workflowId": "bzUEnf4bejo7eneZ",
     "nodes": [
       {
@@ -610,30 +610,8 @@
         "typeVersion": 1.2,
         "position": [
           -1536,
-          96
+          32
         ]
-      },
-      {
-        "parameters": {
-          "url": "https://ad-pilot-n8n-development.up.railway.app/api/v1/workflows",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "options": {}
-        },
-        "id": "39ec583e-87f1-4f3c-8d15-d257e505bd16",
-        "name": "Get All Workflows",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          -1312,
-          96
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "b1OrgqNsUXGMEANF",
-            "name": "N8N"
-          }
-        }
       },
       {
         "parameters": {
@@ -645,8 +623,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -880,
-          96
+          -864,
+          32
         ]
       },
       {
@@ -680,8 +658,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          -656,
-          96
+          -640,
+          32
         ],
         "retryOnFail": false,
         "waitBetweenTries": 2000,
@@ -708,8 +686,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          -432,
-          96
+          -416,
+          128
         ]
       },
       {
@@ -728,8 +706,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 1,
         "position": [
-          -208,
-          96
+          -192,
+          128
         ]
       },
       {
@@ -759,8 +737,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          -16,
-          -16
+          32,
+          56
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -804,8 +782,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          416,
-          -32
+          704,
+          -16
         ],
         "credentials": {
           "httpHeaderAuth": {
@@ -825,8 +803,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          576,
-          112
+          928,
+          128
         ],
         "id": "5d9bea72-51b4-4ee0-9267-a6c57301477a",
         "name": "Aggregate Results"
@@ -860,8 +838,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          720,
-          112
+          1152,
+          128
         ],
         "id": "7940083a-972c-4589-becf-7da2615885d9",
         "name": "If"
@@ -871,8 +849,8 @@
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
         "position": [
-          944,
-          192
+          1376,
+          224
         ],
         "id": "ec514100-f164-46dd-866d-424a59b5f24c",
         "name": "No Operation, do nothing"
@@ -885,8 +863,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          128,
-          -16
+          256,
+          56
         ],
         "id": "compare-content-node",
         "name": "Compare Content"
@@ -899,8 +877,8 @@
         "type": "n8n-nodes-base.splitOut",
         "typeVersion": 1,
         "position": [
-          -1104,
-          96
+          -1088,
+          32
         ],
         "id": "f360cbde-c656-4301-899f-f9159123f054",
         "name": "Split Out"
@@ -933,8 +911,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          272,
-          -16
+          480,
+          56
         ],
         "id": "c5dc8ca3-ae2b-4a13-8365-211a7c66023f",
         "name": "If1"
@@ -953,8 +931,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          928,
-          16
+          1376,
+          32
         ],
         "id": "2497f8ea-debd-4eaa-9695-dc07c5366636",
         "name": "Email Errors",
@@ -970,11 +948,33 @@
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
         "position": [
-          -432,
+          -416,
           -64
         ],
         "id": "068778e4-cca2-4540-b1a2-b250eac5f73f",
         "name": "No Operation, do nothing1"
+      },
+      {
+        "parameters": {
+          "url": "https://ad-pilot-n8n-development.up.railway.app/api/v1/workflows",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "f6cb2e6b-169e-48b7-9471-b4ad5d78aceb",
+        "name": "Get All Workflows",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -1312,
+          32
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "px0cxeOtxtBNiekC",
+            "name": "N8N"
+          }
+        }
       }
     ],
     "connections": {
@@ -983,17 +983,6 @@
           [
             {
               "node": "Get All Workflows",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get All Workflows": {
-        "main": [
-          [
-            {
-              "node": "Split Out",
               "type": "main",
               "index": 0
             }
@@ -1148,12 +1137,23 @@
             }
           ]
         ]
+      },
+      "Get All Workflows": {
+        "main": [
+          [
+            {
+              "node": "Split Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "name": "Version ba31a550",
+    "description": "",
+    "autosaved": true
   },
   "tags": []
 }
