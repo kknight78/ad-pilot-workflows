@@ -1,0 +1,487 @@
+{
+  "updatedAt": "2026-02-12T19:08:45.759Z",
+  "createdAt": "2026-02-12T17:45:39.373Z",
+  "id": "7bTpATAf7nlBud4y",
+  "name": "[AGENT] Idea Ping Fallback",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "trigger-cron",
+      "name": "Wednesday 6pm CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        500
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * 3"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "find-unresponded",
+      "name": "Find Unresponded Plans",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DISTINCT ON (wp.id)\n  ipr.id AS ping_id, ipr.plan_id, wp.client_id::text AS client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE ipr.responded_at IS NULL\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'draft'\nORDER BY wp.id, ipr.created_at DESC",
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "check-any",
+      "name": "Any Unresponded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "check",
+              "leftValue": "={{ $json.plan_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "auto-approve",
+      "name": "Auto-Approve Plans",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        750,
+        200
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH updated_plans AS (\n  UPDATE weekly_plans\n  SET status = 'confirmed',\n      approved_at = NOW(),\n      approved_by = 'auto-fallback',\n      updated_at = NOW()\n  WHERE id = '{{ $json.plan_id }}'::uuid\n    AND status = 'draft'\n  RETURNING id, theme_name, theme_emoji\n),\nupdated_pings AS (\n  UPDATE idea_ping_responses\n  SET responded_at = NOW(),\n      theme_approved = true,\n      response_channel = 'auto-fallback',\n      responded_by = 'system'\n  WHERE plan_id = '{{ $json.plan_id }}'::uuid\n    AND responded_at IS NULL\n  RETURNING id\n)\nSELECT\n  (SELECT count(*) FROM updated_plans) AS plans_confirmed,\n  (SELECT count(*) FROM updated_pings) AS pings_closed",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "prep-email",
+      "name": "Prepare Fallback Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const items = $('Find Unresponded Plans').all();\nconst clients = items.map(i => i.json.theme_emoji + ' ' + i.json.client_name + ' — ' + i.json.theme_name).join('<br>');\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Auto-confirmed ' + items.length + ' plan(s) (no client response)',\n    html: '<h2>Auto-Fallback Confirmation</h2>' +\n      '<p>The following plans were auto-confirmed because no client response was received:</p>' +\n      '<p>' + clients + '</p>' +\n      '<hr><p>These plans will proceed to script generation.</p>'\n  }\n}}];"
+      }
+    },
+    {
+      "id": "send-email",
+      "name": "Email Kelly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1250,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Unresponded Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wednesday 6pm CT": {
+      "main": [
+        [
+          {
+            "node": "Find Unresponded Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Unresponded Plans": {
+      "main": [
+        [
+          {
+            "node": "Any Unresponded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Unresponded?": {
+      "main": [
+        [
+          {
+            "node": "Auto-Approve Plans",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Auto-Approve Plans": {
+      "main": [
+        [
+          {
+            "node": "Prepare Fallback Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Fallback Email": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Wednesday 6pm CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "5ef713d2-a322-4bcb-8da3-f7400c8fa6c1",
+  "activeVersionId": "5ef713d2-a322-4bcb-8da3-f7400c8fa6c1",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-12T17:45:39.373Z",
+      "createdAt": "2026-02-12T17:45:39.373Z",
+      "role": "workflow:owner",
+      "workflowId": "7bTpATAf7nlBud4y",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-12T19:08:45.761Z",
+    "createdAt": "2026-02-12T19:08:45.761Z",
+    "versionId": "5ef713d2-a322-4bcb-8da3-f7400c8fa6c1",
+    "workflowId": "7bTpATAf7nlBud4y",
+    "nodes": [
+      {
+        "id": "trigger-manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "trigger-cron",
+        "name": "Wednesday 6pm CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          500
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 18 * * 3"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "find-unresponded",
+        "name": "Find Unresponded Plans",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          250,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT DISTINCT ON (wp.id)\n  ipr.id AS ping_id, ipr.plan_id, wp.client_id::text AS client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE ipr.responded_at IS NULL\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'draft'\nORDER BY wp.id, ipr.created_at DESC",
+          "options": {
+            "alwaysOutputData": true
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "check-any",
+        "name": "Any Unresponded?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "check",
+                "leftValue": "={{ $json.plan_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "isNotEmpty"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "auto-approve",
+        "name": "Auto-Approve Plans",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          750,
+          200
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH updated_plans AS (\n  UPDATE weekly_plans\n  SET status = 'confirmed',\n      approved_at = NOW(),\n      approved_by = 'auto-fallback',\n      updated_at = NOW()\n  WHERE id = '{{ $json.plan_id }}'::uuid\n    AND status = 'draft'\n  RETURNING id, theme_name, theme_emoji\n),\nupdated_pings AS (\n  UPDATE idea_ping_responses\n  SET responded_at = NOW(),\n      theme_approved = true,\n      response_channel = 'auto-fallback',\n      responded_by = 'system'\n  WHERE plan_id = '{{ $json.plan_id }}'::uuid\n    AND responded_at IS NULL\n  RETURNING id\n)\nSELECT\n  (SELECT count(*) FROM updated_plans) AS plans_confirmed,\n  (SELECT count(*) FROM updated_pings) AS pings_closed",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "prep-email",
+        "name": "Prepare Fallback Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          200
+        ],
+        "parameters": {
+          "jsCode": "const items = $('Find Unresponded Plans').all();\nconst clients = items.map(i => i.json.theme_emoji + ' ' + i.json.client_name + ' — ' + i.json.theme_name).join('<br>');\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Auto-confirmed ' + items.length + ' plan(s) (no client response)',\n    html: '<h2>Auto-Fallback Confirmation</h2>' +\n      '<p>The following plans were auto-confirmed because no client response was received:</p>' +\n      '<p>' + clients + '</p>' +\n      '<hr><p>These plans will proceed to script generation.</p>'\n  }\n}}];"
+        }
+      },
+      {
+        "id": "send-email",
+        "name": "Email Kelly",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1250,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Find Unresponded Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wednesday 6pm CT": {
+        "main": [
+          [
+            {
+              "node": "Find Unresponded Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Unresponded Plans": {
+        "main": [
+          [
+            {
+              "node": "Any Unresponded?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Any Unresponded?": {
+        "main": [
+          [
+            {
+              "node": "Auto-Approve Plans",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Auto-Approve Plans": {
+        "main": [
+          [
+            {
+              "node": "Prepare Fallback Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Fallback Email": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
