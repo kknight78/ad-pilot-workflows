@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-03T20:28:35.061Z",
+  "updatedAt": "2026-02-08T13:35:04.152Z",
   "createdAt": "2026-01-26T23:34:57.068Z",
   "id": "YRyWnGyjNZTqD0a4",
   "name": "[05] Process Avatar Photo",
@@ -27,7 +27,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body - null/empty means we need to create a new group\nconst groupId = body.group_id || null;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body - null/empty means we need to create a new group\nconst groupId = body.group_id || null;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    client_id: body.client_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -775,7 +775,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active, is_deleted)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',\n  '{{ $json.id }}',\n  true,\n  false\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n);",
+        "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active, is_deleted)\nSELECT \n  COALESCE(\n    NULLIF('{{ $('Parse Input').first().json.client_id }}', '')::uuid,\n    (SELECT client_id FROM client_persons WHERE person_id = '{{ $('Parse Input').first().json.person_id }}' AND is_active = true LIMIT 1)\n  ),\n  '{{ $json.id }}',\n  true,\n  false\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = COALESCE(\n    NULLIF('{{ $('Parse Input').first().json.client_id }}', '')::uuid,\n    (SELECT client_id FROM client_persons WHERE person_id = '{{ $('Parse Input').first().json.person_id }}' AND is_active = true LIMIT 1)\n  )\n  AND avatar_id = '{{ $json.id }}'\n);",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -785,7 +785,7 @@
         -64
       ],
       "id": "postgres-insert-client-avatar",
-      "name": "DB: Insert Client Avatar",
+      "name": "DB: Link Avatar to Client",
       "credentials": {
         "postgres": {
           "id": "ZUwzqy3kvUJpXrDM",
@@ -1372,18 +1372,7 @@
       "main": [
         [
           {
-            "node": "DB: Insert Client Avatar",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "DB: Insert Client Avatar": {
-      "main": [
-        [
-          {
-            "node": "Format Success Response",
+            "node": "DB: Link Avatar to Client",
             "type": "main",
             "index": 0
           }
@@ -1473,6 +1462,17 @@
           }
         ]
       ]
+    },
+    "DB: Link Avatar to Client": {
+      "main": [
+        [
+          {
+            "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1483,8 +1483,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "15e48c5b-1b17-49b0-8349-9b7b907f03e1",
-  "activeVersionId": "15e48c5b-1b17-49b0-8349-9b7b907f03e1",
+  "versionId": "4d0f8ed4-f3d9-42a6-a81d-371be5305251",
+  "activeVersionId": "4d0f8ed4-f3d9-42a6-a81d-371be5305251",
   "triggerCount": 1,
   "shared": [
     {
@@ -1496,9 +1496,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-03T20:28:35.068Z",
-    "createdAt": "2026-02-03T20:28:35.068Z",
-    "versionId": "15e48c5b-1b17-49b0-8349-9b7b907f03e1",
+    "updatedAt": "2026-02-08T13:35:04.156Z",
+    "createdAt": "2026-02-08T13:35:04.156Z",
+    "versionId": "4d0f8ed4-f3d9-42a6-a81d-371be5305251",
     "workflowId": "YRyWnGyjNZTqD0a4",
     "nodes": [
       {
@@ -1522,7 +1522,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body - null/empty means we need to create a new group\nconst groupId = body.group_id || null;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
+          "jsCode": "const input = $input.first().json;\nconst body = input.body || {};\n\nif (!body.image_url && !body.image_base64) {\n  throw new Error('Missing required field: image_url or image_base64');\n}\n\n// Motion prompt presets\nconst MOTION_PRESETS = {\n  \"talking_naturally\": \"Subject talks animatedly while maintaining direct eye contact with the camera. Background elements subtly move to enhance realism. Camera remains absolutely static.\",\n  \"expert_presentation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, confident clear speaking, direct eye contact, professional presence, neutral yet approachable facial expression, precise controlled minimal hand gestures, emphasizes key points, hands free, stable natural posture, motionless delivery\",\n  \"dynamic_announcement\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, enthusiastic energetic speaking, strong engaging eye contact, sense of urgency and importance, animated facial expressions, smiles, raised eyebrows, expressive controlled hand gestures, speech-driven gestures, hands free, stable natural posture, dynamic yet anchored presence\",\n  \"keynote_speaker\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, authoritative passionate speaking, steady engaging tone, intentional powerful eye contact toward camera, strong grounded presence, charismatic dynamic facial expressions, balance of seriousness and warmth, deliberate confident hand gestures, open-palm movements, gestures reinforce message, hands free, stable natural posture, focused delivery\",\n  \"thoughtful_conversation\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, soft even lighting, calm reflective engaging speaking, natural thoughtful pauses, gentle focused eye contact, conversational tone, warm understanding facial expressions, occasional nodding, subtle thoughtful hand gestures, gestures support message, hands free, stable natural posture, composed presence\",\n  \"telling_funny_story\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, playful engaging speaking, natural vocal variations, witty smiling facial expression, slight eye contact shifts, expressive storytelling vibe, lively exaggerated expressions, comedic emphasis, animated contained hand gestures, storytelling gestures, hands free, stable natural posture, grounded delivery\",\n  \"compelling_pitch\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, smooth convincing speaking, confident rhythm, trust-building tone, strong engaging eye contact, credible presence, confident approachable enthusiastic facial expressions, purposeful persuasive hand gestures, selling point emphasis, hands free, stable natural posture, composed delivery\",\n  \"encouraging_motivational\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, passionate energetic speaking, uplifting inspirational tone, intense warm eye contact, personal emotional connection, passionate expressive facial expressions, motivation-focused delivery, open expressive hand gestures, welcoming encouraging presence, hands free, stable natural posture, energized presence\",\n  \"news_moderator\": \"Static camera, locked frame, steady shot, fixed composition, consistent position, even lighting, uniform setup, clear professional composed speaking, authoritative structured neutral tone, direct steady eye contact, credible delivery, measured serious facial expressions, slight expressive variation, subtle intentional hand gestures, hands free, upright stable posture, anchored performance\"\n};\n\n// Default to expert_presentation\nconst defaultPreset = \"expert_presentation\";\nconst motionPreset = body.motion_preset || body.motion_style_name || defaultPreset;\n\n// Get full prompt\nvar motionPrompt;\nif (MOTION_PRESETS[motionPreset]) {\n  motionPrompt = MOTION_PRESETS[motionPreset];\n} else if (body.motion_prompt) {\n  motionPrompt = body.motion_prompt;\n} else {\n  motionPrompt = MOTION_PRESETS[defaultPreset];\n}\n\n// Accept group_id from body - null/empty means we need to create a new group\nconst groupId = body.group_id || null;\n\nconst headers = input.headers || {};\n\nreturn [{\n  json: {\n    image_url: body.image_url || null,\n    image_base64: body.image_base64 || null,\n    group_id: groupId,\n    person_name: body.person_name || \"Unknown\",\n    style_name: body.style_name || body.avatar_name || \"Default\",\n    motion_preset: motionPreset,\n    motion_prompt: motionPrompt,\n    motion_engine: body.motion_engine || \"kling\",\n    voice_id: body.voice_id || \"91cf853f9a91452486ba8ae00a963160\",\n    person_id: body.person_id || null,\n    client_id: body.client_id || null,\n    notification_pref: body.notification_pref || \"email\",\n    request_id: headers[\"x-request-id\"] || String(Date.now())\n  }\n}];\n"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -2270,7 +2270,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active, is_deleted)\nSELECT \n  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',\n  '{{ $json.id }}',\n  true,\n  false\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' \n  AND avatar_id = '{{ $json.id }}'\n);",
+          "query": "INSERT INTO client_avatars (client_id, avatar_id, is_active, is_deleted)\nSELECT \n  COALESCE(\n    NULLIF('{{ $('Parse Input').first().json.client_id }}', '')::uuid,\n    (SELECT client_id FROM client_persons WHERE person_id = '{{ $('Parse Input').first().json.person_id }}' AND is_active = true LIMIT 1)\n  ),\n  '{{ $json.id }}',\n  true,\n  false\nWHERE NOT EXISTS (\n  SELECT 1 FROM client_avatars \n  WHERE client_id = COALESCE(\n    NULLIF('{{ $('Parse Input').first().json.client_id }}', '')::uuid,\n    (SELECT client_id FROM client_persons WHERE person_id = '{{ $('Parse Input').first().json.person_id }}' AND is_active = true LIMIT 1)\n  )\n  AND avatar_id = '{{ $json.id }}'\n);",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
@@ -2280,7 +2280,7 @@
           -64
         ],
         "id": "postgres-insert-client-avatar",
-        "name": "DB: Insert Client Avatar",
+        "name": "DB: Link Avatar to Client",
         "credentials": {
           "postgres": {
             "id": "ZUwzqy3kvUJpXrDM",
@@ -2867,18 +2867,7 @@
         "main": [
           [
             {
-              "node": "DB: Insert Client Avatar",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "DB: Insert Client Avatar": {
-        "main": [
-          [
-            {
-              "node": "Format Success Response",
+              "node": "DB: Link Avatar to Client",
               "type": "main",
               "index": 0
             }
@@ -2963,6 +2952,17 @@
           [
             {
               "node": "API: Add Look to Group",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DB: Link Avatar to Client": {
+        "main": [
+          [
+            {
+              "node": "Format Success Response",
               "type": "main",
               "index": 0
             }
