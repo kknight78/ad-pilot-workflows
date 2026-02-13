@@ -1,0 +1,1877 @@
+{
+  "updatedAt": "2026-02-09T14:43:54.779Z",
+  "createdAt": "2026-02-09T12:57:06.012Z",
+  "id": "uZJD1if4DPu2zYR6",
+  "name": "[Process Spotlight Asset]",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-spotlight-asset",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "process-spotlight-asset"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'::uuid",
+        "options": {}
+      },
+      "id": "fetch-asset",
+      "name": "Fetch Asset + Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const asset = $input.first().json;\n\n// Parse inventory_items JSON if it's a string\nconst inventoryItems = typeof asset.inventory_items === 'string' \n  ? JSON.parse(asset.inventory_items) \n  : asset.inventory_items;\n\nif (!inventoryItems || inventoryItems.length === 0) {\n  throw new Error('No inventory items found on asset');\n}\n\n// Extract item IDs for the query\nconst itemIds = inventoryItems.map(item => item.id);\n\nconsole.log(`Processing ${itemIds.length} items:`, itemIds);\n\nreturn [{\n  json: {\n    asset,\n    inventoryItems,\n    itemIds\n  }\n}];"
+      },
+      "id": "extract-ids",
+      "name": "Extract Item IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  v.*,\n  ii.hero_image_url,\n  ii.hero_cloudinary_url,\n  ii.price,\n  ii.url,\n  v.raw_data->>'Equipment' as equipment_raw,\n  v.raw_data->>'ImageUrlsDelimited' as all_images_delimited\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+        "options": {}
+      },
+      "id": "fetch-vehicle",
+      "name": "Fetch Vehicle Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        880,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Extract Item IDs').first().json;\nconst asset = input.asset;\nconst vehicle = $input.first().json;\n\n// Parse all images\nconst allImages = vehicle.all_images_delimited \n  ? vehicle.all_images_delimited.split('|').filter(Boolean)\n  : [];\n\n// Parse equipment\nconst equipmentRaw = vehicle.equipment_raw || '';\nconst equipment = equipmentRaw ? equipmentRaw.split('|').map(e => e.trim()).filter(Boolean) : [];\n\nconst processed = {\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: equipment,\n  all_images: allImages,\n  photo_url: vehicle.hero_image_url || (allImages.length > 0 ? allImages[0] : null),\n  hero_cloudinary_url: vehicle.hero_cloudinary_url,\n  url: vehicle.url,\n  days_on_lot: vehicle.days_on_lot || 0\n};\n\nconsole.log(`🚗 Spotlight vehicle: ${processed.year} ${processed.make} ${processed.model}`);\nconsole.log(`📸 ${allImages.length} images available`);\nconsole.log(`🔧 ${equipment.length} equipment items`);\n\nreturn [{\n  json: {\n    asset,\n    vehicle: processed,\n    vehicles: [processed],\n    test_mode: false\n  }\n}];"
+      },
+      "id": "process-vehicle",
+      "name": "Process Vehicle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\nconst equipment = vehicle.equipment;\n\n// Split equipment into individual features\nconst features = Array.isArray(equipment) ? equipment : (equipment || '').split('|').map(f => f.trim()).filter(f => f);\n\n// Initialize category arrays\nconst categories = {\n  enginePower: [],\n  transmission: [],\n  drivetrain: [],\n  brakingStability: [],\n  safetyAirbags: [],\n  driverAssist: [],\n  exteriorLighting: [],\n  roofsGlass: [],\n  interiorComfort: [],\n  seatingConfig: [],\n  infotainmentAudio: [],\n  navigationDisplay: [],\n  securityAntiTheft: [],\n  towingOffRoad: [],\n  packages: [],\n  wheelsTires: []\n};\n\n// Helper function to categorize features\nconst categorizeFeature = (feature) => {\n  const f = feature.toLowerCase();\n  \n  // 1. Engine & Power\n  if (/^(v6|v8|4-cyl|3-cyl|i4|i6)/.test(f) || \n      /(ecoboost|ecotec|hybrid|turbo|hemi|gdi|vtec|multiair|liter|electric)/i.test(f)) {\n    categories.enginePower.push(feature);\n  }\n  \n  // 2. Transmission\n  if (/(automatic|auto|manual|cvt|spd|drive unit|shiftronic|selshft|xtronic|overdrive)/i.test(f)) {\n    categories.transmission.push(feature);\n  }\n  \n  // 3. Drivetrain\n  if (/^(fwd|rwd|awd|4wd|2wd)$/i.test(f) || /wheel drive/i.test(f)) {\n    categories.drivetrain.push(feature);\n  }\n  \n  // 4. Braking & Stability\n  if (/(abs|stability|stabilitrak|advancetrac|rollover|hill start|hill descent|traction|vehicle dynamic)/i.test(f)) {\n    categories.brakingStability.push(feature);\n  }\n  \n  // 5. Safety - Airbags\n  if (/air bags|airbag|tire pressure monitoring/i.test(f)) {\n    categories.safetyAirbags.push(feature);\n  }\n  \n  // 6. Driver Assist / ADAS\n  if (/(camera|park assist|parksense|parking sensor|distance warning|sonar|blind|lane|collision|propilot|safety shield|adaptive cruise|intelligent cruise)/i.test(f)) {\n    categories.driverAssist.push(feature);\n  }\n  \n  // 7. Exterior & Lighting\n  if (/(headlamp|headlight|xenon|hid|led|fog lamp|daytime running|bed liner|tailgate|spoiler|roof rack|running board|tonneau|shell|cap|sliding rear window)/i.test(f)) {\n    categories.exteriorLighting.push(feature);\n  }\n  \n  // 8. Roofs & Glass\n  if (/(roof:|moonroof|sunroof|panoramic|skylight|privacy glass)/i.test(f)) {\n    categories.roofsGlass.push(feature);\n  }\n  \n  // 9. Interior Comfort\n  if (/(air conditioning|climate|keyless|remote start|power door|power window|power liftgate|power tailgate|power trunk|tilt|telescoping|steering wheel: heated|garage door)/i.test(f)) {\n    categories.interiorComfort.push(feature);\n  }\n  \n  // 10. Seating & Configuration\n  if (/(seat|passenger seating|leather)/i.test(f) && !/steering/i.test(f)) {\n    categories.seatingConfig.push(feature);\n  }\n  \n  // 11. Infotainment & Audio\n  if (/(am\\/fm|radio|stereo|sound|bose|harman|revel|premium sound|infotainment|onstar|sync|uconnect|connect|link|bluetooth|usb|auxiliary|siriusxm|cd|mp3)/i.test(f)) {\n    categories.infotainmentAudio.push(feature);\n  }\n  \n  // 12. Navigation & Display\n  if (/(navigation|head-up display)/i.test(f)) {\n    categories.navigationDisplay.push(feature);\n  }\n  \n  // 13. Security & Anti-Theft\n  if (/(alarm|anti-theft|theft|security system)/i.test(f)) {\n    categories.securityAntiTheft.push(feature);\n  }\n  \n  // 14. Towing & Off-Road\n  if (/(towing|tow|off-road|z71)/i.test(f)) {\n    categories.towingOffRoad.push(feature);\n  }\n  \n  // 15. Packages & Trims\n  if (/(pkg|package|big horn|technology|premium)/i.test(f) && !/sound|audio/i.test(f)) {\n    categories.packages.push(feature);\n  }\n  \n  // 16. Wheels & Tires\n  if (/wheels:|alloy|steel/i.test(f)) {\n    categories.wheelsTires.push(feature);\n  }\n};\n\n// Categorize all features\nfeatures.forEach(feature => {\n  if (feature) categorizeFeature(feature);\n});\n\n// Build allowed photo categories based on equipment\nconst allowedPhotoCategories = [\n  'hero_exterior',\n  'engine_bay',\n  'infotainment_other',\n  'instrument_cluster',\n  'steering_wheel',\n  'front_seats',\n  'second_row_seats',\n  'cargo_area'\n];\n\n// Add conditional categories based on equipment\nif (categories.infotainmentAudio.some(f => /carplay|android auto/i.test(f))) {\n  allowedPhotoCategories.push('infotainment_carplay');\n}\n\nif (categories.driverAssist.some(f => /360|multi-view|surround view|around view/i.test(f))) {\n  allowedPhotoCategories.push('infotainment_360_camera');\n}\n\nif (categories.roofsGlass.some(f => /moonroof|sunroof|panoramic/i.test(f))) {\n  allowedPhotoCategories.push('moonroof');\n}\n\nif (categories.seatingConfig.some(f => /third row|3rd row|7 passenger|8 passenger/i.test(f))) {\n  allowedPhotoCategories.push('third_row_seats');\n}\n\n// Always add special_feature category for unexpected finds\nallowedPhotoCategories.push('special_feature');\n\n// Build equipment context for each photo category\nconst equipmentContextByCategory = {\n  hero_exterior: {},\n  \n  engine_bay: {\n    engine_features: categories.enginePower,\n    transmission: categories.transmission[0] || null,\n    drivetrain: categories.drivetrain[0] || null\n  },\n  \n  front_seats: {\n    has_leather: categories.seatingConfig.some(f => /^leather$/i.test(f)),\n    has_heated: categories.seatingConfig.some(f => /heated/i.test(f) && /seat/i.test(f)),\n    has_cooled: categories.seatingConfig.some(f => /(cooled|ventilated)/i.test(f)),\n    has_power: categories.seatingConfig.some(f => /(power|dual power)/i.test(f) && /seat/i.test(f)),\n    has_memory: categories.seatingConfig.some(f => /memory/i.test(f)),\n    material_claim: categories.seatingConfig.some(f => /^leather$/i.test(f)) ? 'leather' : 'premium upholstery',\n    all_seat_features: categories.seatingConfig\n  },\n  \n  second_row_seats: {\n    seating_features: categories.seatingConfig.filter(f => /rear|second|passenger/i.test(f))\n  },\n  \n  third_row_seats: {\n    has_third_row: categories.seatingConfig.some(f => /third row|3rd row/i.test(f))\n  },\n  \n  steering_wheel: {\n    has_heated_wheel: categories.interiorComfort.some(f => /steering wheel.*heated/i.test(f)),\n    has_controls: categories.interiorComfort.some(f => /steering wheel control/i.test(f)),\n    tilt_telescoping: categories.interiorComfort.some(f => /tilt.*telescoping/i.test(f))\n  },\n  \n  infotainment_carplay: {\n    has_navigation: categories.navigationDisplay.length > 0,\n    audio_system: categories.infotainmentAudio.find(f => /sound|audio|bose|harman|revel/i.test(f)),\n    connectivity: categories.infotainmentAudio.filter(f => /bluetooth|usb|siriusxm/i.test(f))\n  },\n  \n  infotainment_360_camera: {\n    has_360: true,\n    parking_features: categories.driverAssist.filter(f => /parking|park assist/i.test(f))\n  },\n  \n  moonroof: {\n    moonroof_type: categories.roofsGlass.find(f => /panoramic/i.test(f)) ? 'Panoramic' : 'Moonroof',\n    all_roof_features: categories.roofsGlass\n  },\n  \n  cargo_area: {\n    power_liftgate: categories.interiorComfort.some(f => /power liftgate/i.test(f)),\n    truck_bed_features: categories.exteriorLighting.filter(f => /bed liner|tailgate|tonneau/i.test(f))\n  }\n};\n\n// Clean up baseConfig - remove equipment\nconst cleanBaseConfig = {\n  ...config,\n  equipment: undefined,  // Remove equipment string\n  vehicles: config.vehicles?.map(vehicle => {\n    const {equipment, ...cleanVehicle } = vehicle;\n    return cleanVehicle;\n  })\n};\n\nreturn [{\n  json: {\n    ...cleanBaseConfig,\n    equipment_categories: categories,\n    allowed_photo_categories: allowedPhotoCategories,\n    equipment_context_by_category: equipmentContextByCategory,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ],
+      "id": "parse-equip",
+      "name": "Parse Equipment & Build Categories"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\n// Use thumbnails for faster processing\nconst allImageUrls = vehicle.all_images\n  .filter(url => url && url.trim())\n  .map(url => url + '/thumb/');\n\nconst allowedCategories = config.allowed_photo_categories;\nconst totalPhotos = allImageUrls.length;\nconst maxIndex = totalPhotos - 1;\n\nconst systemPrompt = `You are categorizing ${totalPhotos} photos of a ${vehicle.year} ${vehicle.make} ${vehicle.model}.\n\nEQUIPMENT config CONFIRMS THIS VEHICLE HAS:\n${config.equipment_categories.seatingConfig.some(f => /third row|3rd row/i.test(f)) ? '✓ Third row seating\\n' : ''}\n${config.equipment_categories.roofsGlass.some(f => /moonroof|sunroof|panoramic/i.test(f)) ? '✓ ' + config.equipment_context_by_category.moonroof.moonroof_type + '\\n' : ''}\n${config.equipment_categories.driverAssist.some(f => /360|multi-view|surround/i.test(f)) ? '✓ 360-degree camera\\n' : ''}\n${config.equipment_categories.seatingConfig.some(f => /heated/i.test(f) && /seat/i.test(f)) ? '✓ Heated seats\\n' : ''}\n${config.equipment_categories.seatingConfig.some(f => /cooled|ventilated/i.test(f)) ? '✓ Cooled/ventilated seats\\n' : ''}\n${config.equipment_categories.seatingConfig.some(f => /^leather$/i.test(f)) ? '✓ Leather seats\\n' : ''}\n\nPhoto[0] is designated as hero_exterior (already selected).\n\nCATEGORIES TO LOOK FOR:\n${allowedCategories.filter(c => c !== 'hero_exterior').map(cat => `- ${cat}`).join('\\n')}\n\nDO NOT look for categories not listed above - they don't exist on this vehicle.\n\nRULES:\n1. Multiple photos CAN have the same category if showing DIFFERENT subcategories\n   Example: One photo shows CarPlay, another shows 360 camera → both are infotainment\n2. If multiple photos show THE SAME THING, pick ONLY THE BEST (clearest, best lighting)\n3. Only assign categories from the list above\n4. Mark irrelevant photos as \"exclude\"\n\nEXCLUDE these categories entirely (never ad-worthy):\n- Center console storage compartments (close-ups)\n- Control button close-ups (seat controls, climate buttons)\n- Cup holder close-ups (showing just cupholders)\n- Key fobs\n- Window stickers / price labels\n- Door panels (unless showing special feature)\n- Random detail shots with no clear feature\n- Photos that are blurry or too dark to use\n\nQUALITY REQUIREMENTS:\n- Well-lit photos only (skip dark or blurry)\n- Clear view of features being highlighted\n- Professional appearance (avoid awkward angles)\n- Shows vehicle in good condition\n\nCATEGORY DEFINITIONS:\n\nENGINE BAY:\n- Clear shot of engine compartment\n- Well-lit, shows engine condition\n\nINFOTAINMENT (can have multiple):\n- infotainment_carplay: Screen showing Apple CarPlay OR Android Auto interface clearly\n- infotainment_360_camera: Screen showing 360-degree/bird's eye parking camera view\n- infotainment_other: Touchscreen showing other features (navigation, audio, settings)\n\nDASHBOARD:\n- instrument_cluster: Gauge cluster or digital instrument display\n- steering_wheel: Steering wheel (with or without controls visible)\n\nSEATING:\n- front_seats: Front seat view showing material, condition, and controls\n- second_row_seats: Back seat view\n- third_row_seats: Third row seating (only if equipment confirms it exists)\n\nCARGO:\n- cargo_area: Trunk or cargo space (or truck bed for pickups)\n\nSPECIAL:\n- moonroof: Moonroof open OR moonroof controls visible (only if equipment confirms)\n- special_feature: Anything else impressive (heads-up display, wireless charging, etc.)\n\nOUTPUT FORMAT (JSON only, no markdown):\n{\n  \"categorized_photos\": [\n    {\n      \"photo_index\": 1,\n      \"category\": \"engine_bay\",\n      \"reasoning\": \"Clear engine shot, well-lit\"\n    },\n    {\n      \"photo_index\": 12,\n      \"category\": \"infotainment_carplay\",\n      \"reasoning\": \"Shows Apple CarPlay interface clearly\"\n    },\n    {\n      \"photo_index\": 8,\n      \"category\": \"exclude\",\n      \"reasoning\": \"Center console storage - not ad-worthy\"\n    }\n  ],\n  \"summary\": {\n    \"engine_bay\": [1],\n    \"infotainment_carplay\": [12],\n    \"front_seats\": [20],\n    \"excluded\": [8, 9, 22]\n  }\n}`;\n\nconst userPrompt = `Categorize all ${totalPhotos} photos of this ${vehicle.year} ${vehicle.make} ${vehicle.model}.\n\n🚨 CRITICAL - PHOTO INDICES 🚨\nVALID INDICES: 0 through ${maxIndex}\nTOTAL PHOTOS: ${totalPhotos}\nDO NOT USE indices ${maxIndex + 1} or higher (they don't exist!)\n\nPhoto[0] is hero_exterior (skip this one).\nAnalyze photos 1 through ${maxIndex} and assign categories or mark as exclude.\n\nSelect the BEST photo for each category (quality over quantity).\nIf multiple photos show different features, keep both.\nIf multiple photos show the same feature, pick only the best one.`;\n\n// Build vision_content array for Claude API\nconst visionContent = [\n  {\n    type: \"text\",\n    text: `${systemPrompt}\\n\\n${userPrompt}\\n\\nPHOTOS (each labeled with its index):`\n  }\n];\n\n// Add all images with explicit index labels\nallImageUrls.forEach((url, index) => {\n  visionContent.push({\n    type: \"text\",\n    text: `[PHOTO INDEX ${index}]`\n  });\n  visionContent.push({\n    type: \"image\",\n    source: {\n      type: \"url\",\n      url: url\n    }\n  });\n});\n\nconsole.log(`✅ Built vision content with ${allImageUrls.length} photos`);\n\nreturn [{\n  json: {\n    ...config,\n    \n    categorizer_vision_content: visionContent,\n    categorizer_system_prompt: systemPrompt,\n    categorizer_user_prompt: userPrompt,\n    all_image_urls: allImageUrls,\n    max_photo_index: maxIndex,\n    total_photos: totalPhotos,\n    \n    // Remove used data\n    equipment_categories: undefined,\n    allowed_photo_categories: undefined\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        300
+      ],
+      "id": "build-photo-prompt",
+      "name": "Build Photo Categorizer Prompt"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9451dada-8f16-4dff-ba00-ab2aabc49185",
+              "leftValue": "={{ $json.api_claude_categorize_photos }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        300
+      ],
+      "id": "if-skip-cat",
+      "name": "If: Test, Skip Categorization"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    ...$json,\n    \"content\": [{\n      \"text\": $json.api_claude_categorize_photos\n    }]\n  }\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        200
+      ],
+      "id": "skip-cat",
+      "name": "Skip Categorization"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.categorizer_vision_content) }}\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1980,
+        400
+      ],
+      "id": "claude-categorize",
+      "name": "API: Claude, Categorize Photos",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LQZygyOyKZ5tikRW",
+          "name": "VideoBGRemover"
+        },
+        "anthropicApi": {
+          "id": "Cias5aAJewPKMMCa",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Build Photo Categorizer Prompt').first().json;\nconst apiResponse = $json.content[0].text;\n\nlet responseText = apiResponse;\nconst jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\nif (jsonMatch) {\n  responseText = jsonMatch[0];\n} else {\n  throw new Error(\"Could not find valid JSON object in response\");\n}\n\nconst categorizedResult = JSON.parse(responseText.trim());\n\n// Get data from previous node\nconst allImageUrls = config.all_image_urls;\nconst equipmentContextByCategory = config.equipment_context_by_category;\nconst vehicle = config.vehicles[0];\n\n// Build selected photos object\nconst selectedPhotos = {};\n\ncategorizedResult.categorized_photos.forEach(photo => {\n  const category = photo.category;\n  if (category !== 'exclude') {\n    const photoIndex = photo.photo_index;\n    \n    // Get equipment context for this category\n    const equipmentContext = equipmentContextByCategory[category] || {};\n    \n    selectedPhotos[category] = {\n      photo_index: photoIndex,\n      photo_url: allImageUrls[photoIndex],\n      reasoning: photo.reasoning,\n      equipment_context: equipmentContext\n    };\n  }\n});\n\n// Always include hero exterior (photo 0)\nselectedPhotos.hero_exterior = {\n  photo_index: 0,\n  photo_url: vehicle.all_images[0],\n  reasoning: \"Hero exterior shot\",\n  equipment_context: {}\n};\n\n// Clean up baseConfig - remove all_images\nconst cleanBaseConfig = {\n  ...config,\n  all_images: undefined,  // Remove all_images array\n  vehicles: config.vehicles?.map(vehicle => {\n    const {all_images, ...cleanVehicle } = vehicle;\n    return cleanVehicle;\n  })\n};\n\nreturn [{\n  json: {\n    ...cleanBaseConfig,\n\n    selected_photos: selectedPhotos,\n\n    // Remove used data\n    equipment_context_by_category: undefined,\n    categorizer_vision_content: undefined,\n    categorizer_system_prompt: undefined,\n    categorizer_user_prompt: undefined,\n    all_image_urls: undefined,\n    max_photo_index: undefined,\n    total_photos: undefined,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_claude_categorize_photos: apiResponse })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        300
+      ],
+      "id": "parse-cat",
+      "name": "Parse Catagorization Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst selectedPhotos = config.selected_photos;\nconst vehicle = config.vehicles[0];\n\n// Category-specific prompt templates\nconst categoryPrompts = {\n  front_seats: (equipCtx) => `\nAnalyze this front seat photo.\n\nEQUIPMENT DATA:\n${equipCtx.has_leather ? '✓ Leather seats confirmed in equipment' : '✗ Leather NOT listed in equipment'}\n${equipCtx.has_heated ? '✓ Heated seats' : ''}\n${equipCtx.has_cooled ? '✓ Cooled/ventilated seats' : ''}\n${equipCtx.has_power ? '✓ Power-adjustable seats' : ''}\n${equipCtx.has_memory ? '✓ Memory seats' : ''}\n\n🚫 CRITICAL RULE: DO NOT analyze or comment on seat material\nWe use equipment data ONLY for material claims (${equipCtx.material_claim}).\n\nYOUR TASK - Focus on what you CAN reliably identify:\n\n1. SEAT CONDITION (visual assessment):\n   - excellent (pristine, no wear)\n   - good (normal use, clean)\n   - fair (some wear visible)\n   - poor (stains, tears, heavy wear)\n\n2. CONTROLS VISIBLE (Yes/No for each):\n   - Heated seat buttons?\n   - Cooled/ventilated buttons?\n   - Power adjustment controls?\n   - Memory seat buttons?\n\n3. GENERAL FEATURES:\n   - Spacious/comfortable appearance?\n   - Center armrest present?\n\nOUTPUT JSON:\n{\n  \"condition\": \"excellent|good|fair|poor\",\n  \"controls_visible\": {\n    \"heated\": true/false,\n    \"cooled\": true/false,\n    \"power\": true/false,\n    \"memory\": true/false\n  },\n  \"spacious\": true/false,\n  \"additional_notes\": \"Brief notes on comfort features\"\n}`,\n\n  engine_bay: (equipCtx) => `\nAnalyze this engine bay photo.\n\nEQUIPMENT DATA:\n${equipCtx.engine_features && equipCtx.engine_features.length > 0 ? '- Engine: ' + equipCtx.engine_features.join(', ') : ''}\n${equipCtx.transmission ? '- Transmission: ' + equipCtx.transmission : ''}\n${equipCtx.drivetrain ? '- Drivetrain: ' + equipCtx.drivetrain : ''}\n\nYOUR TASK:\n\n1. ENGINE CONDITION:\n   - clean (well-maintained, no visible dirt/oil)\n   - average (normal condition)\n   - dirty (visible grime, neglect)\n\n2. VISIBLE BADGING/LABELS:\n   - Any engine badges or labels visible on engine cover?\n   - Specific text you can read?\n\n3. MAINTENANCE APPEARANCE:\n   - Does it appear well-maintained? (Yes/No)\n   - Any obvious issues visible? (leaks, damaged parts)\n\nOUTPUT JSON:\n{\n  \"condition\": \"clean|average|dirty\",\n  \"visible_badging\": \"Description of any badges/labels or null\",\n  \"appears_maintained\": true/false,\n  \"issues_visible\": \"Description or null\"\n}`,\n\n  infotainment_carplay: (equipCtx) => `\nAnalyze this infotainment screen photo.\n\nEQUIPMENT DATA:\n${equipCtx.has_navigation ? '✓ Navigation system' : ''}\n${equipCtx.audio_system ? '✓ Audio: ' + equipCtx.audio_system : ''}\n\nYOUR TASK - Be SPECIFIC about what you see:\n\n⚠️ CRITICAL: DO NOT assume both CarPlay and Android Auto unless you see BOTH logos clearly!\n\n1. SMARTPHONE INTEGRATION (look carefully):\n   - Apple CarPlay logo visible? (Yes/No)\n   - Android Auto logo visible? (Yes/No)\n   - If neither logo visible: Generic smartphone connectivity only\n\n2. SCREEN SIZE:\n   - small (less than 7 inches)\n   - medium (7-9 inches)\n   - large (10+ inches)\n\n3. SCREEN CONDITION:\n   - excellent (no scratches, clear)\n   - good (minor wear)\n   - scratched (visible damage)\n\n4. OTHER VISIBLE FEATURES:\n   - Navigation map visible?\n   - Premium brand logos (Bose, Harman Kardon)?\n   - Any other notable features?\n\nOUTPUT JSON:\n{\n  \"has_apple_carplay\": true/false/unclear,\n  \"has_android_auto\": true/false/unclear,\n  \"screen_size\": \"small|medium|large\",\n  \"screen_condition\": \"excellent|good|scratched\",\n  \"navigation_visible\": true/false,\n  \"other_features\": \"Description or null\"\n}`,\n\n  infotainment_360_camera: (equipCtx) => `\nAnalyze this 360 camera display photo.\n\nYOUR TASK:\n\n1. CONFIRM 360 CAMERA:\n   - Does this show multi-view/bird's eye parking camera? (Yes/No)\n   - How many camera angles visible? (top view, front, rear, sides?)\n\n2. DISPLAY QUALITY:\n   - clear (high resolution, easy to see)\n   - average (acceptable quality)\n   - poor (grainy, hard to see)\n\n3. ADDITIONAL FEATURES VISIBLE:\n   - Parking sensor indicators?\n   - Trajectory lines?\n   - Distance markers?\n\nOUTPUT JSON:\n{\n  \"is_360_camera\": true/false,\n  \"camera_angles_visible\": [\"top\", \"front\", \"rear\", \"left\", \"right\"],\n  \"display_quality\": \"clear|average|poor\",\n  \"parking_sensors_visible\": true/false,\n  \"additional_features\": \"Description or null\"\n}`,\n\n  moonroof: (equipCtx) => `\nAnalyze this moonroof photo.\n\nEQUIPMENT DATA: ${equipCtx.moonroof_type || 'Moonroof'}\n\nYOUR TASK:\n\n1. WHAT'S SHOWN:\n   - moonroof_open (showing open roof with sky visible)\n   - controls_visible (showing buttons/switches for moonroof)\n   - both (both open roof and controls visible)\n\n2. SIZE ASSESSMENT:\n   - small (compact opening)\n   - medium (standard size)\n   - large (extended opening)\n   - panoramic (very large, extends over passengers)\n\n3. CONDITION:\n   - Glass clean and clear? (Yes/No)\n   - Controls in good condition? (Yes/No)\n\nOUTPUT JSON:\n{\n  \"moonroof_shown\": \"moonroof_open|controls_visible|both\",\n  \"appears_panoramic\": true/false,\n  \"size_rating\": \"small|medium|large|panoramic\",\n  \"condition_notes\": \"Brief assessment\"\n}`,\n\n  cargo_area: (equipCtx) => `\nAnalyze this cargo/trunk space photo.\n\nEQUIPMENT DATA:\n${equipCtx.power_liftgate ? '✓ Power liftgate' : ''}\n${equipCtx.truck_bed_features && equipCtx.truck_bed_features.length > 0 ? '✓ Truck bed features: ' + equipCtx.truck_bed_features.join(', ') : ''}\n\nYOUR TASK:\n\n1. SPACE ASSESSMENT:\n   - compact (small trunk/bed)\n   - average (typical for vehicle class)\n   - spacious (above average)\n   - huge (exceptional cargo capacity)\n\n2. CONDITION:\n   - clean (well-maintained, no debris)\n   - average (normal use)\n   - cluttered (items present)\n\n3. NOTABLE FEATURES:\n   - Power liftgate button visible?\n   - Cargo cover present?\n   - Tie-down hooks/anchors?\n   - Bed liner visible (trucks)?\n   - Tonneau cover?\n\nOUTPUT JSON:\n{\n  \"space_rating\": \"compact|average|spacious|huge\",\n  \"condition\": \"clean|average|cluttered\",\n  \"notable_features\": [\"list\", \"of\", \"features\"],\n  \"additional_notes\": \"Brief notes\"\n}`,\n\n  steering_wheel: (equipCtx) => `\nAnalyze this steering wheel photo.\n\nEQUIPMENT DATA:\n${equipCtx.has_heated_wheel ? '✓ Heated steering wheel' : ''}\n${equipCtx.has_controls ? '✓ Steering wheel controls' : ''}\n${equipCtx.tilt_telescoping ? '✓ Tilt & telescoping wheel' : ''}\n\nYOUR TASK:\n\n1. CONTROLS VISIBLE:\n   - Audio controls? (Yes/No)\n   - Cruise control buttons? (Yes/No)\n   - Phone/voice controls? (Yes/No)\n   - Heated wheel button/indicator? (Yes/No)\n\n2. MATERIAL/CONDITION:\n   - Leather/wrapped? (Yes/No/Unclear)\n   - Condition: excellent/good/worn\n\n3. OTHER FEATURES:\n   - Paddle shifters visible?\n   - Multifunction display visible behind wheel?\n\nOUTPUT JSON:\n{\n  \"controls_visible\": {\n    \"audio\": true/false,\n    \"cruise\": true/false,\n    \"phone_voice\": true/false,\n    \"heated\": true/false\n  },\n  \"appears_leather_wrapped\": true/false/unclear,\n  \"condition\": \"excellent|good|worn\",\n  \"paddle_shifters\": true/false,\n  \"other_notes\": \"Brief notes\"\n}`,\n\n  instrument_cluster: (equipCtx) => `\nAnalyze this instrument cluster / gauge display photo.\n\nYOUR TASK:\n\n1. CLUSTER TYPE:\n   - traditional_analog (physical gauges with needles)\n   - digital (full digital/LCD display)\n   - hybrid (mix of analog and digital)\n\n2. FEATURES VISIBLE:\n   - Speedometer clearly visible?\n   - Tachometer (RPM gauge) visible?\n   - Fuel gauge visible?\n   - Trip computer/info display?\n   - Navigation display in cluster?\n\n3. CONDITION & QUALITY:\n   - Display condition: excellent/good/worn\n   - Easy to read? (Yes/No)\n\nOUTPUT JSON:\n{\n  \"cluster_type\": \"traditional_analog|digital|hybrid\",\n  \"features_visible\": [\"speedometer\", \"tachometer\", \"fuel\", \"trip_computer\"],\n  \"display_condition\": \"excellent|good|worn\",\n  \"easy_to_read\": true/false,\n  \"notes\": \"Brief assessment\"\n}`,\n\n  second_row_seats: (equipCtx) => `\nAnalyze this second row / back seat photo.\n\nYOUR TASK:\n\n1. SPACE ASSESSMENT:\n   - cramped (limited legroom)\n   - adequate (acceptable for adults)\n   - spacious (comfortable for adults)\n   - generous (exceptional rear space)\n\n2. SEATING CONFIGURATION:\n   - bench (traditional bench seat)\n   - captain_chairs (individual bucket seats)\n   - split_bench (can fold separately)\n\n3. CONDITION:\n   - excellent (pristine, no wear)\n   - good (clean, normal use)\n   - fair (some wear visible)\n\n4. FEATURES VISIBLE:\n   - Rear climate vents?\n   - Cup holders?\n   - USB ports/charging?\n   - Armrest?\n\nOUTPUT JSON:\n{\n  \"space_rating\": \"cramped|adequate|spacious|generous\",\n  \"seating_config\": \"bench|captain_chairs|split_bench\",\n  \"condition\": \"excellent|good|fair\",\n  \"features_visible\": [\"list\", \"of\", \"features\"],\n  \"notes\": \"Brief assessment\"\n}`,\n\n  third_row_seats: (equipCtx) => `\nAnalyze this third row seating photo.\n\nYOUR TASK:\n\n1. SPACE ASSESSMENT:\n   - tight (kids only)\n   - adequate (short adults okay)\n   - comfortable (adults can fit)\n\n2. ACCESS:\n   - How do passengers access third row?\n   - Easy entry visible? (fold-flat second row, etc.)\n\n3. CONDITION:\n   - excellent/good/fair\n\n4. FEATURES:\n   - Cup holders?\n   - Climate vents?\n   - Storage compartments?\n\nOUTPUT JSON:\n{\n  \"space_rating\": \"tight|adequate|comfortable\",\n  \"condition\": \"excellent|good|fair\",\n  \"easy_access\": true/false,\n  \"features_visible\": [\"list\"],\n  \"notes\": \"Brief assessment\"\n}`,\n\n  special_feature: (equipCtx) => `\nAnalyze this special feature photo.\n\nYOUR TASK:\n\nIdentify what special feature is being shown. This could be:\n- Heads-up display\n- Wireless charging pad\n- Advanced climate controls\n- Unique storage solutions\n- Premium materials/trim\n- Technology features\n- Or anything else noteworthy\n\nDescribe what you see and assess its condition/functionality.\n\nOUTPUT JSON:\n{\n  \"feature_identified\": \"Name/description of feature\",\n  \"condition\": \"excellent|good|fair\",\n  \"notable_aspects\": \"What makes this feature special\",\n  \"likely_appeal\": \"Why customers would value this\"\n}`,\n\n  infotainment_other: (equipCtx) => `\nAnalyze this infotainment screen photo.\n\nYOUR TASK:\n\nThis screen is NOT showing CarPlay/Android Auto or 360 camera.\nWhat IS it showing?\n\n1. SCREEN CONTENT:\n   - Navigation system?\n   - Audio/radio interface?\n   - Vehicle settings?\n   - Other?\n\n2. SCREEN QUALITY:\n   - Size: small/medium/large\n   - Condition: excellent/good/scratched\n   - Touchscreen? (Yes/No/Unclear)\n\n3. FEATURES VISIBLE:\n   - Premium audio branding?\n   - Climate controls integrated?\n   - Other notable features?\n\nOUTPUT JSON:\n{\n  \"showing\": \"navigation|audio|settings|other\",\n  \"screen_size\": \"small|medium|large\",\n  \"condition\": \"excellent|good|scratched\",\n  \"appears_touchscreen\": true/false/unclear,\n  \"features_visible\": [\"list\"],\n  \"notes\": \"Brief description\"\n}`\n};\n\n// Build feature identifier vision content\nconst featureIdentifierContent = [\n  {\n    type: \"text\",\n    text: `Analyze these vehicle feature photos from a ${vehicle.year} ${vehicle.make} ${vehicle.model}.\n\nFor each photo, identify visible features based on the category-specific instructions.\n\nIMPORTANT: Output ONLY valid JSON with no markdown formatting.\n\n`\n  }\n];\n\nlet categoriesProcessed = 0;\n\nObject.entries(selectedPhotos).forEach(([category, photoData]) => {\n  if (category === 'hero_exterior') return; // Skip hero\n\n  const promptGenerator = categoryPrompts[category];\n  if (!promptGenerator) {\n    console.log(`⚠️ No prompt template for category: ${category}`);\n    return;\n  }\n\n  const categoryPrompt = promptGenerator(photoData.equipment_context);\n  \n  featureIdentifierContent.push({\n    type: \"text\",\n    text: `\\n═══ CATEGORY: ${category.toUpperCase()} ═══\\n${categoryPrompt}\\n`\n  });\n  \n  featureIdentifierContent.push({\n    type: \"image\",\n    source: {\n      type: \"url\",\n      url: photoData.photo_url\n    }\n  });\n\n  categoriesProcessed++;\n});\n\n// Add final instruction\nconst categoryKeys = Object.keys(selectedPhotos).filter(k => k !== 'hero_exterior');\nfeatureIdentifierContent.push({\n  type: \"text\",\n  text: `\\n\\nProvide analysis for each category in this JSON format (no markdown, no backticks):\n{\n  \"${categoryKeys[0] || 'category_name'}\": { ... your analysis ... },\n  \"${categoryKeys[1] || 'category_name'}\": { ... your analysis ... }\n}\n\nOutput ONLY the JSON object, nothing else.`\n});\n\nconsole.log(`✅ Built feature identifier prompts for ${categoriesProcessed} categories`);\n\nreturn [{\n  json: {\n    ...config,\n    \n    feature_identifier_content: featureIdentifierContent,\n    categories_to_identify: categoriesProcessed\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        300
+      ],
+      "id": "build-feature-prompt",
+      "name": "Build Feature Identifier Prompts"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0a330d1c-bcb6-470a-88be-3dab4273101a",
+              "leftValue": "={{ $json.api_claude_feature_identification }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        300
+      ],
+      "id": "if-skip-feat",
+      "name": "If: Test, Skip Feature Identification"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    ...$json,\n    \"content\": [{\n      \"text\": $json.api_claude_feature_identification\n    }]\n  }\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        200
+      ],
+      "id": "skip-feat",
+      "name": "Skip Feature Identification"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.feature_identifier_content) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2860,
+        400
+      ],
+      "id": "claude-features",
+      "name": "API: Claude, Feature Identification",
+      "credentials": {
+        "anthropicApi": {
+          "id": "Cias5aAJewPKMMCa",
+          "name": "Anthropic account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Build Feature Identifier Prompts').first().json;\nconst apiResponse = $json.content[0].text;\nconst vehicle = config.vehicles[0];\n\n// Parse JSON response (strip markdown if present)\nlet responseText = apiResponse.replace(/```json\\n?/g, \"\").replace(/```\\n?/g, \"\").trim();\n\n// Try to extract JSON object\nconst jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\nif (jsonMatch) {\n  responseText = jsonMatch[0];\n}\n\nconst identifiedFeatures = JSON.parse(responseText);\n\n// Combine equipment context + visual verification\nconst verifiedFeatures = {};\n\nObject.entries(identifiedFeatures).forEach(([category, features]) => {\n  const photoData = config.selected_photos[category];\n  if (!photoData) {\n    console.log(`⚠️ No photo data found for category: ${category}`);\n    return;\n  }\n\n  verifiedFeatures[category] = {\n    photo_index: photoData.photo_index,\n    photo_url: photoData.photo_url,\n    equipment_context: photoData.equipment_context,\n    visual_verification: features,\n    \n    // Build final feature list for script generation\n    script_features: buildScriptFeatures(category, photoData.equipment_context, features, vehicle)\n  };\n});\n\n// Function to build script-ready feature descriptions\nfunction buildScriptFeatures(category, equipment, visual, vehicle) {\n  switch(category) {\n    case 'front_seats':\n      const seatFeatures = [];\n      \n      // Add condition if excellent\n      if (visual.condition === 'excellent') {\n        seatFeatures.push('pristine');\n      }\n      \n      // Add material from equipment ONLY\n      seatFeatures.push(equipment.material_claim || 'comfortable seating');\n      \n      // Add climate features\n      if (equipment.has_heated && equipment.has_cooled) {\n        seatFeatures.push('heated and ventilated');\n      } else if (equipment.has_heated) {\n        seatFeatures.push('heated');\n      } else if (equipment.has_cooled) {\n        seatFeatures.push('ventilated');\n      }\n      \n      // Add power if present\n      if (equipment.has_power) {\n        seatFeatures.push('power-adjustable');\n      }\n      \n      // Add memory if present\n      if (equipment.has_memory) {\n        seatFeatures.push('with memory');\n      }\n      \n      return seatFeatures.join(' ');\n      \n    case 'engine_bay':\n      const engineFeatures = [];\n      \n      // Add engine details from equipment\n      if (equipment.engine_features && equipment.engine_features.length > 0) {\n        const engineInfo = equipment.engine_features[0];\n        // Extract key parts (e.g., \"V6 i-VTEC 3.5 Liter\")\n        const match = engineInfo.match(/(V\\d+|4-Cyl|3-Cyl|I\\d+).*?(\\d+\\.\\d+)\\s*Liter/i);\n        if (match) {\n          const cylinders = match[1];\n          const displacement = match[2];\n          engineFeatures.push(`${displacement}L ${cylinders}`);\n        } else {\n          engineFeatures.push(engineInfo);\n        }\n      }\n      \n      // Add turbo/special tech\n      if (equipment.engine_features && equipment.engine_features.some(e => /turbo/i.test(e))) {\n        engineFeatures.push('turbocharged');\n      }\n      if (equipment.engine_features && equipment.engine_features.some(e => /hemi/i.test(e))) {\n        engineFeatures.push('HEMI power');\n      }\n      \n      // Add condition note\n      if (visual.condition === 'clean') {\n        engineFeatures.push('well-maintained');\n      }\n      \n      return engineFeatures.join(', ');\n      \n    case 'infotainment_carplay':\n      const infoFeatures = [];\n      \n      // Smartphone integration\n      if (visual.has_apple_carplay && visual.has_android_auto) {\n        infoFeatures.push('Apple CarPlay and Android Auto');\n      } else if (visual.has_apple_carplay) {\n        infoFeatures.push('Apple CarPlay');\n      } else if (visual.has_android_auto) {\n        infoFeatures.push('Android Auto');\n      } else {\n        infoFeatures.push('smartphone connectivity');\n      }\n      \n      // Premium audio\n      if (equipment.audio_system && /bose|harman|revel|premium/i.test(equipment.audio_system)) {\n        infoFeatures.push(equipment.audio_system);\n      }\n      \n      // Navigation\n      if (equipment.has_navigation || visual.navigation_visible) {\n        infoFeatures.push('navigation');\n      }\n      \n      return infoFeatures.join(' with ');\n      \n    case 'infotainment_360_camera':\n      const cameraFeatures = ['360-degree camera'];\n      \n      if (visual.parking_sensors_visible) {\n        cameraFeatures.push('with parking sensors');\n      }\n      \n      return cameraFeatures.join(' ');\n      \n    case 'moonroof':\n      const roofFeatures = [];\n      \n      // Type from equipment\n      if (equipment.moonroof_type === 'Panoramic' || visual.appears_panoramic) {\n        roofFeatures.push('panoramic moonroof');\n      } else {\n        roofFeatures.push('power moonroof');\n      }\n      \n      return roofFeatures.join(' ');\n      \n    case 'cargo_area':\n      const cargoFeatures = [];\n      \n      // Space rating\n      if (visual.space_rating === 'spacious' || visual.space_rating === 'huge') {\n        cargoFeatures.push('spacious cargo area');\n      } else {\n        cargoFeatures.push('cargo space');\n      }\n      \n      // Power liftgate\n      if (equipment.power_liftgate) {\n        cargoFeatures.push('with power liftgate');\n      }\n      \n      // Truck bed features\n      if (equipment.truck_bed_features && equipment.truck_bed_features.length > 0) {\n        if (equipment.truck_bed_features.some(f => /bed liner/i.test(f))) {\n          cargoFeatures.push('spray-in bed liner');\n        }\n        if (equipment.truck_bed_features.some(f => /multipro/i.test(f))) {\n          cargoFeatures.push('MultiPro tailgate');\n        }\n      }\n      \n      return cargoFeatures.join(', ');\n      \n    case 'steering_wheel':\n      const wheelFeatures = [];\n      \n      if (equipment.has_heated_wheel || visual.controls_visible?.heated) {\n        wheelFeatures.push('heated steering wheel');\n      }\n      \n      if (visual.controls_visible?.audio || visual.controls_visible?.cruise) {\n        wheelFeatures.push('with steering wheel controls');\n      }\n      \n      if (visual.paddle_shifters) {\n        wheelFeatures.push('and paddle shifters');\n      }\n      \n      return wheelFeatures.length > 0 ? wheelFeatures.join(' ') : 'multifunction steering wheel';\n      \n    case 'second_row_seats':\n      const secondRowFeatures = [];\n      \n      if (visual.space_rating === 'spacious' || visual.space_rating === 'generous') {\n        secondRowFeatures.push('spacious rear seating');\n      } else {\n        secondRowFeatures.push('rear seating');\n      }\n      \n      if (visual.features_visible && visual.features_visible.length > 0) {\n        if (visual.features_visible.some(f => /climate/i.test(f))) {\n          secondRowFeatures.push('with rear climate control');\n        }\n      }\n      \n      return secondRowFeatures.join(' ');\n      \n    case 'third_row_seats':\n      return 'third row seating for seven passengers';\n      \n    case 'instrument_cluster':\n      if (visual.cluster_type === 'digital') {\n        return 'digital instrument cluster';\n      } else if (visual.cluster_type === 'hybrid') {\n        return 'advanced gauge cluster with digital display';\n      }\n      return null; // Don't highlight basic analog clusters\n      \n    case 'special_feature':\n      if (visual.feature_identified) {\n        return visual.feature_identified;\n      }\n      return null;\n      \n    case 'infotainment_other':\n      const otherFeatures = [];\n      \n      if (visual.showing === 'navigation' || equipment.has_navigation) {\n        otherFeatures.push('navigation system');\n      }\n      \n      if (equipment.audio_system && /bose|harman|revel|premium/i.test(equipment.audio_system)) {\n        otherFeatures.push(equipment.audio_system);\n      }\n      \n      if (otherFeatures.length === 0) {\n        otherFeatures.push('touchscreen infotainment');\n      }\n      \n      return otherFeatures.join(' with ');\n      \n    default:\n      return null;\n  }\n}\n\nconsole.log(`📋 Built script features for ${Object.keys(verifiedFeatures).length} categories`);\n\n// Log feature summary for debugging\nObject.entries(verifiedFeatures).forEach(([category, data]) => {\n  if (data.script_features) {\n    console.log(`  ${category}: \"${data.script_features}\"`);\n  }\n});\n\nreturn [{\n  json: {\n    ...config,\n    \n    verified_features: verifiedFeatures,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_claude_feature_identification: apiResponse })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        300
+      ],
+      "id": "parse-feat",
+      "name": "Parse Feature Identification Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\n\nconst selectedPhotos = config.selected_photos || {};\n\n// Get VIN from vehicles array\nconst vin = config.vehicles?.[0]?.vin;\n\n// Validate we have required data\nif (!vin) {\n  throw new Error('VIN missing - needed for Cloudinary lookup');\n}\n\nif (!selectedPhotos.hero_exterior) {\n  throw new Error('No hero_exterior photo found in selected_photos!');\n}\n\nconst heroPhoto = selectedPhotos.hero_exterior;\n\n// Check if BG-removed version exists in Cloudinary\nconst bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\nconsole.log(`🔍 Checking Cloudinary: ${bgRemovedUrl}`);\n\nlet heroBackgroundRemoved = null;\nlet needsProcessing = false;\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'HEAD',\n    url: bgRemovedUrl,\n    returnFullResponse: true,\n    ignoreHttpStatusErrors: true,\n    timeout: 5000\n  });\n  \n  if (response.statusCode === 200) {\n    console.log('✅ BG-removed hero found in Cloudinary!');\n    heroBackgroundRemoved = bgRemovedUrl;\n    needsProcessing = false;\n    \n    selectedPhotos.hero_exterior.photo_url = bgRemovedUrl;\n  } else {\n    console.log(`Status code: ${response.statusCode}`);\n    needsProcessing = true;\n  }\n} catch (error) {\n  needsProcessing = true;\n}\n\nreturn [{\n  json: {\n    ...config,\n    \n    selected_photos: selectedPhotos,\n    hero_photo_url: heroPhoto.photo_url,\n    hero_photo_index: heroPhoto.photo_index,\n    hero_bg_removed_url: heroBackgroundRemoved,\n    needs_bg_removal: needsProcessing,\n    cloudinary_checked: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        300
+      ],
+      "id": "process-hero",
+      "name": "Process Hero Photo for Animation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "50cf43b0-eb78-4a88-be36-f13549c7b8fc",
+              "leftValue": "={{ $json.needs_bg_removal }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        300
+      ],
+      "id": "if-needs-bg",
+      "name": "If: Needs Background Removed"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn [{\n  json: {\n    image_url: input.hero_photo_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vins: input.vins\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3740,
+        200
+      ],
+      "id": "prep-bg",
+      "name": "Prep: Remove BG"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RmW2on3d2zlhjj33",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/pbHuh1HdmZxbFX0M",
+          "cachedResultName": "[Service] Remove Background"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3960,
+        200
+      ],
+      "id": "call-bg",
+      "name": "Call: Remove Background",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items at once\nconst result = $input.all();\n\nfor (const item of result) {\n  // VIN is now in context from the service response\n  const vin = item.json.context?.vins?.[0] || item.json.vins?.[0] || 'unknown'; \n\n  if (item.binary && item.binary.data) {\n    item.binary.data.fileName = `${vin}.png`;\n  }\n  \n  // Flatten context back to top level for downstream nodes\n  if (item.json.context) {\n    item.json = { ...item.json.context, ...item.json };\n    delete item.json.context;\n  }\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4180,
+        200
+      ],
+      "id": "rename-bin",
+      "name": "Rename Binary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.VIN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4400,
+        200
+      ],
+      "id": "cloudinary-upload",
+      "name": "Upload to Cloudinary",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const currentData = $json;\nconst config = $('Process Hero Photo for Animation').first().json;\n\n// Get VIN - might be in different places depending on the path\nconst vin = currentData.vehicles?.[0]?.vin || config.vehicles?.[0]?.vin;\n\nif (!vin) {\n  throw new Error('VIN missing - cannot update hero URL');\n}\n\n// Cloudinary response gives us the URL\nconst cloudinaryUrl = currentData.secure_url || `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n\n// Update the hero_bg_removed_url and selected_photos\n// const updatedData = {\n//   ...config,  // Use data from BEFORE the HTTP requests\n//   hero_bg_removed_url: cloudinaryUrl,\n//   needs_bg_removal: false,\n//   cloudinary_uploaded: true\n// };\n\n// Update the hero photo URL in selected_photos\nif (config.selected_photos?.hero_exterior) {\n  config.selected_photos.hero_exterior.photo_url = cloudinaryUrl;\n}\n\nreturn [{\n  json: {\n    ...config,\n    hero_bg_removed_url: cloudinaryUrl,\n    needs_bg_removal: false,\n    cloudinary_uploaded: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4620,
+        200
+      ],
+      "id": "update-hero",
+      "name": "Update Hero URL"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No BG removal needed - pass through\nconst data = $('Process Hero Photo for Animation').first().json;\nconsole.log('✅ BG already removed or not needed, passing through');\nreturn [{ json: data }];"
+      },
+      "id": "skip-bg",
+      "name": "Skip BG Removal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3740,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "empty"
+      },
+      "id": "merge-bg",
+      "name": "Merge BG Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.themePackRequest) }}",
+        "options": {}
+      },
+      "id": "gen-theme",
+      "name": "Generate Theme Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const themePackResponse = $json;\n\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items array (single item for spotlight)\nconst processedItems = [{\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: vehicle.equipment || [],\n  photo_url: spotlightData.hero_bg_removed_url || vehicle.photo_url,\n  bg_removed: !spotlightData.needs_bg_removal,\n  days_on_lot: vehicle.days_on_lot || 0,\n  sort_order: 0,\n  // Spotlight-specific enrichments\n  verified_features: spotlightData.verified_features || {},\n  selected_photos: spotlightData.selected_photos || {},\n  all_images: vehicle.all_images || []\n}];\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  core_tension: themePackResponse.core_tension,\n  ad_angle: themePackResponse.ad_angle,\n  local_micro_moments: themePackResponse.local_micro_moments,\n  banned_phrases: themePackResponse.banned_phrases,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_items: processedItems,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
+      },
+      "id": "prep-save",
+      "name": "Prepare Save Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE assets \nSET \n  processed_items = $pd${{ JSON.stringify($json.processed_items) }}$pd$::jsonb,\n  theme_pack = $pd${{ JSON.stringify($json.theme_pack) }}$pd$::jsonb,\n  processing_status = '{{ $json.processing_status }}',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, processing_status",
+        "options": {}
+      },
+      "id": "save-asset",
+      "name": "Save to Asset",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        5500,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"asset_id\": \"{{ $json.id }}\",\n  \"status\": \"{{ $json.processing_status }}\",\n  \"message\": \"Asset processed successfully\"\n}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build theme pack request from spotlight data\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\n// Build item summary for single spotlight vehicle\nconst equipment = vehicle.equipment || [];\nconst highlights = equipment.slice(0, 5).join(', ');\nconst itemSummary = `Spotlight: ${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim() +\n  `\\nPrice: $${Number(vehicle.price || 0).toLocaleString()}` +\n  `\\nMileage: ${Number(vehicle.mileage || 0).toLocaleString()}` +\n  (vehicle.exterior_color ? `\\nColor: ${vehicle.exterior_color}` : '') +\n  (highlights ? `\\nKey features: ${highlights}` : '') +\n  (vehicle.days_on_lot > 0 ? `\\nDays on lot: ${vehicle.days_on_lot}` : '');\n\nconsole.log('Building theme pack request for spotlight vehicle:');\nconsole.log(itemSummary);\n\nreturn [{\n  json: {\n    ...spotlightData,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed || '',\n      emoji: asset.theme_emoji || '',\n      direction: asset.theme_direction || '',\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      client_id: asset.client_id,\n      item_summary: itemSummary\n    }\n  }\n}];"
+      },
+      "id": "build-theme-req",
+      "name": "Build Theme Pack Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Asset + Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Asset + Plan": {
+      "main": [
+        [
+          {
+            "node": "Extract Item IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Item IDs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Vehicle Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Vehicle Data": {
+      "main": [
+        [
+          {
+            "node": "Process Vehicle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Vehicle": {
+      "main": [
+        [
+          {
+            "node": "Parse Equipment & Build Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Equipment & Build Categories": {
+      "main": [
+        [
+          {
+            "node": "Build Photo Categorizer Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Photo Categorizer Prompt": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip Categorization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Test, Skip Categorization": {
+      "main": [
+        [
+          {
+            "node": "Skip Categorization",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: Claude, Categorize Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Categorization": {
+      "main": [
+        [
+          {
+            "node": "Parse Catagorization Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Claude, Categorize Photos": {
+      "main": [
+        [
+          {
+            "node": "Parse Catagorization Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Catagorization Response": {
+      "main": [
+        [
+          {
+            "node": "Build Feature Identifier Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Feature Identifier Prompts": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip Feature Identification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Test, Skip Feature Identification": {
+      "main": [
+        [
+          {
+            "node": "Skip Feature Identification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: Claude, Feature Identification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Feature Identification": {
+      "main": [
+        [
+          {
+            "node": "Parse Feature Identification Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Claude, Feature Identification": {
+      "main": [
+        [
+          {
+            "node": "Parse Feature Identification Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Feature Identification Response": {
+      "main": [
+        [
+          {
+            "node": "Process Hero Photo for Animation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Hero Photo for Animation": {
+      "main": [
+        [
+          {
+            "node": "If: Needs Background Removed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Needs Background Removed": {
+      "main": [
+        [
+          {
+            "node": "Prep: Remove BG",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip BG Removal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Remove BG": {
+      "main": [
+        [
+          {
+            "node": "Call: Remove Background",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Remove Background": {
+      "main": [
+        [
+          {
+            "node": "Rename Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Binary": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Update Hero URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Hero URL": {
+      "main": [
+        [
+          {
+            "node": "Build Theme Pack Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip BG Removal": {
+      "main": [
+        [
+          {
+            "node": "Build Theme Pack Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge BG Paths": {
+      "main": [
+        [
+          {
+            "node": "Generate Theme Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Theme Pack": {
+      "main": [
+        [
+          {
+            "node": "Prepare Save Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Save Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Asset": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Theme Pack Request": {
+      "main": [
+        [
+          {
+            "node": "Generate Theme Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "a06eb6d7-c4de-498d-8869-98c95e83d642",
+  "activeVersionId": "a06eb6d7-c4de-498d-8869-98c95e83d642",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-09T12:57:06.012Z",
+      "createdAt": "2026-02-09T12:57:06.012Z",
+      "role": "workflow:owner",
+      "workflowId": "uZJD1if4DPu2zYR6",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-09T14:43:54.783Z",
+    "createdAt": "2026-02-09T14:43:54.783Z",
+    "versionId": "a06eb6d7-c4de-498d-8869-98c95e83d642",
+    "workflowId": "uZJD1if4DPu2zYR6",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "process-spotlight-asset",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          220,
+          300
+        ],
+        "webhookId": "process-spotlight-asset"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'::uuid",
+          "options": {}
+        },
+        "id": "fetch-asset",
+        "name": "Fetch Asset + Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          440,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const asset = $input.first().json;\n\n// Parse inventory_items JSON if it's a string\nconst inventoryItems = typeof asset.inventory_items === 'string' \n  ? JSON.parse(asset.inventory_items) \n  : asset.inventory_items;\n\nif (!inventoryItems || inventoryItems.length === 0) {\n  throw new Error('No inventory items found on asset');\n}\n\n// Extract item IDs for the query\nconst itemIds = inventoryItems.map(item => item.id);\n\nconsole.log(`Processing ${itemIds.length} items:`, itemIds);\n\nreturn [{\n  json: {\n    asset,\n    inventoryItems,\n    itemIds\n  }\n}];"
+        },
+        "id": "extract-ids",
+        "name": "Extract Item IDs",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT \n  v.*,\n  ii.hero_image_url,\n  ii.hero_cloudinary_url,\n  ii.price,\n  ii.url,\n  v.raw_data->>'Equipment' as equipment_raw,\n  v.raw_data->>'ImageUrlsDelimited' as all_images_delimited\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+          "options": {}
+        },
+        "id": "fetch-vehicle",
+        "name": "Fetch Vehicle Data",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          880,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $('Extract Item IDs').first().json;\nconst asset = input.asset;\nconst vehicle = $input.first().json;\n\n// Parse all images\nconst allImages = vehicle.all_images_delimited \n  ? vehicle.all_images_delimited.split('|').filter(Boolean)\n  : [];\n\n// Parse equipment\nconst equipmentRaw = vehicle.equipment_raw || '';\nconst equipment = equipmentRaw ? equipmentRaw.split('|').map(e => e.trim()).filter(Boolean) : [];\n\nconst processed = {\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: equipment,\n  all_images: allImages,\n  photo_url: vehicle.hero_image_url || (allImages.length > 0 ? allImages[0] : null),\n  hero_cloudinary_url: vehicle.hero_cloudinary_url,\n  url: vehicle.url,\n  days_on_lot: vehicle.days_on_lot || 0\n};\n\nconsole.log(`🚗 Spotlight vehicle: ${processed.year} ${processed.make} ${processed.model}`);\nconsole.log(`📸 ${allImages.length} images available`);\nconsole.log(`🔧 ${equipment.length} equipment items`);\n\nreturn [{\n  json: {\n    asset,\n    vehicle: processed,\n    vehicles: [processed],\n    test_mode: false\n  }\n}];"
+        },
+        "id": "process-vehicle",
+        "name": "Process Vehicle",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\nconst equipment = vehicle.equipment;\n\n// Split equipment into individual features\nconst features = Array.isArray(equipment) ? equipment : (equipment || '').split('|').map(f => f.trim()).filter(f => f);\n\n// Initialize category arrays\nconst categories = {\n  enginePower: [],\n  transmission: [],\n  drivetrain: [],\n  brakingStability: [],\n  safetyAirbags: [],\n  driverAssist: [],\n  exteriorLighting: [],\n  roofsGlass: [],\n  interiorComfort: [],\n  seatingConfig: [],\n  infotainmentAudio: [],\n  navigationDisplay: [],\n  securityAntiTheft: [],\n  towingOffRoad: [],\n  packages: [],\n  wheelsTires: []\n};\n\n// Helper function to categorize features\nconst categorizeFeature = (feature) => {\n  const f = feature.toLowerCase();\n  \n  // 1. Engine & Power\n  if (/^(v6|v8|4-cyl|3-cyl|i4|i6)/.test(f) || \n      /(ecoboost|ecotec|hybrid|turbo|hemi|gdi|vtec|multiair|liter|electric)/i.test(f)) {\n    categories.enginePower.push(feature);\n  }\n  \n  // 2. Transmission\n  if (/(automatic|auto|manual|cvt|spd|drive unit|shiftronic|selshft|xtronic|overdrive)/i.test(f)) {\n    categories.transmission.push(feature);\n  }\n  \n  // 3. Drivetrain\n  if (/^(fwd|rwd|awd|4wd|2wd)$/i.test(f) || /wheel drive/i.test(f)) {\n    categories.drivetrain.push(feature);\n  }\n  \n  // 4. Braking & Stability\n  if (/(abs|stability|stabilitrak|advancetrac|rollover|hill start|hill descent|traction|vehicle dynamic)/i.test(f)) {\n    categories.brakingStability.push(feature);\n  }\n  \n  // 5. Safety - Airbags\n  if (/air bags|airbag|tire pressure monitoring/i.test(f)) {\n    categories.safetyAirbags.push(feature);\n  }\n  \n  // 6. Driver Assist / ADAS\n  if (/(camera|park assist|parksense|parking sensor|distance warning|sonar|blind|lane|collision|propilot|safety shield|adaptive cruise|intelligent cruise)/i.test(f)) {\n    categories.driverAssist.push(feature);\n  }\n  \n  // 7. Exterior & Lighting\n  if (/(headlamp|headlight|xenon|hid|led|fog lamp|daytime running|bed liner|tailgate|spoiler|roof rack|running board|tonneau|shell|cap|sliding rear window)/i.test(f)) {\n    categories.exteriorLighting.push(feature);\n  }\n  \n  // 8. Roofs & Glass\n  if (/(roof:|moonroof|sunroof|panoramic|skylight|privacy glass)/i.test(f)) {\n    categories.roofsGlass.push(feature);\n  }\n  \n  // 9. Interior Comfort\n  if (/(air conditioning|climate|keyless|remote start|power door|power window|power liftgate|power tailgate|power trunk|tilt|telescoping|steering wheel: heated|garage door)/i.test(f)) {\n    categories.interiorComfort.push(feature);\n  }\n  \n  // 10. Seating & Configuration\n  if (/(seat|passenger seating|leather)/i.test(f) && !/steering/i.test(f)) {\n    categories.seatingConfig.push(feature);\n  }\n  \n  // 11. Infotainment & Audio\n  if (/(am\\/fm|radio|stereo|sound|bose|harman|revel|premium sound|infotainment|onstar|sync|uconnect|connect|link|bluetooth|usb|auxiliary|siriusxm|cd|mp3)/i.test(f)) {\n    categories.infotainmentAudio.push(feature);\n  }\n  \n  // 12. Navigation & Display\n  if (/(navigation|head-up display)/i.test(f)) {\n    categories.navigationDisplay.push(feature);\n  }\n  \n  // 13. Security & Anti-Theft\n  if (/(alarm|anti-theft|theft|security system)/i.test(f)) {\n    categories.securityAntiTheft.push(feature);\n  }\n  \n  // 14. Towing & Off-Road\n  if (/(towing|tow|off-road|z71)/i.test(f)) {\n    categories.towingOffRoad.push(feature);\n  }\n  \n  // 15. Packages & Trims\n  if (/(pkg|package|big horn|technology|premium)/i.test(f) && !/sound|audio/i.test(f)) {\n    categories.packages.push(feature);\n  }\n  \n  // 16. Wheels & Tires\n  if (/wheels:|alloy|steel/i.test(f)) {\n    categories.wheelsTires.push(feature);\n  }\n};\n\n// Categorize all features\nfeatures.forEach(feature => {\n  if (feature) categorizeFeature(feature);\n});\n\n// Build allowed photo categories based on equipment\nconst allowedPhotoCategories = [\n  'hero_exterior',\n  'engine_bay',\n  'infotainment_other',\n  'instrument_cluster',\n  'steering_wheel',\n  'front_seats',\n  'second_row_seats',\n  'cargo_area'\n];\n\n// Add conditional categories based on equipment\nif (categories.infotainmentAudio.some(f => /carplay|android auto/i.test(f))) {\n  allowedPhotoCategories.push('infotainment_carplay');\n}\n\nif (categories.driverAssist.some(f => /360|multi-view|surround view|around view/i.test(f))) {\n  allowedPhotoCategories.push('infotainment_360_camera');\n}\n\nif (categories.roofsGlass.some(f => /moonroof|sunroof|panoramic/i.test(f))) {\n  allowedPhotoCategories.push('moonroof');\n}\n\nif (categories.seatingConfig.some(f => /third row|3rd row|7 passenger|8 passenger/i.test(f))) {\n  allowedPhotoCategories.push('third_row_seats');\n}\n\n// Always add special_feature category for unexpected finds\nallowedPhotoCategories.push('special_feature');\n\n// Build equipment context for each photo category\nconst equipmentContextByCategory = {\n  hero_exterior: {},\n  \n  engine_bay: {\n    engine_features: categories.enginePower,\n    transmission: categories.transmission[0] || null,\n    drivetrain: categories.drivetrain[0] || null\n  },\n  \n  front_seats: {\n    has_leather: categories.seatingConfig.some(f => /^leather$/i.test(f)),\n    has_heated: categories.seatingConfig.some(f => /heated/i.test(f) && /seat/i.test(f)),\n    has_cooled: categories.seatingConfig.some(f => /(cooled|ventilated)/i.test(f)),\n    has_power: categories.seatingConfig.some(f => /(power|dual power)/i.test(f) && /seat/i.test(f)),\n    has_memory: categories.seatingConfig.some(f => /memory/i.test(f)),\n    material_claim: categories.seatingConfig.some(f => /^leather$/i.test(f)) ? 'leather' : 'premium upholstery',\n    all_seat_features: categories.seatingConfig\n  },\n  \n  second_row_seats: {\n    seating_features: categories.seatingConfig.filter(f => /rear|second|passenger/i.test(f))\n  },\n  \n  third_row_seats: {\n    has_third_row: categories.seatingConfig.some(f => /third row|3rd row/i.test(f))\n  },\n  \n  steering_wheel: {\n    has_heated_wheel: categories.interiorComfort.some(f => /steering wheel.*heated/i.test(f)),\n    has_controls: categories.interiorComfort.some(f => /steering wheel control/i.test(f)),\n    tilt_telescoping: categories.interiorComfort.some(f => /tilt.*telescoping/i.test(f))\n  },\n  \n  infotainment_carplay: {\n    has_navigation: categories.navigationDisplay.length > 0,\n    audio_system: categories.infotainmentAudio.find(f => /sound|audio|bose|harman|revel/i.test(f)),\n    connectivity: categories.infotainmentAudio.filter(f => /bluetooth|usb|siriusxm/i.test(f))\n  },\n  \n  infotainment_360_camera: {\n    has_360: true,\n    parking_features: categories.driverAssist.filter(f => /parking|park assist/i.test(f))\n  },\n  \n  moonroof: {\n    moonroof_type: categories.roofsGlass.find(f => /panoramic/i.test(f)) ? 'Panoramic' : 'Moonroof',\n    all_roof_features: categories.roofsGlass\n  },\n  \n  cargo_area: {\n    power_liftgate: categories.interiorComfort.some(f => /power liftgate/i.test(f)),\n    truck_bed_features: categories.exteriorLighting.filter(f => /bed liner|tailgate|tonneau/i.test(f))\n  }\n};\n\n// Clean up baseConfig - remove equipment\nconst cleanBaseConfig = {\n  ...config,\n  equipment: undefined,  // Remove equipment string\n  vehicles: config.vehicles?.map(vehicle => {\n    const {equipment, ...cleanVehicle } = vehicle;\n    return cleanVehicle;\n  })\n};\n\nreturn [{\n  json: {\n    ...cleanBaseConfig,\n    equipment_categories: categories,\n    allowed_photo_categories: allowedPhotoCategories,\n    equipment_context_by_category: equipmentContextByCategory,\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          300
+        ],
+        "id": "parse-equip",
+        "name": "Parse Equipment & Build Categories"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\nconst vehicle = config.vehicles[0];\n// Use thumbnails for faster processing\nconst allImageUrls = vehicle.all_images\n  .filter(url => url && url.trim())\n  .map(url => url + '/thumb/');\n\nconst allowedCategories = config.allowed_photo_categories;\nconst totalPhotos = allImageUrls.length;\nconst maxIndex = totalPhotos - 1;\n\nconst systemPrompt = `You are categorizing ${totalPhotos} photos of a ${vehicle.year} ${vehicle.make} ${vehicle.model}.\n\nEQUIPMENT config CONFIRMS THIS VEHICLE HAS:\n${config.equipment_categories.seatingConfig.some(f => /third row|3rd row/i.test(f)) ? '✓ Third row seating\\n' : ''}\n${config.equipment_categories.roofsGlass.some(f => /moonroof|sunroof|panoramic/i.test(f)) ? '✓ ' + config.equipment_context_by_category.moonroof.moonroof_type + '\\n' : ''}\n${config.equipment_categories.driverAssist.some(f => /360|multi-view|surround/i.test(f)) ? '✓ 360-degree camera\\n' : ''}\n${config.equipment_categories.seatingConfig.some(f => /heated/i.test(f) && /seat/i.test(f)) ? '✓ Heated seats\\n' : ''}\n${config.equipment_categories.seatingConfig.some(f => /cooled|ventilated/i.test(f)) ? '✓ Cooled/ventilated seats\\n' : ''}\n${config.equipment_categories.seatingConfig.some(f => /^leather$/i.test(f)) ? '✓ Leather seats\\n' : ''}\n\nPhoto[0] is designated as hero_exterior (already selected).\n\nCATEGORIES TO LOOK FOR:\n${allowedCategories.filter(c => c !== 'hero_exterior').map(cat => `- ${cat}`).join('\\n')}\n\nDO NOT look for categories not listed above - they don't exist on this vehicle.\n\nRULES:\n1. Multiple photos CAN have the same category if showing DIFFERENT subcategories\n   Example: One photo shows CarPlay, another shows 360 camera → both are infotainment\n2. If multiple photos show THE SAME THING, pick ONLY THE BEST (clearest, best lighting)\n3. Only assign categories from the list above\n4. Mark irrelevant photos as \"exclude\"\n\nEXCLUDE these categories entirely (never ad-worthy):\n- Center console storage compartments (close-ups)\n- Control button close-ups (seat controls, climate buttons)\n- Cup holder close-ups (showing just cupholders)\n- Key fobs\n- Window stickers / price labels\n- Door panels (unless showing special feature)\n- Random detail shots with no clear feature\n- Photos that are blurry or too dark to use\n\nQUALITY REQUIREMENTS:\n- Well-lit photos only (skip dark or blurry)\n- Clear view of features being highlighted\n- Professional appearance (avoid awkward angles)\n- Shows vehicle in good condition\n\nCATEGORY DEFINITIONS:\n\nENGINE BAY:\n- Clear shot of engine compartment\n- Well-lit, shows engine condition\n\nINFOTAINMENT (can have multiple):\n- infotainment_carplay: Screen showing Apple CarPlay OR Android Auto interface clearly\n- infotainment_360_camera: Screen showing 360-degree/bird's eye parking camera view\n- infotainment_other: Touchscreen showing other features (navigation, audio, settings)\n\nDASHBOARD:\n- instrument_cluster: Gauge cluster or digital instrument display\n- steering_wheel: Steering wheel (with or without controls visible)\n\nSEATING:\n- front_seats: Front seat view showing material, condition, and controls\n- second_row_seats: Back seat view\n- third_row_seats: Third row seating (only if equipment confirms it exists)\n\nCARGO:\n- cargo_area: Trunk or cargo space (or truck bed for pickups)\n\nSPECIAL:\n- moonroof: Moonroof open OR moonroof controls visible (only if equipment confirms)\n- special_feature: Anything else impressive (heads-up display, wireless charging, etc.)\n\nOUTPUT FORMAT (JSON only, no markdown):\n{\n  \"categorized_photos\": [\n    {\n      \"photo_index\": 1,\n      \"category\": \"engine_bay\",\n      \"reasoning\": \"Clear engine shot, well-lit\"\n    },\n    {\n      \"photo_index\": 12,\n      \"category\": \"infotainment_carplay\",\n      \"reasoning\": \"Shows Apple CarPlay interface clearly\"\n    },\n    {\n      \"photo_index\": 8,\n      \"category\": \"exclude\",\n      \"reasoning\": \"Center console storage - not ad-worthy\"\n    }\n  ],\n  \"summary\": {\n    \"engine_bay\": [1],\n    \"infotainment_carplay\": [12],\n    \"front_seats\": [20],\n    \"excluded\": [8, 9, 22]\n  }\n}`;\n\nconst userPrompt = `Categorize all ${totalPhotos} photos of this ${vehicle.year} ${vehicle.make} ${vehicle.model}.\n\n🚨 CRITICAL - PHOTO INDICES 🚨\nVALID INDICES: 0 through ${maxIndex}\nTOTAL PHOTOS: ${totalPhotos}\nDO NOT USE indices ${maxIndex + 1} or higher (they don't exist!)\n\nPhoto[0] is hero_exterior (skip this one).\nAnalyze photos 1 through ${maxIndex} and assign categories or mark as exclude.\n\nSelect the BEST photo for each category (quality over quantity).\nIf multiple photos show different features, keep both.\nIf multiple photos show the same feature, pick only the best one.`;\n\n// Build vision_content array for Claude API\nconst visionContent = [\n  {\n    type: \"text\",\n    text: `${systemPrompt}\\n\\n${userPrompt}\\n\\nPHOTOS (each labeled with its index):`\n  }\n];\n\n// Add all images with explicit index labels\nallImageUrls.forEach((url, index) => {\n  visionContent.push({\n    type: \"text\",\n    text: `[PHOTO INDEX ${index}]`\n  });\n  visionContent.push({\n    type: \"image\",\n    source: {\n      type: \"url\",\n      url: url\n    }\n  });\n});\n\nconsole.log(`✅ Built vision content with ${allImageUrls.length} photos`);\n\nreturn [{\n  json: {\n    ...config,\n    \n    categorizer_vision_content: visionContent,\n    categorizer_system_prompt: systemPrompt,\n    categorizer_user_prompt: userPrompt,\n    all_image_urls: allImageUrls,\n    max_photo_index: maxIndex,\n    total_photos: totalPhotos,\n    \n    // Remove used data\n    equipment_categories: undefined,\n    allowed_photo_categories: undefined\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1540,
+          300
+        ],
+        "id": "build-photo-prompt",
+        "name": "Build Photo Categorizer Prompt"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "9451dada-8f16-4dff-ba00-ab2aabc49185",
+                "leftValue": "={{ $json.api_claude_categorize_photos }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1760,
+          300
+        ],
+        "id": "if-skip-cat",
+        "name": "If: Test, Skip Categorization"
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$json,\n    \"content\": [{\n      \"text\": $json.api_claude_categorize_photos\n    }]\n  }\n}]"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1980,
+          200
+        ],
+        "id": "skip-cat",
+        "name": "Skip Categorization"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "specifyHeaders": "json",
+          "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.categorizer_vision_content) }}\n    }\n  ]\n}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1980,
+          400
+        ],
+        "id": "claude-categorize",
+        "name": "API: Claude, Categorize Photos",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "LQZygyOyKZ5tikRW",
+            "name": "VideoBGRemover"
+          },
+          "anthropicApi": {
+            "id": "Cias5aAJewPKMMCa",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $('Build Photo Categorizer Prompt').first().json;\nconst apiResponse = $json.content[0].text;\n\nlet responseText = apiResponse;\nconst jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\nif (jsonMatch) {\n  responseText = jsonMatch[0];\n} else {\n  throw new Error(\"Could not find valid JSON object in response\");\n}\n\nconst categorizedResult = JSON.parse(responseText.trim());\n\n// Get data from previous node\nconst allImageUrls = config.all_image_urls;\nconst equipmentContextByCategory = config.equipment_context_by_category;\nconst vehicle = config.vehicles[0];\n\n// Build selected photos object\nconst selectedPhotos = {};\n\ncategorizedResult.categorized_photos.forEach(photo => {\n  const category = photo.category;\n  if (category !== 'exclude') {\n    const photoIndex = photo.photo_index;\n    \n    // Get equipment context for this category\n    const equipmentContext = equipmentContextByCategory[category] || {};\n    \n    selectedPhotos[category] = {\n      photo_index: photoIndex,\n      photo_url: allImageUrls[photoIndex],\n      reasoning: photo.reasoning,\n      equipment_context: equipmentContext\n    };\n  }\n});\n\n// Always include hero exterior (photo 0)\nselectedPhotos.hero_exterior = {\n  photo_index: 0,\n  photo_url: vehicle.all_images[0],\n  reasoning: \"Hero exterior shot\",\n  equipment_context: {}\n};\n\n// Clean up baseConfig - remove all_images\nconst cleanBaseConfig = {\n  ...config,\n  all_images: undefined,  // Remove all_images array\n  vehicles: config.vehicles?.map(vehicle => {\n    const {all_images, ...cleanVehicle } = vehicle;\n    return cleanVehicle;\n  })\n};\n\nreturn [{\n  json: {\n    ...cleanBaseConfig,\n\n    selected_photos: selectedPhotos,\n\n    // Remove used data\n    equipment_context_by_category: undefined,\n    categorizer_vision_content: undefined,\n    categorizer_system_prompt: undefined,\n    categorizer_user_prompt: undefined,\n    all_image_urls: undefined,\n    max_photo_index: undefined,\n    total_photos: undefined,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_claude_categorize_photos: apiResponse })\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2200,
+          300
+        ],
+        "id": "parse-cat",
+        "name": "Parse Catagorization Response"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\nconst selectedPhotos = config.selected_photos;\nconst vehicle = config.vehicles[0];\n\n// Category-specific prompt templates\nconst categoryPrompts = {\n  front_seats: (equipCtx) => `\nAnalyze this front seat photo.\n\nEQUIPMENT DATA:\n${equipCtx.has_leather ? '✓ Leather seats confirmed in equipment' : '✗ Leather NOT listed in equipment'}\n${equipCtx.has_heated ? '✓ Heated seats' : ''}\n${equipCtx.has_cooled ? '✓ Cooled/ventilated seats' : ''}\n${equipCtx.has_power ? '✓ Power-adjustable seats' : ''}\n${equipCtx.has_memory ? '✓ Memory seats' : ''}\n\n🚫 CRITICAL RULE: DO NOT analyze or comment on seat material\nWe use equipment data ONLY for material claims (${equipCtx.material_claim}).\n\nYOUR TASK - Focus on what you CAN reliably identify:\n\n1. SEAT CONDITION (visual assessment):\n   - excellent (pristine, no wear)\n   - good (normal use, clean)\n   - fair (some wear visible)\n   - poor (stains, tears, heavy wear)\n\n2. CONTROLS VISIBLE (Yes/No for each):\n   - Heated seat buttons?\n   - Cooled/ventilated buttons?\n   - Power adjustment controls?\n   - Memory seat buttons?\n\n3. GENERAL FEATURES:\n   - Spacious/comfortable appearance?\n   - Center armrest present?\n\nOUTPUT JSON:\n{\n  \"condition\": \"excellent|good|fair|poor\",\n  \"controls_visible\": {\n    \"heated\": true/false,\n    \"cooled\": true/false,\n    \"power\": true/false,\n    \"memory\": true/false\n  },\n  \"spacious\": true/false,\n  \"additional_notes\": \"Brief notes on comfort features\"\n}`,\n\n  engine_bay: (equipCtx) => `\nAnalyze this engine bay photo.\n\nEQUIPMENT DATA:\n${equipCtx.engine_features && equipCtx.engine_features.length > 0 ? '- Engine: ' + equipCtx.engine_features.join(', ') : ''}\n${equipCtx.transmission ? '- Transmission: ' + equipCtx.transmission : ''}\n${equipCtx.drivetrain ? '- Drivetrain: ' + equipCtx.drivetrain : ''}\n\nYOUR TASK:\n\n1. ENGINE CONDITION:\n   - clean (well-maintained, no visible dirt/oil)\n   - average (normal condition)\n   - dirty (visible grime, neglect)\n\n2. VISIBLE BADGING/LABELS:\n   - Any engine badges or labels visible on engine cover?\n   - Specific text you can read?\n\n3. MAINTENANCE APPEARANCE:\n   - Does it appear well-maintained? (Yes/No)\n   - Any obvious issues visible? (leaks, damaged parts)\n\nOUTPUT JSON:\n{\n  \"condition\": \"clean|average|dirty\",\n  \"visible_badging\": \"Description of any badges/labels or null\",\n  \"appears_maintained\": true/false,\n  \"issues_visible\": \"Description or null\"\n}`,\n\n  infotainment_carplay: (equipCtx) => `\nAnalyze this infotainment screen photo.\n\nEQUIPMENT DATA:\n${equipCtx.has_navigation ? '✓ Navigation system' : ''}\n${equipCtx.audio_system ? '✓ Audio: ' + equipCtx.audio_system : ''}\n\nYOUR TASK - Be SPECIFIC about what you see:\n\n⚠️ CRITICAL: DO NOT assume both CarPlay and Android Auto unless you see BOTH logos clearly!\n\n1. SMARTPHONE INTEGRATION (look carefully):\n   - Apple CarPlay logo visible? (Yes/No)\n   - Android Auto logo visible? (Yes/No)\n   - If neither logo visible: Generic smartphone connectivity only\n\n2. SCREEN SIZE:\n   - small (less than 7 inches)\n   - medium (7-9 inches)\n   - large (10+ inches)\n\n3. SCREEN CONDITION:\n   - excellent (no scratches, clear)\n   - good (minor wear)\n   - scratched (visible damage)\n\n4. OTHER VISIBLE FEATURES:\n   - Navigation map visible?\n   - Premium brand logos (Bose, Harman Kardon)?\n   - Any other notable features?\n\nOUTPUT JSON:\n{\n  \"has_apple_carplay\": true/false/unclear,\n  \"has_android_auto\": true/false/unclear,\n  \"screen_size\": \"small|medium|large\",\n  \"screen_condition\": \"excellent|good|scratched\",\n  \"navigation_visible\": true/false,\n  \"other_features\": \"Description or null\"\n}`,\n\n  infotainment_360_camera: (equipCtx) => `\nAnalyze this 360 camera display photo.\n\nYOUR TASK:\n\n1. CONFIRM 360 CAMERA:\n   - Does this show multi-view/bird's eye parking camera? (Yes/No)\n   - How many camera angles visible? (top view, front, rear, sides?)\n\n2. DISPLAY QUALITY:\n   - clear (high resolution, easy to see)\n   - average (acceptable quality)\n   - poor (grainy, hard to see)\n\n3. ADDITIONAL FEATURES VISIBLE:\n   - Parking sensor indicators?\n   - Trajectory lines?\n   - Distance markers?\n\nOUTPUT JSON:\n{\n  \"is_360_camera\": true/false,\n  \"camera_angles_visible\": [\"top\", \"front\", \"rear\", \"left\", \"right\"],\n  \"display_quality\": \"clear|average|poor\",\n  \"parking_sensors_visible\": true/false,\n  \"additional_features\": \"Description or null\"\n}`,\n\n  moonroof: (equipCtx) => `\nAnalyze this moonroof photo.\n\nEQUIPMENT DATA: ${equipCtx.moonroof_type || 'Moonroof'}\n\nYOUR TASK:\n\n1. WHAT'S SHOWN:\n   - moonroof_open (showing open roof with sky visible)\n   - controls_visible (showing buttons/switches for moonroof)\n   - both (both open roof and controls visible)\n\n2. SIZE ASSESSMENT:\n   - small (compact opening)\n   - medium (standard size)\n   - large (extended opening)\n   - panoramic (very large, extends over passengers)\n\n3. CONDITION:\n   - Glass clean and clear? (Yes/No)\n   - Controls in good condition? (Yes/No)\n\nOUTPUT JSON:\n{\n  \"moonroof_shown\": \"moonroof_open|controls_visible|both\",\n  \"appears_panoramic\": true/false,\n  \"size_rating\": \"small|medium|large|panoramic\",\n  \"condition_notes\": \"Brief assessment\"\n}`,\n\n  cargo_area: (equipCtx) => `\nAnalyze this cargo/trunk space photo.\n\nEQUIPMENT DATA:\n${equipCtx.power_liftgate ? '✓ Power liftgate' : ''}\n${equipCtx.truck_bed_features && equipCtx.truck_bed_features.length > 0 ? '✓ Truck bed features: ' + equipCtx.truck_bed_features.join(', ') : ''}\n\nYOUR TASK:\n\n1. SPACE ASSESSMENT:\n   - compact (small trunk/bed)\n   - average (typical for vehicle class)\n   - spacious (above average)\n   - huge (exceptional cargo capacity)\n\n2. CONDITION:\n   - clean (well-maintained, no debris)\n   - average (normal use)\n   - cluttered (items present)\n\n3. NOTABLE FEATURES:\n   - Power liftgate button visible?\n   - Cargo cover present?\n   - Tie-down hooks/anchors?\n   - Bed liner visible (trucks)?\n   - Tonneau cover?\n\nOUTPUT JSON:\n{\n  \"space_rating\": \"compact|average|spacious|huge\",\n  \"condition\": \"clean|average|cluttered\",\n  \"notable_features\": [\"list\", \"of\", \"features\"],\n  \"additional_notes\": \"Brief notes\"\n}`,\n\n  steering_wheel: (equipCtx) => `\nAnalyze this steering wheel photo.\n\nEQUIPMENT DATA:\n${equipCtx.has_heated_wheel ? '✓ Heated steering wheel' : ''}\n${equipCtx.has_controls ? '✓ Steering wheel controls' : ''}\n${equipCtx.tilt_telescoping ? '✓ Tilt & telescoping wheel' : ''}\n\nYOUR TASK:\n\n1. CONTROLS VISIBLE:\n   - Audio controls? (Yes/No)\n   - Cruise control buttons? (Yes/No)\n   - Phone/voice controls? (Yes/No)\n   - Heated wheel button/indicator? (Yes/No)\n\n2. MATERIAL/CONDITION:\n   - Leather/wrapped? (Yes/No/Unclear)\n   - Condition: excellent/good/worn\n\n3. OTHER FEATURES:\n   - Paddle shifters visible?\n   - Multifunction display visible behind wheel?\n\nOUTPUT JSON:\n{\n  \"controls_visible\": {\n    \"audio\": true/false,\n    \"cruise\": true/false,\n    \"phone_voice\": true/false,\n    \"heated\": true/false\n  },\n  \"appears_leather_wrapped\": true/false/unclear,\n  \"condition\": \"excellent|good|worn\",\n  \"paddle_shifters\": true/false,\n  \"other_notes\": \"Brief notes\"\n}`,\n\n  instrument_cluster: (equipCtx) => `\nAnalyze this instrument cluster / gauge display photo.\n\nYOUR TASK:\n\n1. CLUSTER TYPE:\n   - traditional_analog (physical gauges with needles)\n   - digital (full digital/LCD display)\n   - hybrid (mix of analog and digital)\n\n2. FEATURES VISIBLE:\n   - Speedometer clearly visible?\n   - Tachometer (RPM gauge) visible?\n   - Fuel gauge visible?\n   - Trip computer/info display?\n   - Navigation display in cluster?\n\n3. CONDITION & QUALITY:\n   - Display condition: excellent/good/worn\n   - Easy to read? (Yes/No)\n\nOUTPUT JSON:\n{\n  \"cluster_type\": \"traditional_analog|digital|hybrid\",\n  \"features_visible\": [\"speedometer\", \"tachometer\", \"fuel\", \"trip_computer\"],\n  \"display_condition\": \"excellent|good|worn\",\n  \"easy_to_read\": true/false,\n  \"notes\": \"Brief assessment\"\n}`,\n\n  second_row_seats: (equipCtx) => `\nAnalyze this second row / back seat photo.\n\nYOUR TASK:\n\n1. SPACE ASSESSMENT:\n   - cramped (limited legroom)\n   - adequate (acceptable for adults)\n   - spacious (comfortable for adults)\n   - generous (exceptional rear space)\n\n2. SEATING CONFIGURATION:\n   - bench (traditional bench seat)\n   - captain_chairs (individual bucket seats)\n   - split_bench (can fold separately)\n\n3. CONDITION:\n   - excellent (pristine, no wear)\n   - good (clean, normal use)\n   - fair (some wear visible)\n\n4. FEATURES VISIBLE:\n   - Rear climate vents?\n   - Cup holders?\n   - USB ports/charging?\n   - Armrest?\n\nOUTPUT JSON:\n{\n  \"space_rating\": \"cramped|adequate|spacious|generous\",\n  \"seating_config\": \"bench|captain_chairs|split_bench\",\n  \"condition\": \"excellent|good|fair\",\n  \"features_visible\": [\"list\", \"of\", \"features\"],\n  \"notes\": \"Brief assessment\"\n}`,\n\n  third_row_seats: (equipCtx) => `\nAnalyze this third row seating photo.\n\nYOUR TASK:\n\n1. SPACE ASSESSMENT:\n   - tight (kids only)\n   - adequate (short adults okay)\n   - comfortable (adults can fit)\n\n2. ACCESS:\n   - How do passengers access third row?\n   - Easy entry visible? (fold-flat second row, etc.)\n\n3. CONDITION:\n   - excellent/good/fair\n\n4. FEATURES:\n   - Cup holders?\n   - Climate vents?\n   - Storage compartments?\n\nOUTPUT JSON:\n{\n  \"space_rating\": \"tight|adequate|comfortable\",\n  \"condition\": \"excellent|good|fair\",\n  \"easy_access\": true/false,\n  \"features_visible\": [\"list\"],\n  \"notes\": \"Brief assessment\"\n}`,\n\n  special_feature: (equipCtx) => `\nAnalyze this special feature photo.\n\nYOUR TASK:\n\nIdentify what special feature is being shown. This could be:\n- Heads-up display\n- Wireless charging pad\n- Advanced climate controls\n- Unique storage solutions\n- Premium materials/trim\n- Technology features\n- Or anything else noteworthy\n\nDescribe what you see and assess its condition/functionality.\n\nOUTPUT JSON:\n{\n  \"feature_identified\": \"Name/description of feature\",\n  \"condition\": \"excellent|good|fair\",\n  \"notable_aspects\": \"What makes this feature special\",\n  \"likely_appeal\": \"Why customers would value this\"\n}`,\n\n  infotainment_other: (equipCtx) => `\nAnalyze this infotainment screen photo.\n\nYOUR TASK:\n\nThis screen is NOT showing CarPlay/Android Auto or 360 camera.\nWhat IS it showing?\n\n1. SCREEN CONTENT:\n   - Navigation system?\n   - Audio/radio interface?\n   - Vehicle settings?\n   - Other?\n\n2. SCREEN QUALITY:\n   - Size: small/medium/large\n   - Condition: excellent/good/scratched\n   - Touchscreen? (Yes/No/Unclear)\n\n3. FEATURES VISIBLE:\n   - Premium audio branding?\n   - Climate controls integrated?\n   - Other notable features?\n\nOUTPUT JSON:\n{\n  \"showing\": \"navigation|audio|settings|other\",\n  \"screen_size\": \"small|medium|large\",\n  \"condition\": \"excellent|good|scratched\",\n  \"appears_touchscreen\": true/false/unclear,\n  \"features_visible\": [\"list\"],\n  \"notes\": \"Brief description\"\n}`\n};\n\n// Build feature identifier vision content\nconst featureIdentifierContent = [\n  {\n    type: \"text\",\n    text: `Analyze these vehicle feature photos from a ${vehicle.year} ${vehicle.make} ${vehicle.model}.\n\nFor each photo, identify visible features based on the category-specific instructions.\n\nIMPORTANT: Output ONLY valid JSON with no markdown formatting.\n\n`\n  }\n];\n\nlet categoriesProcessed = 0;\n\nObject.entries(selectedPhotos).forEach(([category, photoData]) => {\n  if (category === 'hero_exterior') return; // Skip hero\n\n  const promptGenerator = categoryPrompts[category];\n  if (!promptGenerator) {\n    console.log(`⚠️ No prompt template for category: ${category}`);\n    return;\n  }\n\n  const categoryPrompt = promptGenerator(photoData.equipment_context);\n  \n  featureIdentifierContent.push({\n    type: \"text\",\n    text: `\\n═══ CATEGORY: ${category.toUpperCase()} ═══\\n${categoryPrompt}\\n`\n  });\n  \n  featureIdentifierContent.push({\n    type: \"image\",\n    source: {\n      type: \"url\",\n      url: photoData.photo_url\n    }\n  });\n\n  categoriesProcessed++;\n});\n\n// Add final instruction\nconst categoryKeys = Object.keys(selectedPhotos).filter(k => k !== 'hero_exterior');\nfeatureIdentifierContent.push({\n  type: \"text\",\n  text: `\\n\\nProvide analysis for each category in this JSON format (no markdown, no backticks):\n{\n  \"${categoryKeys[0] || 'category_name'}\": { ... your analysis ... },\n  \"${categoryKeys[1] || 'category_name'}\": { ... your analysis ... }\n}\n\nOutput ONLY the JSON object, nothing else.`\n});\n\nconsole.log(`✅ Built feature identifier prompts for ${categoriesProcessed} categories`);\n\nreturn [{\n  json: {\n    ...config,\n    \n    feature_identifier_content: featureIdentifierContent,\n    categories_to_identify: categoriesProcessed\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2420,
+          300
+        ],
+        "id": "build-feature-prompt",
+        "name": "Build Feature Identifier Prompts"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "0a330d1c-bcb6-470a-88be-3dab4273101a",
+                "leftValue": "={{ $json.api_claude_feature_identification }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2640,
+          300
+        ],
+        "id": "if-skip-feat",
+        "name": "If: Test, Skip Feature Identification"
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$json,\n    \"content\": [{\n      \"text\": $json.api_claude_feature_identification\n    }]\n  }\n}]"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2860,
+          200
+        ],
+        "id": "skip-feat",
+        "name": "Skip Feature Identification"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "specifyHeaders": "json",
+          "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.feature_identifier_content) }}\n    }\n  ]\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2860,
+          400
+        ],
+        "id": "claude-features",
+        "name": "API: Claude, Feature Identification",
+        "credentials": {
+          "anthropicApi": {
+            "id": "Cias5aAJewPKMMCa",
+            "name": "Anthropic account"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $('Build Feature Identifier Prompts').first().json;\nconst apiResponse = $json.content[0].text;\nconst vehicle = config.vehicles[0];\n\n// Parse JSON response (strip markdown if present)\nlet responseText = apiResponse.replace(/```json\\n?/g, \"\").replace(/```\\n?/g, \"\").trim();\n\n// Try to extract JSON object\nconst jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\nif (jsonMatch) {\n  responseText = jsonMatch[0];\n}\n\nconst identifiedFeatures = JSON.parse(responseText);\n\n// Combine equipment context + visual verification\nconst verifiedFeatures = {};\n\nObject.entries(identifiedFeatures).forEach(([category, features]) => {\n  const photoData = config.selected_photos[category];\n  if (!photoData) {\n    console.log(`⚠️ No photo data found for category: ${category}`);\n    return;\n  }\n\n  verifiedFeatures[category] = {\n    photo_index: photoData.photo_index,\n    photo_url: photoData.photo_url,\n    equipment_context: photoData.equipment_context,\n    visual_verification: features,\n    \n    // Build final feature list for script generation\n    script_features: buildScriptFeatures(category, photoData.equipment_context, features, vehicle)\n  };\n});\n\n// Function to build script-ready feature descriptions\nfunction buildScriptFeatures(category, equipment, visual, vehicle) {\n  switch(category) {\n    case 'front_seats':\n      const seatFeatures = [];\n      \n      // Add condition if excellent\n      if (visual.condition === 'excellent') {\n        seatFeatures.push('pristine');\n      }\n      \n      // Add material from equipment ONLY\n      seatFeatures.push(equipment.material_claim || 'comfortable seating');\n      \n      // Add climate features\n      if (equipment.has_heated && equipment.has_cooled) {\n        seatFeatures.push('heated and ventilated');\n      } else if (equipment.has_heated) {\n        seatFeatures.push('heated');\n      } else if (equipment.has_cooled) {\n        seatFeatures.push('ventilated');\n      }\n      \n      // Add power if present\n      if (equipment.has_power) {\n        seatFeatures.push('power-adjustable');\n      }\n      \n      // Add memory if present\n      if (equipment.has_memory) {\n        seatFeatures.push('with memory');\n      }\n      \n      return seatFeatures.join(' ');\n      \n    case 'engine_bay':\n      const engineFeatures = [];\n      \n      // Add engine details from equipment\n      if (equipment.engine_features && equipment.engine_features.length > 0) {\n        const engineInfo = equipment.engine_features[0];\n        // Extract key parts (e.g., \"V6 i-VTEC 3.5 Liter\")\n        const match = engineInfo.match(/(V\\d+|4-Cyl|3-Cyl|I\\d+).*?(\\d+\\.\\d+)\\s*Liter/i);\n        if (match) {\n          const cylinders = match[1];\n          const displacement = match[2];\n          engineFeatures.push(`${displacement}L ${cylinders}`);\n        } else {\n          engineFeatures.push(engineInfo);\n        }\n      }\n      \n      // Add turbo/special tech\n      if (equipment.engine_features && equipment.engine_features.some(e => /turbo/i.test(e))) {\n        engineFeatures.push('turbocharged');\n      }\n      if (equipment.engine_features && equipment.engine_features.some(e => /hemi/i.test(e))) {\n        engineFeatures.push('HEMI power');\n      }\n      \n      // Add condition note\n      if (visual.condition === 'clean') {\n        engineFeatures.push('well-maintained');\n      }\n      \n      return engineFeatures.join(', ');\n      \n    case 'infotainment_carplay':\n      const infoFeatures = [];\n      \n      // Smartphone integration\n      if (visual.has_apple_carplay && visual.has_android_auto) {\n        infoFeatures.push('Apple CarPlay and Android Auto');\n      } else if (visual.has_apple_carplay) {\n        infoFeatures.push('Apple CarPlay');\n      } else if (visual.has_android_auto) {\n        infoFeatures.push('Android Auto');\n      } else {\n        infoFeatures.push('smartphone connectivity');\n      }\n      \n      // Premium audio\n      if (equipment.audio_system && /bose|harman|revel|premium/i.test(equipment.audio_system)) {\n        infoFeatures.push(equipment.audio_system);\n      }\n      \n      // Navigation\n      if (equipment.has_navigation || visual.navigation_visible) {\n        infoFeatures.push('navigation');\n      }\n      \n      return infoFeatures.join(' with ');\n      \n    case 'infotainment_360_camera':\n      const cameraFeatures = ['360-degree camera'];\n      \n      if (visual.parking_sensors_visible) {\n        cameraFeatures.push('with parking sensors');\n      }\n      \n      return cameraFeatures.join(' ');\n      \n    case 'moonroof':\n      const roofFeatures = [];\n      \n      // Type from equipment\n      if (equipment.moonroof_type === 'Panoramic' || visual.appears_panoramic) {\n        roofFeatures.push('panoramic moonroof');\n      } else {\n        roofFeatures.push('power moonroof');\n      }\n      \n      return roofFeatures.join(' ');\n      \n    case 'cargo_area':\n      const cargoFeatures = [];\n      \n      // Space rating\n      if (visual.space_rating === 'spacious' || visual.space_rating === 'huge') {\n        cargoFeatures.push('spacious cargo area');\n      } else {\n        cargoFeatures.push('cargo space');\n      }\n      \n      // Power liftgate\n      if (equipment.power_liftgate) {\n        cargoFeatures.push('with power liftgate');\n      }\n      \n      // Truck bed features\n      if (equipment.truck_bed_features && equipment.truck_bed_features.length > 0) {\n        if (equipment.truck_bed_features.some(f => /bed liner/i.test(f))) {\n          cargoFeatures.push('spray-in bed liner');\n        }\n        if (equipment.truck_bed_features.some(f => /multipro/i.test(f))) {\n          cargoFeatures.push('MultiPro tailgate');\n        }\n      }\n      \n      return cargoFeatures.join(', ');\n      \n    case 'steering_wheel':\n      const wheelFeatures = [];\n      \n      if (equipment.has_heated_wheel || visual.controls_visible?.heated) {\n        wheelFeatures.push('heated steering wheel');\n      }\n      \n      if (visual.controls_visible?.audio || visual.controls_visible?.cruise) {\n        wheelFeatures.push('with steering wheel controls');\n      }\n      \n      if (visual.paddle_shifters) {\n        wheelFeatures.push('and paddle shifters');\n      }\n      \n      return wheelFeatures.length > 0 ? wheelFeatures.join(' ') : 'multifunction steering wheel';\n      \n    case 'second_row_seats':\n      const secondRowFeatures = [];\n      \n      if (visual.space_rating === 'spacious' || visual.space_rating === 'generous') {\n        secondRowFeatures.push('spacious rear seating');\n      } else {\n        secondRowFeatures.push('rear seating');\n      }\n      \n      if (visual.features_visible && visual.features_visible.length > 0) {\n        if (visual.features_visible.some(f => /climate/i.test(f))) {\n          secondRowFeatures.push('with rear climate control');\n        }\n      }\n      \n      return secondRowFeatures.join(' ');\n      \n    case 'third_row_seats':\n      return 'third row seating for seven passengers';\n      \n    case 'instrument_cluster':\n      if (visual.cluster_type === 'digital') {\n        return 'digital instrument cluster';\n      } else if (visual.cluster_type === 'hybrid') {\n        return 'advanced gauge cluster with digital display';\n      }\n      return null; // Don't highlight basic analog clusters\n      \n    case 'special_feature':\n      if (visual.feature_identified) {\n        return visual.feature_identified;\n      }\n      return null;\n      \n    case 'infotainment_other':\n      const otherFeatures = [];\n      \n      if (visual.showing === 'navigation' || equipment.has_navigation) {\n        otherFeatures.push('navigation system');\n      }\n      \n      if (equipment.audio_system && /bose|harman|revel|premium/i.test(equipment.audio_system)) {\n        otherFeatures.push(equipment.audio_system);\n      }\n      \n      if (otherFeatures.length === 0) {\n        otherFeatures.push('touchscreen infotainment');\n      }\n      \n      return otherFeatures.join(' with ');\n      \n    default:\n      return null;\n  }\n}\n\nconsole.log(`📋 Built script features for ${Object.keys(verifiedFeatures).length} categories`);\n\n// Log feature summary for debugging\nObject.entries(verifiedFeatures).forEach(([category, data]) => {\n  if (data.script_features) {\n    console.log(`  ${category}: \"${data.script_features}\"`);\n  }\n});\n\nreturn [{\n  json: {\n    ...config,\n    \n    verified_features: verifiedFeatures,\n    \n    // Testing API Response\n    ...(config.test_mode && { api_claude_feature_identification: apiResponse })\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3080,
+          300
+        ],
+        "id": "parse-feat",
+        "name": "Parse Feature Identification Response"
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\n\nconst selectedPhotos = config.selected_photos || {};\n\n// Get VIN from vehicles array\nconst vin = config.vehicles?.[0]?.vin;\n\n// Validate we have required data\nif (!vin) {\n  throw new Error('VIN missing - needed for Cloudinary lookup');\n}\n\nif (!selectedPhotos.hero_exterior) {\n  throw new Error('No hero_exterior photo found in selected_photos!');\n}\n\nconst heroPhoto = selectedPhotos.hero_exterior;\n\n// Check if BG-removed version exists in Cloudinary\nconst bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\nconsole.log(`🔍 Checking Cloudinary: ${bgRemovedUrl}`);\n\nlet heroBackgroundRemoved = null;\nlet needsProcessing = false;\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'HEAD',\n    url: bgRemovedUrl,\n    returnFullResponse: true,\n    ignoreHttpStatusErrors: true,\n    timeout: 5000\n  });\n  \n  if (response.statusCode === 200) {\n    console.log('✅ BG-removed hero found in Cloudinary!');\n    heroBackgroundRemoved = bgRemovedUrl;\n    needsProcessing = false;\n    \n    selectedPhotos.hero_exterior.photo_url = bgRemovedUrl;\n  } else {\n    console.log(`Status code: ${response.statusCode}`);\n    needsProcessing = true;\n  }\n} catch (error) {\n  needsProcessing = true;\n}\n\nreturn [{\n  json: {\n    ...config,\n    \n    selected_photos: selectedPhotos,\n    hero_photo_url: heroPhoto.photo_url,\n    hero_photo_index: heroPhoto.photo_index,\n    hero_bg_removed_url: heroBackgroundRemoved,\n    needs_bg_removal: needsProcessing,\n    cloudinary_checked: true\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3300,
+          300
+        ],
+        "id": "process-hero",
+        "name": "Process Hero Photo for Animation"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "50cf43b0-eb78-4a88-be36-f13549c7b8fc",
+                "leftValue": "={{ $json.needs_bg_removal }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3520,
+          300
+        ],
+        "id": "if-needs-bg",
+        "name": "If: Needs Background Removed"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn [{\n  json: {\n    image_url: input.hero_photo_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vins: input.vins\n    }\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3740,
+          200
+        ],
+        "id": "prep-bg",
+        "name": "Prep: Remove BG"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "RmW2on3d2zlhjj33",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/pbHuh1HdmZxbFX0M",
+            "cachedResultName": "[Service] Remove Background"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          3960,
+          200
+        ],
+        "id": "call-bg",
+        "name": "Call: Remove Background",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get all items at once\nconst result = $input.all();\n\nfor (const item of result) {\n  // VIN is now in context from the service response\n  const vin = item.json.context?.vins?.[0] || item.json.vins?.[0] || 'unknown'; \n\n  if (item.binary && item.binary.data) {\n    item.binary.data.fileName = `${vin}.png`;\n  }\n  \n  // Flatten context back to top level for downstream nodes\n  if (item.json.context) {\n    item.json = { ...item.json.context, ...item.json };\n    delete item.json.context;\n  }\n}\n\nreturn result;"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4180,
+          200
+        ],
+        "id": "rename-bin",
+        "name": "Rename Binary"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "parameterType": "formBinaryData",
+                "name": "file",
+                "inputDataFieldName": "data"
+              },
+              {
+                "name": "upload_preset",
+                "value": "n8n_unsigned"
+              },
+              {
+                "name": "public_id",
+                "value": "={{ $json.VIN }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4400,
+          200
+        ],
+        "id": "cloudinary-upload",
+        "name": "Upload to Cloudinary",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const currentData = $json;\nconst config = $('Process Hero Photo for Animation').first().json;\n\n// Get VIN - might be in different places depending on the path\nconst vin = currentData.vehicles?.[0]?.vin || config.vehicles?.[0]?.vin;\n\nif (!vin) {\n  throw new Error('VIN missing - cannot update hero URL');\n}\n\n// Cloudinary response gives us the URL\nconst cloudinaryUrl = currentData.secure_url || `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n\n// Update the hero_bg_removed_url and selected_photos\n// const updatedData = {\n//   ...config,  // Use data from BEFORE the HTTP requests\n//   hero_bg_removed_url: cloudinaryUrl,\n//   needs_bg_removal: false,\n//   cloudinary_uploaded: true\n// };\n\n// Update the hero photo URL in selected_photos\nif (config.selected_photos?.hero_exterior) {\n  config.selected_photos.hero_exterior.photo_url = cloudinaryUrl;\n}\n\nreturn [{\n  json: {\n    ...config,\n    hero_bg_removed_url: cloudinaryUrl,\n    needs_bg_removal: false,\n    cloudinary_uploaded: true\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4620,
+          200
+        ],
+        "id": "update-hero",
+        "name": "Update Hero URL"
+      },
+      {
+        "parameters": {
+          "jsCode": "// No BG removal needed - pass through\nconst data = $('Process Hero Photo for Animation').first().json;\nconsole.log('✅ BG already removed or not needed, passing through');\nreturn [{ json: data }];"
+        },
+        "id": "skip-bg",
+        "name": "Skip BG Removal",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3740,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "chooseBranch",
+          "output": "empty"
+        },
+        "id": "merge-bg",
+        "name": "Merge BG Paths",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          4840,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.themePackRequest) }}",
+          "options": {}
+        },
+        "id": "gen-theme",
+        "name": "Generate Theme Pack",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          5200,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const themePackResponse = $json;\n\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items array (single item for spotlight)\nconst processedItems = [{\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: vehicle.equipment || [],\n  photo_url: spotlightData.hero_bg_removed_url || vehicle.photo_url,\n  bg_removed: !spotlightData.needs_bg_removal,\n  days_on_lot: vehicle.days_on_lot || 0,\n  sort_order: 0,\n  // Spotlight-specific enrichments\n  verified_features: spotlightData.verified_features || {},\n  selected_photos: spotlightData.selected_photos || {},\n  all_images: vehicle.all_images || []\n}];\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  core_tension: themePackResponse.core_tension,\n  ad_angle: themePackResponse.ad_angle,\n  local_micro_moments: themePackResponse.local_micro_moments,\n  banned_phrases: themePackResponse.banned_phrases,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_items: processedItems,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
+        },
+        "id": "prep-save",
+        "name": "Prepare Save Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5500,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=UPDATE assets \nSET \n  processed_items = $pd${{ JSON.stringify($json.processed_items) }}$pd$::jsonb,\n  theme_pack = $pd${{ JSON.stringify($json.theme_pack) }}$pd$::jsonb,\n  processing_status = '{{ $json.processing_status }}',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'::uuid\nRETURNING id, processing_status",
+          "options": {}
+        },
+        "id": "save-asset",
+        "name": "Save to Asset",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          5500,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"success\": true,\n  \"asset_id\": \"{{ $json.id }}\",\n  \"status\": \"{{ $json.processing_status }}\",\n  \"message\": \"Asset processed successfully\"\n}",
+          "options": {}
+        },
+        "id": "respond",
+        "name": "Respond Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          5720,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build theme pack request from spotlight data\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\n// Build item summary for single spotlight vehicle\nconst equipment = vehicle.equipment || [];\nconst highlights = equipment.slice(0, 5).join(', ');\nconst itemSummary = `Spotlight: ${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim() +\n  `\\nPrice: $${Number(vehicle.price || 0).toLocaleString()}` +\n  `\\nMileage: ${Number(vehicle.mileage || 0).toLocaleString()}` +\n  (vehicle.exterior_color ? `\\nColor: ${vehicle.exterior_color}` : '') +\n  (highlights ? `\\nKey features: ${highlights}` : '') +\n  (vehicle.days_on_lot > 0 ? `\\nDays on lot: ${vehicle.days_on_lot}` : '');\n\nconsole.log('Building theme pack request for spotlight vehicle:');\nconsole.log(itemSummary);\n\nreturn [{\n  json: {\n    ...spotlightData,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed || '',\n      emoji: asset.theme_emoji || '',\n      direction: asset.theme_direction || '',\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      client_id: asset.client_id,\n      item_summary: itemSummary\n    }\n  }\n}];"
+        },
+        "id": "build-theme-req",
+        "name": "Build Theme Pack Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4900,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Asset + Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Asset + Plan": {
+        "main": [
+          [
+            {
+              "node": "Extract Item IDs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Item IDs": {
+        "main": [
+          [
+            {
+              "node": "Fetch Vehicle Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Vehicle Data": {
+        "main": [
+          [
+            {
+              "node": "Process Vehicle",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Vehicle": {
+        "main": [
+          [
+            {
+              "node": "Parse Equipment & Build Categories",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Equipment & Build Categories": {
+        "main": [
+          [
+            {
+              "node": "Build Photo Categorizer Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Photo Categorizer Prompt": {
+        "main": [
+          [
+            {
+              "node": "If: Test, Skip Categorization",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Test, Skip Categorization": {
+        "main": [
+          [
+            {
+              "node": "Skip Categorization",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "API: Claude, Categorize Photos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip Categorization": {
+        "main": [
+          [
+            {
+              "node": "Parse Catagorization Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Claude, Categorize Photos": {
+        "main": [
+          [
+            {
+              "node": "Parse Catagorization Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Catagorization Response": {
+        "main": [
+          [
+            {
+              "node": "Build Feature Identifier Prompts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Feature Identifier Prompts": {
+        "main": [
+          [
+            {
+              "node": "If: Test, Skip Feature Identification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Test, Skip Feature Identification": {
+        "main": [
+          [
+            {
+              "node": "Skip Feature Identification",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "API: Claude, Feature Identification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip Feature Identification": {
+        "main": [
+          [
+            {
+              "node": "Parse Feature Identification Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Claude, Feature Identification": {
+        "main": [
+          [
+            {
+              "node": "Parse Feature Identification Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Feature Identification Response": {
+        "main": [
+          [
+            {
+              "node": "Process Hero Photo for Animation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Hero Photo for Animation": {
+        "main": [
+          [
+            {
+              "node": "If: Needs Background Removed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Needs Background Removed": {
+        "main": [
+          [
+            {
+              "node": "Prep: Remove BG",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Skip BG Removal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Remove BG": {
+        "main": [
+          [
+            {
+              "node": "Call: Remove Background",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Remove Background": {
+        "main": [
+          [
+            {
+              "node": "Rename Binary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Rename Binary": {
+        "main": [
+          [
+            {
+              "node": "Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Update Hero URL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Hero URL": {
+        "main": [
+          [
+            {
+              "node": "Build Theme Pack Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip BG Removal": {
+        "main": [
+          [
+            {
+              "node": "Build Theme Pack Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge BG Paths": {
+        "main": [
+          [
+            {
+              "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Theme Pack": {
+        "main": [
+          [
+            {
+              "node": "Prepare Save Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Save Data": {
+        "main": [
+          [
+            {
+              "node": "Save to Asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save to Asset": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Theme Pack Request": {
+        "main": [
+          [
+            {
+              "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
