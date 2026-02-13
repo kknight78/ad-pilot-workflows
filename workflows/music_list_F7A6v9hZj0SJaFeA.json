@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:18.905Z",
+  "updatedAt": "2026-02-08T15:28:53.324Z",
   "createdAt": "2026-01-26T23:35:00.306Z",
   "id": "F7A6v9hZj0SJaFeA",
   "name": "Music List",
@@ -44,7 +44,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  s.id as song_id,\n  s.name,\n  s.artist,\n  s.audio_preview_url,\n  s.cloudinary_url,\n  s.filters\nFROM songs s\nJOIN client_music cm ON cm.song_id = s.id\nWHERE cm.client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'\n  AND cm.active = true\nORDER BY s.name",
+        "query": "SELECT\n  s.id as song_id,\n  s.name,\n  s.artist,\n  s.audio_preview_url,\n  s.cloudinary_url,\n  s.filters\nFROM songs s\nJOIN client_music cm ON cm.song_id = s.id\nWHERE cm.client_id = '{{ $json.query.client_id }}' -- TODO: was hardcoded to CCC UUID, now requires ?client_id= query param\n  AND cm.active = true\nORDER BY s.name",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -134,8 +134,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "b8ef1679-3caf-4778-beeb-d48f19c11f22",
-  "activeVersionId": "b8ef1679-3caf-4778-beeb-d48f19c11f22",
+  "versionId": "b110c001-582f-4856-8cfe-e74312045758",
+  "activeVersionId": "b110c001-582f-4856-8cfe-e74312045758",
   "triggerCount": 1,
   "shared": [
     {
@@ -147,9 +147,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T01:12:18.907Z",
-    "createdAt": "2026-01-30T01:12:18.907Z",
-    "versionId": "b8ef1679-3caf-4778-beeb-d48f19c11f22",
+    "updatedAt": "2026-02-08T15:28:53.326Z",
+    "createdAt": "2026-02-08T15:28:53.326Z",
+    "versionId": "b110c001-582f-4856-8cfe-e74312045758",
     "workflowId": "F7A6v9hZj0SJaFeA",
     "nodes": [
       {
@@ -190,7 +190,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  s.id as song_id,\n  s.name,\n  s.artist,\n  s.audio_preview_url,\n  s.cloudinary_url,\n  s.filters\nFROM songs s\nJOIN client_music cm ON cm.song_id = s.id\nWHERE cm.client_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'\n  AND cm.active = true\nORDER BY s.name",
+          "query": "SELECT\n  s.id as song_id,\n  s.name,\n  s.artist,\n  s.audio_preview_url,\n  s.cloudinary_url,\n  s.filters\nFROM songs s\nJOIN client_music cm ON cm.song_id = s.id\nWHERE cm.client_id = '{{ $json.query.client_id }}' -- TODO: was hardcoded to CCC UUID, now requires ?client_id= query param\n  AND cm.active = true\nORDER BY s.name",
           "options": {}
         },
         "type": "n8n-nodes-base.postgres",
