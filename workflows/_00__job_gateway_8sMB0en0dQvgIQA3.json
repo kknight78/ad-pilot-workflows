@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T22:38:17.635Z",
+  "updatedAt": "2026-02-08T15:28:49.256Z",
   "createdAt": "2026-01-26T23:34:45.209Z",
   "id": "8sMB0en0dQvgIQA3",
   "name": "[00] Job Gateway",
@@ -211,7 +211,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id || 'ccc',\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
+        "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nif (!$json.body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed');\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id,\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1003,8 +1003,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "c6ff4095-03fa-4e49-a23e-30d4c6714a22",
-  "activeVersionId": "c6ff4095-03fa-4e49-a23e-30d4c6714a22",
+  "versionId": "0a6bd18c-5338-4efd-8462-6e6880db2c01",
+  "activeVersionId": "0a6bd18c-5338-4efd-8462-6e6880db2c01",
   "triggerCount": 2,
   "shared": [
     {
@@ -1016,9 +1016,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T22:38:17.638Z",
-    "createdAt": "2026-01-30T22:38:17.638Z",
-    "versionId": "c6ff4095-03fa-4e49-a23e-30d4c6714a22",
+    "updatedAt": "2026-02-08T15:28:49.258Z",
+    "createdAt": "2026-02-08T15:28:49.258Z",
+    "versionId": "0a6bd18c-5338-4efd-8462-6e6880db2c01",
     "workflowId": "8sMB0en0dQvgIQA3",
     "nodes": [
       {
@@ -1226,7 +1226,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id || 'ccc',\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
+          "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nif (!$json.body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed');\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id,\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
