@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-13T02:10:35.779Z",
+  "updatedAt": "2026-02-14T00:21:47.729Z",
   "createdAt": "2026-01-26T23:34:54.488Z",
   "id": "qXvDgLuvrY7u6d7w",
   "name": "[02] Generate Script",
@@ -13,8 +13,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5616,
-        416
+        6736,
+        360
       ],
       "id": "d6093e73-d482-410c-8930-d1aa5178d0b1",
       "name": "Process Hero Photo for Animation"
@@ -26,8 +26,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3600,
-        480
+        4720,
+        432
       ],
       "id": "c8ded42c-3c2d-44b2-9bed-e66dd3c6f0f3",
       "name": "Parse Equipment & Build Categories"
@@ -39,8 +39,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3824,
-        480
+        4944,
+        432
       ],
       "id": "932c81fd-a4cf-4f85-b15e-7fe833c9ee7b",
       "name": "Build Photo Categorizer Prompt"
@@ -52,8 +52,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4720,
-        480
+        5840,
+        432
       ],
       "id": "f156f084-80ef-48c5-a7cd-53f8544ecab1",
       "name": "Build Feature Identifier Prompts"
@@ -65,7 +65,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7184,
+        8304,
         48
       ],
       "id": "ad226bad-f815-4a28-80c1-bd19c2d3f6de",
@@ -78,8 +78,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7232,
-        256
+        8304,
+        264
       ],
       "id": "71098943-07f6-42e5-b720-c456d85b47d8",
       "name": "Build Script Prompt TEMP_002"
@@ -91,8 +91,8 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        8928,
-        608
+        10096,
+        576
       ],
       "id": "bf56da31-0f0a-4eb3-8c4c-4c50ace36add",
       "name": "Stop and Error"
@@ -104,7 +104,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7184,
+        8304,
         1008
       ],
       "id": "336bf8bd-795b-4072-8928-7cd0cbf88e62",
@@ -115,8 +115,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        2704,
-        384
+        3824,
+        336
       ],
       "id": "0d4af0b1-1d94-4f7f-93f5-b2ef0583deee",
       "name": "Merge: Config with Inventory"
@@ -130,7 +130,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        2736,
+        3848,
         0
       ],
       "typeVersion": 1,
@@ -144,8 +144,8 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        240,
-        720
+        688,
+        912
       ],
       "id": "922249e2-7fd3-4244-8775-3e140eb6cf1d",
       "name": "When Executed by Orchestrate Video Creation"
@@ -173,8 +173,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8304,
-        608
+        9424,
+        576
       ],
       "id": "74e1d4fe-8f00-469c-9431-335022e1a2f5",
       "name": "Format Script Creation Errors"
@@ -223,8 +223,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1984,
-        720
+        3152,
+        456
       ],
       "id": "64391fd8-17dd-42a7-916c-df995f8fe030",
       "name": "If: Template ID"
@@ -257,8 +257,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3376,
-        384
+        4496,
+        336
       ],
       "id": "f079a106-b70a-4b76-847e-afcda07ee5ab",
       "name": "If: Feature Photos"
@@ -292,8 +292,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        4048,
-        480
+        5168,
+        432
       ],
       "id": "f336e118-e90b-4a2d-889d-ecb42175adf3",
       "name": "If: Test, Skip Categorization"
@@ -327,8 +327,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        4944,
-        480
+        6064,
+        432
       ],
       "id": "94b5114b-6559-4c22-bf5d-fdd5bfbe25fe",
       "name": "If: Test, Skip Feature Identification"
@@ -362,8 +362,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        5840,
-        416
+        6960,
+        360
       ],
       "id": "b5e859ce-c0b1-4718-89ca-088f60a9435f",
       "name": "If: Needs Background Removed"
@@ -375,8 +375,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2368,
-        368
+        3600,
+        264
       ],
       "id": "c814151d-0bc4-4253-a0c8-11d92029f90d",
       "name": "Combine DB Data"
@@ -388,8 +388,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2928,
-        384
+        4048,
+        336
       ],
       "id": "0fb932eb-3dee-4079-b0b0-7374acadec24",
       "name": "Fetch Car Info from VINs"
@@ -401,8 +401,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4272,
-        224
+        5392,
+        192
       ],
       "id": "6d44a5df-2346-4ce7-ad89-fad5aa113439",
       "name": "Skip Categorization"
@@ -414,8 +414,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4496,
-        480
+        5616,
+        432
       ],
       "id": "433c72d7-dcc7-4e22-836b-222aef450043",
       "name": "Parse Catagorization Response"
@@ -443,7 +443,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        4272,
+        5392,
         720
       ],
       "id": "752295fe-7598-4b8e-b64a-98d3359b6d66",
@@ -470,8 +470,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2192,
-        368
+        3376,
+        264
       ],
       "credentials": {
         "postgres": {
@@ -487,8 +487,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5168,
-        224
+        6288,
+        192
       ],
       "id": "cf9a49be-f418-4e32-97cc-125258af5f13",
       "name": "Skip Feature Identification"
@@ -510,8 +510,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        5168,
-        720
+        6288,
+        672
       ],
       "id": "6c0a8ff6-289e-44d4-a686-fc29e533014a",
       "name": "API: Claude, Feature Identification",
@@ -530,8 +530,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6512,
-        432
+        7632,
+        384
       ],
       "id": "45a01157-ebc3-4fc6-9675-7405ce66b01c",
       "name": "Rename Binary"
@@ -564,8 +564,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        6736,
-        432
+        7856,
+        384
       ],
       "id": "2a89fee3-72bf-4e01-ac5d-ad25a99f1da4",
       "name": "API: Coudinary, Upload",
@@ -578,8 +578,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6960,
-        336
+        8080,
+        312
       ],
       "id": "64da0924-589c-4fa7-85e3-c625cdd26fce",
       "name": "Update Hero URL"
@@ -631,8 +631,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        8080,
-        320
+        9200,
+        312
       ],
       "credentials": {
         "anthropicApi": {
@@ -681,8 +681,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        7856,
-        272
+        8976,
+        168
       ],
       "id": "1dc60f41-78d4-48ad-bdf0-9d1392292905",
       "name": "If: Test, Skip Script Generation"
@@ -694,8 +694,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8080,
-        96
+        9200,
+        72
       ],
       "id": "f1d0ded6-7c9b-4e9b-8939-dba10e9f4552",
       "name": "Skip Script Generation"
@@ -709,8 +709,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8304,
-        192
+        9424,
+        120
       ]
     },
     {
@@ -721,8 +721,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        7408,
-        272
+        8528,
+        168
       ],
       "id": "e1b7324f-d614-4a72-a661-be6c5cfb1dfb",
       "name": "Aggregate: All Configs"
@@ -734,8 +734,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5392,
-        416
+        6512,
+        360
       ],
       "id": "5fb2621e-973e-439c-8afe-4ee7ed2c8603",
       "name": "Parse Feature Identification Response"
@@ -747,8 +747,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7632,
-        272
+        8752,
+        168
       ],
       "id": "9b593a38-46e0-4170-bc3c-3bb1a2645f8a",
       "name": "Post Agg Parse"
@@ -762,8 +762,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        464,
-        720
+        912,
+        912
       ],
       "id": "2925906e-f154-4670-9716-aabfdc9ce42f",
       "name": "Pass Config"
@@ -775,8 +775,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8528,
-        608
+        9648,
+        576
       ],
       "id": "prep-error-email",
       "name": "Prep: Error Email"
@@ -803,8 +803,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        8752,
-        608
+        9872,
+        576
       ],
       "id": "call-email-error",
       "name": "Call: Email Error"
@@ -816,8 +816,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6064,
-        528
+        7184,
+        456
       ],
       "id": "prep-remove-bg",
       "name": "Prep: Remove BG"
@@ -844,8 +844,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        6288,
-        528
+        7408,
+        456
       ],
       "id": "call-remove-bg",
       "name": "Call: Remove Background",
@@ -862,8 +862,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        688,
-        720
+        1360,
+        624
       ],
       "credentials": {
         "postgres": {
@@ -875,7 +875,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT i.pronunciations, i.legal, i.feature_enrichment, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'::uuid",
+        "query": "SELECT i.pronunciations, i.legal, i.feature_enrichment, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Resolve Config').first().json.client_id }}'::uuid",
         "options": {}
       },
       "id": "fetch-industry-config-001",
@@ -883,8 +883,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        912,
-        720
+        1584,
+        624
       ],
       "credentials": {
         "postgres": {
@@ -895,15 +895,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $('Pass Config').first().json;\nconst promptRows = $('Fetch Client Prompts').all().map(r => r.json);\nconst industryPromptRaw = $('Fetch Industry Prompts').first()?.json?.prompt_content || {};\nconst industryConfig = $('Fetch Industry Config').first().json;\nconst timingDefaults = $('Fetch Timing Defaults').first().json;\nconst templateConfig = $('Fetch Template Config').first().json;\n\n// Parse industry prompt if string\nconst industryPrompt = typeof industryPromptRaw === 'string' \n  ? JSON.parse(industryPromptRaw) \n  : industryPromptRaw;\n\n// Get client-level data\nconst basePrompt = promptRows.find(r => r.prompt_type === 'base')?.prompt_content || {};\n// Rules now come from the dedicated rules table\nlet rulesFromDB = [];\ntry {\n  rulesFromDB = $('Fetch Rules').all().map(r => r.json);\n} catch (e) {\n  // Node may not have executed\n}\nconst overridePromptRaw = promptRows.find(r => r.prompt_type === 'override')?.prompt_content || {};\nconst overridePrompt = typeof overridePromptRaw === 'string' ? JSON.parse(overridePromptRaw) : overridePromptRaw;\n\n// Deep merge helper - client overrides win\nfunction deepMerge(base, override) {\n  if (!override || Object.keys(override).length === 0) return base;\n  \n  const result = { ...base };\n  for (const key of Object.keys(override)) {\n    if (typeof override[key] === 'object' && !Array.isArray(override[key]) && base[key]) {\n      result[key] = deepMerge(base[key], override[key]);\n    } else {\n      result[key] = override[key];\n    }\n  }\n  return result;\n}\n\n// MERGE: industry_prompts + client overrides\nconst templatePrompt = deepMerge(industryPrompt, overridePrompt);\n\n// Check template flags\nconst isStandalone = templatePrompt.standalone === true;\nconst usesBase = templatePrompt.uses_base === true;\nconst usesFromBase = templatePrompt.uses_from_base || [];\nconst respectsRules = templatePrompt.respects_rules !== false; // default true\n\n// ═══════════════════════════════════════════════════════════════\n// BUILD SYSTEM PROMPT (14 SECTIONS)\n// ═══════════════════════════════════════════════════════════════\n\nconst sections = [];\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 1: IDENTITY (from base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase || usesFromBase.includes('identity')) {\n  const identity = basePrompt.identity || {};\n  sections.push(`You are a ${identity.platform_voice || 'video ad copywriter'} for ${identity.business_name || 'our client'} in ${identity.location || 'their area'}.`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 2: TEMPLATE DEFINITION (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.description) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📋 TEMPLATE: ${templateConfig.template_code || config.template_id}\n═══════════════════════════════════════════════════════════════\n${templatePrompt.description}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 3: WORD LIMITS (from timing_defaults DB)\n// ─────────────────────────────────────────────────────────────────\nif (timingDefaults) {\n  sections.push(`\n⚠️ WORD LIMITS (${timingDefaults.name} - ${timingDefaults.style || ''}):\n- Hook: ${timingDefaults.hook_words} words max\n- Segment: ${timingDefaults.segment_words} words max\n- CTA: ${timingDefaults.cta_words} words max`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 4: STRUCTURE (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.structure) {\n  sections.push(`\nSTRUCTURE:\n${templatePrompt.structure.map((s, i) => `${i + 1}. ${s}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 5: HOOK RULES (from merged template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.hook_rules) {\n  const hr = templatePrompt.hook_rules;\n  let hookSection = `\n═══════════════════════════════════════════════════════════════\n🪝 HOOK RULES\n═══════════════════════════════════════════════════════════════\n${hr.principle}`;\n\n  if (hr.format) {\n    hookSection += `\\n\\nFORMAT: ${hr.format}`;\n  }\n\n  // Handle both old (good_examples) and new (examples) schemas\n  const goodExamples = hr.examples || hr.good_examples || [];\n  if (goodExamples.length > 0) {\n    hookSection += `\\n\\nGOOD EXAMPLES:\\n${goodExamples.map(e => `✅ \"${e}\"`).join('\\n')}`;\n  }\n\n  // Handle both old (bad_examples) and new (avoid) schemas  \n  const badExamples = hr.avoid || hr.bad_examples || [];\n  if (badExamples.length > 0) {\n    hookSection += `\\n\\nAVOID:\\n${badExamples.map(e => `❌ \"${e}\"`).join('\\n')}`;\n  }\n\n  sections.push(hookSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 6: VALUE SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.value_section) {\n  const vs = templatePrompt.value_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n💡 VALUE SECTION\n═══════════════════════════════════════════════════════════════\n${vs.principle}\n\nRULES:\n${(vs.rules || []).map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 7: AUTHORITY SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.authority_section) {\n  const as = templatePrompt.authority_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🏆 AUTHORITY SECTION\n═══════════════════════════════════════════════════════════════\n${as.principle}\n\nEXAMPLE FRAMING:\n${(as.example_framing || []).map(f => `• \"${f}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 8: CTA RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.cta_rules) {\n  const cr = templatePrompt.cta_rules;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📣 CTA RULES\n═══════════════════════════════════════════════════════════════\n${cr.principle}\n\nORDER:\n${(cr.order || []).map((o, i) => `${i + 1}. ${o}`).join('\\n')}\n\nAVOID: ${(cr.avoid || []).join(', ')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 9: DELIVERY RULES (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.delivery_rules) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🎤 DELIVERY RULES\n═══════════════════════════════════════════════════════════════\n${templatePrompt.delivery_rules.map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 10: SEGMENT RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.segment_rules) {\n  const sr = templatePrompt.segment_rules;\n  let segSection = `\n═══════════════════════���════�����������═══════════════════════════════\n📝 SEGMENT RULES\n═══════════════════════════════════════════════════════════════`;\n\n  // Handle both nested structure (MULTI-ITEM) and flat structure (SINGLE-ITEM)\n  if (sr.segment_1_hero) {\n    segSection += `\\nSEGMENT 1 (HERO):\n${sr.segment_1_hero.principle}\nPattern: ${sr.segment_1_hero.pattern}\nExample: \"${sr.segment_1_hero.example}\"`;\n  }\n\n  if (sr.segments_2_plus) {\n    segSection += `\\n\\nSEGMENTS 2+:\n${sr.segments_2_plus.principle}\nStyle: ${sr.segments_2_plus.style}\n\nGOOD:\n${(sr.segments_2_plus.good_patterns || []).map(p => `✅ \"${p}\"`).join('\\n')}\n\nBAD:\n${(sr.segments_2_plus.bad_patterns || []).map(p => `❌ \"${p}\"`).join('\\n')}`;\n  }\n\n  // Flat structure (SINGLE-ITEM-SPOTLIGHT)\n  if (sr.principle && !sr.segment_1_hero) {\n    segSection += `\\n${sr.principle}\nFlow: ${sr.flow || ''}\n\nEXAMPLE ARC:\n${(sr.example_arc || []).map(e => `• ${e}`).join('\\n')}`;\n  }\n\n  sections.push(segSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 11: NATURAL FLOW (for multi-item templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.natural_flow) {\n  const nf = templatePrompt.natural_flow;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ NATURAL FLOW\n═══════════════════════════════════════════════════════════════\n${nf.principle}\n\nLEAD-IN VARIETY:\n${(nf.lead_in_variety || []).map(l => `- \"${l}\"`).join('\\n')}\n\nCONNECT FEATURES:\n${nf.connect_features?.principle || ''}\nGOOD: ${(nf.connect_features?.good || []).map(g => `\"${g}\"`).join(', ')}\nBAD: ${(nf.connect_features?.bad || []).map(b => `\"${b}\"`).join(', ')}`);\n}\n\n// Feature diversity\nif (templatePrompt.feature_diversity) {\n  sections.push(`\nFEATURE DIVERSITY: ${templatePrompt.feature_diversity}`);\n}\n\n// Tone\nif (templatePrompt.tone) {\n  sections.push(`\nTONE: ${templatePrompt.tone}`);\n}\n\n// Hard fails\nif (templatePrompt.hard_fails) {\n  sections.push(`\n❌ HARD FAILS (avoid at all costs):\n${templatePrompt.hard_fails.map(f => `• ${f}`).join('\\n')}`);\n}\n\n// TTS rules\nif (templatePrompt.tts_rules) {\n  const tts = templatePrompt.tts_rules;\n  sections.push(`\n🔊 TTS RULES: ${tts.principle}\nNo emojis in: ${(tts.no_emojis_in || []).join(', ')}\nEmojis allowed in: ${(tts.emojis_allowed_in || []).join(', ')}`);\n}\n\n// Output format\nif (templatePrompt.output_format) {\n  const of = templatePrompt.output_format;\n  let formatSection = `\n═══════════════════════════════════════════════════════════════\n📤 OUTPUT FORMAT\n═══════════════════════════════════════════════════════════════`;\n  for (const [key, val] of Object.entries(of)) {\n    if (Array.isArray(val)) {\n      formatSection += `\\n${key}: ${val.join(', ')}`;\n    } else {\n      formatSection += `\\n${key}: ${val}`;\n    }\n  }\n  sections.push(formatSection);\n}\n\n// Examples from template\nif (templatePrompt.examples) {\n  sections.push(`\nEXAMPLES:\nGOOD:\n${(templatePrompt.examples.good || []).map(e => `✅ \"${e}\"`).join('\\n')}\n\nBAD:\n${(templatePrompt.examples.bad || []).map(e => `❌ \"${e}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 12: THEME PACK USAGE (from theme_modes DB)\n// ─────────────────────────────────────────────────────────────────\nif (templateConfig.theme_mode_rules) {\n  const rules = typeof templateConfig.theme_mode_rules === 'string'\n    ? JSON.parse(templateConfig.theme_mode_rules)\n    : templateConfig.theme_mode_rules;\n\n  if (rules && rules.length > 0) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 THEME PACK USAGE (${templateConfig.theme_mode_name || templateConfig.theme_mode})\n═══════════════════════════════════════════════════════════════\n${rules.map((r, i) => `${i + 1}) ${r}`).join('\\n')}\n\nIf theme_pack missing: Use generic value/deals hook`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 13: GLOBAL RULES (from industry)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.global_rules?.length) {\n  const globalLines = industryConfig.global_rules.map(rule => `⚠️ ${rule}`).join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🌐 GLOBAL RULES\n═══════════════════════════════════════════════════════════════\n${globalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 14: BANNED PHRASE CHECK (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.banned_phrase_check) {\n  sections.push(`\n⚠️ ${templatePrompt.banned_phrase_check}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 15: BASE PROMPT SECTIONS (if uses_base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase) {\n  // Priorities\n  if (basePrompt.priorities?.length) {\n    const priorityLines = basePrompt.priorities\n      .map((p, i) => `${i + 1}. ${p.name.toUpperCase()} - ${p.description}`)\n      .join('\\n');\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎯 PRIORITIES (IN ORDER)\n═══════════════════════════════════════════════════════════════\n${priorityLines}`);\n  }\n\n  // Contact info\n  if (basePrompt.contact_tts) {\n    const ct = basePrompt.contact_tts;\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📞 CONTACT INFO (FOR TTS)\n═══════════════════════════════════════════════════════════════\n- Address: \"${ct.address_short}\"\n- Full address: \"${ct.address_full}\"\n- Phone: \"${ct.phone}\"\n- Website: \"${ct.website}\"`);\n  }\n\n  // CTA patterns\n  if (basePrompt.cta_patterns?.length) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📢 CTA PATTERNS\n═══════════════════════════════════════════════════════════════\n${basePrompt.cta_patterns.map(c => `✅ \"${c}\"`).join('\\n')}`);\n  }\n\n  // Tone\n  if (basePrompt.tone_and_style) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 TONE & STYLE\n═══════════════════════════════════════════════════════════════\n${basePrompt.tone_and_style}`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 16: PRONUNCIATIONS (merged: industry library + client custom)\n// ─────────────────────────────────────────────────────────────────\nconst industryPronunciations = industryConfig?.pronunciations || {};\nconst clientPronunciations = basePrompt.pronunciations || {};\nconst mergedPronunciations = { ...industryPronunciations, ...clientPronunciations };\n\nif (Object.keys(mergedPronunciations).length > 0) {\n  const pronLines = Object.entries(mergedPronunciations)\n    .map(([word, say]) => `- ${word} → \"${say}\"`)\n    .join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ PRONUNCIATIONS (NEVER DEVIATE)\n═══════════════════════════════════════════════════════════════\n${pronLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 17: LEGAL RULES (from industry - NON-NEGOTIABLE)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.legal?.length) {\n  const legalLines = industryConfig.legal.map(rule => `❌ ${rule}`).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL (CRITICAL - NON-NEGOTIABLE)\n═══════════════════════════════════════════════════════════════\n${legalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 18: CLIENT RULES (LAST - HIGHEST PRIORITY)\n// ─────────────────────────────────────────────────────────────────\nif (respectsRules && rulesFromDB?.length) {\n  const ruleLines = rulesFromDB.map(r => {\n    const icon = r.is_compliance ? '📌' : '⛔';\n    return `${icon} ${r.rule_text}`;\n  }).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🚨 CLIENT RULES — OVERRIDE EVERYTHING ABOVE\n═══════════════════════════════════════════════════════════════\nThese rules are CLIENT-SPECIFIC and take ABSOLUTE PRIORITY.\nIf ANY rule above conflicts with these, THESE WIN.\n\n${ruleLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// ASSEMBLE FINAL PROMPT\n// ─────────────────────────────────────────────────────────────────\nconst systemPrompt = sections.join('\\n');\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('ASSEMBLED SYSTEM PROMPT');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Template: ${templateConfig.template_code || config.template_id}`);\nconsole.log(`Theme Mode: ${templateConfig.theme_mode || 'none'}`);\nconsole.log(`Timing: ${timingDefaults?.code || 'standard'}`);\nconsole.log(`Standalone: ${isStandalone}`);\nconsole.log(`Uses Base: ${usesBase}`);\nconsole.log(`Respects Rules: ${respectsRules}`);\nconsole.log(`Industry Prompt Found: ${Object.keys(industryPrompt).length > 0}`);\nconsole.log(`Client Override Found: ${Object.keys(overridePrompt).length > 0}`);\nconsole.log(`Prompt length: ${systemPrompt.length} chars`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    ...config,\n    system_prompt: systemPrompt,\n    timing_config: timingDefaults,\n    template_config: templateConfig,\n    industry_config: industryConfig,\n    _prompt_meta: {\n      standalone: isStandalone,\n      uses_base: usesBase,\n      respects_rules: respectsRules,\n      template_code: templateConfig.template_code || config.template_id,\n      theme_mode: templateConfig.theme_mode,\n      industry_prompt_found: Object.keys(industryPrompt).length > 0,\n      client_override_found: Object.keys(overridePrompt).length > 0\n    }\n  }\n}];"
+        "jsCode": "const config = $('Resolve Config').first().json;\nconst promptRows = $('Fetch Client Prompts').all().map(r => r.json);\nconst industryPromptRaw = $('Fetch Industry Prompts').first()?.json?.prompt_content || {};\nconst industryConfig = $('Fetch Industry Config').first().json;\nconst timingDefaults = $('Fetch Timing Defaults').first().json;\nconst templateConfig = $('Fetch Template Config').first().json;\n\n// Parse industry prompt if string\nconst industryPrompt = typeof industryPromptRaw === 'string' \n  ? JSON.parse(industryPromptRaw) \n  : industryPromptRaw;\n\n// Get client-level data\nconst basePrompt = promptRows.find(r => r.prompt_type === 'base')?.prompt_content || {};\n// Rules now come from the dedicated rules table\nlet rulesFromDB = [];\ntry {\n  rulesFromDB = $('Fetch Rules').all().map(r => r.json);\n} catch (e) {\n  // Node may not have executed\n}\nconst overridePromptRaw = promptRows.find(r => r.prompt_type === 'override')?.prompt_content || {};\nconst overridePrompt = typeof overridePromptRaw === 'string' ? JSON.parse(overridePromptRaw) : overridePromptRaw;\n\n// Deep merge helper - client overrides win\nfunction deepMerge(base, override) {\n  if (!override || Object.keys(override).length === 0) return base;\n  \n  const result = { ...base };\n  for (const key of Object.keys(override)) {\n    if (typeof override[key] === 'object' && !Array.isArray(override[key]) && base[key]) {\n      result[key] = deepMerge(base[key], override[key]);\n    } else {\n      result[key] = override[key];\n    }\n  }\n  return result;\n}\n\n// MERGE: industry_prompts + client overrides\nconst templatePrompt = deepMerge(industryPrompt, overridePrompt);\n\n// Check template flags\nconst isStandalone = templatePrompt.standalone === true;\nconst usesBase = templatePrompt.uses_base === true;\nconst usesFromBase = templatePrompt.uses_from_base || [];\nconst respectsRules = templatePrompt.respects_rules !== false; // default true\n\n// ═══════════════════════════════════════════════════════════════\n// BUILD SYSTEM PROMPT (14 SECTIONS)\n// ═══════════════════════════════════════════════════════════════\n\nconst sections = [];\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 1: IDENTITY (from base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase || usesFromBase.includes('identity')) {\n  const identity = basePrompt.identity || {};\n  sections.push(`You are a ${identity.platform_voice || 'video ad copywriter'} for ${identity.business_name || 'our client'} in ${identity.location || 'their area'}.`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 2: TEMPLATE DEFINITION (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.description) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📋 TEMPLATE: ${templateConfig.template_code || config.template_id}\n═══════════════════════════════════════════════════════════════\n${templatePrompt.description}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 3: WORD LIMITS (from timing_defaults DB)\n// ─────────────────────────────────────────────────────────────────\nif (timingDefaults) {\n  sections.push(`\n⚠️ WORD LIMITS (${timingDefaults.name} - ${timingDefaults.style || ''}):\n- Hook: ${timingDefaults.hook_words} words max\n- Segment: ${timingDefaults.segment_words} words max\n- CTA: ${timingDefaults.cta_words} words max`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 4: STRUCTURE (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.structure) {\n  sections.push(`\nSTRUCTURE:\n${templatePrompt.structure.map((s, i) => `${i + 1}. ${s}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 5: HOOK RULES (from merged template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.hook_rules) {\n  const hr = templatePrompt.hook_rules;\n  let hookSection = `\n═══════════════════════════════════════════════════════════════\n🪝 HOOK RULES\n═══════════════════════════════════════════════════════════════\n${hr.principle}`;\n\n  if (hr.format) {\n    hookSection += `\\n\\nFORMAT: ${hr.format}`;\n  }\n\n  // Handle both old (good_examples) and new (examples) schemas\n  const goodExamples = hr.examples || hr.good_examples || [];\n  if (goodExamples.length > 0) {\n    hookSection += `\\n\\nGOOD EXAMPLES:\\n${goodExamples.map(e => `✅ \"${e}\"`).join('\\n')}`;\n  }\n\n  // Handle both old (bad_examples) and new (avoid) schemas  \n  const badExamples = hr.avoid || hr.bad_examples || [];\n  if (badExamples.length > 0) {\n    hookSection += `\\n\\nAVOID:\\n${badExamples.map(e => `❌ \"${e}\"`).join('\\n')}`;\n  }\n\n  sections.push(hookSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 6: VALUE SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.value_section) {\n  const vs = templatePrompt.value_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n💡 VALUE SECTION\n═══════════════════════════════════════════════════════════════\n${vs.principle}\n\nRULES:\n${(vs.rules || []).map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 7: AUTHORITY SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.authority_section) {\n  const as = templatePrompt.authority_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🏆 AUTHORITY SECTION\n═══════════════════════════════════════════════════════════════\n${as.principle}\n\nEXAMPLE FRAMING:\n${(as.example_framing || []).map(f => `• \"${f}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 8: CTA RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.cta_rules) {\n  const cr = templatePrompt.cta_rules;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📣 CTA RULES\n═══════════════════════════════════════════════════════════════\n${cr.principle}\n\nORDER:\n${(cr.order || []).map((o, i) => `${i + 1}. ${o}`).join('\\n')}\n\nAVOID: ${(cr.avoid || []).join(', ')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 9: DELIVERY RULES (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.delivery_rules) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🎤 DELIVERY RULES\n═══════════════════════════════════════════════════════════════\n${templatePrompt.delivery_rules.map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 10: SEGMENT RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.segment_rules) {\n  const sr = templatePrompt.segment_rules;\n  let segSection = `\n═══════════════════════���════�����������═══════════════════════════════\n📝 SEGMENT RULES\n═══════════════════════════════════════════════════════════════`;\n\n  // Handle both nested structure (MULTI-ITEM) and flat structure (SINGLE-ITEM)\n  if (sr.segment_1_hero) {\n    segSection += `\\nSEGMENT 1 (HERO):\n${sr.segment_1_hero.principle}\nPattern: ${sr.segment_1_hero.pattern}\nExample: \"${sr.segment_1_hero.example}\"`;\n  }\n\n  if (sr.segments_2_plus) {\n    segSection += `\\n\\nSEGMENTS 2+:\n${sr.segments_2_plus.principle}\nStyle: ${sr.segments_2_plus.style}\n\nGOOD:\n${(sr.segments_2_plus.good_patterns || []).map(p => `✅ \"${p}\"`).join('\\n')}\n\nBAD:\n${(sr.segments_2_plus.bad_patterns || []).map(p => `❌ \"${p}\"`).join('\\n')}`;\n  }\n\n  // Flat structure (SINGLE-ITEM-SPOTLIGHT)\n  if (sr.principle && !sr.segment_1_hero) {\n    segSection += `\\n${sr.principle}\nFlow: ${sr.flow || ''}\n\nEXAMPLE ARC:\n${(sr.example_arc || []).map(e => `• ${e}`).join('\\n')}`;\n  }\n\n  sections.push(segSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 11: NATURAL FLOW (for multi-item templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.natural_flow) {\n  const nf = templatePrompt.natural_flow;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ NATURAL FLOW\n═══════════════════════════════════════════════════════════════\n${nf.principle}\n\nLEAD-IN VARIETY:\n${(nf.lead_in_variety || []).map(l => `- \"${l}\"`).join('\\n')}\n\nCONNECT FEATURES:\n${nf.connect_features?.principle || ''}\nGOOD: ${(nf.connect_features?.good || []).map(g => `\"${g}\"`).join(', ')}\nBAD: ${(nf.connect_features?.bad || []).map(b => `\"${b}\"`).join(', ')}`);\n}\n\n// Feature diversity\nif (templatePrompt.feature_diversity) {\n  sections.push(`\nFEATURE DIVERSITY: ${templatePrompt.feature_diversity}`);\n}\n\n// Tone\nif (templatePrompt.tone) {\n  sections.push(`\nTONE: ${templatePrompt.tone}`);\n}\n\n// Hard fails\nif (templatePrompt.hard_fails) {\n  sections.push(`\n❌ HARD FAILS (avoid at all costs):\n${templatePrompt.hard_fails.map(f => `• ${f}`).join('\\n')}`);\n}\n\n// TTS rules\nif (templatePrompt.tts_rules) {\n  const tts = templatePrompt.tts_rules;\n  sections.push(`\n🔊 TTS RULES: ${tts.principle}\nNo emojis in: ${(tts.no_emojis_in || []).join(', ')}\nEmojis allowed in: ${(tts.emojis_allowed_in || []).join(', ')}`);\n}\n\n// Output format\nif (templatePrompt.output_format) {\n  const of = templatePrompt.output_format;\n  let formatSection = `\n═══════════════════════════════════════════════════════════════\n📤 OUTPUT FORMAT\n═══════════════════════════════════════════════════════════════`;\n  for (const [key, val] of Object.entries(of)) {\n    if (Array.isArray(val)) {\n      formatSection += `\\n${key}: ${val.join(', ')}`;\n    } else {\n      formatSection += `\\n${key}: ${val}`;\n    }\n  }\n  sections.push(formatSection);\n}\n\n// Examples from template\nif (templatePrompt.examples) {\n  sections.push(`\nEXAMPLES:\nGOOD:\n${(templatePrompt.examples.good || []).map(e => `✅ \"${e}\"`).join('\\n')}\n\nBAD:\n${(templatePrompt.examples.bad || []).map(e => `❌ \"${e}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 12: THEME PACK USAGE (from theme_modes DB)\n// ─────────────────────────────────────────────────────────────────\nif (templateConfig.theme_mode_rules) {\n  const rules = typeof templateConfig.theme_mode_rules === 'string'\n    ? JSON.parse(templateConfig.theme_mode_rules)\n    : templateConfig.theme_mode_rules;\n\n  if (rules && rules.length > 0) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 THEME PACK USAGE (${templateConfig.theme_mode_name || templateConfig.theme_mode})\n═══════════════════════════════════════════════════════════════\n${rules.map((r, i) => `${i + 1}) ${r}`).join('\\n')}\n\nIf theme_pack missing: Use generic value/deals hook`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 13: GLOBAL RULES (from industry)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.global_rules?.length) {\n  const globalLines = industryConfig.global_rules.map(rule => `⚠️ ${rule}`).join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🌐 GLOBAL RULES\n═══════════════════════════════════════════════════════════════\n${globalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 14: BANNED PHRASE CHECK (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.banned_phrase_check) {\n  sections.push(`\n⚠️ ${templatePrompt.banned_phrase_check}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 15: BASE PROMPT SECTIONS (if uses_base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase) {\n  // Priorities\n  if (basePrompt.priorities?.length) {\n    const priorityLines = basePrompt.priorities\n      .map((p, i) => `${i + 1}. ${p.name.toUpperCase()} - ${p.description}`)\n      .join('\\n');\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎯 PRIORITIES (IN ORDER)\n═══════════════════════════════════════════════════════════════\n${priorityLines}`);\n  }\n\n  // Contact info\n  if (basePrompt.contact_tts) {\n    const ct = basePrompt.contact_tts;\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📞 CONTACT INFO (FOR TTS)\n═══════════════════════════════════════════════════════════════\n- Address: \"${ct.address_short}\"\n- Full address: \"${ct.address_full}\"\n- Phone: \"${ct.phone}\"\n- Website: \"${ct.website}\"`);\n  }\n\n  // CTA patterns\n  if (basePrompt.cta_patterns?.length) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📢 CTA PATTERNS\n═══════════════════════════════════════════════════════════════\n${basePrompt.cta_patterns.map(c => `✅ \"${c}\"`).join('\\n')}`);\n  }\n\n  // Tone\n  if (basePrompt.tone_and_style) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 TONE & STYLE\n═══════════════════════════════════════════════════════════════\n${basePrompt.tone_and_style}`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 16: PRONUNCIATIONS (merged: industry library + client custom)\n// ─────────────────────────────────────────────────────────────────\nconst industryPronunciations = industryConfig?.pronunciations || {};\n// Client pronunciations now come from the dedicated client_pronunciations table\nlet clientPronunciations = {};\ntry {\n  const pronRows = $('Fetch Client Pronunciations').all().map(r => r.json);\n  for (const row of pronRows) {\n    clientPronunciations[row.word] = row.pronunciation;\n  }\n} catch (e) {\n  // Node may not have executed\n}\nconst mergedPronunciations = { ...industryPronunciations, ...clientPronunciations };\n\nif (Object.keys(mergedPronunciations).length > 0) {\n  const pronLines = Object.entries(mergedPronunciations)\n    .map(([word, say]) => `- ${word} → \"${say}\"`)\n    .join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ PRONUNCIATIONS (NEVER DEVIATE)\n═══════════════════════════════════════════════════════════════\n${pronLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 17: LEGAL RULES (from industry - NON-NEGOTIABLE)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.legal?.length) {\n  const legalLines = industryConfig.legal.map(rule => `❌ ${rule}`).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL (CRITICAL - NON-NEGOTIABLE)\n═══════════════════════════════════════════════════════════════\n${legalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 18: CLIENT RULES (LAST - HIGHEST PRIORITY)\n// ─────────────────────────────────────────────────────────────────\nif (respectsRules && rulesFromDB?.length) {\n  const ruleLines = rulesFromDB.map(r => {\n    const icon = r.is_compliance ? '📌' : '⛔';\n    return `${icon} ${r.rule_text}`;\n  }).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🚨 CLIENT RULES — OVERRIDE EVERYTHING ABOVE\n═══════════════════════════════════════════════════════════════\nThese rules are CLIENT-SPECIFIC and take ABSOLUTE PRIORITY.\nIf ANY rule above conflicts with these, THESE WIN.\n\n${ruleLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// ASSEMBLE FINAL PROMPT\n// ─────────────────────────────────────────────────────────────────\nconst systemPrompt = sections.join('\\n');\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('ASSEMBLED SYSTEM PROMPT');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Template: ${templateConfig.template_code || config.template_id}`);\nconsole.log(`Theme Mode: ${templateConfig.theme_mode || 'none'}`);\nconsole.log(`Timing: ${timingDefaults?.code || 'standard'}`);\nconsole.log(`Standalone: ${isStandalone}`);\nconsole.log(`Uses Base: ${usesBase}`);\nconsole.log(`Respects Rules: ${respectsRules}`);\nconsole.log(`Industry Prompt Found: ${Object.keys(industryPrompt).length > 0}`);\nconsole.log(`Client Override Found: ${Object.keys(overridePrompt).length > 0}`);\nconsole.log(`Prompt length: ${systemPrompt.length} chars`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    ...config,\n    _source: config._source || 'orchestration',\n    system_prompt: systemPrompt,\n    timing_config: timingDefaults,\n    template_config: templateConfig,\n    industry_config: industryConfig,\n    _prompt_meta: {\n      standalone: isStandalone,\n      uses_base: usesBase,\n      respects_rules: respectsRules,\n      template_code: templateConfig.template_code || config.template_id,\n      theme_mode: templateConfig.theme_mode,\n      industry_prompt_found: Object.keys(industryPrompt).length > 0,\n      client_override_found: Object.keys(overridePrompt).length > 0\n    }\n  }\n}];"
       },
       "id": "assemble-system-prompt-001",
       "name": "Assemble System Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1808,
-        720
+        2480,
+        624
       ]
     },
     {
@@ -913,8 +913,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1824,
-        528
+        2928,
+        456
       ],
       "id": "43d9026d-8fad-41ac-a50a-a283cb30f122",
       "name": "Prepare Script Context"
@@ -922,7 +922,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT code, name, hook_words, segment_words, cta_words, style\nFROM timing_defaults\nWHERE code = COALESCE('{{ $('Pass Config').first().json.script_length }}', 'standard')",
+        "query": "SELECT code, name, hook_words, segment_words, cta_words, style\nFROM timing_defaults\nWHERE code = COALESCE('{{ $('Resolve Config').first().json.script_length }}', 'standard')\nUNION ALL\nSELECT code, name, hook_words, segment_words, cta_words, style\nFROM timing_defaults\nWHERE code = 'standard'\nLIMIT 1",
         "options": {}
       },
       "id": "fetch-timing-defaults-001",
@@ -930,8 +930,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1136,
-        720
+        1808,
+        624
       ],
       "credentials": {
         "postgres": {
@@ -943,7 +943,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  t.code as template_code,\n  t.name as template_name,\n  t.theme_mode,\n  t.data_requirements,\n  tm.code as theme_mode_code,\n  tm.name as theme_mode_name,\n  tm.rules as theme_mode_rules\nFROM templates t\nLEFT JOIN theme_modes tm ON tm.code = t.theme_mode\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $('Pass Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
+        "query": "SELECT\n  t.code as template_code,\n  t.name as template_name,\n  t.theme_mode,\n  t.data_requirements,\n  tm.code as theme_mode_code,\n  tm.name as theme_mode_name,\n  tm.rules as theme_mode_rules\nFROM templates t\nLEFT JOIN theme_modes tm ON tm.code = t.theme_mode\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $('Resolve Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
         "options": {}
       },
       "id": "fetch-template-config-001",
@@ -951,8 +951,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1360,
-        720
+        2032,
+        624
       ],
       "credentials": {
         "postgres": {
@@ -970,8 +970,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3152,
-        384
+        4272,
+        336
       ]
     },
     {
@@ -988,8 +988,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        6064,
-        1056
+        240,
+        720
       ],
       "webhookId": "generate-from-asset-001"
     },
@@ -1004,8 +1004,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        6288,
-        1056
+        464,
+        720
       ],
       "credentials": {
         "postgres": {
@@ -1025,8 +1025,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        6512,
-        1056
+        688,
+        720
       ],
       "credentials": {
         "postgres": {
@@ -1044,7 +1044,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6736,
+        7856,
         1056
       ]
     },
@@ -1129,8 +1129,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        6960,
-        1056
+        8080,
+        1024
       ]
     },
     {
@@ -1143,14 +1143,14 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        8528,
-        192
+        9648,
+        120
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT prompt_content\nFROM industry_prompts ip\nJOIN industries i ON ip.industry_id = i.id\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'::uuid\nAND ip.template_code = UPPER(REPLACE(REPLACE('{{ $('Pass Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
+        "query": "SELECT prompt_content\nFROM industry_prompts ip\nJOIN industries i ON ip.industry_id = i.id\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Resolve Config').first().json.client_id }}'::uuid\nAND ip.template_code = UPPER(REPLACE(REPLACE('{{ $('Resolve Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
         "options": {}
       },
       "id": "fetch-industry-prompts-001",
@@ -1158,8 +1158,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1584,
-        720
+        2256,
+        624
       ],
       "credentials": {
         "postgres": {
@@ -1180,16 +1180,128 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        688,
-        900
+        1360,
+        816
       ],
+      "id": "b82d9ab5-7903-4832-a7c1-64e349af9778",
       "credentials": {
         "postgres": {
           "id": "ZUwzqy3kvUJpXrDM",
           "name": "Postgres (Dev)"
         }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT word, pronunciation\nFROM client_pronunciations\nWHERE client_id = '{{ $json.client_id }}'::uuid\nORDER BY word ASC",
+        "options": {
+          "queryBatching": "independently"
+        }
       },
-      "id": "b82d9ab5-7903-4832-a7c1-64e349af9778"
+      "name": "Fetch Client Pronunciations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1360,
+        1008
+      ],
+      "id": "8b6b948c-36d4-4987-b1c7-e8c9957017e7",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract config from the processed asset data\n// Matches the shape that Pass Config provides for the orchestration path\nconst asset = $('Fetch Processed Asset').first().json;\nconst avatars = typeof asset.avatars === 'string'\n  ? JSON.parse(asset.avatars)\n  : (asset.avatars || []);\n\n// Map frontend target_length to timing_defaults codes\n// Frontend uses: brief, standard, detailed\n// DB timing_defaults uses: quick, standard, detailed\nconst lengthMap = { brief: 'quick', standard: 'standard', detailed: 'detailed' };\nconst script_length = lengthMap[asset.target_length] || asset.target_length || 'standard';\n\nreturn [{\n  json: {\n    client_id: asset.client_id,\n    template_id: asset.template_code || asset.template_id,\n    script_length: script_length,\n    avatars: avatars,\n    business_name: asset.client_name,\n    client_name: asset.client_name,\n    _source: 'asset'\n  }\n}];"
+      },
+      "id": "prepare-asset-config-001",
+      "name": "Prepare Asset Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resolve config from whichever path is active\n// Orchestration path: Pass Config ran\n// Webhook/Asset path: Prepare Asset Config ran\nlet config;\ntry {\n  config = $('Pass Config').first().json;\n  config._source = config._source || 'orchestration';\n} catch (e) {\n  config = $('Prepare Asset Config').first().json;\n}\nreturn [{ json: config }];"
+      },
+      "id": "resolve-config-001",
+      "name": "Resolve Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "route-orch",
+                    "leftValue": "={{ $json._source }}",
+                    "rightValue": "orchestration",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Orchestration"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "route-asset",
+                    "leftValue": "={{ $json._source }}",
+                    "rightValue": "asset",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Asset"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "route-by-source-001",
+      "name": "Route by Source",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2704,
+        624
+      ]
     }
   ],
   "connections": {
@@ -1628,12 +1740,7 @@
       "main": [
         [
           {
-            "node": "Fetch Client Prompts",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Fetch Rules",
+            "node": "Resolve Config",
             "type": "main",
             "index": 0
           }
@@ -1706,7 +1813,7 @@
       "main": [
         [
           {
-            "node": "Prepare Script Context",
+            "node": "Route by Source",
             "type": "main",
             "index": 0
           }
@@ -1794,7 +1901,7 @@
       "main": [
         [
           {
-            "node": "Prepare Script Context (Asset)",
+            "node": "Prepare Asset Config",
             "type": "main",
             "index": 0
           }
@@ -1854,6 +1961,56 @@
           }
         ]
       ]
+    },
+    "Prepare Asset Config": {
+      "main": [
+        [
+          {
+            "node": "Resolve Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Config": {
+      "main": [
+        [
+          {
+            "node": "Fetch Client Prompts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Rules",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Client Pronunciations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Source": {
+      "main": [
+        [
+          {
+            "node": "Prepare Script Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Script Context (Asset)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1863,9 +2020,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "f21ebc17-5679-4d7b-abdd-8031a6f7a649",
-  "activeVersionId": "f21ebc17-5679-4d7b-abdd-8031a6f7a649",
+  "pinData": {},
+  "versionId": "2a3e17ab-3869-45a2-af52-f2cbf3af0104",
+  "activeVersionId": "19396d30-a87c-4c8f-925c-e97fc716bdcb",
   "triggerCount": 1,
   "shared": [
     {
@@ -1877,9 +2034,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-13T02:10:35.784Z",
-    "createdAt": "2026-02-13T02:10:35.784Z",
-    "versionId": "f21ebc17-5679-4d7b-abdd-8031a6f7a649",
+    "updatedAt": "2026-02-14T00:18:19.001Z",
+    "createdAt": "2026-02-14T00:18:19.001Z",
+    "versionId": "19396d30-a87c-4c8f-925c-e97fc716bdcb",
     "workflowId": "qXvDgLuvrY7u6d7w",
     "nodes": [
       {
@@ -1889,8 +2046,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          5616,
-          416
+          5840,
+          360
         ],
         "id": "d6093e73-d482-410c-8930-d1aa5178d0b1",
         "name": "Process Hero Photo for Animation"
@@ -1902,8 +2059,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3600,
-          480
+          3824,
+          432
         ],
         "id": "c8ded42c-3c2d-44b2-9bed-e66dd3c6f0f3",
         "name": "Parse Equipment & Build Categories"
@@ -1915,8 +2072,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3824,
-          480
+          4048,
+          432
         ],
         "id": "932c81fd-a4cf-4f85-b15e-7fe833c9ee7b",
         "name": "Build Photo Categorizer Prompt"
@@ -1928,8 +2085,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4720,
-          480
+          4944,
+          432
         ],
         "id": "f156f084-80ef-48c5-a7cd-53f8544ecab1",
         "name": "Build Feature Identifier Prompts"
@@ -1941,7 +2098,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          7184,
+          7408,
           48
         ],
         "id": "ad226bad-f815-4a28-80c1-bd19c2d3f6de",
@@ -1954,8 +2111,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          7232,
-          256
+          7408,
+          264
         ],
         "id": "71098943-07f6-42e5-b720-c456d85b47d8",
         "name": "Build Script Prompt TEMP_002"
@@ -1967,8 +2124,8 @@
         "type": "n8n-nodes-base.stopAndError",
         "typeVersion": 1,
         "position": [
-          8928,
-          608
+          9200,
+          600
         ],
         "id": "bf56da31-0f0a-4eb3-8c4c-4c50ace36add",
         "name": "Stop and Error"
@@ -1980,8 +2137,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          7184,
-          1008
+          7408,
+          1056
         ],
         "id": "336bf8bd-795b-4072-8928-7cd0cbf88e62",
         "name": "Build Script Prompt TEMP_003"
@@ -1991,8 +2148,8 @@
         "type": "n8n-nodes-base.merge",
         "typeVersion": 3.2,
         "position": [
-          2704,
-          384
+          2928,
+          336
         ],
         "id": "0d4af0b1-1d94-4f7f-93f5-b2ef0583deee",
         "name": "Merge: Config with Inventory"
@@ -2006,7 +2163,7 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          2736,
+          2952,
           0
         ],
         "typeVersion": 1,
@@ -2021,7 +2178,7 @@
         "typeVersion": 1.1,
         "position": [
           240,
-          720
+          648
         ],
         "id": "922249e2-7fd3-4244-8775-3e140eb6cf1d",
         "name": "When Executed by Orchestrate Video Creation"
@@ -2049,8 +2206,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          8304,
-          608
+          8528,
+          600
         ],
         "id": "74e1d4fe-8f00-469c-9431-335022e1a2f5",
         "name": "Format Script Creation Errors"
@@ -2099,8 +2256,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1984,
-          720
+          2256,
+          456
         ],
         "id": "64391fd8-17dd-42a7-916c-df995f8fe030",
         "name": "If: Template ID"
@@ -2133,8 +2290,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          3376,
-          384
+          3600,
+          336
         ],
         "id": "f079a106-b70a-4b76-847e-afcda07ee5ab",
         "name": "If: Feature Photos"
@@ -2168,8 +2325,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          4048,
-          480
+          4272,
+          432
         ],
         "id": "f336e118-e90b-4a2d-889d-ecb42175adf3",
         "name": "If: Test, Skip Categorization"
@@ -2203,8 +2360,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          4944,
-          480
+          5168,
+          432
         ],
         "id": "94b5114b-6559-4c22-bf5d-fdd5bfbe25fe",
         "name": "If: Test, Skip Feature Identification"
@@ -2238,8 +2395,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          5840,
-          416
+          6064,
+          360
         ],
         "id": "b5e859ce-c0b1-4718-89ca-088f60a9435f",
         "name": "If: Needs Background Removed"
@@ -2251,8 +2408,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2368,
-          368
+          2704,
+          264
         ],
         "id": "c814151d-0bc4-4253-a0c8-11d92029f90d",
         "name": "Combine DB Data"
@@ -2264,8 +2421,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2928,
-          384
+          3152,
+          336
         ],
         "id": "0fb932eb-3dee-4079-b0b0-7374acadec24",
         "name": "Fetch Car Info from VINs"
@@ -2277,8 +2434,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4272,
-          224
+          4496,
+          192
         ],
         "id": "6d44a5df-2346-4ce7-ad89-fad5aa113439",
         "name": "Skip Categorization"
@@ -2290,8 +2447,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4496,
-          480
+          4720,
+          432
         ],
         "id": "433c72d7-dcc7-4e22-836b-222aef450043",
         "name": "Parse Catagorization Response"
@@ -2319,7 +2476,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          4272,
+          4496,
           720
         ],
         "id": "752295fe-7598-4b8e-b64a-98d3359b6d66",
@@ -2346,8 +2503,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2192,
-          368
+          2480,
+          264
         ],
         "credentials": {
           "postgres": {
@@ -2363,8 +2520,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          5168,
-          224
+          5392,
+          192
         ],
         "id": "cf9a49be-f418-4e32-97cc-125258af5f13",
         "name": "Skip Feature Identification"
@@ -2386,8 +2543,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          5168,
-          720
+          5392,
+          672
         ],
         "id": "6c0a8ff6-289e-44d4-a686-fc29e533014a",
         "name": "API: Claude, Feature Identification",
@@ -2406,8 +2563,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          6512,
-          432
+          6736,
+          360
         ],
         "id": "45a01157-ebc3-4fc6-9675-7405ce66b01c",
         "name": "Rename Binary"
@@ -2440,8 +2597,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          6736,
-          432
+          6960,
+          360
         ],
         "id": "2a89fee3-72bf-4e01-ac5d-ad25a99f1da4",
         "name": "API: Coudinary, Upload",
@@ -2454,8 +2611,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          6960,
-          336
+          7184,
+          312
         ],
         "id": "64da0924-589c-4fa7-85e3-c625cdd26fce",
         "name": "Update Hero URL"
@@ -2507,8 +2664,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          8080,
-          320
+          8304,
+          312
         ],
         "credentials": {
           "anthropicApi": {
@@ -2557,8 +2714,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          7856,
-          272
+          8080,
+          240
         ],
         "id": "1dc60f41-78d4-48ad-bdf0-9d1392292905",
         "name": "If: Test, Skip Script Generation"
@@ -2570,8 +2727,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          8080,
-          96
+          8304,
+          72
         ],
         "id": "f1d0ded6-7c9b-4e9b-8939-dba10e9f4552",
         "name": "Skip Script Generation"
@@ -2585,8 +2742,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          8304,
-          192
+          8528,
+          144
         ]
       },
       {
@@ -2597,8 +2754,8 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          7408,
-          272
+          7632,
+          240
         ],
         "id": "e1b7324f-d614-4a72-a661-be6c5cfb1dfb",
         "name": "Aggregate: All Configs"
@@ -2610,8 +2767,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          5392,
-          416
+          5616,
+          360
         ],
         "id": "5fb2621e-973e-439c-8afe-4ee7ed2c8603",
         "name": "Parse Feature Identification Response"
@@ -2623,8 +2780,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          7632,
-          272
+          7856,
+          240
         ],
         "id": "9b593a38-46e0-4170-bc3c-3bb1a2645f8a",
         "name": "Post Agg Parse"
@@ -2639,7 +2796,7 @@
         "typeVersion": 3.4,
         "position": [
           464,
-          720
+          648
         ],
         "id": "2925906e-f154-4670-9716-aabfdc9ce42f",
         "name": "Pass Config"
@@ -2651,8 +2808,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          8528,
-          608
+          8752,
+          600
         ],
         "id": "prep-error-email",
         "name": "Prep: Error Email"
@@ -2679,8 +2836,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          8752,
-          608
+          8976,
+          600
         ],
         "id": "call-email-error",
         "name": "Call: Email Error"
@@ -2692,8 +2849,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          6064,
-          528
+          6288,
+          432
         ],
         "id": "prep-remove-bg",
         "name": "Prep: Remove BG"
@@ -2720,8 +2877,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          6288,
-          528
+          6512,
+          432
         ],
         "id": "call-remove-bg",
         "name": "Call: Remove Background",
@@ -2738,8 +2895,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          688,
-          720
+          744,
+          456
         ],
         "credentials": {
           "postgres": {
@@ -2751,7 +2908,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT i.pronunciations, i.legal, i.feature_enrichment, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'::uuid",
+          "query": "SELECT i.pronunciations, i.legal, i.feature_enrichment, i.global_rules\nFROM industries i\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Resolve Config').first().json.client_id }}'::uuid",
           "options": {}
         },
         "id": "fetch-industry-config-001",
@@ -2760,7 +2917,7 @@
         "typeVersion": 2.5,
         "position": [
           912,
-          720
+          456
         ],
         "credentials": {
           "postgres": {
@@ -2771,7 +2928,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const config = $('Pass Config').first().json;\nconst promptRows = $('Fetch Client Prompts').all().map(r => r.json);\nconst industryPromptRaw = $('Fetch Industry Prompts').first()?.json?.prompt_content || {};\nconst industryConfig = $('Fetch Industry Config').first().json;\nconst timingDefaults = $('Fetch Timing Defaults').first().json;\nconst templateConfig = $('Fetch Template Config').first().json;\n\n// Parse industry prompt if string\nconst industryPrompt = typeof industryPromptRaw === 'string' \n  ? JSON.parse(industryPromptRaw) \n  : industryPromptRaw;\n\n// Get client-level data\nconst basePrompt = promptRows.find(r => r.prompt_type === 'base')?.prompt_content || {};\n// Rules now come from the dedicated rules table\nlet rulesFromDB = [];\ntry {\n  rulesFromDB = $('Fetch Rules').all().map(r => r.json);\n} catch (e) {\n  // Node may not have executed\n}\nconst overridePromptRaw = promptRows.find(r => r.prompt_type === 'override')?.prompt_content || {};\nconst overridePrompt = typeof overridePromptRaw === 'string' ? JSON.parse(overridePromptRaw) : overridePromptRaw;\n\n// Deep merge helper - client overrides win\nfunction deepMerge(base, override) {\n  if (!override || Object.keys(override).length === 0) return base;\n  \n  const result = { ...base };\n  for (const key of Object.keys(override)) {\n    if (typeof override[key] === 'object' && !Array.isArray(override[key]) && base[key]) {\n      result[key] = deepMerge(base[key], override[key]);\n    } else {\n      result[key] = override[key];\n    }\n  }\n  return result;\n}\n\n// MERGE: industry_prompts + client overrides\nconst templatePrompt = deepMerge(industryPrompt, overridePrompt);\n\n// Check template flags\nconst isStandalone = templatePrompt.standalone === true;\nconst usesBase = templatePrompt.uses_base === true;\nconst usesFromBase = templatePrompt.uses_from_base || [];\nconst respectsRules = templatePrompt.respects_rules !== false; // default true\n\n// ═══════════════════════════════════════════════════════════════\n// BUILD SYSTEM PROMPT (14 SECTIONS)\n// ═══════════════════════════════════════════════════════════════\n\nconst sections = [];\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 1: IDENTITY (from base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase || usesFromBase.includes('identity')) {\n  const identity = basePrompt.identity || {};\n  sections.push(`You are a ${identity.platform_voice || 'video ad copywriter'} for ${identity.business_name || 'our client'} in ${identity.location || 'their area'}.`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 2: TEMPLATE DEFINITION (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.description) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📋 TEMPLATE: ${templateConfig.template_code || config.template_id}\n═══════════════════════════════════════════════════════════════\n${templatePrompt.description}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 3: WORD LIMITS (from timing_defaults DB)\n// ─────────────────────────────────────────────────────────────────\nif (timingDefaults) {\n  sections.push(`\n⚠️ WORD LIMITS (${timingDefaults.name} - ${timingDefaults.style || ''}):\n- Hook: ${timingDefaults.hook_words} words max\n- Segment: ${timingDefaults.segment_words} words max\n- CTA: ${timingDefaults.cta_words} words max`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 4: STRUCTURE (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.structure) {\n  sections.push(`\nSTRUCTURE:\n${templatePrompt.structure.map((s, i) => `${i + 1}. ${s}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 5: HOOK RULES (from merged template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.hook_rules) {\n  const hr = templatePrompt.hook_rules;\n  let hookSection = `\n═══════════════════════════════════════════════════════════════\n🪝 HOOK RULES\n═══════════════════════════════════════════════════════════════\n${hr.principle}`;\n\n  if (hr.format) {\n    hookSection += `\\n\\nFORMAT: ${hr.format}`;\n  }\n\n  // Handle both old (good_examples) and new (examples) schemas\n  const goodExamples = hr.examples || hr.good_examples || [];\n  if (goodExamples.length > 0) {\n    hookSection += `\\n\\nGOOD EXAMPLES:\\n${goodExamples.map(e => `✅ \"${e}\"`).join('\\n')}`;\n  }\n\n  // Handle both old (bad_examples) and new (avoid) schemas  \n  const badExamples = hr.avoid || hr.bad_examples || [];\n  if (badExamples.length > 0) {\n    hookSection += `\\n\\nAVOID:\\n${badExamples.map(e => `❌ \"${e}\"`).join('\\n')}`;\n  }\n\n  sections.push(hookSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 6: VALUE SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.value_section) {\n  const vs = templatePrompt.value_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n💡 VALUE SECTION\n═══════════════════════════════════════════════════════════════\n${vs.principle}\n\nRULES:\n${(vs.rules || []).map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 7: AUTHORITY SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.authority_section) {\n  const as = templatePrompt.authority_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🏆 AUTHORITY SECTION\n═══════════════════════════════════════════════════════════════\n${as.principle}\n\nEXAMPLE FRAMING:\n${(as.example_framing || []).map(f => `• \"${f}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 8: CTA RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.cta_rules) {\n  const cr = templatePrompt.cta_rules;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📣 CTA RULES\n═══════════════════════════════════════════════════════════════\n${cr.principle}\n\nORDER:\n${(cr.order || []).map((o, i) => `${i + 1}. ${o}`).join('\\n')}\n\nAVOID: ${(cr.avoid || []).join(', ')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 9: DELIVERY RULES (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.delivery_rules) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🎤 DELIVERY RULES\n═══════════════════════════════════════════════════════════════\n${templatePrompt.delivery_rules.map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 10: SEGMENT RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.segment_rules) {\n  const sr = templatePrompt.segment_rules;\n  let segSection = `\n═══════════════════════���════�����������═══════════════════════════════\n📝 SEGMENT RULES\n═══════════════════════════════════════════════════════════════`;\n\n  // Handle both nested structure (MULTI-ITEM) and flat structure (SINGLE-ITEM)\n  if (sr.segment_1_hero) {\n    segSection += `\\nSEGMENT 1 (HERO):\n${sr.segment_1_hero.principle}\nPattern: ${sr.segment_1_hero.pattern}\nExample: \"${sr.segment_1_hero.example}\"`;\n  }\n\n  if (sr.segments_2_plus) {\n    segSection += `\\n\\nSEGMENTS 2+:\n${sr.segments_2_plus.principle}\nStyle: ${sr.segments_2_plus.style}\n\nGOOD:\n${(sr.segments_2_plus.good_patterns || []).map(p => `✅ \"${p}\"`).join('\\n')}\n\nBAD:\n${(sr.segments_2_plus.bad_patterns || []).map(p => `❌ \"${p}\"`).join('\\n')}`;\n  }\n\n  // Flat structure (SINGLE-ITEM-SPOTLIGHT)\n  if (sr.principle && !sr.segment_1_hero) {\n    segSection += `\\n${sr.principle}\nFlow: ${sr.flow || ''}\n\nEXAMPLE ARC:\n${(sr.example_arc || []).map(e => `• ${e}`).join('\\n')}`;\n  }\n\n  sections.push(segSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 11: NATURAL FLOW (for multi-item templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.natural_flow) {\n  const nf = templatePrompt.natural_flow;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ NATURAL FLOW\n═══════════════════════════════════════════════════════════════\n${nf.principle}\n\nLEAD-IN VARIETY:\n${(nf.lead_in_variety || []).map(l => `- \"${l}\"`).join('\\n')}\n\nCONNECT FEATURES:\n${nf.connect_features?.principle || ''}\nGOOD: ${(nf.connect_features?.good || []).map(g => `\"${g}\"`).join(', ')}\nBAD: ${(nf.connect_features?.bad || []).map(b => `\"${b}\"`).join(', ')}`);\n}\n\n// Feature diversity\nif (templatePrompt.feature_diversity) {\n  sections.push(`\nFEATURE DIVERSITY: ${templatePrompt.feature_diversity}`);\n}\n\n// Tone\nif (templatePrompt.tone) {\n  sections.push(`\nTONE: ${templatePrompt.tone}`);\n}\n\n// Hard fails\nif (templatePrompt.hard_fails) {\n  sections.push(`\n❌ HARD FAILS (avoid at all costs):\n${templatePrompt.hard_fails.map(f => `• ${f}`).join('\\n')}`);\n}\n\n// TTS rules\nif (templatePrompt.tts_rules) {\n  const tts = templatePrompt.tts_rules;\n  sections.push(`\n🔊 TTS RULES: ${tts.principle}\nNo emojis in: ${(tts.no_emojis_in || []).join(', ')}\nEmojis allowed in: ${(tts.emojis_allowed_in || []).join(', ')}`);\n}\n\n// Output format\nif (templatePrompt.output_format) {\n  const of = templatePrompt.output_format;\n  let formatSection = `\n═══════════════════════════════════════════════════════════════\n📤 OUTPUT FORMAT\n═══════════════════════════════════════════════════════════════`;\n  for (const [key, val] of Object.entries(of)) {\n    if (Array.isArray(val)) {\n      formatSection += `\\n${key}: ${val.join(', ')}`;\n    } else {\n      formatSection += `\\n${key}: ${val}`;\n    }\n  }\n  sections.push(formatSection);\n}\n\n// Examples from template\nif (templatePrompt.examples) {\n  sections.push(`\nEXAMPLES:\nGOOD:\n${(templatePrompt.examples.good || []).map(e => `✅ \"${e}\"`).join('\\n')}\n\nBAD:\n${(templatePrompt.examples.bad || []).map(e => `❌ \"${e}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 12: THEME PACK USAGE (from theme_modes DB)\n// ─────────────────────────────────────────────────────────────────\nif (templateConfig.theme_mode_rules) {\n  const rules = typeof templateConfig.theme_mode_rules === 'string'\n    ? JSON.parse(templateConfig.theme_mode_rules)\n    : templateConfig.theme_mode_rules;\n\n  if (rules && rules.length > 0) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 THEME PACK USAGE (${templateConfig.theme_mode_name || templateConfig.theme_mode})\n═══════════════════════════════════════════════════════════════\n${rules.map((r, i) => `${i + 1}) ${r}`).join('\\n')}\n\nIf theme_pack missing: Use generic value/deals hook`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 13: GLOBAL RULES (from industry)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.global_rules?.length) {\n  const globalLines = industryConfig.global_rules.map(rule => `⚠️ ${rule}`).join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🌐 GLOBAL RULES\n═══════════════════════════════════════════════════════════════\n${globalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 14: BANNED PHRASE CHECK (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.banned_phrase_check) {\n  sections.push(`\n⚠️ ${templatePrompt.banned_phrase_check}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 15: BASE PROMPT SECTIONS (if uses_base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase) {\n  // Priorities\n  if (basePrompt.priorities?.length) {\n    const priorityLines = basePrompt.priorities\n      .map((p, i) => `${i + 1}. ${p.name.toUpperCase()} - ${p.description}`)\n      .join('\\n');\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎯 PRIORITIES (IN ORDER)\n═══════════════════════════════════════════════════════════════\n${priorityLines}`);\n  }\n\n  // Contact info\n  if (basePrompt.contact_tts) {\n    const ct = basePrompt.contact_tts;\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📞 CONTACT INFO (FOR TTS)\n═══════════════════════════════════════════════════════════════\n- Address: \"${ct.address_short}\"\n- Full address: \"${ct.address_full}\"\n- Phone: \"${ct.phone}\"\n- Website: \"${ct.website}\"`);\n  }\n\n  // CTA patterns\n  if (basePrompt.cta_patterns?.length) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📢 CTA PATTERNS\n═══════════════════════════════════════════════════════════════\n${basePrompt.cta_patterns.map(c => `✅ \"${c}\"`).join('\\n')}`);\n  }\n\n  // Tone\n  if (basePrompt.tone_and_style) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 TONE & STYLE\n═══════════════════════════════════════════════════════════════\n${basePrompt.tone_and_style}`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 16: PRONUNCIATIONS (merged: industry library + client custom)\n// ─────────────────────────────────────────────────────────────────\nconst industryPronunciations = industryConfig?.pronunciations || {};\nconst clientPronunciations = basePrompt.pronunciations || {};\nconst mergedPronunciations = { ...industryPronunciations, ...clientPronunciations };\n\nif (Object.keys(mergedPronunciations).length > 0) {\n  const pronLines = Object.entries(mergedPronunciations)\n    .map(([word, say]) => `- ${word} → \"${say}\"`)\n    .join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ PRONUNCIATIONS (NEVER DEVIATE)\n═══════════════════════════════════════════════════════════════\n${pronLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 17: LEGAL RULES (from industry - NON-NEGOTIABLE)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.legal?.length) {\n  const legalLines = industryConfig.legal.map(rule => `❌ ${rule}`).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL (CRITICAL - NON-NEGOTIABLE)\n═══════════════════════════════════════════════════════════════\n${legalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 18: CLIENT RULES (LAST - HIGHEST PRIORITY)\n// ─────────────────────────────────────────────────────────────────\nif (respectsRules && rulesFromDB?.length) {\n  const ruleLines = rulesFromDB.map(r => {\n    const icon = r.is_compliance ? '📌' : '⛔';\n    return `${icon} ${r.rule_text}`;\n  }).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🚨 CLIENT RULES — OVERRIDE EVERYTHING ABOVE\n═══════════════════════════════════════════════════════════════\nThese rules are CLIENT-SPECIFIC and take ABSOLUTE PRIORITY.\nIf ANY rule above conflicts with these, THESE WIN.\n\n${ruleLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// ASSEMBLE FINAL PROMPT\n// ─────────────────────────────────────────────────────────────────\nconst systemPrompt = sections.join('\\n');\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('ASSEMBLED SYSTEM PROMPT');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Template: ${templateConfig.template_code || config.template_id}`);\nconsole.log(`Theme Mode: ${templateConfig.theme_mode || 'none'}`);\nconsole.log(`Timing: ${timingDefaults?.code || 'standard'}`);\nconsole.log(`Standalone: ${isStandalone}`);\nconsole.log(`Uses Base: ${usesBase}`);\nconsole.log(`Respects Rules: ${respectsRules}`);\nconsole.log(`Industry Prompt Found: ${Object.keys(industryPrompt).length > 0}`);\nconsole.log(`Client Override Found: ${Object.keys(overridePrompt).length > 0}`);\nconsole.log(`Prompt length: ${systemPrompt.length} chars`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    ...config,\n    system_prompt: systemPrompt,\n    timing_config: timingDefaults,\n    template_config: templateConfig,\n    industry_config: industryConfig,\n    _prompt_meta: {\n      standalone: isStandalone,\n      uses_base: usesBase,\n      respects_rules: respectsRules,\n      template_code: templateConfig.template_code || config.template_id,\n      theme_mode: templateConfig.theme_mode,\n      industry_prompt_found: Object.keys(industryPrompt).length > 0,\n      client_override_found: Object.keys(overridePrompt).length > 0\n    }\n  }\n}];"
+          "jsCode": "const config = $('Resolve Config').first().json;\nconst promptRows = $('Fetch Client Prompts').all().map(r => r.json);\nconst industryPromptRaw = $('Fetch Industry Prompts').first()?.json?.prompt_content || {};\nconst industryConfig = $('Fetch Industry Config').first().json;\nconst timingDefaults = $('Fetch Timing Defaults').first().json;\nconst templateConfig = $('Fetch Template Config').first().json;\n\n// Parse industry prompt if string\nconst industryPrompt = typeof industryPromptRaw === 'string' \n  ? JSON.parse(industryPromptRaw) \n  : industryPromptRaw;\n\n// Get client-level data\nconst basePrompt = promptRows.find(r => r.prompt_type === 'base')?.prompt_content || {};\n// Rules now come from the dedicated rules table\nlet rulesFromDB = [];\ntry {\n  rulesFromDB = $('Fetch Rules').all().map(r => r.json);\n} catch (e) {\n  // Node may not have executed\n}\nconst overridePromptRaw = promptRows.find(r => r.prompt_type === 'override')?.prompt_content || {};\nconst overridePrompt = typeof overridePromptRaw === 'string' ? JSON.parse(overridePromptRaw) : overridePromptRaw;\n\n// Deep merge helper - client overrides win\nfunction deepMerge(base, override) {\n  if (!override || Object.keys(override).length === 0) return base;\n  \n  const result = { ...base };\n  for (const key of Object.keys(override)) {\n    if (typeof override[key] === 'object' && !Array.isArray(override[key]) && base[key]) {\n      result[key] = deepMerge(base[key], override[key]);\n    } else {\n      result[key] = override[key];\n    }\n  }\n  return result;\n}\n\n// MERGE: industry_prompts + client overrides\nconst templatePrompt = deepMerge(industryPrompt, overridePrompt);\n\n// Check template flags\nconst isStandalone = templatePrompt.standalone === true;\nconst usesBase = templatePrompt.uses_base === true;\nconst usesFromBase = templatePrompt.uses_from_base || [];\nconst respectsRules = templatePrompt.respects_rules !== false; // default true\n\n// ═══════════════════════════════════════════════════════════════\n// BUILD SYSTEM PROMPT (14 SECTIONS)\n// ═══════════════════════════════════════════════════════════════\n\nconst sections = [];\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 1: IDENTITY (from base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase || usesFromBase.includes('identity')) {\n  const identity = basePrompt.identity || {};\n  sections.push(`You are a ${identity.platform_voice || 'video ad copywriter'} for ${identity.business_name || 'our client'} in ${identity.location || 'their area'}.`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 2: TEMPLATE DEFINITION (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.description) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📋 TEMPLATE: ${templateConfig.template_code || config.template_id}\n═══════════════════════════════════════════════════════════════\n${templatePrompt.description}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 3: WORD LIMITS (from timing_defaults DB)\n// ─────────────────────────────────────────────────────────────────\nif (timingDefaults) {\n  sections.push(`\n⚠️ WORD LIMITS (${timingDefaults.name} - ${timingDefaults.style || ''}):\n- Hook: ${timingDefaults.hook_words} words max\n- Segment: ${timingDefaults.segment_words} words max\n- CTA: ${timingDefaults.cta_words} words max`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 4: STRUCTURE (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.structure) {\n  sections.push(`\nSTRUCTURE:\n${templatePrompt.structure.map((s, i) => `${i + 1}. ${s}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 5: HOOK RULES (from merged template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.hook_rules) {\n  const hr = templatePrompt.hook_rules;\n  let hookSection = `\n═══════════════════════════════════════════════════════════════\n🪝 HOOK RULES\n═══════════════════════════════════════════════════════════════\n${hr.principle}`;\n\n  if (hr.format) {\n    hookSection += `\\n\\nFORMAT: ${hr.format}`;\n  }\n\n  // Handle both old (good_examples) and new (examples) schemas\n  const goodExamples = hr.examples || hr.good_examples || [];\n  if (goodExamples.length > 0) {\n    hookSection += `\\n\\nGOOD EXAMPLES:\\n${goodExamples.map(e => `✅ \"${e}\"`).join('\\n')}`;\n  }\n\n  // Handle both old (bad_examples) and new (avoid) schemas  \n  const badExamples = hr.avoid || hr.bad_examples || [];\n  if (badExamples.length > 0) {\n    hookSection += `\\n\\nAVOID:\\n${badExamples.map(e => `❌ \"${e}\"`).join('\\n')}`;\n  }\n\n  sections.push(hookSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 6: VALUE SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.value_section) {\n  const vs = templatePrompt.value_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n💡 VALUE SECTION\n═══════════════════════════════════════════════════════════════\n${vs.principle}\n\nRULES:\n${(vs.rules || []).map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 7: AUTHORITY SECTION (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.authority_section) {\n  const as = templatePrompt.authority_section;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🏆 AUTHORITY SECTION\n═══════════════════════════════════════════════════════════════\n${as.principle}\n\nEXAMPLE FRAMING:\n${(as.example_framing || []).map(f => `• \"${f}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 8: CTA RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.cta_rules) {\n  const cr = templatePrompt.cta_rules;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n📣 CTA RULES\n═══════════════════════════════════════════════════════════════\n${cr.principle}\n\nORDER:\n${(cr.order || []).map((o, i) => `${i + 1}. ${o}`).join('\\n')}\n\nAVOID: ${(cr.avoid || []).join(', ')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 9: DELIVERY RULES (for educational templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.delivery_rules) {\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🎤 DELIVERY RULES\n═══════════════════════════════════════════════════════════════\n${templatePrompt.delivery_rules.map(r => `• ${r}`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 10: SEGMENT RULES (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.segment_rules) {\n  const sr = templatePrompt.segment_rules;\n  let segSection = `\n═══════════════════════���════�����������═══════════════════════════════\n📝 SEGMENT RULES\n═══════════════════════════════════════════════════════════════`;\n\n  // Handle both nested structure (MULTI-ITEM) and flat structure (SINGLE-ITEM)\n  if (sr.segment_1_hero) {\n    segSection += `\\nSEGMENT 1 (HERO):\n${sr.segment_1_hero.principle}\nPattern: ${sr.segment_1_hero.pattern}\nExample: \"${sr.segment_1_hero.example}\"`;\n  }\n\n  if (sr.segments_2_plus) {\n    segSection += `\\n\\nSEGMENTS 2+:\n${sr.segments_2_plus.principle}\nStyle: ${sr.segments_2_plus.style}\n\nGOOD:\n${(sr.segments_2_plus.good_patterns || []).map(p => `✅ \"${p}\"`).join('\\n')}\n\nBAD:\n${(sr.segments_2_plus.bad_patterns || []).map(p => `❌ \"${p}\"`).join('\\n')}`;\n  }\n\n  // Flat structure (SINGLE-ITEM-SPOTLIGHT)\n  if (sr.principle && !sr.segment_1_hero) {\n    segSection += `\\n${sr.principle}\nFlow: ${sr.flow || ''}\n\nEXAMPLE ARC:\n${(sr.example_arc || []).map(e => `• ${e}`).join('\\n')}`;\n  }\n\n  sections.push(segSection);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 11: NATURAL FLOW (for multi-item templates)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.natural_flow) {\n  const nf = templatePrompt.natural_flow;\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ NATURAL FLOW\n═══════════════════════════════════════════════════════════════\n${nf.principle}\n\nLEAD-IN VARIETY:\n${(nf.lead_in_variety || []).map(l => `- \"${l}\"`).join('\\n')}\n\nCONNECT FEATURES:\n${nf.connect_features?.principle || ''}\nGOOD: ${(nf.connect_features?.good || []).map(g => `\"${g}\"`).join(', ')}\nBAD: ${(nf.connect_features?.bad || []).map(b => `\"${b}\"`).join(', ')}`);\n}\n\n// Feature diversity\nif (templatePrompt.feature_diversity) {\n  sections.push(`\nFEATURE DIVERSITY: ${templatePrompt.feature_diversity}`);\n}\n\n// Tone\nif (templatePrompt.tone) {\n  sections.push(`\nTONE: ${templatePrompt.tone}`);\n}\n\n// Hard fails\nif (templatePrompt.hard_fails) {\n  sections.push(`\n❌ HARD FAILS (avoid at all costs):\n${templatePrompt.hard_fails.map(f => `• ${f}`).join('\\n')}`);\n}\n\n// TTS rules\nif (templatePrompt.tts_rules) {\n  const tts = templatePrompt.tts_rules;\n  sections.push(`\n🔊 TTS RULES: ${tts.principle}\nNo emojis in: ${(tts.no_emojis_in || []).join(', ')}\nEmojis allowed in: ${(tts.emojis_allowed_in || []).join(', ')}`);\n}\n\n// Output format\nif (templatePrompt.output_format) {\n  const of = templatePrompt.output_format;\n  let formatSection = `\n═══════════════════════════════════════════════════════════════\n📤 OUTPUT FORMAT\n═══════════════════════════════════════════════════════════════`;\n  for (const [key, val] of Object.entries(of)) {\n    if (Array.isArray(val)) {\n      formatSection += `\\n${key}: ${val.join(', ')}`;\n    } else {\n      formatSection += `\\n${key}: ${val}`;\n    }\n  }\n  sections.push(formatSection);\n}\n\n// Examples from template\nif (templatePrompt.examples) {\n  sections.push(`\nEXAMPLES:\nGOOD:\n${(templatePrompt.examples.good || []).map(e => `✅ \"${e}\"`).join('\\n')}\n\nBAD:\n${(templatePrompt.examples.bad || []).map(e => `❌ \"${e}\"`).join('\\n')}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 12: THEME PACK USAGE (from theme_modes DB)\n// ─────────────────────────────────────────────────────────────────\nif (templateConfig.theme_mode_rules) {\n  const rules = typeof templateConfig.theme_mode_rules === 'string'\n    ? JSON.parse(templateConfig.theme_mode_rules)\n    : templateConfig.theme_mode_rules;\n\n  if (rules && rules.length > 0) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 THEME PACK USAGE (${templateConfig.theme_mode_name || templateConfig.theme_mode})\n═══════════════════════════════════════════════════════════════\n${rules.map((r, i) => `${i + 1}) ${r}`).join('\\n')}\n\nIf theme_pack missing: Use generic value/deals hook`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 13: GLOBAL RULES (from industry)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.global_rules?.length) {\n  const globalLines = industryConfig.global_rules.map(rule => `⚠️ ${rule}`).join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🌐 GLOBAL RULES\n═══════════════════════════════════════════════════════════════\n${globalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 14: BANNED PHRASE CHECK (from template prompt)\n// ─────────────────────────────────────────────────────────────────\nif (templatePrompt.banned_phrase_check) {\n  sections.push(`\n⚠️ ${templatePrompt.banned_phrase_check}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 15: BASE PROMPT SECTIONS (if uses_base)\n// ─────────────────────────────────────────────────────────────────\nif (usesBase) {\n  // Priorities\n  if (basePrompt.priorities?.length) {\n    const priorityLines = basePrompt.priorities\n      .map((p, i) => `${i + 1}. ${p.name.toUpperCase()} - ${p.description}`)\n      .join('\\n');\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎯 PRIORITIES (IN ORDER)\n═══════════════════════════════════════════════════════════════\n${priorityLines}`);\n  }\n\n  // Contact info\n  if (basePrompt.contact_tts) {\n    const ct = basePrompt.contact_tts;\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📞 CONTACT INFO (FOR TTS)\n═══════════════════════════════════════════════════════════════\n- Address: \"${ct.address_short}\"\n- Full address: \"${ct.address_full}\"\n- Phone: \"${ct.phone}\"\n- Website: \"${ct.website}\"`);\n  }\n\n  // CTA patterns\n  if (basePrompt.cta_patterns?.length) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n📢 CTA PATTERNS\n═══════════════════════════════════════════════════════════════\n${basePrompt.cta_patterns.map(c => `✅ \"${c}\"`).join('\\n')}`);\n  }\n\n  // Tone\n  if (basePrompt.tone_and_style) {\n    sections.push(`\n═══════════════════════════════════════════════════════════════\n🎨 TONE & STYLE\n═══════════════════════════════════════════════════════════════\n${basePrompt.tone_and_style}`);\n  }\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 16: PRONUNCIATIONS (merged: industry library + client custom)\n// ─────────────────────────────────────────────────────────────────\nconst industryPronunciations = industryConfig?.pronunciations || {};\n// Client pronunciations now come from the dedicated client_pronunciations table\nlet clientPronunciations = {};\ntry {\n  const pronRows = $('Fetch Client Pronunciations').all().map(r => r.json);\n  for (const row of pronRows) {\n    clientPronunciations[row.word] = row.pronunciation;\n  }\n} catch (e) {\n  // Node may not have executed\n}\nconst mergedPronunciations = { ...industryPronunciations, ...clientPronunciations };\n\nif (Object.keys(mergedPronunciations).length > 0) {\n  const pronLines = Object.entries(mergedPronunciations)\n    .map(([word, say]) => `- ${word} → \"${say}\"`)\n    .join('\\n');\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🗣️ PRONUNCIATIONS (NEVER DEVIATE)\n═══════════════════════════════════════════════════════════════\n${pronLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 17: LEGAL RULES (from industry - NON-NEGOTIABLE)\n// ─────────────────────────────────────────────────────────────────\nif (industryConfig?.legal?.length) {\n  const legalLines = industryConfig.legal.map(rule => `❌ ${rule}`).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n⚖️ LEGAL (CRITICAL - NON-NEGOTIABLE)\n═══════════════════════════════════════════════════════════════\n${legalLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// SECTION 18: CLIENT RULES (LAST - HIGHEST PRIORITY)\n// ─────────────────────────────────────────────────────────────────\nif (respectsRules && rulesFromDB?.length) {\n  const ruleLines = rulesFromDB.map(r => {\n    const icon = r.is_compliance ? '📌' : '⛔';\n    return `${icon} ${r.rule_text}`;\n  }).join('\\n');\n\n  sections.push(`\n═══════════════════════════════════════════════════════════════\n🚨 CLIENT RULES — OVERRIDE EVERYTHING ABOVE\n═══════════════════════════════════════════════════════════════\nThese rules are CLIENT-SPECIFIC and take ABSOLUTE PRIORITY.\nIf ANY rule above conflicts with these, THESE WIN.\n\n${ruleLines}`);\n}\n\n// ─────────────────────────────────────────────────────────────────\n// ASSEMBLE FINAL PROMPT\n// ─────────────────────────────────────────────────────────────────\nconst systemPrompt = sections.join('\\n');\n\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('ASSEMBLED SYSTEM PROMPT');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log(`Template: ${templateConfig.template_code || config.template_id}`);\nconsole.log(`Theme Mode: ${templateConfig.theme_mode || 'none'}`);\nconsole.log(`Timing: ${timingDefaults?.code || 'standard'}`);\nconsole.log(`Standalone: ${isStandalone}`);\nconsole.log(`Uses Base: ${usesBase}`);\nconsole.log(`Respects Rules: ${respectsRules}`);\nconsole.log(`Industry Prompt Found: ${Object.keys(industryPrompt).length > 0}`);\nconsole.log(`Client Override Found: ${Object.keys(overridePrompt).length > 0}`);\nconsole.log(`Prompt length: ${systemPrompt.length} chars`);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn [{\n  json: {\n    ...config,\n    _source: config._source || 'orchestration',\n    system_prompt: systemPrompt,\n    timing_config: timingDefaults,\n    template_config: templateConfig,\n    industry_config: industryConfig,\n    _prompt_meta: {\n      standalone: isStandalone,\n      uses_base: usesBase,\n      respects_rules: respectsRules,\n      template_code: templateConfig.template_code || config.template_id,\n      theme_mode: templateConfig.theme_mode,\n      industry_prompt_found: Object.keys(industryPrompt).length > 0,\n      client_override_found: Object.keys(overridePrompt).length > 0\n    }\n  }\n}];"
         },
         "id": "assemble-system-prompt-001",
         "name": "Assemble System Prompt",
@@ -2779,7 +2936,7 @@
         "typeVersion": 2,
         "position": [
           1808,
-          720
+          456
         ]
       },
       {
@@ -2789,8 +2946,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1824,
-          528
+          2184,
+          300
         ],
         "id": "43d9026d-8fad-41ac-a50a-a283cb30f122",
         "name": "Prepare Script Context"
@@ -2798,7 +2955,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT code, name, hook_words, segment_words, cta_words, style\nFROM timing_defaults\nWHERE code = COALESCE('{{ $('Pass Config').first().json.script_length }}', 'standard')",
+          "query": "SELECT code, name, hook_words, segment_words, cta_words, style\nFROM timing_defaults\nWHERE code = COALESCE('{{ $('Resolve Config').first().json.script_length }}', 'standard')\nUNION ALL\nSELECT code, name, hook_words, segment_words, cta_words, style\nFROM timing_defaults\nWHERE code = 'standard'\nLIMIT 1",
           "options": {}
         },
         "id": "fetch-timing-defaults-001",
@@ -2807,7 +2964,7 @@
         "typeVersion": 2.5,
         "position": [
           1136,
-          720
+          456
         ],
         "credentials": {
           "postgres": {
@@ -2819,7 +2976,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  t.code as template_code,\n  t.name as template_name,\n  t.theme_mode,\n  t.data_requirements,\n  tm.code as theme_mode_code,\n  tm.name as theme_mode_name,\n  tm.rules as theme_mode_rules\nFROM templates t\nLEFT JOIN theme_modes tm ON tm.code = t.theme_mode\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $('Pass Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
+          "query": "SELECT\n  t.code as template_code,\n  t.name as template_name,\n  t.theme_mode,\n  t.data_requirements,\n  tm.code as theme_mode_code,\n  tm.name as theme_mode_name,\n  tm.rules as theme_mode_rules\nFROM templates t\nLEFT JOIN theme_modes tm ON tm.code = t.theme_mode\nWHERE t.code = UPPER(REPLACE(REPLACE('{{ $('Resolve Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
           "options": {}
         },
         "id": "fetch-template-config-001",
@@ -2828,7 +2985,7 @@
         "typeVersion": 2.5,
         "position": [
           1360,
-          720
+          456
         ],
         "credentials": {
           "postgres": {
@@ -2846,8 +3003,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3152,
-          384
+          3376,
+          336
         ]
       },
       {
@@ -2864,7 +3021,7 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
         "position": [
-          6064,
+          6288,
           1056
         ],
         "webhookId": "generate-from-asset-001"
@@ -2880,7 +3037,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          6288,
+          6512,
           1056
         ],
         "credentials": {
@@ -2901,7 +3058,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          6512,
+          6736,
           1056
         ],
         "credentials": {
@@ -2920,7 +3077,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          6736,
+          6960,
           1056
         ]
       },
@@ -3005,8 +3162,8 @@
         "type": "n8n-nodes-base.switch",
         "typeVersion": 3.2,
         "position": [
-          6960,
-          1056
+          7184,
+          1024
         ]
       },
       {
@@ -3019,14 +3176,14 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          8528,
-          192
+          8752,
+          144
         ]
       },
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT prompt_content\nFROM industry_prompts ip\nJOIN industries i ON ip.industry_id = i.id\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Pass Config').first().json.client_id }}'::uuid\nAND ip.template_code = UPPER(REPLACE(REPLACE('{{ $('Pass Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
+          "query": "SELECT prompt_content\nFROM industry_prompts ip\nJOIN industries i ON ip.industry_id = i.id\nJOIN clients c ON c.industry_id = i.id\nWHERE c.id = '{{ $('Resolve Config').first().json.client_id }}'::uuid\nAND ip.template_code = UPPER(REPLACE(REPLACE('{{ $('Resolve Config').first().json.template_id }}', 'ad-', ''), 'organic-', ''))",
           "options": {}
         },
         "id": "fetch-industry-prompts-001",
@@ -3035,7 +3192,7 @@
         "typeVersion": 2.5,
         "position": [
           1584,
-          720
+          456
         ],
         "credentials": {
           "postgres": {
@@ -3057,15 +3214,127 @@
         "typeVersion": 2.5,
         "position": [
           688,
-          900
+          648
         ],
+        "id": "b82d9ab5-7903-4832-a7c1-64e349af9778",
         "credentials": {
           "postgres": {
             "id": "ZUwzqy3kvUJpXrDM",
             "name": "Postgres (Dev)"
           }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT word, pronunciation\nFROM client_pronunciations\nWHERE client_id = '{{ $json.client_id }}'::uuid\nORDER BY word ASC",
+          "options": {
+            "queryBatching": "independently"
+          }
         },
-        "id": "b82d9ab5-7903-4832-a7c1-64e349af9778"
+        "name": "Fetch Client Pronunciations",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          688,
+          840
+        ],
+        "id": "8b6b948c-36d4-4987-b1c7-e8c9957017e7",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "prepare-asset-config-001",
+        "name": "Prepare Asset Config",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          1056
+        ],
+        "parameters": {
+          "jsCode": "// Extract config from the processed asset data\n// Matches the shape that Pass Config provides for the orchestration path\nconst asset = $('Fetch Processed Asset').first().json;\nconst avatars = typeof asset.avatars === 'string'\n  ? JSON.parse(asset.avatars)\n  : (asset.avatars || []);\n\n// Map frontend target_length to timing_defaults codes\n// Frontend uses: brief, standard, detailed\n// DB timing_defaults uses: quick, standard, detailed\nconst lengthMap = { brief: 'quick', standard: 'standard', detailed: 'detailed' };\nconst script_length = lengthMap[asset.target_length] || asset.target_length || 'standard';\n\nreturn [{\n  json: {\n    client_id: asset.client_id,\n    template_id: asset.template_code || asset.template_id,\n    script_length: script_length,\n    avatars: avatars,\n    business_name: asset.client_name,\n    client_name: asset.client_name,\n    _source: 'asset'\n  }\n}];"
+        }
+      },
+      {
+        "id": "resolve-config-001",
+        "name": "Resolve Config",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          520,
+          456
+        ],
+        "parameters": {
+          "jsCode": "// Resolve config from whichever path is active\n// Orchestration path: Pass Config ran\n// Webhook/Asset path: Prepare Asset Config ran\nlet config;\ntry {\n  config = $('Pass Config').first().json;\n  config._source = config._source || 'orchestration';\n} catch (e) {\n  config = $('Prepare Asset Config').first().json;\n}\nreturn [{ json: config }];"
+        }
+      },
+      {
+        "id": "route-by-source-001",
+        "name": "Route by Source",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          1960,
+          456
+        ],
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "id": "route-orch",
+                      "leftValue": "={{ $json._source }}",
+                      "rightValue": "orchestration",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Orchestration"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "id": "route-asset",
+                      "leftValue": "={{ $json._source }}",
+                      "rightValue": "asset",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Asset"
+              }
+            ]
+          },
+          "options": {}
+        }
       }
     ],
     "connections": {
@@ -3504,12 +3773,7 @@
         "main": [
           [
             {
-              "node": "Fetch Client Prompts",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Fetch Rules",
+              "node": "Resolve Config",
               "type": "main",
               "index": 0
             }
@@ -3582,7 +3846,7 @@
         "main": [
           [
             {
-              "node": "Prepare Script Context",
+              "node": "Route by Source",
               "type": "main",
               "index": 0
             }
@@ -3670,7 +3934,7 @@
         "main": [
           [
             {
-              "node": "Prepare Script Context (Asset)",
+              "node": "Prepare Asset Config",
               "type": "main",
               "index": 0
             }
@@ -3725,6 +3989,56 @@
           [
             {
               "node": "Assemble System Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Asset Config": {
+        "main": [
+          [
+            {
+              "node": "Resolve Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resolve Config": {
+        "main": [
+          [
+            {
+              "node": "Fetch Client Prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Fetch Rules",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Fetch Client Pronunciations",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route by Source": {
+        "main": [
+          [
+            {
+              "node": "Prepare Script Context",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Prepare Script Context (Asset)",
               "type": "main",
               "index": 0
             }
