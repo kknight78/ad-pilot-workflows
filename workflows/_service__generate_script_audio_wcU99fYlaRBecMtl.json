@@ -1,0 +1,479 @@
+{
+  "updatedAt": "2026-02-13T14:51:41.614Z",
+  "createdAt": "2026-02-13T14:51:41.614Z",
+  "id": "wcU99fYlaRBecMtl",
+  "name": "[Service] Generate Script Audio",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "trigger-workflow",
+      "name": "When Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -200,
+        200
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "trigger-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        400
+      ],
+      "parameters": {
+        "path": "generate-script-audio",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "generate-script-audio"
+    },
+    {
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Validate and normalize input from either trigger\nconst input = $input.first().json;\n\n// Webhook sends body, executeWorkflow sends directly\nconst data = input.body || input;\n\nconst script = data.script;\nconst voiceId = data.voice_id;\nconst voiceSettings = data.voice_settings || null;\nconst useTestVoice = data.use_test_voice === true;\n\nconst TEST_VOICE_ID = 'CwhRBWXzGAHq8TQ4Fs17';\n\nif (!script || !script.full_script) {\n  throw new Error('Missing required field: script.full_script');\n}\n\nif (!voiceId && !useTestVoice) {\n  throw new Error('Missing required field: voice_id (or set use_test_voice: true)');\n}\n\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : voiceId;\n\nreturn [{\n  json: {\n    script,\n    voice_id: voiceId,\n    effective_voice_id: effectiveVoiceId,\n    voice_settings: voiceSettings,\n    use_test_voice: useTestVoice\n  }\n}];"
+      }
+    },
+    {
+      "id": "tts-api",
+      "name": "API: 11Labs TTS with Timestamps",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        350,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}/with-timestamps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      }
+    },
+    {
+      "id": "parse-response",
+      "name": "Parse 11Labs Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping for section timings\nconst response = $json;\nconst config = $('Validate Input').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\n\n// Get script sections\nconst script = config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  charPos += section.text.length + 1;\n}\n\n// Map character positions to timestamps\nconst sectionTimings = [];\nfor (const section of sectionPositions) {\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n  sectionTimings.push({\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  });\n}\n\n// Build word timestamps\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    section_timings: sectionTimings,\n    word_timestamps: words,\n    audio_duration: audio_duration\n  }\n}];"
+      }
+    },
+    {
+      "id": "temp-audio",
+      "name": "API: Temp Audio Service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://temp-audio-service-production.up.railway.app/audio",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"audio_base64\": {{ JSON.stringify($json.audio_base64) }},\n  \"format\": \"mp3\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "add-silence",
+      "name": "Add Silence",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 0.5\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1350,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Merge final audio URL with parsed timings\nconst silenceResponse = $json;\nconst parsed = $('Parse 11Labs Response').first().json;\n\n// Strip the large base64 data from the response\nconst { audio_base64, ...rest } = parsed;\n\nreturn [{\n  json: {\n    success: true,\n    audio_url: silenceResponse.audio_url,\n    audio_duration: rest.audio_duration + 0.5,\n    section_timings: rest.section_timings,\n    word_timestamps: rest.word_timestamps\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "When Called by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "API: 11Labs TTS with Timestamps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: 11Labs TTS with Timestamps": {
+      "main": [
+        [
+          {
+            "node": "Parse 11Labs Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse 11Labs Response": {
+      "main": [
+        [
+          {
+            "node": "API: Temp Audio Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Temp Audio Service": {
+      "main": [
+        [
+          {
+            "node": "Add Silence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Silence": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "1ac02d0f-4abb-49fc-9f42-a1866308aec7",
+  "activeVersionId": "1ac02d0f-4abb-49fc-9f42-a1866308aec7",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-13T14:51:41.614Z",
+      "createdAt": "2026-02-13T14:51:41.614Z",
+      "role": "workflow:owner",
+      "workflowId": "wcU99fYlaRBecMtl",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-13T14:51:41.650Z",
+    "createdAt": "2026-02-13T14:51:41.650Z",
+    "versionId": "1ac02d0f-4abb-49fc-9f42-a1866308aec7",
+    "workflowId": "wcU99fYlaRBecMtl",
+    "nodes": [
+      {
+        "id": "trigger-workflow",
+        "name": "When Called by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -200,
+          200
+        ],
+        "parameters": {
+          "inputSource": "passthrough"
+        }
+      },
+      {
+        "id": "trigger-webhook",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -200,
+          400
+        ],
+        "parameters": {
+          "path": "generate-script-audio",
+          "httpMethod": "POST",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "webhookId": "generate-script-audio"
+      },
+      {
+        "id": "validate-input",
+        "name": "Validate Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// Validate and normalize input from either trigger\nconst input = $input.first().json;\n\n// Webhook sends body, executeWorkflow sends directly\nconst data = input.body || input;\n\nconst script = data.script;\nconst voiceId = data.voice_id;\nconst voiceSettings = data.voice_settings || null;\nconst useTestVoice = data.use_test_voice === true;\n\nconst TEST_VOICE_ID = 'CwhRBWXzGAHq8TQ4Fs17';\n\nif (!script || !script.full_script) {\n  throw new Error('Missing required field: script.full_script');\n}\n\nif (!voiceId && !useTestVoice) {\n  throw new Error('Missing required field: voice_id (or set use_test_voice: true)');\n}\n\nconst effectiveVoiceId = useTestVoice ? TEST_VOICE_ID : voiceId;\n\nreturn [{\n  json: {\n    script,\n    voice_id: voiceId,\n    effective_voice_id: effectiveVoiceId,\n    voice_settings: voiceSettings,\n    use_test_voice: useTestVoice\n  }\n}];"
+        }
+      },
+      {
+        "id": "tts-api",
+        "name": "API: 11Labs TTS with Timestamps",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          350,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.effective_voice_id }}/with-timestamps",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": []
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        }
+      },
+      {
+        "id": "parse-response",
+        "name": "Parse 11Labs Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// Parse 11Labs with-timestamps response\n// Uses CHARACTER POSITION mapping for section timings\nconst response = $json;\nconst config = $('Validate Input').first().json;\n\nconst audio_base64 = response.audio_base64;\nconst alignment = response.alignment;\n\nif (!alignment) {\n  return [{\n    json: {\n      ...config,\n      audio_base64: audio_base64,\n      section_timings: null,\n      word_timestamps: [],\n      audio_duration: 0\n    }\n  }];\n}\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\n\nconst audio_duration = ends[ends.length - 1];\n\n// Get script sections\nconst script = config.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [script.body].filter(Boolean);\nconst cta = script.cta || '';\nconst fullScript = script.full_script || '';\n\n// Build section info with character offsets\nconst sectionDefs = [];\nsectionDefs.push({ name: 'hook', text: hook });\nsegments.forEach((seg, idx) => {\n  sectionDefs.push({ name: 'segment_' + (idx + 1), text: seg });\n});\nsectionDefs.push({ name: 'cta', text: cta });\n\n// Calculate character positions in full_script\nlet charPos = 0;\nconst sectionPositions = [];\nfor (const section of sectionDefs) {\n  const startPos = charPos;\n  const endPos = charPos + section.text.length - 1;\n  sectionPositions.push({\n    name: section.name,\n    text: section.text,\n    startChar: startPos,\n    endChar: endPos\n  });\n  charPos += section.text.length + 1;\n}\n\n// Map character positions to timestamps\nconst sectionTimings = [];\nfor (const section of sectionPositions) {\n  const startIdx = Math.min(section.startChar, chars.length - 1);\n  const endIdx = Math.min(section.endChar, chars.length - 1);\n  const startTime = starts[startIdx] || 0;\n  const endTime = ends[endIdx] || audio_duration;\n  sectionTimings.push({\n    name: section.name,\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  });\n}\n\n// Build word timestamps\nconst words = [];\nlet currentWord = '';\nlet wordStart = null;\nlet wordEnd = null;\nfor (let i = 0; i < chars.length; i++) {\n  const char = chars[i];\n  if (char === ' ' || i === chars.length - 1) {\n    if (i === chars.length - 1 && char !== ' ') {\n      currentWord += char;\n      wordEnd = ends[i];\n    }\n    if (currentWord) {\n      words.push({ word: currentWord, start: wordStart, end: wordEnd });\n    }\n    currentWord = '';\n    wordStart = null;\n  } else {\n    if (wordStart === null) wordStart = starts[i];\n    currentWord += char;\n    wordEnd = ends[i];\n  }\n}\n\nreturn [{\n  json: {\n    ...config,\n    audio_base64: audio_base64,\n    section_timings: sectionTimings,\n    word_timestamps: words,\n    audio_duration: audio_duration\n  }\n}];"
+        }
+      },
+      {
+        "id": "temp-audio",
+        "name": "API: Temp Audio Service",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          850,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://temp-audio-service-production.up.railway.app/audio",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"audio_base64\": {{ JSON.stringify($json.audio_base64) }},\n  \"format\": \"mp3\"\n}",
+          "options": {
+            "timeout": 30000
+          }
+        }
+      },
+      {
+        "id": "add-silence",
+        "name": "Add Silence",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 0.5\n}",
+          "options": {}
+        }
+      },
+      {
+        "id": "format-response",
+        "name": "Format Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1350,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// Merge final audio URL with parsed timings\nconst silenceResponse = $json;\nconst parsed = $('Parse 11Labs Response').first().json;\n\n// Strip the large base64 data from the response\nconst { audio_base64, ...rest } = parsed;\n\nreturn [{\n  json: {\n    success: true,\n    audio_url: silenceResponse.audio_url,\n    audio_duration: rest.audio_duration + 0.5,\n    section_timings: rest.section_timings,\n    word_timestamps: rest.word_timestamps\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "When Called by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Validate Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Validate Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Input": {
+        "main": [
+          [
+            {
+              "node": "API: 11Labs TTS with Timestamps",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: 11Labs TTS with Timestamps": {
+        "main": [
+          [
+            {
+              "node": "Parse 11Labs Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse 11Labs Response": {
+        "main": [
+          [
+            {
+              "node": "API: Temp Audio Service",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Temp Audio Service": {
+        "main": [
+          [
+            {
+              "node": "Add Silence",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add Silence": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
