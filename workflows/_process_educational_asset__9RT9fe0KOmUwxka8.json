@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-14T01:56:15.672Z",
+  "updatedAt": "2026-02-14T13:20:28.284Z",
   "createdAt": "2026-01-26T23:34:57.395Z",
   "id": "9RT9fe0KOmUwxka8",
   "name": "[Process Educational Asset]",
@@ -126,7 +126,9 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "inputSource": "passthrough"
+      },
       "id": "trigger-inline-001",
       "name": "When Called as Sub-Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
@@ -336,8 +338,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "4e5c93ee-5f74-4c92-bf4d-3caf272d9b58",
-  "activeVersionId": "4e5c93ee-5f74-4c92-bf4d-3caf272d9b58",
+  "versionId": "ea0b53c9-01a0-4fb2-a40c-e36903264e65",
+  "activeVersionId": "ea0b53c9-01a0-4fb2-a40c-e36903264e65",
   "triggerCount": 1,
   "shared": [
     {
@@ -349,9 +351,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-14T01:56:15.676Z",
-    "createdAt": "2026-02-14T01:56:15.676Z",
-    "versionId": "4e5c93ee-5f74-4c92-bf4d-3caf272d9b58",
+    "updatedAt": "2026-02-14T13:20:28.288Z",
+    "createdAt": "2026-02-14T13:20:28.288Z",
+    "versionId": "ea0b53c9-01a0-4fb2-a40c-e36903264e65",
     "workflowId": "9RT9fe0KOmUwxka8",
     "nodes": [
       {
@@ -474,7 +476,9 @@
         ]
       },
       {
-        "parameters": {},
+        "parameters": {
+          "inputSource": "passthrough"
+        },
         "id": "trigger-inline-001",
         "name": "When Called as Sub-Workflow",
         "type": "n8n-nodes-base.executeWorkflowTrigger",
