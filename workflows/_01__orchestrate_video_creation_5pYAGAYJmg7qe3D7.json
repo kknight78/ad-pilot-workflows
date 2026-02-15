@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-09T03:19:38.466Z",
+  "updatedAt": "2026-02-14T16:59:06.627Z",
   "createdAt": "2026-01-26T23:34:50.230Z",
   "id": "5pYAGAYJmg7qe3D7",
   "name": "[01] Orchestrate Video Creation",
@@ -394,12 +394,12 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+            "job_id": "={{ $('Format Response').first().json.job_id }}",
             "status": "complete",
             "updated_at": "={{ new Date().toISOString() }}",
-            "script_data": "={{ JSON.stringify($json.script || $('Webhook').first().json.body.script || null) }}",
-            "generated_copy": "={{ JSON.stringify($json.generated_copy || []) }}",
-            "video_url": "={{ $json.final_video_url }}"
+            "script_data": "={{ JSON.stringify($('Format Response').first().json.script || null) }}",
+            "generated_copy": "={{ JSON.stringify($('Format Response').first().json.generated_copy || []) }}",
+            "video_url": "={{ $('Format Response').first().json.final_video_url }}"
           },
           "matchingColumns": [
             "job_id"
@@ -742,7 +742,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+            "job_id": "={{ $json.job_id }}",
             "status": "script_ready",
             "updated_at": "={{ new Date().toISOString() }}",
             "script_data": "={{ JSON.stringify($json.script || null) }}",
@@ -802,6 +802,172 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "var config = $input.first().json;\nreturn [{ json: { ...config, vins: config.vins || [] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        424
+      ],
+      "id": "ppi-01",
+      "name": "Prepare Process Input"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template_id }}",
+                    "rightValue": "multi-item",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Multi-Item"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template_id }}",
+                    "rightValue": "spotlight",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Spotlight"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template_id }}",
+                    "rightValue": "educational",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Educational"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1200,
+        424
+      ],
+      "id": "rbt-01",
+      "name": "Route by Template"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pNTmLSTPBJXAhRt7",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1380,
+        300
+      ],
+      "id": "cpm-01",
+      "name": "Call Process Multi-Item"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "uZJD1if4DPu2zYR6",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1380,
+        424
+      ],
+      "id": "cps-01",
+      "name": "Call Process Spotlight"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "9RT9fe0KOmUwxka8",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1380,
+        548
+      ],
+      "id": "cpe-01",
+      "name": "Call Process Educational"
+    },
+    {
+      "parameters": {
+        "jsCode": "var result = $input.first().json;\nvar config;\ntry { config = $('Build Config').first().json; } catch(e) { config = {}; }\nreturn [{ json: { ...config, processed_items: result.processed_items || [], theme_pack: result.theme_pack || {} } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        424
+      ],
+      "id": "mpr-01",
+      "name": "Merge Processing Results"
     }
   ],
   "connections": {
@@ -831,7 +997,7 @@
       "main": [
         [
           {
-            "node": "Generate Theme Pack",
+            "node": "Prepare Process Input",
             "type": "main",
             "index": 0
           }
@@ -1057,28 +1223,6 @@
         ]
       ]
     },
-    "Generate Theme Pack": {
-      "main": [
-        [
-          {
-            "node": "Add Theme Pack to Config",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Add Theme Pack to Config": {
-      "main": [
-        [
-          {
-            "node": "Call '[02] Generate Script'",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Lookup Client Base": {
       "main": [
         [
@@ -1127,18 +1271,105 @@
           }
         ]
       ]
+    },
+    "Prepare Process Input": {
+      "main": [
+        [
+          {
+            "node": "Route by Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Template": {
+      "main": [
+        [
+          {
+            "node": "Call Process Multi-Item",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Process Spotlight",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Process Educational",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Process Multi-Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Process Multi-Item": {
+      "main": [
+        [
+          {
+            "node": "Merge Processing Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Process Spotlight": {
+      "main": [
+        [
+          {
+            "node": "Merge Processing Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Process Educational": {
+      "main": [
+        [
+          {
+            "node": "Merge Processing Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Processing Results": {
+      "main": [
+        [
+          {
+            "node": "Call '[02] Generate Script'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
-    "availableInMCP": true,
+    "availableInMCP": false,
     "callerPolicy": "workflowsFromSameOwner"
   },
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "7df2cd44-1879-443f-ada7-75189dc589cb",
-  "activeVersionId": "7df2cd44-1879-443f-ada7-75189dc589cb",
+  "versionId": "c4d433c8-b4c5-4523-bc0d-5cbdac9fadaf",
+  "activeVersionId": "c4d433c8-b4c5-4523-bc0d-5cbdac9fadaf",
   "triggerCount": 1,
   "shared": [
     {
@@ -1150,9 +1381,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-09T03:19:38.557Z",
-    "createdAt": "2026-02-09T03:19:38.557Z",
-    "versionId": "7df2cd44-1879-443f-ada7-75189dc589cb",
+    "updatedAt": "2026-02-14T16:59:06.632Z",
+    "createdAt": "2026-02-14T16:59:06.632Z",
+    "versionId": "c4d433c8-b4c5-4523-bc0d-5cbdac9fadaf",
     "workflowId": "5pYAGAYJmg7qe3D7",
     "nodes": [
       {
@@ -1543,12 +1774,12 @@
           "columns": {
             "mappingMode": "defineBelow",
             "value": {
-              "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+              "job_id": "={{ $('Format Response').first().json.job_id }}",
               "status": "complete",
               "updated_at": "={{ new Date().toISOString() }}",
-              "script_data": "={{ JSON.stringify($json.script || $('Webhook').first().json.body.script || null) }}",
-              "generated_copy": "={{ JSON.stringify($json.generated_copy || []) }}",
-              "video_url": "={{ $json.final_video_url }}"
+              "script_data": "={{ JSON.stringify($('Format Response').first().json.script || null) }}",
+              "generated_copy": "={{ JSON.stringify($('Format Response').first().json.generated_copy || []) }}",
+              "video_url": "={{ $('Format Response').first().json.final_video_url }}"
             },
             "matchingColumns": [
               "job_id"
@@ -1891,7 +2122,7 @@
           "columns": {
             "mappingMode": "defineBelow",
             "value": {
-              "job_id": "={{ $('Webhook').item.json.body.job_id }}",
+              "job_id": "={{ $json.job_id }}",
               "status": "script_ready",
               "updated_at": "={{ new Date().toISOString() }}",
               "script_data": "={{ JSON.stringify($json.script || null) }}",
@@ -1951,6 +2182,172 @@
             "name": "Google Sheets account"
           }
         }
+      },
+      {
+        "parameters": {
+          "jsCode": "var config = $input.first().json;\nreturn [{ json: { ...config, vins: config.vins || [] } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1040,
+          424
+        ],
+        "id": "ppi-01",
+        "name": "Prepare Process Input"
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": false,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template_id }}",
+                      "rightValue": "multi-item",
+                      "operator": {
+                        "type": "string",
+                        "operation": "contains"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Multi-Item"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": false,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template_id }}",
+                      "rightValue": "spotlight",
+                      "operator": {
+                        "type": "string",
+                        "operation": "contains"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Spotlight"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": false,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template_id }}",
+                      "rightValue": "educational",
+                      "operator": {
+                        "type": "string",
+                        "operation": "contains"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Educational"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          1200,
+          424
+        ],
+        "id": "rbt-01",
+        "name": "Route by Template"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "pNTmLSTPBJXAhRt7",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1380,
+          300
+        ],
+        "id": "cpm-01",
+        "name": "Call Process Multi-Item"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "uZJD1if4DPu2zYR6",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1380,
+          424
+        ],
+        "id": "cps-01",
+        "name": "Call Process Spotlight"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "9RT9fe0KOmUwxka8",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1380,
+          548
+        ],
+        "id": "cpe-01",
+        "name": "Call Process Educational"
+      },
+      {
+        "parameters": {
+          "jsCode": "var result = $input.first().json;\nvar config;\ntry { config = $('Build Config').first().json; } catch(e) { config = {}; }\nreturn [{ json: { ...config, processed_items: result.processed_items || [], theme_pack: result.theme_pack || {} } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1560,
+          424
+        ],
+        "id": "mpr-01",
+        "name": "Merge Processing Results"
       }
     ],
     "connections": {
@@ -1980,7 +2377,7 @@
         "main": [
           [
             {
-              "node": "Generate Theme Pack",
+              "node": "Prepare Process Input",
               "type": "main",
               "index": 0
             }
@@ -2206,28 +2603,6 @@
           ]
         ]
       },
-      "Generate Theme Pack": {
-        "main": [
-          [
-            {
-              "node": "Add Theme Pack to Config",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Add Theme Pack to Config": {
-        "main": [
-          [
-            {
-              "node": "Call '[02] Generate Script'",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Lookup Client Base": {
         "main": [
           [
@@ -2271,6 +2646,93 @@
             },
             {
               "node": "Respond - Script Preview",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Process Input": {
+        "main": [
+          [
+            {
+              "node": "Route by Template",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route by Template": {
+        "main": [
+          [
+            {
+              "node": "Call Process Multi-Item",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Call Process Spotlight",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Call Process Educational",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Call Process Multi-Item",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Process Multi-Item": {
+        "main": [
+          [
+            {
+              "node": "Merge Processing Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Process Spotlight": {
+        "main": [
+          [
+            {
+              "node": "Merge Processing Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Process Educational": {
+        "main": [
+          [
+            {
+              "node": "Merge Processing Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Processing Results": {
+        "main": [
+          [
+            {
+              "node": "Call '[02] Generate Script'",
               "type": "main",
               "index": 0
             }
