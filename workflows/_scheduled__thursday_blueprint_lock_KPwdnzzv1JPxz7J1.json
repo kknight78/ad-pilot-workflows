@@ -1,0 +1,557 @@
+{
+  "updatedAt": "2026-02-18T03:30:47.154Z",
+  "createdAt": "2026-02-16T22:38:04.038Z",
+  "id": "KPwdnzzv1JPxz7J1",
+  "name": "[SCHEDULED] Thursday Blueprint Lock",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "trigger-cron",
+      "name": "Thursday 6pm CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * 5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "id": "find-draft-plans",
+      "name": "Find Draft Plans",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  wp.id AS plan_id,\n  wp.client_id,\n  wp.theme_name,\n  wp.theme_emoji,\n  wp.week_start,\n  c.name AS client_name\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.status = 'draft'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "check-results",
+      "name": "Has Draft Plans?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-count",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "auto-confirm",
+      "name": "Auto-Confirm Plans",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Blueprint lock: confirm the plan\nUPDATE weekly_plans\nSET status = 'confirmed',\n    approved_at = NOW(),\n    approved_by = 'blueprint_lock',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'draft';\n\n-- Mark idea ping as blueprint-lock approved\nUPDATE idea_ping_responses\nSET theme_approved = true,\n    response_channel = 'blueprint_lock',\n    responded_at = NOW()\nWHERE plan_id = '{{ $json.plan_id }}'::uuid\n  AND responded_at IS NULL;\n\nSELECT '{{ $json.client_name }}' AS client_name, '{{ $json.theme_emoji }}' AS theme_emoji, '{{ $json.theme_name }}' AS theme_name, '{{ $json.plan_id }}' AS plan_id;",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "build-email",
+      "name": "Build Notify Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Build email to notify Kelly about blueprint-locked plans\nconst items = $input.all();\nconst plans = items.map(item => {\n  const d = item.json;\n  return (d.theme_emoji || '') + ' ' + (d.theme_name || 'Unnamed') + ' \\u2014 ' + (d.client_name || 'Unknown client');\n}).join('\\n- ');\n\nconst count = items.length;\nconst subject = '[Blueprint Lock] ' + count + ' plan' + (count > 1 ? 's' : '') + ' locked \\u2014 scripts being generated';\n\nconst html = '<h2>Blueprint Lock Triggered</h2>' +\n  '<p>' + count + ' weekly plan' + (count > 1 ? 's were' : ' was') + ' locked at Thursday 6pm CT. Scripts are now being generated.</p>' +\n  '<ul>' + items.map(item => {\n    const d = item.json;\n    return '<li>Blueprint locked for ' + (d.client_name || '') + ' \\u2014 ' + (d.theme_emoji || '') + ' ' + (d.theme_name || '') + ' \\u2014 scripts being generated</li>';\n  }).join('') + '</ul>' +\n  '<p>These plans will proceed to the production queue.</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: subject,\n    html: html\n  }\n}}];"
+      }
+    },
+    {
+      "id": "send-email",
+      "name": "Email Kelly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "id": "trigger-prep",
+      "name": "Trigger Prep",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1550,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_URL ? $env.WEBHOOK_URL.replace(/\\/$/, '') + '/webhook/prep' : 'https://ad-pilot-n8n-development.up.railway.app/webhook/prep' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ plan_id: $('Auto-Confirm Plans').first().json.plan_id }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 600000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Draft Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Draft Plans": {
+      "main": [
+        [
+          {
+            "node": "Has Draft Plans?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Draft Plans?": {
+      "main": [
+        [
+          {
+            "node": "Auto-Confirm Plans",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Auto-Confirm Plans": {
+      "main": [
+        [
+          {
+            "node": "Build Notify Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Notify Email": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Kelly": {
+      "main": [
+        [
+          {
+            "node": "Trigger Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Thursday 6pm CT": {
+      "main": [
+        [
+          {
+            "node": "Find Draft Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Wednesday 6pm CT": {
+      "recurrenceRules": []
+    },
+    "node:Thursday 6pm CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "1a6b8e2f-65f1-42d7-a85f-3510ba22032d",
+  "activeVersionId": "1a6b8e2f-65f1-42d7-a85f-3510ba22032d",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-16T22:38:04.038Z",
+      "createdAt": "2026-02-16T22:38:04.038Z",
+      "role": "workflow:owner",
+      "workflowId": "KPwdnzzv1JPxz7J1",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-18T03:30:47.157Z",
+    "createdAt": "2026-02-18T03:30:47.157Z",
+    "versionId": "1a6b8e2f-65f1-42d7-a85f-3510ba22032d",
+    "workflowId": "KPwdnzzv1JPxz7J1",
+    "nodes": [
+      {
+        "id": "trigger-cron",
+        "name": "Thursday 6pm CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 0 * * 5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "trigger-manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          100
+        ]
+      },
+      {
+        "id": "find-draft-plans",
+        "name": "Find Draft Plans",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  wp.id AS plan_id,\n  wp.client_id,\n  wp.theme_name,\n  wp.theme_emoji,\n  wp.week_start,\n  c.name AS client_name\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.status = 'draft'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "check-results",
+        "name": "Has Draft Plans?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          550,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "check-count",
+                "leftValue": "={{ $input.all().length }}",
+                "rightValue": "0",
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "auto-confirm",
+        "name": "Auto-Confirm Plans",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          800,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "-- Blueprint lock: confirm the plan\nUPDATE weekly_plans\nSET status = 'confirmed',\n    approved_at = NOW(),\n    approved_by = 'blueprint_lock',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'draft';\n\n-- Mark idea ping as blueprint-lock approved\nUPDATE idea_ping_responses\nSET theme_approved = true,\n    response_channel = 'blueprint_lock',\n    responded_at = NOW()\nWHERE plan_id = '{{ $json.plan_id }}'::uuid\n  AND responded_at IS NULL;\n\nSELECT '{{ $json.client_name }}' AS client_name, '{{ $json.theme_emoji }}' AS theme_emoji, '{{ $json.theme_name }}' AS theme_name, '{{ $json.plan_id }}' AS plan_id;",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "build-email",
+        "name": "Build Notify Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1050,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// Build email to notify Kelly about blueprint-locked plans\nconst items = $input.all();\nconst plans = items.map(item => {\n  const d = item.json;\n  return (d.theme_emoji || '') + ' ' + (d.theme_name || 'Unnamed') + ' \\u2014 ' + (d.client_name || 'Unknown client');\n}).join('\\n- ');\n\nconst count = items.length;\nconst subject = '[Blueprint Lock] ' + count + ' plan' + (count > 1 ? 's' : '') + ' locked \\u2014 scripts being generated';\n\nconst html = '<h2>Blueprint Lock Triggered</h2>' +\n  '<p>' + count + ' weekly plan' + (count > 1 ? 's were' : ' was') + ' locked at Thursday 6pm CT. Scripts are now being generated.</p>' +\n  '<ul>' + items.map(item => {\n    const d = item.json;\n    return '<li>Blueprint locked for ' + (d.client_name || '') + ' \\u2014 ' + (d.theme_emoji || '') + ' ' + (d.theme_name || '') + ' \\u2014 scripts being generated</li>';\n  }).join('') + '</ul>' +\n  '<p>These plans will proceed to the production queue.</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: subject,\n    html: html\n  }\n}}];"
+        }
+      },
+      {
+        "id": "send-email",
+        "name": "Email Kelly",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "id": "trigger-prep",
+        "name": "Trigger Prep",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1550,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.WEBHOOK_URL ? $env.WEBHOOK_URL.replace(/\\/$/, '') + '/webhook/prep' : 'https://ad-pilot-n8n-development.up.railway.app/webhook/prep' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ plan_id: $('Auto-Confirm Plans').first().json.plan_id }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            },
+            "timeout": 600000
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Find Draft Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Draft Plans": {
+        "main": [
+          [
+            {
+              "node": "Has Draft Plans?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Draft Plans?": {
+        "main": [
+          [
+            {
+              "node": "Auto-Confirm Plans",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Auto-Confirm Plans": {
+        "main": [
+          [
+            {
+              "node": "Build Notify Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Notify Email": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Kelly": {
+        "main": [
+          [
+            {
+              "node": "Trigger Prep",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Thursday 6pm CT": {
+        "main": [
+          [
+            {
+              "node": "Find Draft Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
