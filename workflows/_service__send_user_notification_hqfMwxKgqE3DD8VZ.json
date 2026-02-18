@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-12T18:53:01.157Z",
+  "updatedAt": "2026-02-18T04:12:52.003Z",
   "createdAt": "2026-01-26T23:34:56.704Z",
   "id": "hqfMwxKgqE3DD8VZ",
   "name": "[Service] Send User Notification",
@@ -113,7 +113,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody\n  }\n}];"
+        "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\n// ===== DEV-MODE GUARD =====\n// Check if this is a non-production environment\n// Uses the n8n instance URL or an env var to detect dev mode\nconst N8N_URL = $env?.WEBHOOK_URL || $env?.N8N_HOST || '';\nconst IS_PRODUCTION = N8N_URL.includes('production');\n\nif (!IS_PRODUCTION) {\n  // Dev mode: redirect all notifications to Kelly\n  input.email = 'kelly@ad-pilot.ai';\n  input.phone = '+13095031120';  // Kelly's number (same as Twilio sender for dev)\n  input.title = '[DEV] ' + (input.title || '');\n  input.message = '[DEV] ' + (input.message || '');\n}\n// ===== END DEV-MODE GUARD =====\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = '';\nif (!IS_PRODUCTION) {\n  htmlBody += '<p style=\"background:#fef3c7;padding:8px;border-radius:4px;\"><strong>⚠ DEV MODE</strong> — This would normally go to: ' + ($json.email || 'unknown') + ' / ' + ($json.phone || 'no phone') + '</p>';\n}\nhtmlBody += `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody,\n    is_production: IS_PRODUCTION\n  }\n}];"
       },
       "id": "prepare-messages",
       "name": "Prepare Messages",
@@ -463,8 +463,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "b6b34f01-4644-4a16-a986-6d15ecd3ad0c",
-  "activeVersionId": "b6b34f01-4644-4a16-a986-6d15ecd3ad0c",
+  "versionId": "22dc515e-0e44-4340-9237-d82ffabeaa3f",
+  "activeVersionId": "22dc515e-0e44-4340-9237-d82ffabeaa3f",
   "triggerCount": 0,
   "shared": [
     {
@@ -476,9 +476,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-12T18:53:01.159Z",
-    "createdAt": "2026-02-12T18:53:01.159Z",
-    "versionId": "b6b34f01-4644-4a16-a986-6d15ecd3ad0c",
+    "updatedAt": "2026-02-18T04:12:52.008Z",
+    "createdAt": "2026-02-18T04:12:52.008Z",
+    "versionId": "22dc515e-0e44-4340-9237-d82ffabeaa3f",
     "workflowId": "hqfMwxKgqE3DD8VZ",
     "nodes": [
       {
@@ -588,7 +588,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody\n  }\n}];"
+          "jsCode": "const input = $json;\nconst results = { email_sent: false, sms_sent: false, errors: [] };\n\n// ===== DEV-MODE GUARD =====\n// Check if this is a non-production environment\n// Uses the n8n instance URL or an env var to detect dev mode\nconst N8N_URL = $env?.WEBHOOK_URL || $env?.N8N_HOST || '';\nconst IS_PRODUCTION = N8N_URL.includes('production');\n\nif (!IS_PRODUCTION) {\n  // Dev mode: redirect all notifications to Kelly\n  input.email = 'kelly@ad-pilot.ai';\n  input.phone = '+13095031120';  // Kelly's number (same as Twilio sender for dev)\n  input.title = '[DEV] ' + (input.title || '');\n  input.message = '[DEV] ' + (input.message || '');\n}\n// ===== END DEV-MODE GUARD =====\n\nconst shouldSendEmail = input.notification_type === 'email' || input.notification_type === 'both';\nconst shouldSendSms = input.notification_type === 'sms' || input.notification_type === 'both';\n\n// Build HTML email body\nlet htmlBody = '';\nif (!IS_PRODUCTION) {\n  htmlBody += '<p style=\"background:#fef3c7;padding:8px;border-radius:4px;\"><strong>⚠ DEV MODE</strong> — This would normally go to: ' + ($json.email || 'unknown') + ' / ' + ($json.phone || 'no phone') + '</p>';\n}\nhtmlBody += `<p>${input.message}</p>`;\nif (input.link) {\n  htmlBody += `<p><a href=\"${input.link}\" style=\"display:inline-block;padding:12px 24px;background-color:#14b8a6;color:white;text-decoration:none;border-radius:6px;\">View Now</a></p>`;\n}\n\n// Build SMS body\nlet smsBody = input.message;\nif (input.link) {\n  smsBody += `\\n\\n${input.link}`;\n}\n\nreturn [{\n  json: {\n    ...input,\n    should_send_email: shouldSendEmail,\n    should_send_sms: shouldSendSms,\n    html_body: htmlBody,\n    sms_body: smsBody,\n    is_production: IS_PRODUCTION\n  }\n}];"
         },
         "id": "prepare-messages",
         "name": "Prepare Messages",
