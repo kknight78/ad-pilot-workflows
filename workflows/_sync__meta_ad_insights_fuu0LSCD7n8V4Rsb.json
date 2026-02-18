@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-12T22:30:28.734Z",
+  "updatedAt": "2026-02-18T02:53:32.479Z",
   "createdAt": "2026-01-28T11:18:31.304Z",
   "id": "fuu0LSCD7n8V4Rsb",
   "name": "[SYNC] Meta Ad Insights",
@@ -43,8 +43,7 @@
         0
       ],
       "id": "schedule-trigger",
-      "name": "Daily 6am CT",
-      "disabled": true
+      "name": "Daily 6am CT"
     },
     {
       "parameters": {},
@@ -813,12 +812,16 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "staticData": null,
+  "staticData": {
+    "node:Daily 6am CT": {
+      "recurrenceRules": []
+    }
+  },
   "meta": null,
   "pinData": {},
-  "versionId": "99625044-3e4a-4f30-80d7-1c93a2356b17",
-  "activeVersionId": "99625044-3e4a-4f30-80d7-1c93a2356b17",
-  "triggerCount": 1,
+  "versionId": "e3b2e39e-27ad-47ba-9bb1-85d83feba8f3",
+  "activeVersionId": "e3b2e39e-27ad-47ba-9bb1-85d83feba8f3",
+  "triggerCount": 2,
   "shared": [
     {
       "updatedAt": "2026-01-28T11:18:31.304Z",
@@ -829,9 +832,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-12T22:30:28.740Z",
-    "createdAt": "2026-02-12T22:30:28.740Z",
-    "versionId": "99625044-3e4a-4f30-80d7-1c93a2356b17",
+    "updatedAt": "2026-02-18T02:53:32.482Z",
+    "createdAt": "2026-02-18T02:53:32.482Z",
+    "versionId": "e3b2e39e-27ad-47ba-9bb1-85d83feba8f3",
     "workflowId": "fuu0LSCD7n8V4Rsb",
     "nodes": [
       {
@@ -871,8 +874,7 @@
           0
         ],
         "id": "schedule-trigger",
-        "name": "Daily 6am CT",
-        "disabled": true
+        "name": "Daily 6am CT"
       },
       {
         "parameters": {},
