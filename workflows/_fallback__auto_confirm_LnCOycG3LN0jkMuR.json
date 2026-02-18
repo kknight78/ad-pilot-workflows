@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T01:05:08.159Z",
+  "updatedAt": "2026-02-17T11:31:00.868Z",
   "createdAt": "2026-02-12T19:13:41.196Z",
   "id": "LnCOycG3LN0jkMuR",
   "name": "[FALLBACK] Auto-Confirm",
@@ -153,6 +153,31 @@
           "name": "Resend"
         }
       }
+    },
+    {
+      "id": "trigger-prep",
+      "name": "Trigger Prep",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1550,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_URL ? $env.WEBHOOK_URL.replace(/\\/$/, '') + '/webhook/prep' : 'https://ad-pilot-n8n-production.up.railway.app/webhook/prep' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ plan_id: $('Auto-Confirm Plans').first().json.plan_id }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 600000
+        }
+      }
     }
   ],
   "connections": {
@@ -222,6 +247,17 @@
           }
         ]
       ]
+    },
+    "Email Kelly": {
+      "main": [
+        [
+          {
+            "node": "Trigger Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -237,8 +273,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "a34e4971-a56e-44fe-ba21-e11b860ae961",
-  "activeVersionId": "a34e4971-a56e-44fe-ba21-e11b860ae961",
+  "versionId": "1ecb3b05-0578-4d2c-b819-0b4d76855d11",
+  "activeVersionId": "1ecb3b05-0578-4d2c-b819-0b4d76855d11",
   "triggerCount": 1,
   "shared": [
     {
@@ -250,9 +286,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-17T01:05:08.163Z",
-    "createdAt": "2026-02-17T01:05:08.163Z",
-    "versionId": "a34e4971-a56e-44fe-ba21-e11b860ae961",
+    "updatedAt": "2026-02-17T11:31:00.882Z",
+    "createdAt": "2026-02-17T11:31:00.882Z",
+    "versionId": "1ecb3b05-0578-4d2c-b819-0b4d76855d11",
     "workflowId": "LnCOycG3LN0jkMuR",
     "nodes": [
       {
@@ -402,6 +438,31 @@
             "name": "Resend"
           }
         }
+      },
+      {
+        "id": "trigger-prep",
+        "name": "Trigger Prep",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1550,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.WEBHOOK_URL ? $env.WEBHOOK_URL.replace(/\\/$/, '') + '/webhook/prep' : 'https://ad-pilot-n8n-production.up.railway.app/webhook/prep' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ plan_id: $('Auto-Confirm Plans').first().json.plan_id }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            },
+            "timeout": 600000
+          }
+        }
       }
     ],
     "connections": {
@@ -466,6 +527,17 @@
           [
             {
               "node": "Email Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Kelly": {
+        "main": [
+          [
+            {
+              "node": "Trigger Prep",
               "type": "main",
               "index": 0
             }
