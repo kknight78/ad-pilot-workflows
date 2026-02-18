@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-12T19:08:45.759Z",
+  "updatedAt": "2026-02-17T14:34:16.884Z",
   "createdAt": "2026-02-12T17:45:39.373Z",
   "id": "7bTpATAf7nlBud4y",
   "name": "[AGENT] Idea Ping Fallback",
@@ -48,7 +48,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT DISTINCT ON (wp.id)\n  ipr.id AS ping_id, ipr.plan_id, wp.client_id::text AS client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE ipr.responded_at IS NULL\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'draft'\nORDER BY wp.id, ipr.created_at DESC",
+        "query": "SELECT DISTINCT ON (wp.id)\n  ipr.id AS ping_id, ipr.plan_id, wp.client_id::text AS client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE ipr.responded_at IS NULL\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'idea_sent'\nORDER BY wp.id, ipr.created_at DESC",
         "options": {
           "alwaysOutputData": true
         }
@@ -102,7 +102,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH updated_plans AS (\n  UPDATE weekly_plans\n  SET status = 'confirmed',\n      approved_at = NOW(),\n      approved_by = 'auto-fallback',\n      updated_at = NOW()\n  WHERE id = '{{ $json.plan_id }}'::uuid\n    AND status = 'draft'\n  RETURNING id, theme_name, theme_emoji\n),\nupdated_pings AS (\n  UPDATE idea_ping_responses\n  SET responded_at = NOW(),\n      theme_approved = true,\n      response_channel = 'auto-fallback',\n      responded_by = 'system'\n  WHERE plan_id = '{{ $json.plan_id }}'::uuid\n    AND responded_at IS NULL\n  RETURNING id\n)\nSELECT\n  (SELECT count(*) FROM updated_plans) AS plans_confirmed,\n  (SELECT count(*) FROM updated_pings) AS pings_closed",
+        "query": "WITH updated_plans AS (\n  UPDATE weekly_plans\n  SET status = 'idea_approved',\n      updated_at = NOW()\n  WHERE id = '{{ $json.plan_id }}'::uuid\n    AND status = 'idea_sent'\n  RETURNING id, theme_name, theme_emoji\n),\nupdated_pings AS (\n  UPDATE idea_ping_responses\n  SET responded_at = NOW(),\n      theme_approved = true,\n      response_channel = 'auto-fallback',\n      responded_by = 'system'\n  WHERE plan_id = '{{ $json.plan_id }}'::uuid\n    AND responded_at IS NULL\n  RETURNING id\n)\nSELECT\n  '{{ $json.plan_id }}' AS plan_id,\n  (SELECT count(*) FROM updated_plans) AS plans_approved,\n  (SELECT count(*) FROM updated_pings) AS pings_closed",
         "options": {}
       },
       "credentials": {
@@ -122,7 +122,7 @@
         200
       ],
       "parameters": {
-        "jsCode": "const items = $('Find Unresponded Plans').all();\nconst clients = items.map(i => i.json.theme_emoji + ' ' + i.json.client_name + ' — ' + i.json.theme_name).join('<br>');\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Auto-confirmed ' + items.length + ' plan(s) (no client response)',\n    html: '<h2>Auto-Fallback Confirmation</h2>' +\n      '<p>The following plans were auto-confirmed because no client response was received:</p>' +\n      '<p>' + clients + '</p>' +\n      '<hr><p>These plans will proceed to script generation.</p>'\n  }\n}}];"
+        "jsCode": "const items = $('Find Unresponded Plans').all();\nconst clients = items.map(i => i.json.theme_emoji + ' ' + i.json.client_name + ' \\u2014 ' + i.json.theme_name).join('<br>');\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Auto-approved ' + items.length + ' idea(s) (no client response)',\n    html: '<h2>Auto-Fallback: Ideas Approved</h2>' +\n      '<p>The following ideas were auto-approved because no client response was received. The Planner agent has been triggered for each:</p>' +\n      '<p>' + clients + '</p>' +\n      '<hr><p>Full plans will be generated automatically.</p>'\n  }\n}}];"
       }
     },
     {
@@ -154,6 +154,31 @@
         "httpBearerAuth": {
           "id": "oConQlSBx8Yjco2M",
           "name": "Resend"
+        }
+      }
+    },
+    {
+      "id": "trigger-planner",
+      "name": "Trigger Planner Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        850,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/planner-agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ plan_id: $json.plan_id }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 10000
         }
       }
     }
@@ -208,7 +233,7 @@
       "main": [
         [
           {
-            "node": "Prepare Fallback Email",
+            "node": "Trigger Planner Agent",
             "type": "main",
             "index": 0
           }
@@ -220,6 +245,17 @@
         [
           {
             "node": "Email Kelly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Planner Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Fallback Email",
             "type": "main",
             "index": 0
           }
@@ -239,8 +275,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "5ef713d2-a322-4bcb-8da3-f7400c8fa6c1",
-  "activeVersionId": "5ef713d2-a322-4bcb-8da3-f7400c8fa6c1",
+  "versionId": "9ae85409-679c-41b7-b1fe-1dfacaec8ff4",
+  "activeVersionId": "9ae85409-679c-41b7-b1fe-1dfacaec8ff4",
   "triggerCount": 1,
   "shared": [
     {
@@ -252,9 +288,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-12T19:08:45.761Z",
-    "createdAt": "2026-02-12T19:08:45.761Z",
-    "versionId": "5ef713d2-a322-4bcb-8da3-f7400c8fa6c1",
+    "updatedAt": "2026-02-17T14:34:16.897Z",
+    "createdAt": "2026-02-17T14:34:16.897Z",
+    "versionId": "9ae85409-679c-41b7-b1fe-1dfacaec8ff4",
     "workflowId": "7bTpATAf7nlBud4y",
     "nodes": [
       {
@@ -299,7 +335,7 @@
         ],
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT DISTINCT ON (wp.id)\n  ipr.id AS ping_id, ipr.plan_id, wp.client_id::text AS client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE ipr.responded_at IS NULL\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'draft'\nORDER BY wp.id, ipr.created_at DESC",
+          "query": "SELECT DISTINCT ON (wp.id)\n  ipr.id AS ping_id, ipr.plan_id, wp.client_id::text AS client_id,\n  wp.theme_name, wp.theme_emoji, wp.week_start::text,\n  c.name AS client_name\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON ipr.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE ipr.responded_at IS NULL\n  AND wp.week_start >= DATE_TRUNC('week', NOW())::date\n  AND wp.status = 'idea_sent'\nORDER BY wp.id, ipr.created_at DESC",
           "options": {
             "alwaysOutputData": true
           }
@@ -353,7 +389,7 @@
         ],
         "parameters": {
           "operation": "executeQuery",
-          "query": "WITH updated_plans AS (\n  UPDATE weekly_plans\n  SET status = 'confirmed',\n      approved_at = NOW(),\n      approved_by = 'auto-fallback',\n      updated_at = NOW()\n  WHERE id = '{{ $json.plan_id }}'::uuid\n    AND status = 'draft'\n  RETURNING id, theme_name, theme_emoji\n),\nupdated_pings AS (\n  UPDATE idea_ping_responses\n  SET responded_at = NOW(),\n      theme_approved = true,\n      response_channel = 'auto-fallback',\n      responded_by = 'system'\n  WHERE plan_id = '{{ $json.plan_id }}'::uuid\n    AND responded_at IS NULL\n  RETURNING id\n)\nSELECT\n  (SELECT count(*) FROM updated_plans) AS plans_confirmed,\n  (SELECT count(*) FROM updated_pings) AS pings_closed",
+          "query": "WITH updated_plans AS (\n  UPDATE weekly_plans\n  SET status = 'idea_approved',\n      updated_at = NOW()\n  WHERE id = '{{ $json.plan_id }}'::uuid\n    AND status = 'idea_sent'\n  RETURNING id, theme_name, theme_emoji\n),\nupdated_pings AS (\n  UPDATE idea_ping_responses\n  SET responded_at = NOW(),\n      theme_approved = true,\n      response_channel = 'auto-fallback',\n      responded_by = 'system'\n  WHERE plan_id = '{{ $json.plan_id }}'::uuid\n    AND responded_at IS NULL\n  RETURNING id\n)\nSELECT\n  '{{ $json.plan_id }}' AS plan_id,\n  (SELECT count(*) FROM updated_plans) AS plans_approved,\n  (SELECT count(*) FROM updated_pings) AS pings_closed",
           "options": {}
         },
         "credentials": {
@@ -373,7 +409,7 @@
           200
         ],
         "parameters": {
-          "jsCode": "const items = $('Find Unresponded Plans').all();\nconst clients = items.map(i => i.json.theme_emoji + ' ' + i.json.client_name + ' — ' + i.json.theme_name).join('<br>');\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Auto-confirmed ' + items.length + ' plan(s) (no client response)',\n    html: '<h2>Auto-Fallback Confirmation</h2>' +\n      '<p>The following plans were auto-confirmed because no client response was received:</p>' +\n      '<p>' + clients + '</p>' +\n      '<hr><p>These plans will proceed to script generation.</p>'\n  }\n}}];"
+          "jsCode": "const items = $('Find Unresponded Plans').all();\nconst clients = items.map(i => i.json.theme_emoji + ' ' + i.json.client_name + ' \\u2014 ' + i.json.theme_name).join('<br>');\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Ping] Auto-approved ' + items.length + ' idea(s) (no client response)',\n    html: '<h2>Auto-Fallback: Ideas Approved</h2>' +\n      '<p>The following ideas were auto-approved because no client response was received. The Planner agent has been triggered for each:</p>' +\n      '<p>' + clients + '</p>' +\n      '<hr><p>Full plans will be generated automatically.</p>'\n  }\n}}];"
         }
       },
       {
@@ -405,6 +441,31 @@
           "httpBearerAuth": {
             "id": "oConQlSBx8Yjco2M",
             "name": "Resend"
+          }
+        }
+      },
+      {
+        "id": "trigger-planner",
+        "name": "Trigger Planner Agent",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          850,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/planner-agent",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ plan_id: $json.plan_id }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            },
+            "timeout": 10000
           }
         }
       }
@@ -459,7 +520,7 @@
         "main": [
           [
             {
-              "node": "Prepare Fallback Email",
+              "node": "Trigger Planner Agent",
               "type": "main",
               "index": 0
             }
@@ -471,6 +532,17 @@
           [
             {
               "node": "Email Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Trigger Planner Agent": {
+        "main": [
+          [
+            {
+              "node": "Prepare Fallback Email",
               "type": "main",
               "index": 0
             }
