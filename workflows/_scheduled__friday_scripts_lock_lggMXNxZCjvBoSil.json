@@ -1,0 +1,525 @@
+{
+  "updatedAt": "2026-02-18T03:32:31.693Z",
+  "createdAt": "2026-02-18T03:32:31.693Z",
+  "id": "lggMXNxZCjvBoSil",
+  "name": "[SCHEDULED] Friday Scripts Lock",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "1e87f69eda2748399103",
+      "name": "Friday 6pm CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * 6"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ba2c9165919641a8a652",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "523e322eb6e341988d1c",
+      "name": "Find Scripts Ready Plans",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        300,
+        200
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.theme_emoji, wp.week_start,\n       c.name AS client_name\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.status = 'scripts_ready'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "1f96771e955b4f53add2",
+      "name": "Has Plans?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "condition-0",
+              "leftValue": "={{ $json.plan_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "39dc91999f7545298843",
+      "name": "Lock Scripts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        820,
+        160
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE weekly_plans\nSET status = 'scripts_locked',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'scripts_ready'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "39477eb39e8f4fa3809c",
+      "name": "Trigger Video Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1080,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-videos",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"plan_id\": \"{{ $json.plan_id }}\" }",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c7357df9b55d41428833",
+      "name": "Notify Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/send-notification",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"client_id\": \"{{ $json.client_id }}\",\n  \"type\": \"videos_generating\",\n  \"title\": \"Your ad videos are being created!\",\n  \"message\": \"Scripts are locked. Videos are rendering now — you\\'ll be able to preview them soon.\",\n  \"channels\": [\"email\", \"sms\"]\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "fabe383cc4504ef9a7db",
+      "name": "Email Kelly (Dev Log)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        160
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = items.map(item => {\n  const clientName = item.json.client_name || \"unknown\";\n  const msg = `Would email Kelly: Scripts locked for ${clientName}, video gen triggered`;\n  console.log(msg);\n  return { json: { logged: msg } };\n});\nreturn results;"
+      }
+    }
+  ],
+  "connections": {
+    "Friday 6pm CT": {
+      "main": [
+        [
+          {
+            "node": "Find Scripts Ready Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Scripts Ready Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Scripts Ready Plans": {
+      "main": [
+        [
+          {
+            "node": "Has Plans?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Plans?": {
+      "main": [
+        [
+          {
+            "node": "Lock Scripts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Lock Scripts": {
+      "main": [
+        [
+          {
+            "node": "Trigger Video Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Video Gen": {
+      "main": [
+        [
+          {
+            "node": "Notify Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Client": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly (Dev Log)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Friday 6pm CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "989511a7-936f-4607-a40a-c55b1effda61",
+  "activeVersionId": "989511a7-936f-4607-a40a-c55b1effda61",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-18T03:32:31.693Z",
+      "createdAt": "2026-02-18T03:32:31.693Z",
+      "role": "workflow:owner",
+      "workflowId": "lggMXNxZCjvBoSil",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-18T03:32:31.725Z",
+    "createdAt": "2026-02-18T03:32:31.725Z",
+    "versionId": "989511a7-936f-4607-a40a-c55b1effda61",
+    "workflowId": "lggMXNxZCjvBoSil",
+    "nodes": [
+      {
+        "id": "1e87f69eda2748399103",
+        "name": "Friday 6pm CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 0 * * 6"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "ba2c9165919641a8a652",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          100
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "523e322eb6e341988d1c",
+        "name": "Find Scripts Ready Plans",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          300,
+          200
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.theme_emoji, wp.week_start,\n       c.name AS client_name\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.status = 'scripts_ready'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "1f96771e955b4f53add2",
+        "name": "Has Plans?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          560,
+          200
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": ""
+            },
+            "conditions": [
+              {
+                "id": "condition-0",
+                "leftValue": "={{ $json.plan_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "39dc91999f7545298843",
+        "name": "Lock Scripts",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          820,
+          160
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE weekly_plans\nSET status = 'scripts_locked',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'scripts_ready'",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "39477eb39e8f4fa3809c",
+        "name": "Trigger Video Gen",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1080,
+          160
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-videos",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={ \"plan_id\": \"{{ $json.plan_id }}\" }",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "c7357df9b55d41428833",
+        "name": "Notify Client",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1340,
+          160
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/send-notification",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"client_id\": \"{{ $json.client_id }}\",\n  \"type\": \"videos_generating\",\n  \"title\": \"Your ad videos are being created!\",\n  \"message\": \"Scripts are locked. Videos are rendering now — you\\'ll be able to preview them soon.\",\n  \"channels\": [\"email\", \"sms\"]\n}",
+          "options": {}
+        }
+      },
+      {
+        "id": "fabe383cc4504ef9a7db",
+        "name": "Email Kelly (Dev Log)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1600,
+          160
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst results = items.map(item => {\n  const clientName = item.json.client_name || \"unknown\";\n  const msg = `Would email Kelly: Scripts locked for ${clientName}, video gen triggered`;\n  console.log(msg);\n  return { json: { logged: msg } };\n});\nreturn results;"
+        }
+      }
+    ],
+    "connections": {
+      "Friday 6pm CT": {
+        "main": [
+          [
+            {
+              "node": "Find Scripts Ready Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Find Scripts Ready Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Scripts Ready Plans": {
+        "main": [
+          [
+            {
+              "node": "Has Plans?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Plans?": {
+        "main": [
+          [
+            {
+              "node": "Lock Scripts",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Lock Scripts": {
+        "main": [
+          [
+            {
+              "node": "Trigger Video Gen",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Trigger Video Gen": {
+        "main": [
+          [
+            {
+              "node": "Notify Client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notify Client": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly (Dev Log)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
