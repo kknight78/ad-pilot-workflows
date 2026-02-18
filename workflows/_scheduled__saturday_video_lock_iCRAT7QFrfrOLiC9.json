@@ -1,0 +1,465 @@
+{
+  "updatedAt": "2026-02-18T03:34:53.750Z",
+  "createdAt": "2026-02-18T03:34:53.750Z",
+  "id": "iCRAT7QFrfrOLiC9",
+  "name": "[SCHEDULED] Saturday Video Lock",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 5 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Saturday 11pm CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "node-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.week_start, c.name AS client_name FROM weekly_plans wp JOIN clients c ON c.id = wp.client_id WHERE wp.status IN ('scripts_locked', 'rendering', 'videos_ready') AND wp.week_start >= date_trunc('week', CURRENT_DATE) AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+        "options": {}
+      },
+      "id": "node-find-plans",
+      "name": "Find Rendering Plans",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        500,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "condition-0",
+              "leftValue": "={{ $json.plan_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if",
+      "name": "Has Plans?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE weekly_plans SET status = 'publish_ready', updated_at = NOW() WHERE id = '{{ $json.plan_id }}'::uuid AND status IN ('scripts_locked', 'rendering', 'videos_ready')",
+        "options": {}
+      },
+      "id": "node-lock",
+      "name": "Lock Videos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/send-notification",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"client_id\": \"{{ $json.client_id }}\", \"type\": \"publish_locked\", \"title\": \"Your ads are locked and ready to publish!\", \"message\": \"Everything is set. Your ads will go live Sunday night/Monday morning.\", \"channels\": [\"email\", \"sms\"] }",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-notify",
+      "name": "Notify Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn [{ json: { success: true, plans_locked: items.length, message: `Locked ${items.length} plans for publishing` } }];"
+      },
+      "id": "node-log",
+      "name": "Log Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Saturday 11pm CT": {
+      "main": [
+        [
+          {
+            "node": "Find Rendering Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Rendering Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Rendering Plans": {
+      "main": [
+        [
+          {
+            "node": "Has Plans?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Plans?": {
+      "main": [
+        [
+          {
+            "node": "Lock Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lock Videos": {
+      "main": [
+        [
+          {
+            "node": "Notify Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Client": {
+      "main": [
+        [
+          {
+            "node": "Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Saturday 11pm CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "f0ad1486-a3b3-4e09-82e8-2dc087149e85",
+  "activeVersionId": "f0ad1486-a3b3-4e09-82e8-2dc087149e85",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-18T03:34:53.750Z",
+      "createdAt": "2026-02-18T03:34:53.750Z",
+      "role": "workflow:owner",
+      "workflowId": "iCRAT7QFrfrOLiC9",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-18T03:34:53.769Z",
+    "createdAt": "2026-02-18T03:34:53.769Z",
+    "versionId": "f0ad1486-a3b3-4e09-82e8-2dc087149e85",
+    "workflowId": "iCRAT7QFrfrOLiC9",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 5 * * 0"
+              }
+            ]
+          }
+        },
+        "id": "node-schedule",
+        "name": "Saturday 11pm CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          250,
+          300
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "node-manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          250,
+          500
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.week_start, c.name AS client_name FROM weekly_plans wp JOIN clients c ON c.id = wp.client_id WHERE wp.status IN ('scripts_locked', 'rendering', 'videos_ready') AND wp.week_start >= date_trunc('week', CURRENT_DATE) AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+          "options": {}
+        },
+        "id": "node-find-plans",
+        "name": "Find Rendering Plans",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          500,
+          400
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": ""
+            },
+            "conditions": [
+              {
+                "id": "condition-0",
+                "leftValue": "={{ $json.plan_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "node-if",
+        "name": "Has Plans?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          700,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE weekly_plans SET status = 'publish_ready', updated_at = NOW() WHERE id = '{{ $json.plan_id }}'::uuid AND status IN ('scripts_locked', 'rendering', 'videos_ready')",
+          "options": {}
+        },
+        "id": "node-lock",
+        "name": "Lock Videos",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          900,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/send-notification",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={ \"client_id\": \"{{ $json.client_id }}\", \"type\": \"publish_locked\", \"title\": \"Your ads are locked and ready to publish!\", \"message\": \"Everything is set. Your ads will go live Sunday night/Monday morning.\", \"channels\": [\"email\", \"sms\"] }",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "node-notify",
+        "name": "Notify Client",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all();\nreturn [{ json: { success: true, plans_locked: items.length, message: `Locked ${items.length} plans for publishing` } }];"
+        },
+        "id": "node-log",
+        "name": "Log Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1300,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Saturday 11pm CT": {
+        "main": [
+          [
+            {
+              "node": "Find Rendering Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Find Rendering Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Rendering Plans": {
+        "main": [
+          [
+            {
+              "node": "Has Plans?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Plans?": {
+        "main": [
+          [
+            {
+              "node": "Lock Videos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lock Videos": {
+        "main": [
+          [
+            {
+              "node": "Notify Client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notify Client": {
+        "main": [
+          [
+            {
+              "node": "Log Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
