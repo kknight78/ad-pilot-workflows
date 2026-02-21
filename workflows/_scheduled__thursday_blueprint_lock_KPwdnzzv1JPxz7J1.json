@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-18T03:30:47.154Z",
+  "updatedAt": "2026-02-20T20:58:54.305Z",
   "createdAt": "2026-02-16T22:38:04.038Z",
   "id": "KPwdnzzv1JPxz7J1",
   "name": "[SCHEDULED] Thursday Blueprint Lock",
@@ -71,7 +71,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -276,8 +276,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "1a6b8e2f-65f1-42d7-a85f-3510ba22032d",
-  "activeVersionId": "1a6b8e2f-65f1-42d7-a85f-3510ba22032d",
+  "versionId": "41cd3bdf-f356-453e-a99c-e5fd330f5998",
+  "activeVersionId": "41cd3bdf-f356-453e-a99c-e5fd330f5998",
   "triggerCount": 1,
   "shared": [
     {
@@ -289,9 +289,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-18T03:30:47.157Z",
-    "createdAt": "2026-02-18T03:30:47.157Z",
-    "versionId": "1a6b8e2f-65f1-42d7-a85f-3510ba22032d",
+    "updatedAt": "2026-02-20T20:58:54.308Z",
+    "createdAt": "2026-02-20T20:58:54.308Z",
+    "versionId": "41cd3bdf-f356-453e-a99c-e5fd330f5998",
     "workflowId": "KPwdnzzv1JPxz7J1",
     "nodes": [
       {
@@ -359,7 +359,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
