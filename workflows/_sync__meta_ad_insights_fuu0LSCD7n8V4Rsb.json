@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-18T02:53:32.479Z",
+  "updatedAt": "2026-02-20T17:55:05.466Z",
   "createdAt": "2026-01-28T11:18:31.304Z",
   "id": "fuu0LSCD7n8V4Rsb",
   "name": "[SYNC] Meta Ad Insights",
@@ -368,7 +368,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare date parameters for Meta API\n// Supports backfill mode via webhook body: { \"backfill\": true, \"days\": 90 }\n// Default: last 7 days\n\nconst accounts = $input.all();\n\n// Try multiple ways to get webhook data\nconst webhookNode = $('Webhook Trigger').first();\nlet webhookData = {};\n\nif (webhookNode) {\n  // Try direct json, then body property\n  webhookData = webhookNode.json?.body || webhookNode.json || {};\n}\n\n// Check if this is a backfill request\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 90, 180); // Max 180 days\n\nlet dateParams;\nif (isBackfill) {\n  // Historical backfill with daily breakdown\n  const until = new Date();\n  const since = new Date();\n  since.setDate(since.getDate() - backfillDays);\n  \n  dateParams = {\n    time_range: JSON.stringify({\n      since: since.toISOString().split('T')[0],\n      until: until.toISOString().split('T')[0]\n    }),\n    time_increment: '1' // Daily breakdown\n  };\n} else {\n  // Normal daily sync\n  dateParams = {\n    date_preset: 'last_7d'\n  };\n}\n\n// Pass through accounts with date params attached\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _dateParams: dateParams,\n    _isBackfill: isBackfill,\n    _debug_webhookData: webhookData\n  }\n}));"
+        "jsCode": "// Prepare date parameters for Meta API\n// Supports backfill mode via webhook body: { \"backfill\": true, \"days\": 90 }\n// Default: last 7 days\n\nconst accounts = $input.all();\n\n// Try multiple ways to get webhook data\n// n8n throws if a referenced node didn't execute (e.g. cron trigger)\nlet webhookData = {};\ntry {\n  const webhookNode = $('Webhook Trigger').first();\n  if (webhookNode) {\n    webhookData = webhookNode.json?.body || webhookNode.json || {};\n  }\n} catch(e) {\n  // Cron trigger — no webhook data, use defaults\n}\n\n// Check if this is a backfill request\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 90, 180); // Max 180 days\n\nlet dateParams;\nif (isBackfill) {\n  // Historical backfill with daily breakdown\n  const until = new Date();\n  const since = new Date();\n  since.setDate(since.getDate() - backfillDays);\n  \n  dateParams = {\n    time_range: JSON.stringify({\n      since: since.toISOString().split('T')[0],\n      until: until.toISOString().split('T')[0]\n    }),\n    time_increment: '1' // Daily breakdown\n  };\n} else {\n  // Normal daily sync\n  dateParams = {\n    date_preset: 'last_7d'\n  };\n}\n\n// Pass through accounts with date params attached\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _dateParams: dateParams,\n    _isBackfill: isBackfill,\n    _debug_webhookData: webhookData\n  }\n}));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -819,8 +819,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "e3b2e39e-27ad-47ba-9bb1-85d83feba8f3",
-  "activeVersionId": "e3b2e39e-27ad-47ba-9bb1-85d83feba8f3",
+  "versionId": "15b1b239-42e5-4e2d-9096-905db6c3776e",
+  "activeVersionId": "15b1b239-42e5-4e2d-9096-905db6c3776e",
   "triggerCount": 2,
   "shared": [
     {
@@ -832,9 +832,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-18T02:53:32.482Z",
-    "createdAt": "2026-02-18T02:53:32.482Z",
-    "versionId": "e3b2e39e-27ad-47ba-9bb1-85d83feba8f3",
+    "updatedAt": "2026-02-20T17:55:05.472Z",
+    "createdAt": "2026-02-20T17:55:05.472Z",
+    "versionId": "15b1b239-42e5-4e2d-9096-905db6c3776e",
     "workflowId": "fuu0LSCD7n8V4Rsb",
     "nodes": [
       {
@@ -1199,7 +1199,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Prepare date parameters for Meta API\n// Supports backfill mode via webhook body: { \"backfill\": true, \"days\": 90 }\n// Default: last 7 days\n\nconst accounts = $input.all();\n\n// Try multiple ways to get webhook data\nconst webhookNode = $('Webhook Trigger').first();\nlet webhookData = {};\n\nif (webhookNode) {\n  // Try direct json, then body property\n  webhookData = webhookNode.json?.body || webhookNode.json || {};\n}\n\n// Check if this is a backfill request\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 90, 180); // Max 180 days\n\nlet dateParams;\nif (isBackfill) {\n  // Historical backfill with daily breakdown\n  const until = new Date();\n  const since = new Date();\n  since.setDate(since.getDate() - backfillDays);\n  \n  dateParams = {\n    time_range: JSON.stringify({\n      since: since.toISOString().split('T')[0],\n      until: until.toISOString().split('T')[0]\n    }),\n    time_increment: '1' // Daily breakdown\n  };\n} else {\n  // Normal daily sync\n  dateParams = {\n    date_preset: 'last_7d'\n  };\n}\n\n// Pass through accounts with date params attached\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _dateParams: dateParams,\n    _isBackfill: isBackfill,\n    _debug_webhookData: webhookData\n  }\n}));"
+          "jsCode": "// Prepare date parameters for Meta API\n// Supports backfill mode via webhook body: { \"backfill\": true, \"days\": 90 }\n// Default: last 7 days\n\nconst accounts = $input.all();\n\n// Try multiple ways to get webhook data\n// n8n throws if a referenced node didn't execute (e.g. cron trigger)\nlet webhookData = {};\ntry {\n  const webhookNode = $('Webhook Trigger').first();\n  if (webhookNode) {\n    webhookData = webhookNode.json?.body || webhookNode.json || {};\n  }\n} catch(e) {\n  // Cron trigger — no webhook data, use defaults\n}\n\n// Check if this is a backfill request\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 90, 180); // Max 180 days\n\nlet dateParams;\nif (isBackfill) {\n  // Historical backfill with daily breakdown\n  const until = new Date();\n  const since = new Date();\n  since.setDate(since.getDate() - backfillDays);\n  \n  dateParams = {\n    time_range: JSON.stringify({\n      since: since.toISOString().split('T')[0],\n      until: until.toISOString().split('T')[0]\n    }),\n    time_increment: '1' // Daily breakdown\n  };\n} else {\n  // Normal daily sync\n  dateParams = {\n    date_preset: 'last_7d'\n  };\n}\n\n// Pass through accounts with date params attached\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _dateParams: dateParams,\n    _isBackfill: isBackfill,\n    _debug_webhookData: webhookData\n  }\n}));"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
