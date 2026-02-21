@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-18T03:32:30.745Z",
+  "updatedAt": "2026-02-20T21:11:03.950Z",
   "createdAt": "2026-02-18T03:32:30.745Z",
   "id": "3ZDjZntWSqoPqS9P",
   "name": "[SCHEDULED] Thursday Blueprint Notification",
@@ -7,14 +7,6 @@
   "isArchived": false,
   "nodes": [
     {
-      "id": "0efc006581e141da84df",
-      "name": "Thursday 8am CT",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        300
-      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -24,33 +16,41 @@
             }
           ]
         }
-      }
+      },
+      "id": "0efc006581e141da84df",
+      "name": "Thursday 8am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        224
+      ]
     },
     {
+      "parameters": {},
       "id": "69bfbb51bdfd42a39bc2",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
         0,
-        100
-      ],
-      "parameters": {}
+        32
+      ]
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.theme_emoji, wp.week_start,\n       c.name AS client_name, c.slug AS client_slug,\n       p.id AS approver_person_id, p.email AS approver_email, p.first_name AS approver_name,\n       ipr.auth_token\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nJOIN client_persons cp ON cp.client_id = c.id AND cp.can_approve_plans = true AND cp.is_active = true\nJOIN persons p ON cp.person_id = p.id\nLEFT JOIN idea_ping_responses ipr ON ipr.plan_id = wp.id AND ipr.responded_at IS NULL\nWHERE wp.status = 'draft'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+        "options": {}
+      },
       "id": "8d34c82da4d346939cec",
       "name": "Find Draft Plans",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        300,
-        200
+        224,
+        128
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.theme_emoji, wp.week_start,\n       c.name AS client_name, c.slug AS client_slug\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.status = 'draft'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
-        "options": {}
-      },
       "credentials": {
         "postgres": {
           "id": "ZUwzqy3kvUJpXrDM",
@@ -59,14 +59,6 @@
       }
     },
     {
-      "id": "726d8a5d0d45457fa732",
-      "name": "Has Plans?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        560,
-        200
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -87,38 +79,69 @@
           "combinator": "and"
         },
         "options": {}
-      }
-    },
-    {
-      "id": "4fc00aacc80047d7b6d6",
-      "name": "Notify Client",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      },
+      "id": "726d8a5d0d45457fa732",
+      "name": "Has Plans?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
       "position": [
-        820,
-        160
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/send-notification",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"client_id\": \"{{ $json.client_id }}\",\n  \"type\": \"blueprint_ready\",\n  \"title\": \"Your weekly ad blueprint is ready!\",\n  \"message\": \"{{ $json.theme_emoji }} {{ $json.theme_name }} — Review and customize your plan before Thursday 6PM.\",\n  \"channels\": [\"email\", \"sms\", \"app\"]\n}",
-        "options": {}
-      }
+        448,
+        128
+      ]
     },
     {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const d = item.json;\n  const reviewUrl = d.auth_token\n    ? 'https://app.ad-pilot.ai/review/' + d.plan_id + '?token=' + d.auth_token\n    : 'https://app.ad-pilot.ai';\n\n  return {\n    json: {\n      person_id: d.approver_person_id || null,\n      email: d.approver_email || null,\n      notification_type: 'email',\n      subject: (d.theme_emoji || '') + ' Your weekly ad blueprint is ready!',\n      message: 'Hey ' + (d.approver_name || 'there') + ', the ' + (d.theme_name || 'weekly') + ' plan for ' + d.client_name + ' is ready for your review. Check it out and customize before Thursday 6PM.',\n      link: reviewUrl\n    }\n  };\n});"
+      },
+      "id": "4fc00aacc80047d7b6d6",
+      "name": "Prepare Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { success: true, plans_notified: $input.all().length } }];"
+      },
       "id": "14c6e72e71d54d9cb75b",
       "name": "Log Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1080,
-        160
-      ],
+        1120,
+        128
+      ]
+    },
+    {
       "parameters": {
-        "jsCode": "return [{ json: { success: true, plans_notified: $input.all().length } }];"
-      }
+        "workflowId": {
+          "__rl": true,
+          "value": "hqfMwxKgqE3DD8VZ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/hqfMwxKgqE3DD8VZ",
+          "cachedResultName": "[Service] Send User Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "call-send-notification",
+      "name": "Call: Send Notification",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        128
+      ]
     }
   ],
   "connections": {
@@ -159,7 +182,7 @@
       "main": [
         [
           {
-            "node": "Notify Client",
+            "node": "Prepare Notification",
             "type": "main",
             "index": 0
           }
@@ -167,7 +190,18 @@
         []
       ]
     },
-    "Notify Client": {
+    "Prepare Notification": {
+      "main": [
+        [
+          {
+            "node": "Call: Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Send Notification": {
       "main": [
         [
           {
@@ -190,9 +224,9 @@
     }
   },
   "meta": null,
-  "pinData": null,
-  "versionId": "aeeb11e3-be7b-49fd-a72a-6059c95be26b",
-  "activeVersionId": "aeeb11e3-be7b-49fd-a72a-6059c95be26b",
+  "pinData": {},
+  "versionId": "571214c6-9dcb-4aac-988e-a6c7edb4f4f6",
+  "activeVersionId": "571214c6-9dcb-4aac-988e-a6c7edb4f4f6",
   "triggerCount": 1,
   "shared": [
     {
@@ -204,20 +238,12 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-18T03:32:30.769Z",
-    "createdAt": "2026-02-18T03:32:30.769Z",
-    "versionId": "aeeb11e3-be7b-49fd-a72a-6059c95be26b",
+    "updatedAt": "2026-02-20T21:11:07.016Z",
+    "createdAt": "2026-02-20T21:11:03.954Z",
+    "versionId": "571214c6-9dcb-4aac-988e-a6c7edb4f4f6",
     "workflowId": "3ZDjZntWSqoPqS9P",
     "nodes": [
       {
-        "id": "0efc006581e141da84df",
-        "name": "Thursday 8am CT",
-        "type": "n8n-nodes-base.scheduleTrigger",
-        "typeVersion": 1.2,
-        "position": [
-          0,
-          300
-        ],
         "parameters": {
           "rule": {
             "interval": [
@@ -227,33 +253,41 @@
               }
             ]
           }
-        }
+        },
+        "id": "0efc006581e141da84df",
+        "name": "Thursday 8am CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          224
+        ]
       },
       {
+        "parameters": {},
         "id": "69bfbb51bdfd42a39bc2",
         "name": "Manual Trigger",
         "type": "n8n-nodes-base.manualTrigger",
         "typeVersion": 1,
         "position": [
           0,
-          100
-        ],
-        "parameters": {}
+          32
+        ]
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.theme_emoji, wp.week_start,\n       c.name AS client_name, c.slug AS client_slug,\n       p.id AS approver_person_id, p.email AS approver_email, p.first_name AS approver_name,\n       ipr.auth_token\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nJOIN client_persons cp ON cp.client_id = c.id AND cp.can_approve_plans = true AND cp.is_active = true\nJOIN persons p ON cp.person_id = p.id\nLEFT JOIN idea_ping_responses ipr ON ipr.plan_id = wp.id AND ipr.responded_at IS NULL\nWHERE wp.status = 'draft'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
+          "options": {}
+        },
         "id": "8d34c82da4d346939cec",
         "name": "Find Draft Plans",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          300,
-          200
+          224,
+          128
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT wp.id AS plan_id, wp.client_id, wp.theme_name, wp.theme_emoji, wp.week_start,\n       c.name AS client_name, c.slug AS client_slug\nFROM weekly_plans wp\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.status = 'draft'\n  AND wp.week_start >= date_trunc('week', CURRENT_DATE)\n  AND wp.week_start < date_trunc('week', CURRENT_DATE) + interval '7 days'",
-          "options": {}
-        },
         "credentials": {
           "postgres": {
             "id": "ZUwzqy3kvUJpXrDM",
@@ -262,14 +296,6 @@
         }
       },
       {
-        "id": "726d8a5d0d45457fa732",
-        "name": "Has Plans?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.2,
-        "position": [
-          560,
-          200
-        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -290,38 +316,69 @@
             "combinator": "and"
           },
           "options": {}
-        }
-      },
-      {
-        "id": "4fc00aacc80047d7b6d6",
-        "name": "Notify Client",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
+        },
+        "id": "726d8a5d0d45457fa732",
+        "name": "Has Plans?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
         "position": [
-          820,
-          160
-        ],
-        "parameters": {
-          "method": "POST",
-          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/send-notification",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"client_id\": \"{{ $json.client_id }}\",\n  \"type\": \"blueprint_ready\",\n  \"title\": \"Your weekly ad blueprint is ready!\",\n  \"message\": \"{{ $json.theme_emoji }} {{ $json.theme_name }} — Review and customize your plan before Thursday 6PM.\",\n  \"channels\": [\"email\", \"sms\", \"app\"]\n}",
-          "options": {}
-        }
+          448,
+          128
+        ]
       },
       {
+        "parameters": {
+          "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const d = item.json;\n  const reviewUrl = d.auth_token\n    ? 'https://app.ad-pilot.ai/review/' + d.plan_id + '?token=' + d.auth_token\n    : 'https://app.ad-pilot.ai';\n\n  return {\n    json: {\n      person_id: d.approver_person_id || null,\n      email: d.approver_email || null,\n      notification_type: 'email',\n      subject: (d.theme_emoji || '') + ' Your weekly ad blueprint is ready!',\n      message: 'Hey ' + (d.approver_name || 'there') + ', the ' + (d.theme_name || 'weekly') + ' plan for ' + d.client_name + ' is ready for your review. Check it out and customize before Thursday 6PM.',\n      link: reviewUrl\n    }\n  };\n});"
+        },
+        "id": "4fc00aacc80047d7b6d6",
+        "name": "Prepare Notification",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{ json: { success: true, plans_notified: $input.all().length } }];"
+        },
         "id": "14c6e72e71d54d9cb75b",
         "name": "Log Result",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1080,
-          160
-        ],
+          1120,
+          128
+        ]
+      },
+      {
         "parameters": {
-          "jsCode": "return [{ json: { success: true, plans_notified: $input.all().length } }];"
-        }
+          "workflowId": {
+            "__rl": true,
+            "value": "hqfMwxKgqE3DD8VZ",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/hqfMwxKgqE3DD8VZ",
+            "cachedResultName": "[Service] Send User Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "call-send-notification",
+        "name": "Call: Send Notification",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          896,
+          128
+        ]
       }
     ],
     "connections": {
@@ -362,7 +419,7 @@
         "main": [
           [
             {
-              "node": "Notify Client",
+              "node": "Prepare Notification",
               "type": "main",
               "index": 0
             }
@@ -370,7 +427,18 @@
           []
         ]
       },
-      "Notify Client": {
+      "Prepare Notification": {
+        "main": [
+          [
+            {
+              "node": "Call: Send Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Send Notification": {
         "main": [
           [
             {
@@ -383,9 +451,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "name": "Version 571214c6",
+    "description": "",
+    "autosaved": true
   },
   "tags": []
 }
