@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-18T03:34:53.750Z",
+  "updatedAt": "2026-02-21T13:05:01.301Z",
   "createdAt": "2026-02-18T03:34:53.750Z",
   "id": "iCRAT7QFrfrOLiC9",
   "name": "[SCHEDULED] Saturday Video Lock",
@@ -12,7 +12,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 5 * * 0"
+              "expression": "0 23 * * 6"
             }
           ]
         }
@@ -228,8 +228,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "f0ad1486-a3b3-4e09-82e8-2dc087149e85",
-  "activeVersionId": "f0ad1486-a3b3-4e09-82e8-2dc087149e85",
+  "versionId": "6c956169-8e53-4abd-b320-c6e814120132",
+  "activeVersionId": "6c956169-8e53-4abd-b320-c6e814120132",
   "triggerCount": 1,
   "shared": [
     {
@@ -241,9 +241,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-18T03:34:53.769Z",
-    "createdAt": "2026-02-18T03:34:53.769Z",
-    "versionId": "f0ad1486-a3b3-4e09-82e8-2dc087149e85",
+    "updatedAt": "2026-02-21T13:05:01.303Z",
+    "createdAt": "2026-02-21T13:05:01.303Z",
+    "versionId": "6c956169-8e53-4abd-b320-c6e814120132",
     "workflowId": "iCRAT7QFrfrOLiC9",
     "nodes": [
       {
@@ -252,7 +252,7 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "0 5 * * 0"
+                "expression": "0 23 * * 6"
               }
             ]
           }
