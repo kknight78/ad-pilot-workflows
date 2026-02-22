@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-14T16:59:06.627Z",
+  "updatedAt": "2026-02-22T03:25:11.292Z",
   "createdAt": "2026-01-26T23:34:50.230Z",
   "id": "5pYAGAYJmg7qe3D7",
   "name": "[01] Orchestrate Video Creation",
@@ -35,7 +35,7 @@
       "typeVersion": 2.1,
       "position": [
         -416,
-        224
+        192
       ],
       "id": "webhook-node",
       "name": "Webhook",
@@ -43,13 +43,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body;\n\nlet config;\n\nif (body.test_workflow) {\n  config = {\n    ...body[0],\n    test_workflow: body.test_workflow\n  };\n} else {\n  config = body;\n}\n\n// Email allowlist\nconst allowlist = [\n  'kelly@kellyrae.net',\n  'kellyraeknight78@gmail.com',\n  'esears48@gmail.com',\n  'kelly@ad-pilot.ai',\n  'eric@ad-pilot.ai',\n  'kimark100@aol.com',\n  'garyknight@carmackcars.com',\n  'karleeknight@gmail.com',\n  'karlee515@yahoo.com',\n  'Blakef1984@gmail.com',\n  'bfree98@aol.com',\n  'kacywaldhoff@yahoo.com',\n  'kacywaldhoff@gmail.com',\n  'Mark@ChampaignExperts.com',\n  'tessawaldhoff@gmail.com',\n  'laurenwaldhoff@gmail.com',\n  'shaddelaney@carmackcars.com',\n  'wedin95@aol.com ',\n  'terricox@carmackcars.com',\n  'hannah.blue1302@gmail.com',\n  'notredameone@yahoo.com',\n  'gregh@consolidatedccs.com'\n];\n\nconst email = config.email;\n\nif (!email) {\n  throw new Error('Email is required');\n}\n\nconst isAllowed = allowlist.some(allowed => \n  email.toLowerCase() === allowed.toLowerCase()\n);\n\nif (!isAllowed) {\n  throw new Error('Your email address is not authorized to use this system.');\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(email)) {\n  throw new Error('Invalid email format');\n}\n\n// Normalize ratios and platforms arrays\nconfig.ratios = config.ratios || ['9:16'];\nconfig.platforms = config.platforms || [];\n\nconsole.log(`Authorized: ${email}`);\nconsole.log(`Ratios: ${config.ratios.join(', ')}`);\nconsole.log(`Platforms: ${config.platforms.join(', ') || 'none'}`);\n\nreturn [{ json: config }];"
+        "jsCode": "const body = $json.body;\n\nlet config;\n\nif (body.test_workflow) {\n  config = {\n    ...body[0],\n    test_workflow: body.test_workflow\n  };\n} else {\n  config = body;\n}\n\n// Email allowlist\nconst allowlist = [\n  'system@ad-pilot.ai',\n  'kelly@kellyrae.net',\n  'kellyraeknight78@gmail.com',\n  'esears48@gmail.com',\n  'kelly@ad-pilot.ai',\n  'eric@ad-pilot.ai',\n  'kimark100@aol.com',\n  'garyknight@carmackcars.com',\n  'karleeknight@gmail.com',\n  'karlee515@yahoo.com',\n  'Blakef1984@gmail.com',\n  'bfree98@aol.com',\n  'kacywaldhoff@yahoo.com',\n  'kacywaldhoff@gmail.com',\n  'Mark@ChampaignExperts.com',\n  'tessawaldhoff@gmail.com',\n  'laurenwaldhoff@gmail.com',\n  'shaddelaney@carmackcars.com',\n  'wedin95@aol.com ',\n  'terricox@carmackcars.com',\n  'hannah.blue1302@gmail.com',\n  'notredameone@yahoo.com',\n  'gregh@consolidatedccs.com'\n];\n\nconst email = config.email;\n\nif (!email) {\n  throw new Error('Email is required');\n}\n\nconst isAllowed = allowlist.some(allowed => \n  email.toLowerCase() === allowed.toLowerCase()\n);\n\nif (!isAllowed) {\n  throw new Error('Your email address is not authorized to use this system.');\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(email)) {\n  throw new Error('Invalid email format');\n}\n\n// Normalize ratios and platforms arrays\nconfig.ratios = config.ratios || ['9:16'];\nconfig.platforms = config.platforms || [];\n\nconsole.log(`Authorized: ${email}`);\nconsole.log(`Ratios: ${config.ratios.join(', ')}`);\nconsole.log(`Platforms: ${config.platforms.join(', ') || 'none'}`);\n\nreturn [{ json: config }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -192,
-        224
+        192
       ],
       "id": "filter-emails",
       "name": "Filter on Whitelisted Emails"
@@ -66,8 +66,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1600,
-        224
+        2272,
+        464
       ],
       "id": "call-script",
       "name": "Call '[02] Generate Script'"
@@ -99,8 +99,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1824,
-        224
+        2496,
+        464
       ],
       "id": "if-preview",
       "name": "If: Script Preview Mode"
@@ -125,8 +125,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2944,
-        128
+        3392,
+        656
       ],
       "id": "respond-preview",
       "name": "Respond - Script Preview"
@@ -142,8 +142,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2048,
-        320
+        2720,
+        192
       ],
       "id": "respond-started",
       "name": "Respond - Generation Started"
@@ -154,6 +154,7 @@
           "__rl": true,
           "value": "g3Uw2wgALuQvGkCE",
           "mode": "list",
+          "cachedResultUrl": "/workflow/g3Uw2wgALuQvGkCE",
           "cachedResultName": "[03] Generate Avatar"
         },
         "workflowInputs": {
@@ -169,8 +170,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        2272,
-        320
+        2944,
+        192
       ],
       "id": "call-avatar",
       "name": "Call '[03] Generate Avatar'"
@@ -182,8 +183,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2496,
-        320
+        3168,
+        192
       ],
       "id": "split-ratios",
       "name": "Split by Ratios"
@@ -212,8 +213,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        2720,
-        320
+        3392,
+        192
       ],
       "id": "call-video",
       "name": "Call '[04] Generate Video'",
@@ -246,8 +247,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2944,
-        320
+        3616,
+        192
       ],
       "id": "if-needs-banners",
       "name": "If: Needs Platform Banners"
@@ -259,8 +260,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3168,
-        224
+        3840,
+        176
       ],
       "id": "prep-banners",
       "name": "Prepare for Banners"
@@ -289,8 +290,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        3392,
-        224
+        4064,
+        176
       ],
       "id": "call-banners",
       "name": "Call '[08] Add Platform Banners'"
@@ -302,8 +303,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3616,
-        416
+        4288,
+        368
       ],
       "id": "no-banners",
       "name": "No Banners - Passthrough"
@@ -315,8 +316,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3616,
-        224
+        4288,
+        176
       ],
       "id": "merge-banner-results",
       "name": "Merge Banner Results"
@@ -330,8 +331,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        3840,
-        320
+        4512,
+        192
       ],
       "id": "aggregate-all",
       "name": "Aggregate All Videos"
@@ -343,8 +344,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4064,
-        320
+        4736,
+        192
       ],
       "id": "format-response",
       "name": "Format Response"
@@ -363,8 +364,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        4288,
-        320
+        4960,
+        192
       ],
       "id": "send-email",
       "name": "Send Video Email",
@@ -448,8 +449,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        4512,
-        224
+        5184,
+        176
       ],
       "id": "update-job",
       "name": "Update Job Complete",
@@ -517,7 +518,7 @@
       "typeVersion": 2.5,
       "position": [
         256,
-        224
+        192
       ],
       "id": "lookup-avatar-config",
       "name": "Lookup Avatar Config",
@@ -536,7 +537,7 @@
       "typeVersion": 2,
       "position": [
         928,
-        224
+        192
       ],
       "id": "build-config",
       "name": "Build Config"
@@ -551,7 +552,7 @@
       "typeVersion": 2.5,
       "position": [
         480,
-        224
+        192
       ],
       "id": "lookup-background",
       "name": "Lookup Background",
@@ -570,8 +571,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4512,
-        416
+        5184,
+        368
       ],
       "id": "format-email-error",
       "name": "Format Email Error"
@@ -598,8 +599,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        4736,
-        416
+        5408,
+        368
       ],
       "id": "call-error-email-orch",
       "name": "Call: Email Error"
@@ -614,7 +615,7 @@
       "typeVersion": 2.6,
       "position": [
         704,
-        224
+        192
       ],
       "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
       "name": "Lookup Wide Override Default",
@@ -638,8 +639,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1152,
-        224
+        -416,
+        960
       ],
       "id": "f11f6e71-048c-4184-87d5-06c2c6068624",
       "name": "Generate Theme Pack"
@@ -651,8 +652,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1376,
-        224
+        -416,
+        1184
       ],
       "id": "d2f5a8cb-f53a-4f24-a16f-b7348f6ac8fd",
       "name": "Add Theme Pack to Config"
@@ -667,7 +668,7 @@
       "typeVersion": 2.6,
       "position": [
         32,
-        224
+        192
       ],
       "id": "2fcce21b-ffac-4443-b549-d89ceb9fbe3c",
       "name": "Lookup Client Base",
@@ -687,8 +688,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2048,
-        128
+        2720,
+        496
       ]
     },
     {
@@ -707,8 +708,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2272,
-        128
+        2944,
+        496
       ]
     },
     {
@@ -720,8 +721,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2496,
-        128
+        3168,
+        496
       ]
     },
     {
@@ -793,8 +794,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        2720,
-        128
+        3392,
+        464
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -810,8 +811,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1040,
-        424
+        1152,
+        192
       ],
       "id": "ppi-01",
       "name": "Prepare Process Input"
@@ -896,8 +897,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1200,
-        424
+        1600,
+        448
       ],
       "id": "rbt-01",
       "name": "Route by Template"
@@ -914,8 +915,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1380,
-        300
+        1824,
+        280
       ],
       "id": "cpm-01",
       "name": "Call Process Multi-Item"
@@ -932,8 +933,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1380,
-        424
+        1824,
+        544
       ],
       "id": "cps-01",
       "name": "Call Process Spotlight"
@@ -950,8 +951,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1380,
-        548
+        1824,
+        736
       ],
       "id": "cpe-01",
       "name": "Call Process Educational"
@@ -963,11 +964,56 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1560,
-        424
+        2048,
+        464
       ],
       "id": "mpr-01",
       "name": "Merge Processing Results"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "skip-condition",
+              "leftValue": "={{ $json.source }}",
+              "rightValue": "weekly_cycle",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-skip-to-render",
+      "name": "If: Skip to Render",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build script object from pre-existing script text\n// When skip_to_render is true, scripts were already generated in the Prep phase\nconst config = $json;\nconst scriptText = config.script_text || '';\n\n// Build the script object that [03] Generate Avatar expects\n// full_script is what 11Labs TTS uses\nconfig.script = {\n  full_script: scriptText,\n  hook: '',\n  segments: [],\n  cta: ''\n};\n\n// Vehicles: already enriched with VIN + image_url from batch query\n// [04] Generate Video's \"Process All Vehicles\" will check Cloudinary cache by VIN\nif (!config.vehicles) config.vehicles = [];\n\n// Set empty processed_items and theme_pack\nconfig.processed_items = [];\nconfig.theme_pack = {};\n\nconsole.log('Skip to render: built script object for TTS');\nconsole.log('Script length:', scriptText.length);\nconsole.log('Vehicles:', config.vehicles.length);\nif (config.vehicles.length > 0) {\n  console.log('First vehicle VIN:', config.vehicles[0].vin);\n}\n\nreturn [{ json: config }];"
+      },
+      "id": "build-script-for-render",
+      "name": "Build Script for Render",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        128
+      ]
     }
   ],
   "connections": {
@@ -1276,7 +1322,7 @@
       "main": [
         [
           {
-            "node": "Route by Template",
+            "node": "If: Skip to Render",
             "type": "main",
             "index": 0
           }
@@ -1358,6 +1404,35 @@
           }
         ]
       ]
+    },
+    "If: Skip to Render": {
+      "main": [
+        [
+          {
+            "node": "Build Script for Render",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route by Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Script for Render": {
+      "main": [
+        [
+          {
+            "node": "Respond - Generation Started",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1368,8 +1443,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "c4d433c8-b4c5-4523-bc0d-5cbdac9fadaf",
-  "activeVersionId": "c4d433c8-b4c5-4523-bc0d-5cbdac9fadaf",
+  "versionId": "fe647f8f-16c0-450c-9a7d-f38d2e10cdb3",
+  "activeVersionId": "fe647f8f-16c0-450c-9a7d-f38d2e10cdb3",
   "triggerCount": 1,
   "shared": [
     {
@@ -1381,9 +1456,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-14T16:59:06.632Z",
-    "createdAt": "2026-02-14T16:59:06.632Z",
-    "versionId": "c4d433c8-b4c5-4523-bc0d-5cbdac9fadaf",
+    "updatedAt": "2026-02-22T03:25:11.297Z",
+    "createdAt": "2026-02-22T03:25:11.297Z",
+    "versionId": "fe647f8f-16c0-450c-9a7d-f38d2e10cdb3",
     "workflowId": "5pYAGAYJmg7qe3D7",
     "nodes": [
       {
@@ -1415,7 +1490,7 @@
         "typeVersion": 2.1,
         "position": [
           -416,
-          224
+          192
         ],
         "id": "webhook-node",
         "name": "Webhook",
@@ -1423,13 +1498,13 @@
       },
       {
         "parameters": {
-          "jsCode": "const body = $json.body;\n\nlet config;\n\nif (body.test_workflow) {\n  config = {\n    ...body[0],\n    test_workflow: body.test_workflow\n  };\n} else {\n  config = body;\n}\n\n// Email allowlist\nconst allowlist = [\n  'kelly@kellyrae.net',\n  'kellyraeknight78@gmail.com',\n  'esears48@gmail.com',\n  'kelly@ad-pilot.ai',\n  'eric@ad-pilot.ai',\n  'kimark100@aol.com',\n  'garyknight@carmackcars.com',\n  'karleeknight@gmail.com',\n  'karlee515@yahoo.com',\n  'Blakef1984@gmail.com',\n  'bfree98@aol.com',\n  'kacywaldhoff@yahoo.com',\n  'kacywaldhoff@gmail.com',\n  'Mark@ChampaignExperts.com',\n  'tessawaldhoff@gmail.com',\n  'laurenwaldhoff@gmail.com',\n  'shaddelaney@carmackcars.com',\n  'wedin95@aol.com ',\n  'terricox@carmackcars.com',\n  'hannah.blue1302@gmail.com',\n  'notredameone@yahoo.com',\n  'gregh@consolidatedccs.com'\n];\n\nconst email = config.email;\n\nif (!email) {\n  throw new Error('Email is required');\n}\n\nconst isAllowed = allowlist.some(allowed => \n  email.toLowerCase() === allowed.toLowerCase()\n);\n\nif (!isAllowed) {\n  throw new Error('Your email address is not authorized to use this system.');\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(email)) {\n  throw new Error('Invalid email format');\n}\n\n// Normalize ratios and platforms arrays\nconfig.ratios = config.ratios || ['9:16'];\nconfig.platforms = config.platforms || [];\n\nconsole.log(`Authorized: ${email}`);\nconsole.log(`Ratios: ${config.ratios.join(', ')}`);\nconsole.log(`Platforms: ${config.platforms.join(', ') || 'none'}`);\n\nreturn [{ json: config }];"
+          "jsCode": "const body = $json.body;\n\nlet config;\n\nif (body.test_workflow) {\n  config = {\n    ...body[0],\n    test_workflow: body.test_workflow\n  };\n} else {\n  config = body;\n}\n\n// Email allowlist\nconst allowlist = [\n  'system@ad-pilot.ai',\n  'kelly@kellyrae.net',\n  'kellyraeknight78@gmail.com',\n  'esears48@gmail.com',\n  'kelly@ad-pilot.ai',\n  'eric@ad-pilot.ai',\n  'kimark100@aol.com',\n  'garyknight@carmackcars.com',\n  'karleeknight@gmail.com',\n  'karlee515@yahoo.com',\n  'Blakef1984@gmail.com',\n  'bfree98@aol.com',\n  'kacywaldhoff@yahoo.com',\n  'kacywaldhoff@gmail.com',\n  'Mark@ChampaignExperts.com',\n  'tessawaldhoff@gmail.com',\n  'laurenwaldhoff@gmail.com',\n  'shaddelaney@carmackcars.com',\n  'wedin95@aol.com ',\n  'terricox@carmackcars.com',\n  'hannah.blue1302@gmail.com',\n  'notredameone@yahoo.com',\n  'gregh@consolidatedccs.com'\n];\n\nconst email = config.email;\n\nif (!email) {\n  throw new Error('Email is required');\n}\n\nconst isAllowed = allowlist.some(allowed => \n  email.toLowerCase() === allowed.toLowerCase()\n);\n\nif (!isAllowed) {\n  throw new Error('Your email address is not authorized to use this system.');\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(email)) {\n  throw new Error('Invalid email format');\n}\n\n// Normalize ratios and platforms arrays\nconfig.ratios = config.ratios || ['9:16'];\nconfig.platforms = config.platforms || [];\n\nconsole.log(`Authorized: ${email}`);\nconsole.log(`Ratios: ${config.ratios.join(', ')}`);\nconsole.log(`Platforms: ${config.platforms.join(', ') || 'none'}`);\n\nreturn [{ json: config }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           -192,
-          224
+          192
         ],
         "id": "filter-emails",
         "name": "Filter on Whitelisted Emails"
@@ -1446,8 +1521,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1600,
-          224
+          2272,
+          464
         ],
         "id": "call-script",
         "name": "Call '[02] Generate Script'"
@@ -1479,8 +1554,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1824,
-          224
+          2496,
+          464
         ],
         "id": "if-preview",
         "name": "If: Script Preview Mode"
@@ -1505,8 +1580,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.4,
         "position": [
-          2944,
-          128
+          3392,
+          656
         ],
         "id": "respond-preview",
         "name": "Respond - Script Preview"
@@ -1522,8 +1597,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.4,
         "position": [
-          2048,
-          320
+          2720,
+          192
         ],
         "id": "respond-started",
         "name": "Respond - Generation Started"
@@ -1534,6 +1609,7 @@
             "__rl": true,
             "value": "g3Uw2wgALuQvGkCE",
             "mode": "list",
+            "cachedResultUrl": "/workflow/g3Uw2wgALuQvGkCE",
             "cachedResultName": "[03] Generate Avatar"
           },
           "workflowInputs": {
@@ -1549,8 +1625,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          2272,
-          320
+          2944,
+          192
         ],
         "id": "call-avatar",
         "name": "Call '[03] Generate Avatar'"
@@ -1562,8 +1638,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2496,
-          320
+          3168,
+          192
         ],
         "id": "split-ratios",
         "name": "Split by Ratios"
@@ -1592,8 +1668,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          2720,
-          320
+          3392,
+          192
         ],
         "id": "call-video",
         "name": "Call '[04] Generate Video'",
@@ -1626,8 +1702,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2944,
-          320
+          3616,
+          192
         ],
         "id": "if-needs-banners",
         "name": "If: Needs Platform Banners"
@@ -1639,8 +1715,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3168,
-          224
+          3840,
+          176
         ],
         "id": "prep-banners",
         "name": "Prepare for Banners"
@@ -1669,8 +1745,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          3392,
-          224
+          4064,
+          176
         ],
         "id": "call-banners",
         "name": "Call '[08] Add Platform Banners'"
@@ -1682,8 +1758,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3616,
-          416
+          4288,
+          368
         ],
         "id": "no-banners",
         "name": "No Banners - Passthrough"
@@ -1695,8 +1771,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3616,
-          224
+          4288,
+          176
         ],
         "id": "merge-banner-results",
         "name": "Merge Banner Results"
@@ -1710,8 +1786,8 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          3840,
-          320
+          4512,
+          192
         ],
         "id": "aggregate-all",
         "name": "Aggregate All Videos"
@@ -1723,8 +1799,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4064,
-          320
+          4736,
+          192
         ],
         "id": "format-response",
         "name": "Format Response"
@@ -1743,8 +1819,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          4288,
-          320
+          4960,
+          192
         ],
         "id": "send-email",
         "name": "Send Video Email",
@@ -1828,8 +1904,8 @@
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
         "position": [
-          4512,
-          224
+          5184,
+          176
         ],
         "id": "update-job",
         "name": "Update Job Complete",
@@ -1897,7 +1973,7 @@
         "typeVersion": 2.5,
         "position": [
           256,
-          224
+          192
         ],
         "id": "lookup-avatar-config",
         "name": "Lookup Avatar Config",
@@ -1916,7 +1992,7 @@
         "typeVersion": 2,
         "position": [
           928,
-          224
+          192
         ],
         "id": "build-config",
         "name": "Build Config"
@@ -1931,7 +2007,7 @@
         "typeVersion": 2.5,
         "position": [
           480,
-          224
+          192
         ],
         "id": "lookup-background",
         "name": "Lookup Background",
@@ -1950,8 +2026,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4512,
-          416
+          5184,
+          368
         ],
         "id": "format-email-error",
         "name": "Format Email Error"
@@ -1978,8 +2054,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          4736,
-          416
+          5408,
+          368
         ],
         "id": "call-error-email-orch",
         "name": "Call: Email Error"
@@ -1994,7 +2070,7 @@
         "typeVersion": 2.6,
         "position": [
           704,
-          224
+          192
         ],
         "id": "5974cf57-7544-488a-8ee2-238e8f8504b9",
         "name": "Lookup Wide Override Default",
@@ -2018,8 +2094,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
         "position": [
-          1152,
-          224
+          -416,
+          960
         ],
         "id": "f11f6e71-048c-4184-87d5-06c2c6068624",
         "name": "Generate Theme Pack"
@@ -2031,8 +2107,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1376,
-          224
+          -416,
+          1184
         ],
         "id": "d2f5a8cb-f53a-4f24-a16f-b7348f6ac8fd",
         "name": "Add Theme Pack to Config"
@@ -2047,7 +2123,7 @@
         "typeVersion": 2.6,
         "position": [
           32,
-          224
+          192
         ],
         "id": "2fcce21b-ffac-4443-b549-d89ceb9fbe3c",
         "name": "Lookup Client Base",
@@ -2067,8 +2143,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2048,
-          128
+          2720,
+          496
         ]
       },
       {
@@ -2087,8 +2163,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2272,
-          128
+          2944,
+          496
         ]
       },
       {
@@ -2100,8 +2176,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2496,
-          128
+          3168,
+          496
         ]
       },
       {
@@ -2173,8 +2249,8 @@
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.5,
         "position": [
-          2720,
-          128
+          3392,
+          464
         ],
         "credentials": {
           "googleSheetsOAuth2Api": {
@@ -2190,8 +2266,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1040,
-          424
+          1152,
+          192
         ],
         "id": "ppi-01",
         "name": "Prepare Process Input"
@@ -2276,8 +2352,8 @@
         "type": "n8n-nodes-base.switch",
         "typeVersion": 3.2,
         "position": [
-          1200,
-          424
+          1600,
+          448
         ],
         "id": "rbt-01",
         "name": "Route by Template"
@@ -2294,8 +2370,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1380,
-          300
+          1824,
+          280
         ],
         "id": "cpm-01",
         "name": "Call Process Multi-Item"
@@ -2312,8 +2388,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1380,
-          424
+          1824,
+          544
         ],
         "id": "cps-01",
         "name": "Call Process Spotlight"
@@ -2330,8 +2406,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1380,
-          548
+          1824,
+          736
         ],
         "id": "cpe-01",
         "name": "Call Process Educational"
@@ -2343,11 +2419,56 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1560,
-          424
+          2048,
+          464
         ],
         "id": "mpr-01",
         "name": "Merge Processing Results"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "skip-condition",
+                "leftValue": "={{ $json.source }}",
+                "rightValue": "weekly_cycle",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-skip-to-render",
+        "name": "If: Skip to Render",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1376,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build script object from pre-existing script text\n// When skip_to_render is true, scripts were already generated in the Prep phase\nconst config = $json;\nconst scriptText = config.script_text || '';\n\n// Build the script object that [03] Generate Avatar expects\n// full_script is what 11Labs TTS uses\nconfig.script = {\n  full_script: scriptText,\n  hook: '',\n  segments: [],\n  cta: ''\n};\n\n// Vehicles: already enriched with VIN + image_url from batch query\n// [04] Generate Video's \"Process All Vehicles\" will check Cloudinary cache by VIN\nif (!config.vehicles) config.vehicles = [];\n\n// Set empty processed_items and theme_pack\nconfig.processed_items = [];\nconfig.theme_pack = {};\n\nconsole.log('Skip to render: built script object for TTS');\nconsole.log('Script length:', scriptText.length);\nconsole.log('Vehicles:', config.vehicles.length);\nif (config.vehicles.length > 0) {\n  console.log('First vehicle VIN:', config.vehicles[0].vin);\n}\n\nreturn [{ json: config }];"
+        },
+        "id": "build-script-for-render",
+        "name": "Build Script for Render",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2496,
+          128
+        ]
       }
     ],
     "connections": {
@@ -2656,7 +2777,7 @@
         "main": [
           [
             {
-              "node": "Route by Template",
+              "node": "If: Skip to Render",
               "type": "main",
               "index": 0
             }
@@ -2733,6 +2854,35 @@
           [
             {
               "node": "Call '[02] Generate Script'",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Skip to Render": {
+        "main": [
+          [
+            {
+              "node": "Build Script for Render",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Route by Template",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Script for Render": {
+        "main": [
+          [
+            {
+              "node": "Respond - Generation Started",
               "type": "main",
               "index": 0
             }
