@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T17:02:52.434Z",
+  "updatedAt": "2026-02-21T23:28:13.594Z",
   "createdAt": "2026-02-08T15:19:48.079Z",
   "id": "7yR23WHEwDmTvukL",
   "name": "Client Factory - Generate Images",
@@ -141,7 +141,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE inventory_items SET hero_cloudinary_url = '{{ $json.secure_url }}', hero_cloudinary_public_id = '{{ $json.public_id }}', hero_processed_at = NOW() WHERE id = '{{ $('Extract Image').item.json.item_id }}';\n\nINSERT INTO inventory_images (item_id, url, cloudinary_url, cloudinary_public_id, is_primary, sort_order)\nVALUES ('{{ $('Extract Image').item.json.item_id }}', '{{ $json.secure_url }}', '{{ $json.secure_url }}', '{{ $json.public_id }}', true, 0);",
+        "query": "UPDATE inventory_items SET hero_cloudinary_url = '{{ $json.secure_url }}', hero_cloudinary_public_id = '{{ $json.public_id }}', hero_processed_at = NOW() WHERE id = '{{ $(\"Extract Image\").item.json.item_id }}';",
         "options": {}
       },
       "id": "update-db",
@@ -268,8 +268,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "aa7f7cd7-ca77-4fb0-8384-910cbd8724c3",
-  "activeVersionId": "aa7f7cd7-ca77-4fb0-8384-910cbd8724c3",
+  "versionId": "9adcfb91-6089-4cef-9065-a7a08ca36788",
+  "activeVersionId": "9adcfb91-6089-4cef-9065-a7a08ca36788",
   "triggerCount": 1,
   "shared": [
     {
@@ -281,9 +281,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-08T17:02:52.436Z",
-    "createdAt": "2026-02-08T17:02:52.436Z",
-    "versionId": "aa7f7cd7-ca77-4fb0-8384-910cbd8724c3",
+    "updatedAt": "2026-02-21T23:28:13.596Z",
+    "createdAt": "2026-02-21T23:28:13.596Z",
+    "versionId": "9adcfb91-6089-4cef-9065-a7a08ca36788",
     "workflowId": "7yR23WHEwDmTvukL",
     "nodes": [
       {
@@ -421,7 +421,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "UPDATE inventory_items SET hero_cloudinary_url = '{{ $json.secure_url }}', hero_cloudinary_public_id = '{{ $json.public_id }}', hero_processed_at = NOW() WHERE id = '{{ $('Extract Image').item.json.item_id }}';\n\nINSERT INTO inventory_images (item_id, url, cloudinary_url, cloudinary_public_id, is_primary, sort_order)\nVALUES ('{{ $('Extract Image').item.json.item_id }}', '{{ $json.secure_url }}', '{{ $json.secure_url }}', '{{ $json.public_id }}', true, 0);",
+          "query": "UPDATE inventory_items SET hero_cloudinary_url = '{{ $json.secure_url }}', hero_cloudinary_public_id = '{{ $json.public_id }}', hero_processed_at = NOW() WHERE id = '{{ $(\"Extract Image\").item.json.item_id }}';",
           "options": {}
         },
         "id": "update-db",
