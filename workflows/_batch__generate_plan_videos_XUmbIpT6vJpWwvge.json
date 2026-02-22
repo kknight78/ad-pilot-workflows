@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-18T04:00:47.533Z",
+  "updatedAt": "2026-02-22T03:25:10.016Z",
   "createdAt": "2026-02-18T04:00:47.533Z",
   "id": "XUmbIpT6vJpWwvge",
   "name": "[BATCH] Generate Plan Videos",
@@ -44,7 +44,10 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT \n  a.id AS asset_id,\n  a.asset_type,\n  a.template_name,\n  a.avatar_id,\n  a.background_id,\n  a.placements,\n  a.script_text,\n  wp.client_id,\n  wp.theme_name,\n  wp.status AS plan_status,\n  c.name AS client_name,\n  c.slug AS client_slug\nFROM assets a\nJOIN weekly_plans wp ON a.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE a.plan_id = '{{ $json.body.plan_id }}'::uuid\n  AND a.included = true\n  AND (a.asset_type = 'video' OR a.asset_type IS NULL)"
+        "query": "SELECT\n  a.id AS asset_id,\n  a.asset_type,\n  a.template_name,\n  (a.avatars->0->>'avatar_id') AS avatar_id,\n  a.background_id,\n  a.planned_outputs AS placements,\n  a.script_text,\n  a.phonetic_script,\n  a.music_id,\n  wp.client_id,\n  wp.theme_name,\n  wp.status AS plan_status,\n  c.name AS client_name,\n  c.slug AS client_slug,\n  s.cloudinary_url AS music_url,\n  COALESCE(\n    (SELECT json_agg(json_build_object(\n      'vin', ii.external_id,\n      'title', ii.title,\n      'image_url', ii.hero_image_url,\n      'price', ii.price\n    ))\n    FROM jsonb_array_elements(a.inventory_items) AS elem\n    JOIN inventory_items ii ON ii.id = (elem->>'id')::uuid\n    ), '[]'::json\n  ) AS vehicles\nFROM assets a\nJOIN weekly_plans wp ON a.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nLEFT JOIN songs s ON a.music_id::text = s.id::text\nWHERE a.plan_id = '{{ $json.body.plan_id }}'::uuid\n  AND a.included = true\n  AND a.template_name IN ('Multi Item', 'Single Item Spotlight', 'Educational')",
+        "options": {
+          "queryBatching": "independently"
+        }
       },
       "credentials": {
         "postgres": {
@@ -67,7 +70,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -95,7 +98,7 @@
         300
       ],
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const d = item.json;\n  \n  // Parse placements to determine ratios and platforms\n  let ratios = ['9:16']; // default\n  let platforms = ['meta'];\n  \n  if (d.placements) {\n    const p = typeof d.placements === 'string' ? JSON.parse(d.placements) : d.placements;\n    const ratioSet = new Set();\n    const platSet = new Set();\n    \n    if (Array.isArray(p)) {\n      for (const placement of p) {\n        if (placement.included !== false) {\n          if (placement.ratio) ratioSet.add(placement.ratio);\n          if (placement.platform) platSet.add(placement.platform);\n        }\n      }\n    }\n    \n    if (ratioSet.size > 0) ratios = [...ratioSet];\n    if (platSet.size > 0) platforms = [...platSet];\n  }\n  \n  // Determine template_id from template_name\n  let template_id = 'multi-item'; // default\n  const tn = (d.template_name || '').toLowerCase();\n  if (tn.includes('spotlight')) template_id = 'spotlight';\n  else if (tn.includes('edu') || tn.includes('education')) template_id = 'educational';\n  else if (tn.includes('multi')) template_id = 'multi-item';\n  \n  results.push({\n    json: {\n      client_id: d.client_id,\n      asset_id: d.asset_id,\n      template_id: template_id,\n      avatar_id: d.avatar_id || null,\n      background_id: d.background_id || null,\n      ratios: ratios,\n      platforms: platforms,\n      email: 'system@ad-pilot.ai',\n      source: 'weekly_cycle',\n      client_name: d.client_name\n    }\n  });\n}\n\nreturn results;"
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Parse planned_outputs to determine ratios and platforms\n  let ratios = ['9:16']; // default\n  let platforms = ['meta'];\n\n  if (d.placements) {\n    const p = typeof d.placements === 'string' ? JSON.parse(d.placements) : d.placements;\n    const ratioSet = new Set();\n    const platSet = new Set();\n\n    if (Array.isArray(p)) {\n      for (const output of p) {\n        if (output.aspect_ratio) ratioSet.add(output.aspect_ratio);\n        if (Array.isArray(output.platforms)) {\n          for (const plat of output.platforms) platSet.add(plat);\n        }\n      }\n    }\n\n    if (ratioSet.size > 0) ratios = [...ratioSet];\n    if (platSet.size > 0) platforms = [...platSet];\n  }\n\n  // Determine template_id from template_name\n  let template_id = 'multi-item'; // default\n  const tn = (d.template_name || '').toLowerCase();\n  if (tn.includes('spotlight')) template_id = 'spotlight';\n  else if (tn.includes('edu') || tn.includes('education')) template_id = 'educational';\n  else if (tn.includes('multi')) template_id = 'multi-item';\n\n  // Parse vehicles (full data from lateral join)\n  let vehicles = [];\n  if (d.vehicles) {\n    vehicles = typeof d.vehicles === 'string' ? JSON.parse(d.vehicles) : d.vehicles;\n  }\n\n  results.push({\n    json: {\n      client_id: d.client_id,\n      client: d.client_slug,\n      client_name: d.client_name,\n      asset_id: d.asset_id,\n      template_id: template_id,\n      avatar_id: d.avatar_id || null,\n      background_id: d.background_id || null,\n      ratios: ratios,\n      platforms: platforms,\n      email: 'system@ad-pilot.ai',\n      source: 'weekly_cycle',\n      script_text: d.phonetic_script || d.script_text || null,\n      display_script: d.script_text || null,\n      skip_to_render: true,\n      vehicles: vehicles,\n      music_id: d.music_id || null,\n      music_url: d.music_url || null\n    }\n  });\n}\n\nreturn results;"
       }
     },
     {
@@ -112,7 +115,7 @@
         "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/ad-pilot/start",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ client_id: $json.client_id, template_id: $json.template_id, avatar_id: $json.avatar_id, background_id: $json.background_id, ratios: $json.ratios, platforms: $json.platforms, email: $json.email, source: $json.source, asset_id: $json.asset_id }) }}",
+        "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {
           "response": {
             "response": {
@@ -173,9 +176,22 @@
         500
       ],
       "parameters": {
-        "respondWith": "json",
+        "respondWith": "allIncomingItems",
         "responseBody": "={{ { success: false, message: 'No video assets found for this plan' } }}"
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through Postgres results, strip debug\nconst items = $input.all();\nreturn items.map(item => ({ json: item.json }));"
+      },
+      "id": "normalize-results-001",
+      "name": "Normalize Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
     }
   ],
   "connections": {
@@ -205,25 +221,7 @@
       "main": [
         [
           {
-            "node": "Has Video Assets?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Video Assets?": {
-      "main": [
-        [
-          {
-            "node": "Build Job Payload",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Assets Response",
+            "node": "Normalize Results",
             "type": "main",
             "index": 0
           }
@@ -273,18 +271,31 @@
           }
         ]
       ]
+    },
+    "Normalize Results": {
+      "main": [
+        [
+          {
+            "node": "Build Job Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
   },
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "19009727-493b-4b9a-8ab6-e2c31a39abc1",
-  "activeVersionId": "19009727-493b-4b9a-8ab6-e2c31a39abc1",
+  "versionId": "a3f1a2e0-1b73-475c-bcc2-7104fa945ef2",
+  "activeVersionId": "a3f1a2e0-1b73-475c-bcc2-7104fa945ef2",
   "triggerCount": 1,
   "shared": [
     {
@@ -296,9 +307,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-18T04:00:47.553Z",
-    "createdAt": "2026-02-18T04:00:47.553Z",
-    "versionId": "19009727-493b-4b9a-8ab6-e2c31a39abc1",
+    "updatedAt": "2026-02-22T03:25:10.021Z",
+    "createdAt": "2026-02-22T03:25:10.021Z",
+    "versionId": "a3f1a2e0-1b73-475c-bcc2-7104fa945ef2",
     "workflowId": "XUmbIpT6vJpWwvge",
     "nodes": [
       {
@@ -339,7 +350,10 @@
         ],
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT \n  a.id AS asset_id,\n  a.asset_type,\n  a.template_name,\n  a.avatar_id,\n  a.background_id,\n  a.placements,\n  a.script_text,\n  wp.client_id,\n  wp.theme_name,\n  wp.status AS plan_status,\n  c.name AS client_name,\n  c.slug AS client_slug\nFROM assets a\nJOIN weekly_plans wp ON a.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nWHERE a.plan_id = '{{ $json.body.plan_id }}'::uuid\n  AND a.included = true\n  AND (a.asset_type = 'video' OR a.asset_type IS NULL)"
+          "query": "SELECT\n  a.id AS asset_id,\n  a.asset_type,\n  a.template_name,\n  (a.avatars->0->>'avatar_id') AS avatar_id,\n  a.background_id,\n  a.planned_outputs AS placements,\n  a.script_text,\n  a.phonetic_script,\n  a.music_id,\n  wp.client_id,\n  wp.theme_name,\n  wp.status AS plan_status,\n  c.name AS client_name,\n  c.slug AS client_slug,\n  s.cloudinary_url AS music_url,\n  COALESCE(\n    (SELECT json_agg(json_build_object(\n      'vin', ii.external_id,\n      'title', ii.title,\n      'image_url', ii.hero_image_url,\n      'price', ii.price\n    ))\n    FROM jsonb_array_elements(a.inventory_items) AS elem\n    JOIN inventory_items ii ON ii.id = (elem->>'id')::uuid\n    ), '[]'::json\n  ) AS vehicles\nFROM assets a\nJOIN weekly_plans wp ON a.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nLEFT JOIN songs s ON a.music_id::text = s.id::text\nWHERE a.plan_id = '{{ $json.body.plan_id }}'::uuid\n  AND a.included = true\n  AND a.template_name IN ('Multi Item', 'Single Item Spotlight', 'Educational')",
+          "options": {
+            "queryBatching": "independently"
+          }
         },
         "credentials": {
           "postgres": {
@@ -362,7 +376,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
@@ -390,7 +404,7 @@
           300
         ],
         "parameters": {
-          "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const d = item.json;\n  \n  // Parse placements to determine ratios and platforms\n  let ratios = ['9:16']; // default\n  let platforms = ['meta'];\n  \n  if (d.placements) {\n    const p = typeof d.placements === 'string' ? JSON.parse(d.placements) : d.placements;\n    const ratioSet = new Set();\n    const platSet = new Set();\n    \n    if (Array.isArray(p)) {\n      for (const placement of p) {\n        if (placement.included !== false) {\n          if (placement.ratio) ratioSet.add(placement.ratio);\n          if (placement.platform) platSet.add(placement.platform);\n        }\n      }\n    }\n    \n    if (ratioSet.size > 0) ratios = [...ratioSet];\n    if (platSet.size > 0) platforms = [...platSet];\n  }\n  \n  // Determine template_id from template_name\n  let template_id = 'multi-item'; // default\n  const tn = (d.template_name || '').toLowerCase();\n  if (tn.includes('spotlight')) template_id = 'spotlight';\n  else if (tn.includes('edu') || tn.includes('education')) template_id = 'educational';\n  else if (tn.includes('multi')) template_id = 'multi-item';\n  \n  results.push({\n    json: {\n      client_id: d.client_id,\n      asset_id: d.asset_id,\n      template_id: template_id,\n      avatar_id: d.avatar_id || null,\n      background_id: d.background_id || null,\n      ratios: ratios,\n      platforms: platforms,\n      email: 'system@ad-pilot.ai',\n      source: 'weekly_cycle',\n      client_name: d.client_name\n    }\n  });\n}\n\nreturn results;"
+          "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Parse planned_outputs to determine ratios and platforms\n  let ratios = ['9:16']; // default\n  let platforms = ['meta'];\n\n  if (d.placements) {\n    const p = typeof d.placements === 'string' ? JSON.parse(d.placements) : d.placements;\n    const ratioSet = new Set();\n    const platSet = new Set();\n\n    if (Array.isArray(p)) {\n      for (const output of p) {\n        if (output.aspect_ratio) ratioSet.add(output.aspect_ratio);\n        if (Array.isArray(output.platforms)) {\n          for (const plat of output.platforms) platSet.add(plat);\n        }\n      }\n    }\n\n    if (ratioSet.size > 0) ratios = [...ratioSet];\n    if (platSet.size > 0) platforms = [...platSet];\n  }\n\n  // Determine template_id from template_name\n  let template_id = 'multi-item'; // default\n  const tn = (d.template_name || '').toLowerCase();\n  if (tn.includes('spotlight')) template_id = 'spotlight';\n  else if (tn.includes('edu') || tn.includes('education')) template_id = 'educational';\n  else if (tn.includes('multi')) template_id = 'multi-item';\n\n  // Parse vehicles (full data from lateral join)\n  let vehicles = [];\n  if (d.vehicles) {\n    vehicles = typeof d.vehicles === 'string' ? JSON.parse(d.vehicles) : d.vehicles;\n  }\n\n  results.push({\n    json: {\n      client_id: d.client_id,\n      client: d.client_slug,\n      client_name: d.client_name,\n      asset_id: d.asset_id,\n      template_id: template_id,\n      avatar_id: d.avatar_id || null,\n      background_id: d.background_id || null,\n      ratios: ratios,\n      platforms: platforms,\n      email: 'system@ad-pilot.ai',\n      source: 'weekly_cycle',\n      script_text: d.phonetic_script || d.script_text || null,\n      display_script: d.script_text || null,\n      skip_to_render: true,\n      vehicles: vehicles,\n      music_id: d.music_id || null,\n      music_url: d.music_url || null\n    }\n  });\n}\n\nreturn results;"
         }
       },
       {
@@ -407,7 +421,7 @@
           "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/ad-pilot/start",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={{ JSON.stringify({ client_id: $json.client_id, template_id: $json.template_id, avatar_id: $json.avatar_id, background_id: $json.background_id, ratios: $json.ratios, platforms: $json.platforms, email: $json.email, source: $json.source, asset_id: $json.asset_id }) }}",
+          "jsonBody": "={{ JSON.stringify($json) }}",
           "options": {
             "response": {
               "response": {
@@ -468,9 +482,22 @@
           500
         ],
         "parameters": {
-          "respondWith": "json",
+          "respondWith": "allIncomingItems",
           "responseBody": "={{ { success: false, message: 'No video assets found for this plan' } }}"
         }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pass through Postgres results, strip debug\nconst items = $input.all();\nreturn items.map(item => ({ json: item.json }));"
+        },
+        "id": "normalize-results-001",
+        "name": "Normalize Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          300
+        ]
       }
     ],
     "connections": {
@@ -500,25 +527,7 @@
         "main": [
           [
             {
-              "node": "Has Video Assets?",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Has Video Assets?": {
-        "main": [
-          [
-            {
-              "node": "Build Job Payload",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "No Assets Response",
+              "node": "Normalize Results",
               "type": "main",
               "index": 0
             }
@@ -563,6 +572,17 @@
           [
             {
               "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize Results": {
+        "main": [
+          [
+            {
+              "node": "Build Job Payload",
               "type": "main",
               "index": 0
             }
