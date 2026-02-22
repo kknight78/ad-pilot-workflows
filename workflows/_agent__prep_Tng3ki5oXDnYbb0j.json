@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T04:14:48.194Z",
+  "updatedAt": "2026-02-21T23:56:13.278Z",
   "createdAt": "2026-02-17T04:14:48.194Z",
   "id": "Tng3ki5oXDnYbb0j",
   "name": "[AGENT] Prep",
@@ -69,7 +69,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT wp.id AS plan_id, wp.status, wp.theme_name, wp.theme_seed,\n  a.id AS asset_id, a.asset_type, a.template_type, a.placements, a.theme_name AS asset_theme,\n  a.items, a.script_text,\n  c.name AS client_name, c.id AS client_id, c.slug AS client_slug\nFROM weekly_plans wp\nJOIN assets a ON a.plan_id = wp.id\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.id = '{{ $json.body.plan_id }}'::uuid",
+        "query": "SELECT wp.id AS plan_id, wp.status, wp.theme_name, wp.theme_seed,\n  a.id AS asset_id,\n  CASE\n    WHEN a.template_name IN ('Multi Item', 'Single Item Spotlight', 'Educational') THEN 'video'\n    WHEN a.template_name = 'Image Ad' THEN 'image'\n    WHEN a.template_name = 'Carousel Ad' THEN 'carousel'\n    ELSE 'other'\n  END AS asset_type,\n  CASE\n    WHEN a.template_name = 'Multi Item' THEN 'multi_item'\n    WHEN a.template_name = 'Single Item Spotlight' THEN 'spotlight'\n    WHEN a.template_name = 'Educational' THEN 'educational'\n    WHEN a.template_name = 'Image Ad' THEN 'image_ad'\n    WHEN a.template_name = 'Carousel Ad' THEN 'carousel_ad'\n    ELSE lower(replace(a.template_name, ' ', '_'))\n  END AS template_type,\n  a.target_placements AS placements,\n  a.title AS asset_theme,\n  a.inventory_items AS items,\n  a.script_text,\n  c.name AS client_name, c.id AS client_id, c.slug AS client_slug,\n  COALESCE((SELECT json_object_agg(cp.pronunciation, cp.word) FROM client_pronunciations cp WHERE cp.client_id = c.id), '{}'::json) AS pronunciation_reverse_map\nFROM weekly_plans wp\nJOIN assets a ON a.plan_id = wp.id AND a.included = true\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.id = '{{ $json.body.plan_id }}'::uuid",
         "options": {}
       },
       "credentials": {
@@ -101,25 +101,12 @@
       }
     },
     {
-      "id": "orchestrate",
-      "name": "Orchestrate Content Generation",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1000,
-        300
-      ],
-      "parameters": {
-        "jsCode": "// [AGENT] Prep — Orchestrate Content Generation\n// Calls existing webhooks: process assets -> generate scripts -> generate platform copy\ntry {\n  const items = $('Fetch Plan + Assets').all();\n  const webhookInput = $('Webhook').first().json.body;\n  const planId = webhookInput.plan_id;\n  const baseUrl = ($env.WEBHOOK_URL || 'https://ad-pilot-n8n-development.up.railway.app/').replace(/\\/$/, '') + '/webhook';\n  const assets = items.map(item => item.json);\n\n  if (assets.length === 0) {\n    return [{ json: { success: true, plan_id: planId, client_name: 'Unknown', errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true } }];\n  }\n\n  const clientName = assets[0].client_name || '';\n  const clientId = assets[0].client_id;\n  const themeName = assets[0].theme_name || '';\n  const planStatus = assets[0].status;\n\n  if (planStatus === 'scripts_ready' || planStatus === 'prep_failed') {\n    return [{ json: { success: true, plan_id: planId, client_name: clientName, errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true, reason: 'Already ' + planStatus } }];\n  }\n\n  const videoAssets = assets.filter(a => a.asset_type === 'video');\n  const imageAssets = assets.filter(a => a.asset_type === 'image');\n  const carouselAssets = assets.filter(a => a.asset_type === 'carousel');\n  const allAssets = [...videoAssets, ...imageAssets, ...carouselAssets];\n  const errors = [];\n  const results = { processed: 0, scripts: 0, copy: 0 };\n  const scriptTexts = {};\n  const scriptResults = {};\n\n  // Step 1: Process Video Assets\n  for (const asset of videoAssets) {\n    try {\n      let endpoint;\n      switch (asset.template_type) {\n        case 'multi_item': endpoint = '/process-multi-item-asset'; break;\n        case 'spotlight': endpoint = '/process-spotlight-asset'; break;\n        case 'educational': endpoint = '/process-educational-asset'; break;\n        default: errors.push('Unknown template_type ' + asset.template_type + ' for ' + asset.asset_id); continue;\n      }\n      const resp = await fetch(baseUrl + endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      if (!resp.ok) { errors.push('Process ' + asset.template_type + ' failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.processed++; }\n    } catch (err) { errors.push('Process error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 2: Generate Scripts for Video Assets\n  for (const asset of videoAssets) {\n    try {\n      const resp = await fetch(baseUrl + '/generate-script-from-asset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      const text = await resp.text();\n      if (!text || !text.trim()) { errors.push('Script empty for ' + asset.asset_id); continue; }\n      let data;\n      try { data = JSON.parse(text); } catch (e) { errors.push('Script non-JSON for ' + asset.asset_id); continue; }\n      const result = Array.isArray(data) ? data[0] : data;\n      scriptResults[asset.asset_id] = result;\n      const script = result.script || {};\n      const fullScript = script.full_script || [script.hook, ...(script.segments || []).map(s => s.narration || s.text || s), script.cta].filter(Boolean).join(' ');\n      if (fullScript) { scriptTexts[asset.asset_id] = fullScript; results.scripts++; }\n    } catch (err) { errors.push('Script error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 3: Generate Platform Copy for All Assets\n  for (const asset of allAssets) {\n    try {\n      const isVideo = asset.asset_type === 'video';\n      const sr = scriptResults[asset.asset_id] || {};\n      let platforms;\n      try { platforms = typeof asset.placements === 'string' ? JSON.parse(asset.placements) : (asset.placements || []); } catch (e) { platforms = ['meta_feed']; }\n      if (!isVideo) { platforms = platforms.filter(p => /meta|facebook|instagram/i.test(p)); if (!platforms.length) platforms = ['meta_feed']; }\n      const payload = {\n        client_id: clientId, platforms,\n        content_type: asset.template_type === 'educational' ? 'organic' : 'ad',\n        format: isVideo ? 'video' : asset.asset_type,\n        template_type: sr.template_code || asset.template_type || '',\n        theme: themeName, vehicles: sr.vehicles || [],\n        script: isVideo ? (scriptTexts[asset.asset_id] || asset.script_text || '') : '',\n        plan_asset_id: asset.asset_id, store_copy: true,\n      };\n      const resp = await fetch(baseUrl + '/generate-platform-copy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });\n      if (!resp.ok) { errors.push('Copy failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.copy++; }\n    } catch (err) { errors.push('Copy error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Build SQL for saving scripts\n  let scriptUpdateSql = 'SELECT 1';\n  const entries = Object.entries(scriptTexts);\n  if (entries.length > 0) {\n    scriptUpdateSql = entries.map(([id, txt]) => \"UPDATE assets SET script_text = $adpilot$\" + txt + \"$adpilot$, updated_at = NOW() WHERE id = '\" + id + \"'::uuid\").join(';\\n') + ';';\n  }\n\n  const success = errors.length === 0 || results.copy > 0;\n  return [{ json: { success, plan_id: planId, client_name: clientName, results, errors, total_assets: allAssets.length, video_count: videoAssets.length, scriptUpdateSql } }];\n} catch (fatalError) {\n  const planId = $('Webhook').first().json.body.plan_id || 'unknown';\n  return [{ json: { success: false, plan_id: planId, client_name: 'Unknown', errors: ['Fatal: ' + fatalError.message], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1' } }];\n}"
-      }
-    },
-    {
       "id": "save-scripts",
       "name": "Save Scripts",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1250,
+        3900,
         300
       ],
       "parameters": {
@@ -141,11 +128,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1500,
+        4250,
         300
       ],
       "parameters": {
-        "jsCode": "const data = $('Orchestrate Content Generation').first().json;\nconst success = data.success;\nconst planId = data.plan_id;\nconst clientName = data.client_name || 'Unknown';\nconst skipped = data.skipped || false;\nconst status = success ? 'scripts_ready' : 'prep_failed';\nconst statusSql = skipped ? 'SELECT 1' : \"UPDATE weekly_plans SET status = '\" + status + \"', updated_at = NOW() WHERE id = '\" + planId + \"'::uuid\";\nlet subject, html;\nif (skipped) {\n  subject = '[Prep] Skipped for ' + clientName;\n  html = '<p>Prep skipped for ' + clientName + '.</p>' + (data.reason ? '<p>Reason: ' + data.reason + '</p>' : '');\n} else if (success) {\n  subject = '[Prep Complete] Scripts & copy ready for ' + clientName;\n  html = '<h2>Scripts & Copy Ready</h2><p><strong>Client:</strong> ' + clientName + '</p><ul><li>Processed: ' + data.results.processed + ' video assets</li><li>Scripts: ' + data.results.scripts + ' generated</li><li>Copy: ' + data.results.copy + ' generated</li></ul><p>Status: <strong>' + status + '</strong></p>';\n} else {\n  subject = '[Prep Failed] Content generation failed for ' + clientName;\n  html = '<h2>Prep Pipeline Failed</h2><p><strong>Client:</strong> ' + clientName + '</p><ul>' + (data.errors || []).map(e => '<li>' + e + '</li>').join('') + '</ul><p>Status: <strong>' + status + '</strong></p>';\n}\nreturn [{ json: {\n  ...data, final_status: status, statusSql,\n  _emailBody: { from: 'Ad Pilot <notifications@ad-pilot.ai>', to: ['kelly@ad-pilot.ai'], subject, html },\n  _response: { success, plan_id: planId, status, results: data.results, errors: data.errors || [] },\n}}];"
+        "jsCode": "const data = $('Aggregate Results').first().json;\nconst success = data.success;\nconst planId = data.plan_id;\nconst clientName = data.client_name || 'Unknown';\nconst skipped = data.skipped || false;\nconst status = success ? 'scripts_ready' : 'prep_failed';\nconst statusSql = skipped ? 'SELECT 1' : \"UPDATE weekly_plans SET status = '\" + status + \"', updated_at = NOW() WHERE id = '\" + planId + \"'::uuid\";\nlet subject, html;\nif (skipped) {\n  subject = '[Prep] Skipped for ' + clientName;\n  html = '<p>Prep skipped for ' + clientName + '.</p>' + (data.reason ? '<p>Reason: ' + data.reason + '</p>' : '');\n} else if (success) {\n  subject = '[Prep Complete] Scripts & copy ready for ' + clientName;\n  html = '<h2>Scripts & Copy Ready</h2><p><strong>Client:</strong> ' + clientName + '</p><ul><li>Processed: ' + data.results.processed + ' video assets</li><li>Scripts: ' + data.results.scripts + ' generated</li><li>Copy: ' + data.results.copy + ' generated</li></ul><p>Status: <strong>' + status + '</strong></p>';\n} else {\n  subject = '[Prep Failed] Content generation failed for ' + clientName;\n  html = '<h2>Prep Pipeline Failed</h2><p><strong>Client:</strong> ' + clientName + '</p><ul>' + (data.errors || []).map(e => '<li>' + e + '</li>').join('') + '</ul><p>Status: <strong>' + status + '</strong></p>';\n}\nreturn [{ json: {\n  ...data, final_status: status, statusSql,\n  _emailBody: { from: 'Ad Pilot <notifications@ad-pilot.ai>', to: ['kelly@ad-pilot.ai'], subject, html },\n  _response: { success, plan_id: planId, status, results: data.results, errors: data.errors || [] },\n}}];"
       }
     },
     {
@@ -154,7 +141,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1750,
+        4500,
         300
       ],
       "parameters": {
@@ -175,8 +162,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2000,
-        300
+        4500,
+        500
       ],
       "parameters": {
         "method": "POST",
@@ -207,13 +194,405 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2250,
-        300
+        4750,
+        500
       ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ JSON.stringify($json._response) }}"
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clear any stale static data from previous runs\nconst staticData = $getWorkflowStaticData('global');\ndelete staticData._results;\n\n// Prep Assets — split into individual items with routing metadata\nconst items = $('Fetch Plan + Assets').all();\nconst webhookInput = $('Webhook').first().json.body;\nconst planId = webhookInput.plan_id;\n\nif (items.length === 0) {\n  return [{ json: {\n    _skip: true, plan_id: planId, client_name: 'Unknown',\n    _results: { processed: 0, scripts: 0, copy: 0 },\n    _errors: [], scriptUpdateSql: 'SELECT 1'\n  }}];\n}\n\nconst assets = items.map(item => item.json);\nconst clientName = assets[0].client_name || '';\nconst clientId = assets[0].client_id;\nconst clientSlug = assets[0].client_slug || '';\nconst themeName = assets[0].theme_name || assets[0].asset_theme || '';\nconst planStatus = assets[0].status;\n\n// If already processed, skip\nif (planStatus === 'scripts_ready' || planStatus === 'prep_failed') {\n  return [{ json: {\n    _skip: true, plan_id: planId, client_name: clientName,\n    _results: { processed: 0, scripts: 0, copy: 0 },\n    _errors: [], scriptUpdateSql: 'SELECT 1',\n    _skipReason: 'Already ' + planStatus\n  }}];\n}\n\n// Build per-asset items\nconst output = [];\nfor (const asset of assets) {\n  let processEndpoint = '';\n  if (asset.asset_type === 'video') {\n    switch (asset.template_type) {\n      case 'multi_item': processEndpoint = '/webhook/process-multi-item-asset'; break;\n      case 'spotlight': processEndpoint = '/webhook/process-spotlight-asset'; break;\n      case 'educational': processEndpoint = '/webhook/process-educational-asset'; break;\n      default: processEndpoint = '';\n    }\n  }\n\n  // Parse placements\n  let platforms;\n  try {\n    platforms = typeof asset.placements === 'string' ? JSON.parse(asset.placements) : (asset.placements || []);\n  } catch (e) { platforms = ['meta_feed']; }\n  if (!Array.isArray(platforms)) platforms = ['meta_feed'];\n\n  // For non-video, filter to meta platforms\n  if (asset.asset_type !== 'video') {\n    platforms = platforms.filter(p => /meta|facebook|instagram/i.test(p));\n    if (platforms.length === 0) platforms = ['meta_feed'];\n  }\n\n  output.push({ json: {\n    asset_id: asset.asset_id,\n    asset_type: asset.asset_type,\n    template_type: asset.template_type,\n    is_video: asset.asset_type === 'video',\n    process_endpoint: processEndpoint,\n    platforms: platforms,\n    theme_name: themeName,\n    client_id: clientId,\n    client_slug: clientSlug,\n    client_name: clientName,\n    plan_id: planId,\n    script_text: asset.script_text || '',\n    _skip: false,\n    pronunciation_reverse_map: asset.pronunciation_reverse_map || {}\n  }});\n}\nreturn output;"
+      },
+      "name": "Prep Assets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ],
+      "id": "prep-assets-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Check Skip",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1250,
+        300
+      ],
+      "id": "check-skip-001"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Loop Over Assets",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1500,
+        500
+      ],
+      "id": "loop-assets-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "video-check",
+              "leftValue": "={{ $json.is_video }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Is Video?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1750,
+        500
+      ],
+      "id": "is-video-001"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "spotlight-check",
+                    "leftValue": "={{ $json.template_type }}",
+                    "rightValue": "spotlight",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Spotlight"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "multi-check",
+                    "leftValue": "={{ $json.template_type }}",
+                    "rightValue": "multi_item",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Multi-Item"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "edu-check",
+                    "leftValue": "={{ $json.template_type }}",
+                    "rightValue": "educational",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Educational"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "name": "Route by Template",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2000,
+        400
+      ],
+      "id": "route-template-001"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/process-spotlight-asset",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Process Spotlight",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        200
+      ],
+      "id": "process-spotlight-001"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/process-multi-item-asset",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Process Multi-Item",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        400
+      ],
+      "id": "process-multi-001"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/process-educational-asset",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Process Educational",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        600
+      ],
+      "id": "process-edu-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Carry asset context forward after process webhook\n// HTTP Request response is in $json, but we need asset_id from input\n// Since pairedItem breaks after HTTP Request, we use $('Loop Over Assets') \n// to get the current batch item\nconst loopItem = $('Loop Over Assets').first().json;\nconst processResult = $json;\n\nreturn [{ json: {\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  template_type: loopItem.template_type,\n  is_video: loopItem.is_video,\n  platforms: loopItem.platforms,\n  theme_name: loopItem.theme_name,\n  client_id: loopItem.client_id,\n  client_slug: loopItem.client_slug,\n  client_name: loopItem.client_name,\n  plan_id: loopItem.plan_id,\n  _process_success: processResult.success !== false,\n  _process_error: processResult.success === false ? (processResult.message || 'Process failed') : '',\n  pronunciation_reverse_map: loopItem.pronunciation_reverse_map || {}\n}}];"
+      },
+      "name": "Carry Context After Process",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        400
+      ],
+      "id": "carry-process-001"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-script-from-asset",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Generate Script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2850,
+        400
+      ],
+      "id": "gen-script-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse script result and build platform copy payload\nconst loopItem = $('Loop Over Assets').first().json;\nconst scriptResult = $json;\n\n// Extract structured script parts (phonetic versions for TTS)\nconst script = scriptResult.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [];\nconst cta = script.cta || '';\n\n// Reverse pronunciation map: phonetic -> original word\n// Used to convert phonetic script back to clean display text\nconst reverseMap = loopItem.pronunciation_reverse_map || {};\nfunction dePhonetic(text) {\n  let clean = text;\n  for (const [phonetic, original] of Object.entries(reverseMap)) {\n    // Replace all occurrences (case-insensitive)\n    clean = clean.replace(new RegExp(phonetic.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&'), 'gi'), original);\n  }\n  return clean;\n}\n\n// Extract display versions (proper spellings for UI)\n// If Claude provided display_ fields, use them; otherwise reverse-map the phonetic\nconst displayHook = script.display_hook || dePhonetic(hook);\nconst displaySegments = script.display_segments || segments.map(s => dePhonetic(s));\nconst displayCta = script.display_cta || dePhonetic(cta);\n\n// Build labeled script_text for UI parsing (HOOK:/BODY:/CTA: format)\n// Uses DISPLAY version (proper spellings, not phonetic)\nconst labeledScript = 'HOOK: ' + displayHook + '\\nBODY: ' + displaySegments.join('\\n') + '\\nCTA: ' + displayCta;\n\n// Build phonetic labeled script for TTS\nconst phoneticScript = 'HOOK: ' + hook + '\\nBODY: ' + segments.join('\\n') + '\\nCTA: ' + cta;\n\n// Build flat display version for the copy payload\nconst displayFullScript = script.display_full_script ||\n  [displayHook, ...displaySegments, displayCta].filter(Boolean).join(' ');\n\nconst templateCode = scriptResult.template_code || loopItem.template_type || '';\nconst vehicles = scriptResult.vehicles || [];\n\nreturn [{ json: {\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  template_type: loopItem.template_type,\n  is_video: true,\n  platforms: loopItem.platforms,\n  theme_name: loopItem.theme_name,\n  client_id: loopItem.client_id,\n  plan_id: loopItem.plan_id,\n  client_name: loopItem.client_name,\n  _labeled_script: labeledScript,\n  _phonetic_script: phoneticScript,\n  _script_text: displayFullScript,\n  _script_success: displayFullScript.length > 0,\n  _copy_payload: {\n    client_id: loopItem.client_id,\n    platforms: loopItem.platforms,\n    content_type: loopItem.template_type === 'educational' ? 'organic' : 'ad',\n    format: 'video',\n    template_type: templateCode,\n    theme: loopItem.theme_name,\n    vehicles: vehicles,\n    script: displayFullScript,\n    plan_asset_id: loopItem.asset_id,\n    store_copy: false\n  }\n}}];"
+      },
+      "name": "Build Copy Payload (Video)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3100,
+        400
+      ],
+      "id": "build-copy-video-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build platform copy payload for non-video assets (image, carousel)\nconst loopItem = $('Loop Over Assets').first().json;\n\nreturn [{ json: {\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  template_type: loopItem.template_type,\n  is_video: false,\n  platforms: loopItem.platforms,\n  theme_name: loopItem.theme_name,\n  client_id: loopItem.client_id,\n  plan_id: loopItem.plan_id,\n  client_name: loopItem.client_name,\n  _script_text: '',\n  _script_success: true,\n  _copy_payload: {\n    client_id: loopItem.client_id,\n    platforms: loopItem.platforms,\n    content_type: 'ad',\n    format: loopItem.asset_type,\n    template_type: loopItem.template_type || '',\n    theme: loopItem.theme_name,\n    vehicles: [],\n    script: '',\n    plan_asset_id: loopItem.asset_id,\n    store_copy: false\n  }\n}}];"
+      },
+      "name": "Build Copy Payload (Non-Video)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        800
+      ],
+      "id": "build-copy-nonvideo-001"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-platform-copy",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._copy_payload) }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Generate Platform Copy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3400,
+        600
+      ],
+      "id": "gen-copy-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect per-asset result and accumulate in static data\nconst loopItem = $('Loop Over Assets').first().json;\nconst staticData = $getWorkflowStaticData('global');\n\nif (!staticData._results) {\n  staticData._results = [];\n}\n\n// Get script text ONLY for video assets\nlet labeledScript = '';\nlet flatScript = '';\nlet phoneticScript = '';\nif (loopItem.is_video) {\n  try {\n    const videoPayload = $('Build Copy Payload (Video)').first().json;\n    labeledScript = videoPayload._labeled_script || '';\n    flatScript = videoPayload._script_text || '';\n    phoneticScript = videoPayload._phonetic_script || '';\n  } catch (e) {}\n}\n\n// Get copy response from Generate Platform Copy\nlet copySuccess = false;\nlet platformCopy = null;\ntry {\n  const copyResp = $('Generate Platform Copy').first().json;\n  copySuccess = copyResp.success !== false && Array.isArray(copyResp.generated_copy);\n  \n  if (copyResp.generated_copy) {\n    platformCopy = {};\n    for (const item of copyResp.generated_copy) {\n      if (item.platform === 'meta' && item.copy) {\n        platformCopy.meta = {\n          primaryText: item.copy.primary_text || '',\n          headline: item.copy.headline || '',\n          description: item.copy.description || ''\n        };\n      } else if (item.platform === 'tiktok' && item.copy) {\n        platformCopy.tiktok = {\n          caption: item.copy.caption || '',\n          hashtags: Array.isArray(item.copy.hashtags) ? item.copy.hashtags.join(' ') : (item.copy.hashtags || '')\n        };\n      } else if (item.platform === 'youtube' && item.copy) {\n        platformCopy.youtube = {\n          title: item.copy.title || '',\n          description: item.copy.description || ''\n        };\n      }\n    }\n  }\n} catch (e) {\n  copySuccess = false;\n}\n\nstaticData._results.push({\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  is_video: loopItem.is_video,\n  plan_id: loopItem.plan_id,\n  client_name: loopItem.client_name,\n  _labeled_script: labeledScript,\n  _phonetic_script: phoneticScript,\n  _script_text: flatScript,\n  _copy_success: copySuccess,\n  _platform_copy: platformCopy\n});\n\nreturn [{ json: { _collected: true, _count: staticData._results.length } }];"
+      },
+      "name": "Collect Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3650,
+        600
+      ],
+      "id": "collect-result-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all accumulated results from static data\nconst staticData = $getWorkflowStaticData('global');\nconst allResults = staticData._results || [];\nconst firstPrep = $('Prep Assets').first().json;\nconst planId = firstPrep.plan_id;\nconst clientName = firstPrep.client_name;\nconst errors = [];\nconst results = { processed: 0, scripts: 0, copy: 0 };\nconst scriptUpdates = [];\nconst copyUpdates = [];\n\nfor (const r of allResults) {\n  if (r.is_video) results.processed++;\n  if (r._labeled_script) {\n    scriptUpdates.push({\n      id: r.asset_id,\n      text: r._labeled_script,\n      phonetic: r._phonetic_script || ''\n    });\n    results.scripts++;\n  }\n  if (r._copy_success && r._platform_copy) {\n    copyUpdates.push({\n      id: r.asset_id,\n      copy: r._platform_copy\n    });\n    results.copy++;\n  }\n}\n\n// Build SQL for saving scripts — both display and phonetic versions\nlet scriptUpdateSql = 'SELECT 1';\nif (scriptUpdates.length > 0) {\n  scriptUpdateSql = scriptUpdates.map(u =>\n    \"UPDATE assets SET script_text = $adpilot$\" + u.text + \"$adpilot$, phonetic_script = $adpilot$\" + u.phonetic + \"$adpilot$, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\n// Build SQL for saving platform_copy JSONB to assets table\nlet copyUpdateSql = 'SELECT 1';\nif (copyUpdates.length > 0) {\n  copyUpdateSql = copyUpdates.map(u =>\n    \"UPDATE assets SET platform_copy = '\" + JSON.stringify(u.copy).replace(/'/g, \"''\") + \"'::jsonb, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\nconst success = errors.length === 0 || results.copy > 0;\n\n// Clean up static data\ndelete staticData._results;\n\nreturn [{ json: {\n  success, plan_id: planId, client_name: clientName,\n  results, errors, total_assets: allResults.length,\n  video_count: allResults.filter(r => r.is_video).length,\n  scriptUpdateSql,\n  copyUpdateSql\n}}];"
+      },
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        200
+      ],
+      "id": "aggregate-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $('Aggregate Results').first().json.copyUpdateSql }}",
+        "options": {}
+      },
+      "name": "Save Copy",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4000,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "id": "save-copy-001"
     }
   ],
   "connections": {
@@ -265,14 +644,210 @@
       "main": [
         [
           {
-            "node": "Orchestrate Content Generation",
+            "node": "Prep Assets",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Orchestrate Content Generation": {
+    "Prep Assets": {
+      "main": [
+        [
+          {
+            "node": "Check Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Skip": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Assets": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Video?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Video?": {
+      "main": [
+        [
+          {
+            "node": "Route by Template",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Copy Payload (Non-Video)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Template": {
+      "main": [
+        [
+          {
+            "node": "Process Spotlight",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Multi-Item",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Educational",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Carry Context After Process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Spotlight": {
+      "main": [
+        [
+          {
+            "node": "Carry Context After Process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Multi-Item": {
+      "main": [
+        [
+          {
+            "node": "Carry Context After Process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Educational": {
+      "main": [
+        [
+          {
+            "node": "Carry Context After Process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carry Context After Process": {
+      "main": [
+        [
+          {
+            "node": "Generate Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Script": {
+      "main": [
+        [
+          {
+            "node": "Build Copy Payload (Video)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Copy Payload (Video)": {
+      "main": [
+        [
+          {
+            "node": "Generate Platform Copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Copy Payload (Non-Video)": {
+      "main": [
+        [
+          {
+            "node": "Generate Platform Copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Platform Copy": {
+      "main": [
+        [
+          {
+            "node": "Collect Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Result": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
       "main": [
         [
           {
@@ -287,7 +862,7 @@
       "main": [
         [
           {
-            "node": "Finalize",
+            "node": "Save Copy",
             "type": "main",
             "index": 0
           }
@@ -301,19 +876,18 @@
             "node": "Update Final Status",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Final Status": {
-      "main": [
-        [
+          },
           {
             "node": "Email Kelly",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Update Final Status": {
+      "main": [
+        []
       ]
     },
     "Email Kelly": {
@@ -326,19 +900,35 @@
           }
         ]
       ]
+    },
+    "Save Copy": {
+      "main": [
+        [
+          {
+            "node": "Finalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
     "timezone": "America/Chicago",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
   },
-  "staticData": null,
+  "staticData": {
+    "global": {}
+  },
   "meta": null,
   "pinData": null,
-  "versionId": "5641107e-0919-4ce6-b6e3-f5473c5a11b6",
-  "activeVersionId": "5641107e-0919-4ce6-b6e3-f5473c5a11b6",
+  "versionId": "d315821b-dcf6-41b3-8174-282c6aa9bc7f",
+  "activeVersionId": "d315821b-dcf6-41b3-8174-282c6aa9bc7f",
   "triggerCount": 1,
   "shared": [
     {
@@ -350,9 +940,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-17T04:14:48.226Z",
-    "createdAt": "2026-02-17T04:14:48.226Z",
-    "versionId": "5641107e-0919-4ce6-b6e3-f5473c5a11b6",
+    "updatedAt": "2026-02-21T23:56:13.283Z",
+    "createdAt": "2026-02-21T23:56:13.283Z",
+    "versionId": "d315821b-dcf6-41b3-8174-282c6aa9bc7f",
     "workflowId": "Tng3ki5oXDnYbb0j",
     "nodes": [
       {
@@ -418,7 +1008,7 @@
         ],
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT wp.id AS plan_id, wp.status, wp.theme_name, wp.theme_seed,\n  a.id AS asset_id, a.asset_type, a.template_type, a.placements, a.theme_name AS asset_theme,\n  a.items, a.script_text,\n  c.name AS client_name, c.id AS client_id, c.slug AS client_slug\nFROM weekly_plans wp\nJOIN assets a ON a.plan_id = wp.id\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.id = '{{ $json.body.plan_id }}'::uuid",
+          "query": "SELECT wp.id AS plan_id, wp.status, wp.theme_name, wp.theme_seed,\n  a.id AS asset_id,\n  CASE\n    WHEN a.template_name IN ('Multi Item', 'Single Item Spotlight', 'Educational') THEN 'video'\n    WHEN a.template_name = 'Image Ad' THEN 'image'\n    WHEN a.template_name = 'Carousel Ad' THEN 'carousel'\n    ELSE 'other'\n  END AS asset_type,\n  CASE\n    WHEN a.template_name = 'Multi Item' THEN 'multi_item'\n    WHEN a.template_name = 'Single Item Spotlight' THEN 'spotlight'\n    WHEN a.template_name = 'Educational' THEN 'educational'\n    WHEN a.template_name = 'Image Ad' THEN 'image_ad'\n    WHEN a.template_name = 'Carousel Ad' THEN 'carousel_ad'\n    ELSE lower(replace(a.template_name, ' ', '_'))\n  END AS template_type,\n  a.target_placements AS placements,\n  a.title AS asset_theme,\n  a.inventory_items AS items,\n  a.script_text,\n  c.name AS client_name, c.id AS client_id, c.slug AS client_slug,\n  COALESCE((SELECT json_object_agg(cp.pronunciation, cp.word) FROM client_pronunciations cp WHERE cp.client_id = c.id), '{}'::json) AS pronunciation_reverse_map\nFROM weekly_plans wp\nJOIN assets a ON a.plan_id = wp.id AND a.included = true\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.id = '{{ $json.body.plan_id }}'::uuid",
           "options": {}
         },
         "credentials": {
@@ -450,25 +1040,12 @@
         }
       },
       {
-        "id": "orchestrate",
-        "name": "Orchestrate Content Generation",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1000,
-          300
-        ],
-        "parameters": {
-          "jsCode": "// [AGENT] Prep — Orchestrate Content Generation\n// Calls existing webhooks: process assets -> generate scripts -> generate platform copy\ntry {\n  const items = $('Fetch Plan + Assets').all();\n  const webhookInput = $('Webhook').first().json.body;\n  const planId = webhookInput.plan_id;\n  const baseUrl = ($env.WEBHOOK_URL || 'https://ad-pilot-n8n-development.up.railway.app/').replace(/\\/$/, '') + '/webhook';\n  const assets = items.map(item => item.json);\n\n  if (assets.length === 0) {\n    return [{ json: { success: true, plan_id: planId, client_name: 'Unknown', errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true } }];\n  }\n\n  const clientName = assets[0].client_name || '';\n  const clientId = assets[0].client_id;\n  const themeName = assets[0].theme_name || '';\n  const planStatus = assets[0].status;\n\n  if (planStatus === 'scripts_ready' || planStatus === 'prep_failed') {\n    return [{ json: { success: true, plan_id: planId, client_name: clientName, errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true, reason: 'Already ' + planStatus } }];\n  }\n\n  const videoAssets = assets.filter(a => a.asset_type === 'video');\n  const imageAssets = assets.filter(a => a.asset_type === 'image');\n  const carouselAssets = assets.filter(a => a.asset_type === 'carousel');\n  const allAssets = [...videoAssets, ...imageAssets, ...carouselAssets];\n  const errors = [];\n  const results = { processed: 0, scripts: 0, copy: 0 };\n  const scriptTexts = {};\n  const scriptResults = {};\n\n  // Step 1: Process Video Assets\n  for (const asset of videoAssets) {\n    try {\n      let endpoint;\n      switch (asset.template_type) {\n        case 'multi_item': endpoint = '/process-multi-item-asset'; break;\n        case 'spotlight': endpoint = '/process-spotlight-asset'; break;\n        case 'educational': endpoint = '/process-educational-asset'; break;\n        default: errors.push('Unknown template_type ' + asset.template_type + ' for ' + asset.asset_id); continue;\n      }\n      const resp = await fetch(baseUrl + endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      if (!resp.ok) { errors.push('Process ' + asset.template_type + ' failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.processed++; }\n    } catch (err) { errors.push('Process error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 2: Generate Scripts for Video Assets\n  for (const asset of videoAssets) {\n    try {\n      const resp = await fetch(baseUrl + '/generate-script-from-asset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      const text = await resp.text();\n      if (!text || !text.trim()) { errors.push('Script empty for ' + asset.asset_id); continue; }\n      let data;\n      try { data = JSON.parse(text); } catch (e) { errors.push('Script non-JSON for ' + asset.asset_id); continue; }\n      const result = Array.isArray(data) ? data[0] : data;\n      scriptResults[asset.asset_id] = result;\n      const script = result.script || {};\n      const fullScript = script.full_script || [script.hook, ...(script.segments || []).map(s => s.narration || s.text || s), script.cta].filter(Boolean).join(' ');\n      if (fullScript) { scriptTexts[asset.asset_id] = fullScript; results.scripts++; }\n    } catch (err) { errors.push('Script error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 3: Generate Platform Copy for All Assets\n  for (const asset of allAssets) {\n    try {\n      const isVideo = asset.asset_type === 'video';\n      const sr = scriptResults[asset.asset_id] || {};\n      let platforms;\n      try { platforms = typeof asset.placements === 'string' ? JSON.parse(asset.placements) : (asset.placements || []); } catch (e) { platforms = ['meta_feed']; }\n      if (!isVideo) { platforms = platforms.filter(p => /meta|facebook|instagram/i.test(p)); if (!platforms.length) platforms = ['meta_feed']; }\n      const payload = {\n        client_id: clientId, platforms,\n        content_type: asset.template_type === 'educational' ? 'organic' : 'ad',\n        format: isVideo ? 'video' : asset.asset_type,\n        template_type: sr.template_code || asset.template_type || '',\n        theme: themeName, vehicles: sr.vehicles || [],\n        script: isVideo ? (scriptTexts[asset.asset_id] || asset.script_text || '') : '',\n        plan_asset_id: asset.asset_id, store_copy: true,\n      };\n      const resp = await fetch(baseUrl + '/generate-platform-copy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });\n      if (!resp.ok) { errors.push('Copy failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.copy++; }\n    } catch (err) { errors.push('Copy error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Build SQL for saving scripts\n  let scriptUpdateSql = 'SELECT 1';\n  const entries = Object.entries(scriptTexts);\n  if (entries.length > 0) {\n    scriptUpdateSql = entries.map(([id, txt]) => \"UPDATE assets SET script_text = $adpilot$\" + txt + \"$adpilot$, updated_at = NOW() WHERE id = '\" + id + \"'::uuid\").join(';\\n') + ';';\n  }\n\n  const success = errors.length === 0 || results.copy > 0;\n  return [{ json: { success, plan_id: planId, client_name: clientName, results, errors, total_assets: allAssets.length, video_count: videoAssets.length, scriptUpdateSql } }];\n} catch (fatalError) {\n  const planId = $('Webhook').first().json.body.plan_id || 'unknown';\n  return [{ json: { success: false, plan_id: planId, client_name: 'Unknown', errors: ['Fatal: ' + fatalError.message], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1' } }];\n}"
-        }
-      },
-      {
         "id": "save-scripts",
         "name": "Save Scripts",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1250,
+          3900,
           300
         ],
         "parameters": {
@@ -490,11 +1067,11 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1500,
+          4250,
           300
         ],
         "parameters": {
-          "jsCode": "const data = $('Orchestrate Content Generation').first().json;\nconst success = data.success;\nconst planId = data.plan_id;\nconst clientName = data.client_name || 'Unknown';\nconst skipped = data.skipped || false;\nconst status = success ? 'scripts_ready' : 'prep_failed';\nconst statusSql = skipped ? 'SELECT 1' : \"UPDATE weekly_plans SET status = '\" + status + \"', updated_at = NOW() WHERE id = '\" + planId + \"'::uuid\";\nlet subject, html;\nif (skipped) {\n  subject = '[Prep] Skipped for ' + clientName;\n  html = '<p>Prep skipped for ' + clientName + '.</p>' + (data.reason ? '<p>Reason: ' + data.reason + '</p>' : '');\n} else if (success) {\n  subject = '[Prep Complete] Scripts & copy ready for ' + clientName;\n  html = '<h2>Scripts & Copy Ready</h2><p><strong>Client:</strong> ' + clientName + '</p><ul><li>Processed: ' + data.results.processed + ' video assets</li><li>Scripts: ' + data.results.scripts + ' generated</li><li>Copy: ' + data.results.copy + ' generated</li></ul><p>Status: <strong>' + status + '</strong></p>';\n} else {\n  subject = '[Prep Failed] Content generation failed for ' + clientName;\n  html = '<h2>Prep Pipeline Failed</h2><p><strong>Client:</strong> ' + clientName + '</p><ul>' + (data.errors || []).map(e => '<li>' + e + '</li>').join('') + '</ul><p>Status: <strong>' + status + '</strong></p>';\n}\nreturn [{ json: {\n  ...data, final_status: status, statusSql,\n  _emailBody: { from: 'Ad Pilot <notifications@ad-pilot.ai>', to: ['kelly@ad-pilot.ai'], subject, html },\n  _response: { success, plan_id: planId, status, results: data.results, errors: data.errors || [] },\n}}];"
+          "jsCode": "const data = $('Aggregate Results').first().json;\nconst success = data.success;\nconst planId = data.plan_id;\nconst clientName = data.client_name || 'Unknown';\nconst skipped = data.skipped || false;\nconst status = success ? 'scripts_ready' : 'prep_failed';\nconst statusSql = skipped ? 'SELECT 1' : \"UPDATE weekly_plans SET status = '\" + status + \"', updated_at = NOW() WHERE id = '\" + planId + \"'::uuid\";\nlet subject, html;\nif (skipped) {\n  subject = '[Prep] Skipped for ' + clientName;\n  html = '<p>Prep skipped for ' + clientName + '.</p>' + (data.reason ? '<p>Reason: ' + data.reason + '</p>' : '');\n} else if (success) {\n  subject = '[Prep Complete] Scripts & copy ready for ' + clientName;\n  html = '<h2>Scripts & Copy Ready</h2><p><strong>Client:</strong> ' + clientName + '</p><ul><li>Processed: ' + data.results.processed + ' video assets</li><li>Scripts: ' + data.results.scripts + ' generated</li><li>Copy: ' + data.results.copy + ' generated</li></ul><p>Status: <strong>' + status + '</strong></p>';\n} else {\n  subject = '[Prep Failed] Content generation failed for ' + clientName;\n  html = '<h2>Prep Pipeline Failed</h2><p><strong>Client:</strong> ' + clientName + '</p><ul>' + (data.errors || []).map(e => '<li>' + e + '</li>').join('') + '</ul><p>Status: <strong>' + status + '</strong></p>';\n}\nreturn [{ json: {\n  ...data, final_status: status, statusSql,\n  _emailBody: { from: 'Ad Pilot <notifications@ad-pilot.ai>', to: ['kelly@ad-pilot.ai'], subject, html },\n  _response: { success, plan_id: planId, status, results: data.results, errors: data.errors || [] },\n}}];"
         }
       },
       {
@@ -503,7 +1080,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1750,
+          4500,
           300
         ],
         "parameters": {
@@ -524,8 +1101,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2000,
-          300
+          4500,
+          500
         ],
         "parameters": {
           "method": "POST",
@@ -556,13 +1133,405 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          2250,
-          300
+          4750,
+          500
         ],
         "parameters": {
           "respondWith": "json",
           "responseBody": "={{ JSON.stringify($json._response) }}"
         }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Clear any stale static data from previous runs\nconst staticData = $getWorkflowStaticData('global');\ndelete staticData._results;\n\n// Prep Assets — split into individual items with routing metadata\nconst items = $('Fetch Plan + Assets').all();\nconst webhookInput = $('Webhook').first().json.body;\nconst planId = webhookInput.plan_id;\n\nif (items.length === 0) {\n  return [{ json: {\n    _skip: true, plan_id: planId, client_name: 'Unknown',\n    _results: { processed: 0, scripts: 0, copy: 0 },\n    _errors: [], scriptUpdateSql: 'SELECT 1'\n  }}];\n}\n\nconst assets = items.map(item => item.json);\nconst clientName = assets[0].client_name || '';\nconst clientId = assets[0].client_id;\nconst clientSlug = assets[0].client_slug || '';\nconst themeName = assets[0].theme_name || assets[0].asset_theme || '';\nconst planStatus = assets[0].status;\n\n// If already processed, skip\nif (planStatus === 'scripts_ready' || planStatus === 'prep_failed') {\n  return [{ json: {\n    _skip: true, plan_id: planId, client_name: clientName,\n    _results: { processed: 0, scripts: 0, copy: 0 },\n    _errors: [], scriptUpdateSql: 'SELECT 1',\n    _skipReason: 'Already ' + planStatus\n  }}];\n}\n\n// Build per-asset items\nconst output = [];\nfor (const asset of assets) {\n  let processEndpoint = '';\n  if (asset.asset_type === 'video') {\n    switch (asset.template_type) {\n      case 'multi_item': processEndpoint = '/webhook/process-multi-item-asset'; break;\n      case 'spotlight': processEndpoint = '/webhook/process-spotlight-asset'; break;\n      case 'educational': processEndpoint = '/webhook/process-educational-asset'; break;\n      default: processEndpoint = '';\n    }\n  }\n\n  // Parse placements\n  let platforms;\n  try {\n    platforms = typeof asset.placements === 'string' ? JSON.parse(asset.placements) : (asset.placements || []);\n  } catch (e) { platforms = ['meta_feed']; }\n  if (!Array.isArray(platforms)) platforms = ['meta_feed'];\n\n  // For non-video, filter to meta platforms\n  if (asset.asset_type !== 'video') {\n    platforms = platforms.filter(p => /meta|facebook|instagram/i.test(p));\n    if (platforms.length === 0) platforms = ['meta_feed'];\n  }\n\n  output.push({ json: {\n    asset_id: asset.asset_id,\n    asset_type: asset.asset_type,\n    template_type: asset.template_type,\n    is_video: asset.asset_type === 'video',\n    process_endpoint: processEndpoint,\n    platforms: platforms,\n    theme_name: themeName,\n    client_id: clientId,\n    client_slug: clientSlug,\n    client_name: clientName,\n    plan_id: planId,\n    script_text: asset.script_text || '',\n    _skip: false,\n    pronunciation_reverse_map: asset.pronunciation_reverse_map || {}\n  }});\n}\nreturn output;"
+        },
+        "name": "Prep Assets",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          300
+        ],
+        "id": "prep-assets-001"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "skip-check",
+                "leftValue": "={{ $json._skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ]
+          },
+          "options": {}
+        },
+        "name": "Check Skip",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1250,
+          300
+        ],
+        "id": "check-skip-001"
+      },
+      {
+        "parameters": {
+          "batchSize": 1,
+          "options": {}
+        },
+        "name": "Loop Over Assets",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          1500,
+          500
+        ],
+        "id": "loop-assets-001"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "video-check",
+                "leftValue": "={{ $json.is_video }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ]
+          },
+          "options": {}
+        },
+        "name": "Is Video?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1750,
+          500
+        ],
+        "id": "is-video-001"
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "id": "spotlight-check",
+                      "leftValue": "={{ $json.template_type }}",
+                      "rightValue": "spotlight",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Spotlight"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "id": "multi-check",
+                      "leftValue": "={{ $json.template_type }}",
+                      "rightValue": "multi_item",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Multi-Item"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "id": "edu-check",
+                      "leftValue": "={{ $json.template_type }}",
+                      "rightValue": "educational",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Educational"
+              }
+            ]
+          },
+          "options": {
+            "fallbackOutput": "extra"
+          }
+        },
+        "name": "Route by Template",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          2000,
+          400
+        ],
+        "id": "route-template-001"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/process-spotlight-asset",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "name": "Process Spotlight",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2300,
+          200
+        ],
+        "id": "process-spotlight-001"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/process-multi-item-asset",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "name": "Process Multi-Item",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2300,
+          400
+        ],
+        "id": "process-multi-001"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/process-educational-asset",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "name": "Process Educational",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2300,
+          600
+        ],
+        "id": "process-edu-001"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Carry asset context forward after process webhook\n// HTTP Request response is in $json, but we need asset_id from input\n// Since pairedItem breaks after HTTP Request, we use $('Loop Over Assets') \n// to get the current batch item\nconst loopItem = $('Loop Over Assets').first().json;\nconst processResult = $json;\n\nreturn [{ json: {\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  template_type: loopItem.template_type,\n  is_video: loopItem.is_video,\n  platforms: loopItem.platforms,\n  theme_name: loopItem.theme_name,\n  client_id: loopItem.client_id,\n  client_slug: loopItem.client_slug,\n  client_name: loopItem.client_name,\n  plan_id: loopItem.plan_id,\n  _process_success: processResult.success !== false,\n  _process_error: processResult.success === false ? (processResult.message || 'Process failed') : '',\n  pronunciation_reverse_map: loopItem.pronunciation_reverse_map || {}\n}}];"
+        },
+        "name": "Carry Context After Process",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2600,
+          400
+        ],
+        "id": "carry-process-001"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-script-from-asset",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ \"asset_id\": $json.asset_id }) }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "name": "Generate Script",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2850,
+          400
+        ],
+        "id": "gen-script-001"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse script result and build platform copy payload\nconst loopItem = $('Loop Over Assets').first().json;\nconst scriptResult = $json;\n\n// Extract structured script parts (phonetic versions for TTS)\nconst script = scriptResult.script || {};\nconst hook = script.hook || '';\nconst segments = script.segments || [];\nconst cta = script.cta || '';\n\n// Reverse pronunciation map: phonetic -> original word\n// Used to convert phonetic script back to clean display text\nconst reverseMap = loopItem.pronunciation_reverse_map || {};\nfunction dePhonetic(text) {\n  let clean = text;\n  for (const [phonetic, original] of Object.entries(reverseMap)) {\n    // Replace all occurrences (case-insensitive)\n    clean = clean.replace(new RegExp(phonetic.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&'), 'gi'), original);\n  }\n  return clean;\n}\n\n// Extract display versions (proper spellings for UI)\n// If Claude provided display_ fields, use them; otherwise reverse-map the phonetic\nconst displayHook = script.display_hook || dePhonetic(hook);\nconst displaySegments = script.display_segments || segments.map(s => dePhonetic(s));\nconst displayCta = script.display_cta || dePhonetic(cta);\n\n// Build labeled script_text for UI parsing (HOOK:/BODY:/CTA: format)\n// Uses DISPLAY version (proper spellings, not phonetic)\nconst labeledScript = 'HOOK: ' + displayHook + '\\nBODY: ' + displaySegments.join('\\n') + '\\nCTA: ' + displayCta;\n\n// Build phonetic labeled script for TTS\nconst phoneticScript = 'HOOK: ' + hook + '\\nBODY: ' + segments.join('\\n') + '\\nCTA: ' + cta;\n\n// Build flat display version for the copy payload\nconst displayFullScript = script.display_full_script ||\n  [displayHook, ...displaySegments, displayCta].filter(Boolean).join(' ');\n\nconst templateCode = scriptResult.template_code || loopItem.template_type || '';\nconst vehicles = scriptResult.vehicles || [];\n\nreturn [{ json: {\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  template_type: loopItem.template_type,\n  is_video: true,\n  platforms: loopItem.platforms,\n  theme_name: loopItem.theme_name,\n  client_id: loopItem.client_id,\n  plan_id: loopItem.plan_id,\n  client_name: loopItem.client_name,\n  _labeled_script: labeledScript,\n  _phonetic_script: phoneticScript,\n  _script_text: displayFullScript,\n  _script_success: displayFullScript.length > 0,\n  _copy_payload: {\n    client_id: loopItem.client_id,\n    platforms: loopItem.platforms,\n    content_type: loopItem.template_type === 'educational' ? 'organic' : 'ad',\n    format: 'video',\n    template_type: templateCode,\n    theme: loopItem.theme_name,\n    vehicles: vehicles,\n    script: displayFullScript,\n    plan_asset_id: loopItem.asset_id,\n    store_copy: false\n  }\n}}];"
+        },
+        "name": "Build Copy Payload (Video)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3100,
+          400
+        ],
+        "id": "build-copy-video-001"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build platform copy payload for non-video assets (image, carousel)\nconst loopItem = $('Loop Over Assets').first().json;\n\nreturn [{ json: {\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  template_type: loopItem.template_type,\n  is_video: false,\n  platforms: loopItem.platforms,\n  theme_name: loopItem.theme_name,\n  client_id: loopItem.client_id,\n  plan_id: loopItem.plan_id,\n  client_name: loopItem.client_name,\n  _script_text: '',\n  _script_success: true,\n  _copy_payload: {\n    client_id: loopItem.client_id,\n    platforms: loopItem.platforms,\n    content_type: 'ad',\n    format: loopItem.asset_type,\n    template_type: loopItem.template_type || '',\n    theme: loopItem.theme_name,\n    vehicles: [],\n    script: '',\n    plan_asset_id: loopItem.asset_id,\n    store_copy: false\n  }\n}}];"
+        },
+        "name": "Build Copy Payload (Non-Video)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2250,
+          800
+        ],
+        "id": "build-copy-nonvideo-001"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-platform-copy",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._copy_payload) }}",
+          "options": {
+            "timeout": 60000,
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "name": "Generate Platform Copy",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3400,
+          600
+        ],
+        "id": "gen-copy-001"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Collect per-asset result and accumulate in static data\nconst loopItem = $('Loop Over Assets').first().json;\nconst staticData = $getWorkflowStaticData('global');\n\nif (!staticData._results) {\n  staticData._results = [];\n}\n\n// Get script text ONLY for video assets\nlet labeledScript = '';\nlet flatScript = '';\nlet phoneticScript = '';\nif (loopItem.is_video) {\n  try {\n    const videoPayload = $('Build Copy Payload (Video)').first().json;\n    labeledScript = videoPayload._labeled_script || '';\n    flatScript = videoPayload._script_text || '';\n    phoneticScript = videoPayload._phonetic_script || '';\n  } catch (e) {}\n}\n\n// Get copy response from Generate Platform Copy\nlet copySuccess = false;\nlet platformCopy = null;\ntry {\n  const copyResp = $('Generate Platform Copy').first().json;\n  copySuccess = copyResp.success !== false && Array.isArray(copyResp.generated_copy);\n  \n  if (copyResp.generated_copy) {\n    platformCopy = {};\n    for (const item of copyResp.generated_copy) {\n      if (item.platform === 'meta' && item.copy) {\n        platformCopy.meta = {\n          primaryText: item.copy.primary_text || '',\n          headline: item.copy.headline || '',\n          description: item.copy.description || ''\n        };\n      } else if (item.platform === 'tiktok' && item.copy) {\n        platformCopy.tiktok = {\n          caption: item.copy.caption || '',\n          hashtags: Array.isArray(item.copy.hashtags) ? item.copy.hashtags.join(' ') : (item.copy.hashtags || '')\n        };\n      } else if (item.platform === 'youtube' && item.copy) {\n        platformCopy.youtube = {\n          title: item.copy.title || '',\n          description: item.copy.description || ''\n        };\n      }\n    }\n  }\n} catch (e) {\n  copySuccess = false;\n}\n\nstaticData._results.push({\n  asset_id: loopItem.asset_id,\n  asset_type: loopItem.asset_type,\n  is_video: loopItem.is_video,\n  plan_id: loopItem.plan_id,\n  client_name: loopItem.client_name,\n  _labeled_script: labeledScript,\n  _phonetic_script: phoneticScript,\n  _script_text: flatScript,\n  _copy_success: copySuccess,\n  _platform_copy: platformCopy\n});\n\nreturn [{ json: { _collected: true, _count: staticData._results.length } }];"
+        },
+        "name": "Collect Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3650,
+          600
+        ],
+        "id": "collect-result-001"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Aggregate all accumulated results from static data\nconst staticData = $getWorkflowStaticData('global');\nconst allResults = staticData._results || [];\nconst firstPrep = $('Prep Assets').first().json;\nconst planId = firstPrep.plan_id;\nconst clientName = firstPrep.client_name;\nconst errors = [];\nconst results = { processed: 0, scripts: 0, copy: 0 };\nconst scriptUpdates = [];\nconst copyUpdates = [];\n\nfor (const r of allResults) {\n  if (r.is_video) results.processed++;\n  if (r._labeled_script) {\n    scriptUpdates.push({\n      id: r.asset_id,\n      text: r._labeled_script,\n      phonetic: r._phonetic_script || ''\n    });\n    results.scripts++;\n  }\n  if (r._copy_success && r._platform_copy) {\n    copyUpdates.push({\n      id: r.asset_id,\n      copy: r._platform_copy\n    });\n    results.copy++;\n  }\n}\n\n// Build SQL for saving scripts — both display and phonetic versions\nlet scriptUpdateSql = 'SELECT 1';\nif (scriptUpdates.length > 0) {\n  scriptUpdateSql = scriptUpdates.map(u =>\n    \"UPDATE assets SET script_text = $adpilot$\" + u.text + \"$adpilot$, phonetic_script = $adpilot$\" + u.phonetic + \"$adpilot$, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\n// Build SQL for saving platform_copy JSONB to assets table\nlet copyUpdateSql = 'SELECT 1';\nif (copyUpdates.length > 0) {\n  copyUpdateSql = copyUpdates.map(u =>\n    \"UPDATE assets SET platform_copy = '\" + JSON.stringify(u.copy).replace(/'/g, \"''\") + \"'::jsonb, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\nconst success = errors.length === 0 || results.copy > 0;\n\n// Clean up static data\ndelete staticData._results;\n\nreturn [{ json: {\n  success, plan_id: planId, client_name: clientName,\n  results, errors, total_assets: allResults.length,\n  video_count: allResults.filter(r => r.is_video).length,\n  scriptUpdateSql,\n  copyUpdateSql\n}}];"
+        },
+        "name": "Aggregate Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          200
+        ],
+        "id": "aggregate-001"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "{{ $('Aggregate Results').first().json.copyUpdateSql }}",
+          "options": {}
+        },
+        "name": "Save Copy",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4000,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        },
+        "id": "save-copy-001"
       }
     ],
     "connections": {
@@ -614,14 +1583,210 @@
         "main": [
           [
             {
-              "node": "Orchestrate Content Generation",
+              "node": "Prep Assets",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Orchestrate Content Generation": {
+      "Prep Assets": {
+        "main": [
+          [
+            {
+              "node": "Check Skip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Skip": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Loop Over Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Assets": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Is Video?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Video?": {
+        "main": [
+          [
+            {
+              "node": "Route by Template",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build Copy Payload (Non-Video)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route by Template": {
+        "main": [
+          [
+            {
+              "node": "Process Spotlight",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Process Multi-Item",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Process Educational",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Carry Context After Process",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Spotlight": {
+        "main": [
+          [
+            {
+              "node": "Carry Context After Process",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Multi-Item": {
+        "main": [
+          [
+            {
+              "node": "Carry Context After Process",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Educational": {
+        "main": [
+          [
+            {
+              "node": "Carry Context After Process",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Carry Context After Process": {
+        "main": [
+          [
+            {
+              "node": "Generate Script",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Script": {
+        "main": [
+          [
+            {
+              "node": "Build Copy Payload (Video)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Copy Payload (Video)": {
+        "main": [
+          [
+            {
+              "node": "Generate Platform Copy",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Copy Payload (Non-Video)": {
+        "main": [
+          [
+            {
+              "node": "Generate Platform Copy",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Platform Copy": {
+        "main": [
+          [
+            {
+              "node": "Collect Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Collect Result": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Results": {
         "main": [
           [
             {
@@ -636,7 +1801,7 @@
         "main": [
           [
             {
-              "node": "Finalize",
+              "node": "Save Copy",
               "type": "main",
               "index": 0
             }
@@ -650,13 +1815,7 @@
               "node": "Update Final Status",
               "type": "main",
               "index": 0
-            }
-          ]
-        ]
-      },
-      "Update Final Status": {
-        "main": [
-          [
+            },
             {
               "node": "Email Kelly",
               "type": "main",
@@ -665,11 +1824,27 @@
           ]
         ]
       },
+      "Update Final Status": {
+        "main": [
+          []
+        ]
+      },
       "Email Kelly": {
         "main": [
           [
             {
               "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Copy": {
+        "main": [
+          [
+            {
+              "node": "Finalize",
               "type": "main",
               "index": 0
             }
