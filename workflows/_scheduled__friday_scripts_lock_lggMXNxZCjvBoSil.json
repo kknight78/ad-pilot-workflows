@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-18T03:32:31.693Z",
+  "updatedAt": "2026-02-21T13:05:00.815Z",
   "createdAt": "2026-02-18T03:32:31.693Z",
   "id": "lggMXNxZCjvBoSil",
   "name": "[SCHEDULED] Friday Scripts Lock",
@@ -20,7 +20,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 0 * * 6"
+              "expression": "0 18 * * 5"
             }
           ]
         }
@@ -258,8 +258,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "989511a7-936f-4607-a40a-c55b1effda61",
-  "activeVersionId": "989511a7-936f-4607-a40a-c55b1effda61",
+  "versionId": "4b4f6d43-fbf9-4a8b-b284-bf0d368a0746",
+  "activeVersionId": "4b4f6d43-fbf9-4a8b-b284-bf0d368a0746",
   "triggerCount": 1,
   "shared": [
     {
@@ -271,9 +271,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-18T03:32:31.725Z",
-    "createdAt": "2026-02-18T03:32:31.725Z",
-    "versionId": "989511a7-936f-4607-a40a-c55b1effda61",
+    "updatedAt": "2026-02-21T13:05:00.817Z",
+    "createdAt": "2026-02-21T13:05:00.817Z",
+    "versionId": "4b4f6d43-fbf9-4a8b-b284-bf0d368a0746",
     "workflowId": "lggMXNxZCjvBoSil",
     "nodes": [
       {
@@ -290,7 +290,7 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "0 0 * * 6"
+                "expression": "0 18 * * 5"
               }
             ]
           }
