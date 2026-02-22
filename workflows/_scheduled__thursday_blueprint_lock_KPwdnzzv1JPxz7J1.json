@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-20T20:58:54.305Z",
+  "updatedAt": "2026-02-21T13:04:59.540Z",
   "createdAt": "2026-02-16T22:38:04.038Z",
   "id": "KPwdnzzv1JPxz7J1",
   "name": "[SCHEDULED] Thursday Blueprint Lock",
@@ -20,7 +20,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 0 * * 5"
+              "expression": "0 18 * * 4"
             }
           ]
         }
@@ -276,8 +276,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "41cd3bdf-f356-453e-a99c-e5fd330f5998",
-  "activeVersionId": "41cd3bdf-f356-453e-a99c-e5fd330f5998",
+  "versionId": "d46c67da-5790-466a-b637-221ab9acb6b2",
+  "activeVersionId": "d46c67da-5790-466a-b637-221ab9acb6b2",
   "triggerCount": 1,
   "shared": [
     {
@@ -289,9 +289,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-20T20:58:54.308Z",
-    "createdAt": "2026-02-20T20:58:54.308Z",
-    "versionId": "41cd3bdf-f356-453e-a99c-e5fd330f5998",
+    "updatedAt": "2026-02-21T13:04:59.546Z",
+    "createdAt": "2026-02-21T13:04:59.546Z",
+    "versionId": "d46c67da-5790-466a-b637-221ab9acb6b2",
     "workflowId": "KPwdnzzv1JPxz7J1",
     "nodes": [
       {
@@ -308,7 +308,7 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "0 0 * * 5"
+                "expression": "0 18 * * 4"
               }
             ]
           }
