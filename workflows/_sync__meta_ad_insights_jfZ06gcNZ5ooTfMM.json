@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-20T17:54:35.199Z",
+  "updatedAt": "2026-02-21T12:42:06.117Z",
   "createdAt": "2026-02-06T23:25:10.831Z",
   "id": "jfZ06gcNZ5ooTfMM",
   "name": "[SYNC] Meta Ad Insights",
@@ -43,8 +43,7 @@
         0
       ],
       "id": "schedule-trigger",
-      "name": "Daily 6am CT",
-      "disabled": true
+      "name": "Daily 6am CT"
     },
     {
       "parameters": {},
@@ -98,7 +97,13 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -111,12 +116,12 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get ads responses from input (account data is embedded by Check Token)\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const adsData = adsResponses[i]?.json;\n  \n  if (!adsData?.data) continue;\n  \n  // account_id is embedded by Check Token node\n  const accountId = adsData.account_id;\n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: accountId,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        896,
+        1596,
         192
       ],
       "id": "parse-ads",
@@ -149,7 +154,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1120,
+        1820,
         192
       ],
       "id": "has-ads",
@@ -164,7 +169,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1344,
+        2044,
         96
       ],
       "id": "upsert-ads",
@@ -183,7 +188,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1568,
+        2268,
         96
       ],
       "id": "group-by-account",
@@ -221,12 +226,18 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1792,
+        2492,
         96
       ],
       "id": "get-insights",
@@ -239,7 +250,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2016,
+        2716,
         96
       ],
       "id": "transform-insights",
@@ -272,7 +283,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2240,
+        2940,
         96
       ],
       "id": "has-insights",
@@ -287,7 +298,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2464,
+        3164,
         0
       ],
       "id": "upsert-insights",
@@ -307,7 +318,7 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        2688,
+        3388,
         0
       ],
       "id": "aggregate-results",
@@ -320,7 +331,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4256,
+        4956,
         0
       ],
       "id": "format-response",
@@ -335,7 +346,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        4480,
+        5180,
         192
       ],
       "id": "respond",
@@ -348,7 +359,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4256,
+        4956,
         384
       ],
       "id": "no-ads-response",
@@ -361,7 +372,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4256,
+        4956,
         192
       ],
       "id": "no-insights-response",
@@ -387,7 +398,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2912,
+        3612,
         0
       ],
       "id": "prep-placement-requests",
@@ -429,12 +440,18 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3136,
+        3836,
         0
       ],
       "id": "get-placement-insights",
@@ -447,7 +464,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3360,
+        4060,
         0
       ],
       "id": "transform-placement-insights",
@@ -480,7 +497,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3584,
+        4284,
         0
       ],
       "id": "has-placement-insights",
@@ -495,7 +512,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3808,
+        4508,
         -60
       ],
       "id": "upsert-placement-insights",
@@ -514,11 +531,124 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3808,
+        4508,
         120
       ],
       "id": "no-placement-response",
       "name": "No Placement Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check Meta API response for token errors\n// Error code 190 = OAuthException (expired/invalid token)\n// Error code 102 = API session expired\n\n// Get all input items (HTTP responses from Get Ads List)\nconst items = $input.all();\n\n// Get original account data from Prepare Date Params\n// (pairedItem breaks after HTTP nodes, so match by index)\nconst accountItems = $('Prepare Date Params').all();\n\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const data = items[i].json;\n  const account = accountItems[i] ? accountItems[i].json : {};\n  const error = data.error;\n\n  if (error && (error.code === 190 || error.code === 102 || error.type === 'OAuthException')) {\n    // Token error - skip this account\n    results.push({\n      json: {\n        _skip: true,\n        _tokenError: true,\n        _accountId: account.account_id || '',\n        _clientId: account.client_id || '',\n        _accountName: account.account_name || '',\n        _errorCode: error.code,\n        _errorMsg: error.message || 'Unknown token error'\n      }\n    });\n  } else if (error) {\n    // Other Meta API error - also skip and alert\n    results.push({\n      json: {\n        _skip: true,\n        _tokenError: true,\n        _accountId: account.account_id || '',\n        _clientId: account.client_id || '',\n        _accountName: account.account_name || '',\n        _errorCode: error.code || 0,\n        _errorMsg: error.message || JSON.stringify(error)\n      }\n    });\n  } else {\n    // Success - pass through with account data re-attached\n    results.push({\n      json: {\n        ...data,\n        account_id: account.account_id,\n        client_id: account.client_id,\n        account_name: account.account_name,\n        access_token: account.access_token,\n        _dateParams: account._dateParams\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        192
+      ],
+      "id": "check-token",
+      "name": "Check Token"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "token-error-check",
+              "leftValue": "={{ $json._tokenError }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1060,
+        192
+      ],
+      "id": "token-error-if",
+      "name": "Token Error?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE meta_ad_accounts SET token_expires_at = NOW() WHERE account_id = '{{ $json._accountId }}'",
+        "options": {
+          "queryReplacement": ""
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1280,
+        400
+      ],
+      "id": "mark-token-expired",
+      "name": "Mark Token Expired",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build email alert for expired Meta token\nconst accountId = $json._accountId || 'unknown';\nconst clientId = $json._clientId || 'unknown';\nconst accountName = $json._accountName || 'unknown';\nconst errorCode = $json._errorCode || 'unknown';\nconst errorMsg = $json._errorMsg || 'Unknown error';\n\nreturn [{\n  json: {\n    _emailBody: {\n      from: 'Ad Pilot <notifications@ad-pilot.ai>',\n      to: ['kelly@ad-pilot.ai'],\n      subject: '\\u26a0\\ufe0f Meta Token Expired: ' + accountName + ' (' + clientId + ')',\n      html: '<div style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto;\">' +\n        '<h2 style=\"color: #c0392b;\">\\u26a0\\ufe0f Meta Token Expired</h2>' +\n        '<p>The Meta access token for the following account has expired or is invalid. ' +\n        'The daily ad insights sync has skipped this account and will continue to skip it until the token is refreshed.</p>' +\n        '<table style=\"border-collapse: collapse; width: 100%; margin: 16px 0;\">' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Client</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + clientId + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Account Name</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + accountName + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Account ID</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + accountId + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Error Code</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + errorCode + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Error Message</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + errorMsg + '</td></tr>' +\n        '</table>' +\n        '<h3>What to do</h3>' +\n        '<ol>' +\n        '<li>Go to the Meta Business Suite and re-authenticate the token</li>' +\n        '<li>Update the <code>access_token</code> in the <code>meta_ad_accounts</code> table</li>' +\n        '<li>Set <code>token_expires_at</code> to a future date (or NULL)</li>' +\n        '</ol>' +\n        '<hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">' +\n        '<p style=\"color: #999; font-size: 12px;\">This account has been marked as expired in the database and will be skipped until re-authenticated.</p>' +\n        '</div>'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        400
+      ],
+      "id": "build-token-alert",
+      "name": "Build Token Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1720,
+        400
+      ],
+      "id": "email-token-expired",
+      "name": "Email Kelly: Token Expired",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
     }
   ],
   "connections": {
@@ -570,7 +700,7 @@
       "main": [
         [
           {
-            "node": "Parse Ad Names",
+            "node": "Check Token",
             "type": "main",
             "index": 0
           }
@@ -806,6 +936,57 @@
           }
         ]
       ]
+    },
+    "Check Token": {
+      "main": [
+        [
+          {
+            "node": "Token Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Error?": {
+      "main": [
+        [
+          {
+            "node": "Mark Token Expired",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Ad Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Token Expired": {
+      "main": [
+        [
+          {
+            "node": "Build Token Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Token Alert": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly: Token Expired",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -813,14 +994,18 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "staticData": null,
+  "staticData": {
+    "node:Daily 6am CT": {
+      "recurrenceRules": []
+    }
+  },
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "09ac7864-8758-47a5-ac06-3669b762a6be",
-  "activeVersionId": "09ac7864-8758-47a5-ac06-3669b762a6be",
-  "triggerCount": 1,
+  "versionId": "d06cf884-c4f0-4c76-8e32-663f023a24de",
+  "activeVersionId": "d06cf884-c4f0-4c76-8e32-663f023a24de",
+  "triggerCount": 2,
   "shared": [
     {
       "updatedAt": "2026-02-06T23:25:10.831Z",
@@ -831,9 +1016,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-20T17:54:35.205Z",
-    "createdAt": "2026-02-20T17:54:35.205Z",
-    "versionId": "09ac7864-8758-47a5-ac06-3669b762a6be",
+    "updatedAt": "2026-02-21T12:42:06.121Z",
+    "createdAt": "2026-02-21T12:42:06.121Z",
+    "versionId": "d06cf884-c4f0-4c76-8e32-663f023a24de",
     "workflowId": "jfZ06gcNZ5ooTfMM",
     "nodes": [
       {
@@ -873,8 +1058,7 @@
           0
         ],
         "id": "schedule-trigger",
-        "name": "Daily 6am CT",
-        "disabled": true
+        "name": "Daily 6am CT"
       },
       {
         "parameters": {},
@@ -928,7 +1112,13 @@
               }
             ]
           },
-          "options": {}
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
@@ -941,12 +1131,12 @@
       },
       {
         "parameters": {
-          "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get account info from previous node\nconst accountsData = $('Get Active Accounts').all();\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const adsData = adsResponses[i]?.json;\n  \n  if (!account || !adsData?.data) continue;\n  \n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: account.account_id,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+          "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get ads responses from input (account data is embedded by Check Token)\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const adsData = adsResponses[i]?.json;\n  \n  if (!adsData?.data) continue;\n  \n  // account_id is embedded by Check Token node\n  const accountId = adsData.account_id;\n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: accountId,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          896,
+          1596,
           192
         ],
         "id": "parse-ads",
@@ -979,7 +1169,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1120,
+          1820,
           192
         ],
         "id": "has-ads",
@@ -994,7 +1184,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1344,
+          2044,
           96
         ],
         "id": "upsert-ads",
@@ -1013,7 +1203,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1568,
+          2268,
           96
         ],
         "id": "group-by-account",
@@ -1051,12 +1241,18 @@
               }
             ]
           },
-          "options": {}
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1792,
+          2492,
           96
         ],
         "id": "get-insights",
@@ -1069,7 +1265,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2016,
+          2716,
           96
         ],
         "id": "transform-insights",
@@ -1102,7 +1298,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2240,
+          2940,
           96
         ],
         "id": "has-insights",
@@ -1117,7 +1313,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2464,
+          3164,
           0
         ],
         "id": "upsert-insights",
@@ -1137,7 +1333,7 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          2688,
+          3388,
           0
         ],
         "id": "aggregate-results",
@@ -1150,7 +1346,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4256,
+          4956,
           0
         ],
         "id": "format-response",
@@ -1165,7 +1361,7 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          4480,
+          5180,
           192
         ],
         "id": "respond",
@@ -1178,7 +1374,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4256,
+          4956,
           384
         ],
         "id": "no-ads-response",
@@ -1191,7 +1387,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          4256,
+          4956,
           192
         ],
         "id": "no-insights-response",
@@ -1217,7 +1413,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2912,
+          3612,
           0
         ],
         "id": "prep-placement-requests",
@@ -1259,12 +1455,18 @@
               }
             ]
           },
-          "options": {}
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3136,
+          3836,
           0
         ],
         "id": "get-placement-insights",
@@ -1277,7 +1479,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3360,
+          4060,
           0
         ],
         "id": "transform-placement-insights",
@@ -1310,7 +1512,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          3584,
+          4284,
           0
         ],
         "id": "has-placement-insights",
@@ -1325,7 +1527,7 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3808,
+          4508,
           -60
         ],
         "id": "upsert-placement-insights",
@@ -1344,11 +1546,124 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3808,
+          4508,
           120
         ],
         "id": "no-placement-response",
         "name": "No Placement Response"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Check Meta API response for token errors\n// Error code 190 = OAuthException (expired/invalid token)\n// Error code 102 = API session expired\n\n// Get all input items (HTTP responses from Get Ads List)\nconst items = $input.all();\n\n// Get original account data from Prepare Date Params\n// (pairedItem breaks after HTTP nodes, so match by index)\nconst accountItems = $('Prepare Date Params').all();\n\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const data = items[i].json;\n  const account = accountItems[i] ? accountItems[i].json : {};\n  const error = data.error;\n\n  if (error && (error.code === 190 || error.code === 102 || error.type === 'OAuthException')) {\n    // Token error - skip this account\n    results.push({\n      json: {\n        _skip: true,\n        _tokenError: true,\n        _accountId: account.account_id || '',\n        _clientId: account.client_id || '',\n        _accountName: account.account_name || '',\n        _errorCode: error.code,\n        _errorMsg: error.message || 'Unknown token error'\n      }\n    });\n  } else if (error) {\n    // Other Meta API error - also skip and alert\n    results.push({\n      json: {\n        _skip: true,\n        _tokenError: true,\n        _accountId: account.account_id || '',\n        _clientId: account.client_id || '',\n        _accountName: account.account_name || '',\n        _errorCode: error.code || 0,\n        _errorMsg: error.message || JSON.stringify(error)\n      }\n    });\n  } else {\n    // Success - pass through with account data re-attached\n    results.push({\n      json: {\n        ...data,\n        account_id: account.account_id,\n        client_id: account.client_id,\n        account_name: account.account_name,\n        access_token: account.access_token,\n        _dateParams: account._dateParams\n      }\n    });\n  }\n}\n\nreturn results;"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          840,
+          192
+        ],
+        "id": "check-token",
+        "name": "Check Token"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "token-error-check",
+                "leftValue": "={{ $json._tokenError }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1060,
+          192
+        ],
+        "id": "token-error-if",
+        "name": "Token Error?"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE meta_ad_accounts SET token_expires_at = NOW() WHERE account_id = '{{ $json._accountId }}'",
+          "options": {
+            "queryReplacement": ""
+          }
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1280,
+          400
+        ],
+        "id": "mark-token-expired",
+        "name": "Mark Token Expired",
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build email alert for expired Meta token\nconst accountId = $json._accountId || 'unknown';\nconst clientId = $json._clientId || 'unknown';\nconst accountName = $json._accountName || 'unknown';\nconst errorCode = $json._errorCode || 'unknown';\nconst errorMsg = $json._errorMsg || 'Unknown error';\n\nreturn [{\n  json: {\n    _emailBody: {\n      from: 'Ad Pilot <notifications@ad-pilot.ai>',\n      to: ['kelly@ad-pilot.ai'],\n      subject: '\\u26a0\\ufe0f Meta Token Expired: ' + accountName + ' (' + clientId + ')',\n      html: '<div style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto;\">' +\n        '<h2 style=\"color: #c0392b;\">\\u26a0\\ufe0f Meta Token Expired</h2>' +\n        '<p>The Meta access token for the following account has expired or is invalid. ' +\n        'The daily ad insights sync has skipped this account and will continue to skip it until the token is refreshed.</p>' +\n        '<table style=\"border-collapse: collapse; width: 100%; margin: 16px 0;\">' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Client</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + clientId + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Account Name</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + accountName + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Account ID</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + accountId + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Error Code</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + errorCode + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Error Message</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + errorMsg + '</td></tr>' +\n        '</table>' +\n        '<h3>What to do</h3>' +\n        '<ol>' +\n        '<li>Go to the Meta Business Suite and re-authenticate the token</li>' +\n        '<li>Update the <code>access_token</code> in the <code>meta_ad_accounts</code> table</li>' +\n        '<li>Set <code>token_expires_at</code> to a future date (or NULL)</li>' +\n        '</ol>' +\n        '<hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">' +\n        '<p style=\"color: #999; font-size: 12px;\">This account has been marked as expired in the database and will be skipped until re-authenticated.</p>' +\n        '</div>'\n    }\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          400
+        ],
+        "id": "build-token-alert",
+        "name": "Build Token Alert"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1720,
+          400
+        ],
+        "id": "email-token-expired",
+        "name": "Email Kelly: Token Expired",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
       }
     ],
     "connections": {
@@ -1400,7 +1715,7 @@
         "main": [
           [
             {
-              "node": "Parse Ad Names",
+              "node": "Check Token",
               "type": "main",
               "index": 0
             }
@@ -1631,6 +1946,57 @@
           [
             {
               "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Token": {
+        "main": [
+          [
+            {
+              "node": "Token Error?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Token Error?": {
+        "main": [
+          [
+            {
+              "node": "Mark Token Expired",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Parse Ad Names",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Token Expired": {
+        "main": [
+          [
+            {
+              "node": "Build Token Alert",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Token Alert": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly: Token Expired",
               "type": "main",
               "index": 0
             }
