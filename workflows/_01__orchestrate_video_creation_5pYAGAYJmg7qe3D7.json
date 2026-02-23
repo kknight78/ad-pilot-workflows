@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-22T03:25:11.292Z",
+  "updatedAt": "2026-02-22T19:29:41.644Z",
   "createdAt": "2026-01-26T23:34:50.230Z",
   "id": "5pYAGAYJmg7qe3D7",
   "name": "[01] Orchestrate Video Creation",
@@ -178,7 +178,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Split config into one item per ratio\nconst config = $json;\nconst ratios = config.ratios || ['9:16'];\nconst platforms = config.platforms || [];\n\n// Determine if we should skip platform banner in Creatomate\nconst skipPlatformBanner = platforms.length > 0;\n\nconsole.log(`Splitting into ${ratios.length} ratio(s)`);\nconsole.log(`Skip platform banner: ${skipPlatformBanner}`);\n\nreturn ratios.map(ratio => ({\n  json: {\n    ...config,\n    ratio: ratio,\n    skipPlatformBanner: skipPlatformBanner,\n    _ratios: ratios,\n    _platforms: platforms\n  }\n}));"
+        "jsCode": "// Split config into one item per ratio with correct per-ratio platforms\nconst config = $json;\nconst ratios = config.ratios || ['9:16'];\nconst ratioPlat = config.ratio_platforms || {};\nconst allPlatforms = config.platforms || [];\n\n// Organic templates don't get platform banners\nconst isOrganic = config.is_organic || (config.template_id || '').startsWith('organic-');\n\n// skipPlatformBanner:\n//   true  = organic (no banners needed)\n//   false = ads (banners added via [08] Add Platform Banners)\nconst skipPlatformBanner = isOrganic;\n\nconsole.log('Splitting into ' + ratios.length + ' ratio(s)');\nconsole.log('Template: ' + (config.template_id || 'unknown'));\nconsole.log('isOrganic: ' + isOrganic);\nconsole.log('skipPlatformBanner: ' + skipPlatformBanner);\n\nreturn ratios.map(ratio => {\n  // Get platforms specific to this ratio, fall back to all platforms\n  const platforms = ratioPlat[ratio] || allPlatforms;\n  console.log(ratio + ': platforms=' + platforms.join(', '));\n\n  return {\n    json: {\n      ...config,\n      ratio: ratio,\n      skipPlatformBanner: skipPlatformBanner,\n      _ratios: ratios,\n      _platforms: platforms\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -231,11 +231,12 @@
           },
           "conditions": [
             {
-              "leftValue": "={{ $json._platforms.length }}",
-              "rightValue": "0",
+              "id": "check-skip-banner",
+              "leftValue": "={{ $json.skipPlatformBanner }}",
+              "rightValue": "",
               "operator": {
-                "type": "number",
-                "operation": "gt"
+                "type": "boolean",
+                "operation": "false"
               }
             }
           ],
@@ -1004,7 +1005,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build script object from pre-existing script text\n// When skip_to_render is true, scripts were already generated in the Prep phase\nconst config = $json;\nconst scriptText = config.script_text || '';\n\n// Build the script object that [03] Generate Avatar expects\n// full_script is what 11Labs TTS uses\nconfig.script = {\n  full_script: scriptText,\n  hook: '',\n  segments: [],\n  cta: ''\n};\n\n// Vehicles: already enriched with VIN + image_url from batch query\n// [04] Generate Video's \"Process All Vehicles\" will check Cloudinary cache by VIN\nif (!config.vehicles) config.vehicles = [];\n\n// Set empty processed_items and theme_pack\nconfig.processed_items = [];\nconfig.theme_pack = {};\n\nconsole.log('Skip to render: built script object for TTS');\nconsole.log('Script length:', scriptText.length);\nconsole.log('Vehicles:', config.vehicles.length);\nif (config.vehicles.length > 0) {\n  console.log('First vehicle VIN:', config.vehicles[0].vin);\n}\n\nreturn [{ json: config }];"
+        "jsCode": "// Build structured script object from pre-existing labeled script text\n// When skip_to_render is true, scripts were already generated in the Planner phase\n// but stored as HOOK:/BODY:/CTA: labeled raw text. Parse into the structured object\n// that [03] Generate Avatar's Parse 11Labs Response expects.\n\nconst config = { ...$json };\n\nconst phoneticRaw = config.phonetic_script || config.script_text || '';\nconst displayRaw = config.script_text || phoneticRaw;\n\n// Parse HOOK:/BODY:/CTA: labeled text into sections\nfunction parseScript(raw) {\n  const result = { hook: '', bodyLines: [], cta: '' };\n  if (!raw) return result;\n\n  // Match labeled sections (case-insensitive)\n  const hookMatch = raw.match(/HOOK:\\s*(.*?)(?=\\nBODY:|\\nCTA:|$)/is);\n  const bodyMatch = raw.match(/BODY:\\s*(.*?)(?=\\nCTA:|$)/is);\n  const ctaMatch = raw.match(/CTA:\\s*(.*?)$/is);\n\n  if (hookMatch) result.hook = hookMatch[1].trim();\n  if (bodyMatch) {\n    // Body can be multi-line — each newline becomes a segment\n    // For multi-item ads: each line = one vehicle segment\n    // For edu: may be one line or multiple paragraphs\n    result.bodyLines = bodyMatch[1].trim().split('\\n').map(l => l.trim()).filter(Boolean);\n  }\n  if (ctaMatch) result.cta = ctaMatch[1].trim();\n\n  // Fallback: if no labels found, treat entire text as body\n  if (!hookMatch && !bodyMatch && !ctaMatch) {\n    result.bodyLines = [raw.trim()];\n  }\n\n  return result;\n}\n\nconst phonetic = parseScript(phoneticRaw);\nconst display = parseScript(displayRaw);\n\n// Build structured script object matching [03] Generate Avatar expectations\nconst segments = phonetic.bodyLines;\nconst displaySegments = display.bodyLines;\n\nconfig.script = {\n  hook: phonetic.hook,\n  segments: segments,\n  cta: phonetic.cta,\n  body: segments.join(' '),\n  full_script: [phonetic.hook, ...segments, phonetic.cta].filter(Boolean).join(' '),\n  display_hook: display.hook,\n  display_segments: displaySegments,\n  display_cta: display.cta,\n  display_full_script: [display.hook, ...displaySegments, display.cta].filter(Boolean).join(' ')\n};\n\n// Vehicles: already enriched from batch query\nif (!config.vehicles) config.vehicles = [];\n\n// VINs array for downstream\nif (!config.vins) {\n  config.vins = config.vehicles.map(v => v.vin).filter(Boolean);\n}\n\n// processed_items already built in Build Job Payload\nif (!Array.isArray(config.processed_items)) config.processed_items = [];\n\n// Flag for downstream nodes\nconfig._hasProcessedItems = config.processed_items.length > 0;\n\n// Empty theme_pack (not needed for skip-to-render)\nif (!config.theme_pack) config.theme_pack = {};\n\n// Clean up raw fields (no longer needed downstream)\ndelete config.phonetic_script;\n\nconsole.log('Skip to render: built structured script object');\nconsole.log('Hook:', (config.script.hook || '').substring(0, 60) + '...');\nconsole.log('Segments:', segments.length);\nsegments.forEach((s, i) => console.log('  seg ' + i + ': ' + s.substring(0, 50) + '...'));\nconsole.log('CTA:', (config.script.cta || '').substring(0, 60) + '...');\nconsole.log('full_script length:', config.script.full_script.length);\nconsole.log('Vehicles:', config.vehicles.length);\nconsole.log('Processed items:', config.processed_items.length);\nconsole.log('skipPlatformBanner:', config.skipPlatformBanner);\n\nreturn [{ json: config }];"
       },
       "id": "build-script-for-render",
       "name": "Build Script for Render",
@@ -1443,8 +1444,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "fe647f8f-16c0-450c-9a7d-f38d2e10cdb3",
-  "activeVersionId": "fe647f8f-16c0-450c-9a7d-f38d2e10cdb3",
+  "versionId": "b8e2ddd6-ed3d-4b0d-828e-a4678c748c44",
+  "activeVersionId": "b8e2ddd6-ed3d-4b0d-828e-a4678c748c44",
   "triggerCount": 1,
   "shared": [
     {
@@ -1456,9 +1457,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-22T03:25:11.297Z",
-    "createdAt": "2026-02-22T03:25:11.297Z",
-    "versionId": "fe647f8f-16c0-450c-9a7d-f38d2e10cdb3",
+    "updatedAt": "2026-02-22T19:29:41.649Z",
+    "createdAt": "2026-02-22T19:29:41.649Z",
+    "versionId": "b8e2ddd6-ed3d-4b0d-828e-a4678c748c44",
     "workflowId": "5pYAGAYJmg7qe3D7",
     "nodes": [
       {
@@ -1633,7 +1634,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Split config into one item per ratio\nconst config = $json;\nconst ratios = config.ratios || ['9:16'];\nconst platforms = config.platforms || [];\n\n// Determine if we should skip platform banner in Creatomate\nconst skipPlatformBanner = platforms.length > 0;\n\nconsole.log(`Splitting into ${ratios.length} ratio(s)`);\nconsole.log(`Skip platform banner: ${skipPlatformBanner}`);\n\nreturn ratios.map(ratio => ({\n  json: {\n    ...config,\n    ratio: ratio,\n    skipPlatformBanner: skipPlatformBanner,\n    _ratios: ratios,\n    _platforms: platforms\n  }\n}));"
+          "jsCode": "// Split config into one item per ratio with correct per-ratio platforms\nconst config = $json;\nconst ratios = config.ratios || ['9:16'];\nconst ratioPlat = config.ratio_platforms || {};\nconst allPlatforms = config.platforms || [];\n\n// Organic templates don't get platform banners\nconst isOrganic = config.is_organic || (config.template_id || '').startsWith('organic-');\n\n// skipPlatformBanner:\n//   true  = organic (no banners needed)\n//   false = ads (banners added via [08] Add Platform Banners)\nconst skipPlatformBanner = isOrganic;\n\nconsole.log('Splitting into ' + ratios.length + ' ratio(s)');\nconsole.log('Template: ' + (config.template_id || 'unknown'));\nconsole.log('isOrganic: ' + isOrganic);\nconsole.log('skipPlatformBanner: ' + skipPlatformBanner);\n\nreturn ratios.map(ratio => {\n  // Get platforms specific to this ratio, fall back to all platforms\n  const platforms = ratioPlat[ratio] || allPlatforms;\n  console.log(ratio + ': platforms=' + platforms.join(', '));\n\n  return {\n    json: {\n      ...config,\n      ratio: ratio,\n      skipPlatformBanner: skipPlatformBanner,\n      _ratios: ratios,\n      _platforms: platforms\n    }\n  };\n});"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1686,11 +1687,12 @@
             },
             "conditions": [
               {
-                "leftValue": "={{ $json._platforms.length }}",
-                "rightValue": "0",
+                "id": "check-skip-banner",
+                "leftValue": "={{ $json.skipPlatformBanner }}",
+                "rightValue": "",
                 "operator": {
-                  "type": "number",
-                  "operation": "gt"
+                  "type": "boolean",
+                  "operation": "false"
                 }
               }
             ],
@@ -2459,7 +2461,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Build script object from pre-existing script text\n// When skip_to_render is true, scripts were already generated in the Prep phase\nconst config = $json;\nconst scriptText = config.script_text || '';\n\n// Build the script object that [03] Generate Avatar expects\n// full_script is what 11Labs TTS uses\nconfig.script = {\n  full_script: scriptText,\n  hook: '',\n  segments: [],\n  cta: ''\n};\n\n// Vehicles: already enriched with VIN + image_url from batch query\n// [04] Generate Video's \"Process All Vehicles\" will check Cloudinary cache by VIN\nif (!config.vehicles) config.vehicles = [];\n\n// Set empty processed_items and theme_pack\nconfig.processed_items = [];\nconfig.theme_pack = {};\n\nconsole.log('Skip to render: built script object for TTS');\nconsole.log('Script length:', scriptText.length);\nconsole.log('Vehicles:', config.vehicles.length);\nif (config.vehicles.length > 0) {\n  console.log('First vehicle VIN:', config.vehicles[0].vin);\n}\n\nreturn [{ json: config }];"
+          "jsCode": "// Build structured script object from pre-existing labeled script text\n// When skip_to_render is true, scripts were already generated in the Planner phase\n// but stored as HOOK:/BODY:/CTA: labeled raw text. Parse into the structured object\n// that [03] Generate Avatar's Parse 11Labs Response expects.\n\nconst config = { ...$json };\n\nconst phoneticRaw = config.phonetic_script || config.script_text || '';\nconst displayRaw = config.script_text || phoneticRaw;\n\n// Parse HOOK:/BODY:/CTA: labeled text into sections\nfunction parseScript(raw) {\n  const result = { hook: '', bodyLines: [], cta: '' };\n  if (!raw) return result;\n\n  // Match labeled sections (case-insensitive)\n  const hookMatch = raw.match(/HOOK:\\s*(.*?)(?=\\nBODY:|\\nCTA:|$)/is);\n  const bodyMatch = raw.match(/BODY:\\s*(.*?)(?=\\nCTA:|$)/is);\n  const ctaMatch = raw.match(/CTA:\\s*(.*?)$/is);\n\n  if (hookMatch) result.hook = hookMatch[1].trim();\n  if (bodyMatch) {\n    // Body can be multi-line — each newline becomes a segment\n    // For multi-item ads: each line = one vehicle segment\n    // For edu: may be one line or multiple paragraphs\n    result.bodyLines = bodyMatch[1].trim().split('\\n').map(l => l.trim()).filter(Boolean);\n  }\n  if (ctaMatch) result.cta = ctaMatch[1].trim();\n\n  // Fallback: if no labels found, treat entire text as body\n  if (!hookMatch && !bodyMatch && !ctaMatch) {\n    result.bodyLines = [raw.trim()];\n  }\n\n  return result;\n}\n\nconst phonetic = parseScript(phoneticRaw);\nconst display = parseScript(displayRaw);\n\n// Build structured script object matching [03] Generate Avatar expectations\nconst segments = phonetic.bodyLines;\nconst displaySegments = display.bodyLines;\n\nconfig.script = {\n  hook: phonetic.hook,\n  segments: segments,\n  cta: phonetic.cta,\n  body: segments.join(' '),\n  full_script: [phonetic.hook, ...segments, phonetic.cta].filter(Boolean).join(' '),\n  display_hook: display.hook,\n  display_segments: displaySegments,\n  display_cta: display.cta,\n  display_full_script: [display.hook, ...displaySegments, display.cta].filter(Boolean).join(' ')\n};\n\n// Vehicles: already enriched from batch query\nif (!config.vehicles) config.vehicles = [];\n\n// VINs array for downstream\nif (!config.vins) {\n  config.vins = config.vehicles.map(v => v.vin).filter(Boolean);\n}\n\n// processed_items already built in Build Job Payload\nif (!Array.isArray(config.processed_items)) config.processed_items = [];\n\n// Flag for downstream nodes\nconfig._hasProcessedItems = config.processed_items.length > 0;\n\n// Empty theme_pack (not needed for skip-to-render)\nif (!config.theme_pack) config.theme_pack = {};\n\n// Clean up raw fields (no longer needed downstream)\ndelete config.phonetic_script;\n\nconsole.log('Skip to render: built structured script object');\nconsole.log('Hook:', (config.script.hook || '').substring(0, 60) + '...');\nconsole.log('Segments:', segments.length);\nsegments.forEach((s, i) => console.log('  seg ' + i + ': ' + s.substring(0, 50) + '...'));\nconsole.log('CTA:', (config.script.cta || '').substring(0, 60) + '...');\nconsole.log('full_script length:', config.script.full_script.length);\nconsole.log('Vehicles:', config.vehicles.length);\nconsole.log('Processed items:', config.processed_items.length);\nconsole.log('skipPlatformBanner:', config.skipPlatformBanner);\n\nreturn [{ json: config }];"
         },
         "id": "build-script-for-render",
         "name": "Build Script for Render",
