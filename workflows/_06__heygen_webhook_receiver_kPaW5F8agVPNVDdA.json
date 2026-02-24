@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-04T20:33:54.626Z",
+  "updatedAt": "2026-02-23T21:54:54.861Z",
   "createdAt": "2026-01-26T23:34:49.104Z",
   "id": "kPaW5F8agVPNVDdA",
   "name": "[06] HeyGen Webhook Receiver",
@@ -267,7 +267,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+        "jsCode": "let avatarInfo = {};\ntry { avatarInfo = $(\"Extract Avatar Info\").first().json || {}; } catch (e) {}\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -315,7 +315,9 @@
           "id": "ZUwzqy3kvUJpXrDM",
           "name": "Postgres (Dev)"
         }
-      }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -547,8 +549,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "3e71bc06-fa1d-4d40-8772-958d1396ce62",
-  "activeVersionId": "3e71bc06-fa1d-4d40-8772-958d1396ce62",
+  "versionId": "45daa42c-a68d-4eac-a514-b309b9b67dc1",
+  "activeVersionId": "45daa42c-a68d-4eac-a514-b309b9b67dc1",
   "triggerCount": 2,
   "shared": [
     {
@@ -560,9 +562,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-04T20:33:54.632Z",
-    "createdAt": "2026-02-04T20:33:54.632Z",
-    "versionId": "3e71bc06-fa1d-4d40-8772-958d1396ce62",
+    "updatedAt": "2026-02-23T21:54:54.863Z",
+    "createdAt": "2026-02-23T21:54:54.863Z",
+    "versionId": "45daa42c-a68d-4eac-a514-b309b9b67dc1",
     "workflowId": "kPaW5F8agVPNVDdA",
     "nodes": [
       {
@@ -826,7 +828,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+          "jsCode": "let avatarInfo = {};\ntry { avatarInfo = $(\"Extract Avatar Info\").first().json || {}; } catch (e) {}\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -874,7 +876,9 @@
             "id": "ZUwzqy3kvUJpXrDM",
             "name": "Postgres (Dev)"
           }
-        }
+        },
+        "onError": "continueRegularOutput",
+        "alwaysOutputData": true
       },
       {
         "parameters": {
