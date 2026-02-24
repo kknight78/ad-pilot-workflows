@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T19:35:35.601Z",
+  "updatedAt": "2026-02-23T22:14:21.283Z",
   "createdAt": "2025-12-17T14:15:04.048Z",
   "id": "FAvXS0078ZfxhOOu",
   "name": "[05] Process Avatar Photo",
@@ -427,7 +427,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $json;\n\nreturn [{\n  json: {\n    success: true,\n    status: 'motion_processing',\n    request_id: data.request_id,\n    group_id: data.group_id,\n    avatar_name: data.avatar_name,\n    image_key: data.image_key,\n    photo_avatar_id: data.photo_avatar_id,\n    motion_avatar_id: data.motion_avatar_id,\n    motion_preset: data.motion_preset,\n    motion_engine: data.motion_engine,\n    bg_removed_url: data.bg_removed_url,\n    message: 'Motion is being generated. Webhook will notify when complete.',\n    webhook_event: 'photo_avatar_add_motion.success'\n  }\n}];"
+        "jsCode": "const motionData = $('Extract Motion ID').first().json;\nconst parseInput = $('Parse Input').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    status: 'motion_processing',\n    request_id: motionData.request_id,\n    group_id: motionData.group_id,\n    avatar_name: motionData.avatar_name || parseInput.style_name,\n    image_key: motionData.image_key,\n    photo_avatar_id: motionData.photo_avatar_id,\n    motion_avatar_id: motionData.motion_avatar_id,\n    motion_preset: motionData.motion_preset || parseInput.motion_preset,\n    motion_engine: motionData.motion_engine || parseInput.motion_engine,\n    bg_removed_url: motionData.bg_removed_url,\n    message: 'Motion is being generated. Webhook will notify when complete.',\n    webhook_event: 'photo_avatar_add_motion.success'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1483,8 +1483,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "fa9db2db-628a-4fd3-a8b8-1923a17e74c4",
-  "activeVersionId": "fa9db2db-628a-4fd3-a8b8-1923a17e74c4",
+  "versionId": "3b9871f0-5d69-4662-b1ca-6eee7ff85ae5",
+  "activeVersionId": "3b9871f0-5d69-4662-b1ca-6eee7ff85ae5",
   "triggerCount": 1,
   "shared": [
     {
@@ -1496,9 +1496,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-08T19:35:35.605Z",
-    "createdAt": "2026-02-08T19:35:35.605Z",
-    "versionId": "fa9db2db-628a-4fd3-a8b8-1923a17e74c4",
+    "updatedAt": "2026-02-23T22:14:21.288Z",
+    "createdAt": "2026-02-23T22:14:21.288Z",
+    "versionId": "3b9871f0-5d69-4662-b1ca-6eee7ff85ae5",
     "workflowId": "FAvXS0078ZfxhOOu",
     "nodes": [
       {
@@ -1922,7 +1922,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const data = $json;\n\nreturn [{\n  json: {\n    success: true,\n    status: 'motion_processing',\n    request_id: data.request_id,\n    group_id: data.group_id,\n    avatar_name: data.avatar_name,\n    image_key: data.image_key,\n    photo_avatar_id: data.photo_avatar_id,\n    motion_avatar_id: data.motion_avatar_id,\n    motion_preset: data.motion_preset,\n    motion_engine: data.motion_engine,\n    bg_removed_url: data.bg_removed_url,\n    message: 'Motion is being generated. Webhook will notify when complete.',\n    webhook_event: 'photo_avatar_add_motion.success'\n  }\n}];"
+          "jsCode": "const motionData = $('Extract Motion ID').first().json;\nconst parseInput = $('Parse Input').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    status: 'motion_processing',\n    request_id: motionData.request_id,\n    group_id: motionData.group_id,\n    avatar_name: motionData.avatar_name || parseInput.style_name,\n    image_key: motionData.image_key,\n    photo_avatar_id: motionData.photo_avatar_id,\n    motion_avatar_id: motionData.motion_avatar_id,\n    motion_preset: motionData.motion_preset || parseInput.motion_preset,\n    motion_engine: motionData.motion_engine || parseInput.motion_engine,\n    bg_removed_url: motionData.bg_removed_url,\n    message: 'Motion is being generated. Webhook will notify when complete.',\n    webhook_event: 'photo_avatar_add_motion.success'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
