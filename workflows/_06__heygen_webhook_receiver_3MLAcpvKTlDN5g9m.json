@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:48.716Z",
+  "updatedAt": "2026-02-23T21:54:56.084Z",
   "createdAt": "2025-12-19T01:37:49.969Z",
   "id": "3MLAcpvKTlDN5g9m",
   "name": "[06] HeyGen Webhook Receiver",
@@ -267,7 +267,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+        "jsCode": "let avatarInfo = {};\ntry { avatarInfo = $(\"Extract Avatar Info\").first().json || {}; } catch (e) {}\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -315,7 +315,8 @@
           "id": "3XsWrPuEddwVYbGS",
           "name": "Railway Postgres"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -547,8 +548,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "9ab2df61-9ca0-4cd8-8e27-19a81031c1cf",
-  "activeVersionId": "9ab2df61-9ca0-4cd8-8e27-19a81031c1cf",
+  "versionId": "29aa1785-df88-41c2-80c2-b0414b1f2304",
+  "activeVersionId": "29aa1785-df88-41c2-80c2-b0414b1f2304",
   "triggerCount": 2,
   "shared": [
     {
@@ -560,9 +561,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:23:48.719Z",
-    "createdAt": "2026-02-06T23:23:48.719Z",
-    "versionId": "9ab2df61-9ca0-4cd8-8e27-19a81031c1cf",
+    "updatedAt": "2026-02-23T21:54:56.094Z",
+    "createdAt": "2026-02-23T21:54:56.094Z",
+    "versionId": "29aa1785-df88-41c2-80c2-b0414b1f2304",
     "workflowId": "3MLAcpvKTlDN5g9m",
     "nodes": [
       {
@@ -826,7 +827,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const avatarInfo = $(\"Extract Avatar Info\").first().json || {};\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || 'unknown'\n  }\n}];"
+          "jsCode": "let avatarInfo = {};\ntry { avatarInfo = $(\"Extract Avatar Info\").first().json || {}; } catch (e) {}\nlet errorMsg = 'Unknown error';\ntry { errorMsg = $json.message || $json.error || JSON.stringify($json); } catch (e) {}\n\nreturn [{\n  json: {\n    workflow_name: '[06] HeyGen Webhook Receiver',\n    error: errorMsg,\n    details: { avatar_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown' },\n    job_id: avatarInfo.avatar_id || $json.event_data?.avatar_id || 'unknown'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -874,7 +875,8 @@
             "id": "3XsWrPuEddwVYbGS",
             "name": "Railway Postgres"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "parameters": {
