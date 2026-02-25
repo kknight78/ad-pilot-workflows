@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-23T22:14:19.733Z",
+  "updatedAt": "2026-02-24T17:09:45.071Z",
   "createdAt": "2026-01-26T23:34:57.068Z",
   "id": "YRyWnGyjNZTqD0a4",
   "name": "[05] Process Avatar Photo",
@@ -523,7 +523,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nif (!response.data || !response.data.photo_avatar_list || response.data.photo_avatar_list.length === 0) {\n  throw new Error('Failed to add look to group: ' + JSON.stringify(response));\n}\n\nconst photoAvatar = response.data.photo_avatar_list[0];\n\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_id: photoAvatar.id,\n    photo_avatar_status: photoAvatar.status,\n    status: 'look_added'\n  }\n}];"
+        "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nif (!response.data || !response.data.photo_avatar_list || response.data.photo_avatar_list.length === 0) {\n  throw new Error('Failed to add look to group: ' + JSON.stringify(response));\n}\n\nconst photoAvatar = response.data.photo_avatar_list[0];\n\n// For new groups, group_id was set in Carry Data Forward (not in Extract Image Key)\n// Extract Image Key runs BEFORE group creation, so its group_id is null for new users\nlet groupId = inputData.group_id;\nif (!groupId) {\n  try {\n    const newGroupData = $('Carry Data Forward').first().json;\n    if (newGroupData && newGroupData.group_id) {\n      groupId = newGroupData.group_id;\n    }\n  } catch (e) {\n    // Carry Data Forward didn't run (existing group path) — keep original\n  }\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    group_id: groupId,\n    photo_avatar_id: photoAvatar.id,\n    photo_avatar_status: photoAvatar.status,\n    status: 'look_added'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1483,8 +1483,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "898baac2-f3b6-492f-8015-c5e194764eb6",
-  "activeVersionId": "898baac2-f3b6-492f-8015-c5e194764eb6",
+  "versionId": "42b6c749-125d-4f79-8fbb-52343bdc8fb8",
+  "activeVersionId": "42b6c749-125d-4f79-8fbb-52343bdc8fb8",
   "triggerCount": 1,
   "shared": [
     {
@@ -1496,9 +1496,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-23T22:14:19.739Z",
-    "createdAt": "2026-02-23T22:14:19.739Z",
-    "versionId": "898baac2-f3b6-492f-8015-c5e194764eb6",
+    "updatedAt": "2026-02-24T17:09:45.103Z",
+    "createdAt": "2026-02-24T17:09:45.103Z",
+    "versionId": "42b6c749-125d-4f79-8fbb-52343bdc8fb8",
     "workflowId": "YRyWnGyjNZTqD0a4",
     "nodes": [
       {
@@ -2018,7 +2018,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nif (!response.data || !response.data.photo_avatar_list || response.data.photo_avatar_list.length === 0) {\n  throw new Error('Failed to add look to group: ' + JSON.stringify(response));\n}\n\nconst photoAvatar = response.data.photo_avatar_list[0];\n\nreturn [{\n  json: {\n    ...inputData,\n    photo_avatar_id: photoAvatar.id,\n    photo_avatar_status: photoAvatar.status,\n    status: 'look_added'\n  }\n}];"
+          "jsCode": "const response = $json;\nconst inputData = $('Extract Image Key').first().json;\n\nif (!response.data || !response.data.photo_avatar_list || response.data.photo_avatar_list.length === 0) {\n  throw new Error('Failed to add look to group: ' + JSON.stringify(response));\n}\n\nconst photoAvatar = response.data.photo_avatar_list[0];\n\n// For new groups, group_id was set in Carry Data Forward (not in Extract Image Key)\n// Extract Image Key runs BEFORE group creation, so its group_id is null for new users\nlet groupId = inputData.group_id;\nif (!groupId) {\n  try {\n    const newGroupData = $('Carry Data Forward').first().json;\n    if (newGroupData && newGroupData.group_id) {\n      groupId = newGroupData.group_id;\n    }\n  } catch (e) {\n    // Carry Data Forward didn't run (existing group path) — keep original\n  }\n}\n\nreturn [{\n  json: {\n    ...inputData,\n    group_id: groupId,\n    photo_avatar_id: photoAvatar.id,\n    photo_avatar_status: photoAvatar.status,\n    status: 'look_added'\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
