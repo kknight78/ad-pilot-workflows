@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T15:20:51.961Z",
+  "updatedAt": "2026-02-25T00:14:58.092Z",
   "createdAt": "2026-02-17T14:37:38.076Z",
   "id": "alhrzPr6Qz4SKuXC",
   "name": "[AGENT] Idea",
@@ -61,7 +61,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT c.id AS client_id, c.slug, c.name AS client_name, c.industry\nFROM clients c\nWHERE c.slug IS NOT NULL AND c.industry IS NOT NULL",
+        "query": "SELECT c.id AS client_id, c.slug, c.name AS client_name, c.industry\nFROM clients c\nWHERE c.is_active = true\n  AND c.slug IS NOT NULL AND c.industry IS NOT NULL",
         "options": {}
       },
       "id": "get-active-clients",
@@ -796,8 +796,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "a0be9c98-80c0-45ea-97f2-7c6ba1ab66d2",
-  "activeVersionId": "a0be9c98-80c0-45ea-97f2-7c6ba1ab66d2",
+  "versionId": "ae3677cd-692c-4c7f-b1d7-d5013fb7d6ef",
+  "activeVersionId": "ae3677cd-692c-4c7f-b1d7-d5013fb7d6ef",
   "triggerCount": 2,
   "shared": [
     {
@@ -809,9 +809,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-17T15:20:51.964Z",
-    "createdAt": "2026-02-17T15:20:51.964Z",
-    "versionId": "a0be9c98-80c0-45ea-97f2-7c6ba1ab66d2",
+    "updatedAt": "2026-02-25T00:14:58.095Z",
+    "createdAt": "2026-02-25T00:14:58.095Z",
+    "versionId": "ae3677cd-692c-4c7f-b1d7-d5013fb7d6ef",
     "workflowId": "alhrzPr6Qz4SKuXC",
     "nodes": [
       {
@@ -869,7 +869,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT c.id AS client_id, c.slug, c.name AS client_name, c.industry\nFROM clients c\nWHERE c.slug IS NOT NULL AND c.industry IS NOT NULL",
+          "query": "SELECT c.id AS client_id, c.slug, c.name AS client_name, c.industry\nFROM clients c\nWHERE c.is_active = true\n  AND c.slug IS NOT NULL AND c.industry IS NOT NULL",
           "options": {}
         },
         "id": "get-active-clients",
