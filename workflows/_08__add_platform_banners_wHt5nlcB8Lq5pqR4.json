@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-26T23:34:46.628Z",
+  "updatedAt": "2026-02-24T23:09:51.836Z",
   "createdAt": "2026-01-26T23:34:46.628Z",
   "id": "wHt5nlcB8Lq5pqR4",
   "name": "[08] Add Platform Banners",
@@ -170,6 +170,53 @@
       ],
       "id": "handle-ffmpeg-error",
       "name": "Handle ffmpeg Error"
+    },
+    {
+      "id": "a4f37c80-4205-4027-8135-2f430ce73249",
+      "name": "Webhook: Add Banners",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        400
+      ],
+      "parameters": {
+        "path": "add-platform-banners",
+        "responseMode": "responseNode",
+        "httpMethod": "POST",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "0beb4c95-305b-4fce-a201-e509264f33d8"
+    },
+    {
+      "id": "0733d2fa-02f3-4036-8c68-3c4996c2bde8",
+      "name": "Parse Webhook Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        400
+      ],
+      "parameters": {
+        "jsCode": "// Extract POST body so downstream nodes see the same data as executeWorkflow passthrough\nreturn [{ json: $json.body }];"
+      }
+    },
+    {
+      "id": "e9645116-b9a8-41f2-8df1-5fd3ce1baf57",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        944,
+        176
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -274,6 +321,39 @@
           }
         ]
       ]
+    },
+    "Webhook: Add Banners": {
+      "main": [
+        [
+          {
+            "node": "Parse Webhook Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Webhook Body": {
+      "main": [
+        [
+          {
+            "node": "Split by Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -284,9 +364,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "bd9b6f21-f328-42ae-9015-5bfc827f43bd",
-  "activeVersionId": "bd9b6f21-f328-42ae-9015-5bfc827f43bd",
-  "triggerCount": 0,
+  "versionId": "d6f7e3cd-5228-40f3-bad2-604a34e14efb",
+  "activeVersionId": "d6f7e3cd-5228-40f3-bad2-604a34e14efb",
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2026-01-26T23:34:46.628Z",
@@ -297,9 +377,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-26T23:34:46.643Z",
-    "createdAt": "2026-01-26T23:34:46.643Z",
-    "versionId": "bd9b6f21-f328-42ae-9015-5bfc827f43bd",
+    "updatedAt": "2026-02-24T23:09:51.841Z",
+    "createdAt": "2026-02-24T23:09:51.841Z",
+    "versionId": "d6f7e3cd-5228-40f3-bad2-604a34e14efb",
     "workflowId": "wHt5nlcB8Lq5pqR4",
     "nodes": [
       {
@@ -466,6 +546,53 @@
         ],
         "id": "handle-ffmpeg-error",
         "name": "Handle ffmpeg Error"
+      },
+      {
+        "id": "a4f37c80-4205-4027-8135-2f430ce73249",
+        "name": "Webhook: Add Banners",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -400,
+          400
+        ],
+        "parameters": {
+          "path": "add-platform-banners",
+          "responseMode": "responseNode",
+          "httpMethod": "POST",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "webhookId": "0beb4c95-305b-4fce-a201-e509264f33d8"
+      },
+      {
+        "id": "0733d2fa-02f3-4036-8c68-3c4996c2bde8",
+        "name": "Parse Webhook Body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -208,
+          400
+        ],
+        "parameters": {
+          "jsCode": "// Extract POST body so downstream nodes see the same data as executeWorkflow passthrough\nreturn [{ json: $json.body }];"
+        }
+      },
+      {
+        "id": "e9645116-b9a8-41f2-8df1-5fd3ce1baf57",
+        "name": "Respond to Webhook",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          944,
+          176
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
       }
     ],
     "connections": {
@@ -565,6 +692,39 @@
           [
             {
               "node": "Format Output",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: Add Banners": {
+        "main": [
+          [
+            {
+              "node": "Parse Webhook Body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Webhook Body": {
+        "main": [
+          [
+            {
+              "node": "Split by Platforms",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Output": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
               "type": "main",
               "index": 0
             }
