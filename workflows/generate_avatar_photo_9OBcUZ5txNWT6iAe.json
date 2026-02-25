@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-11T01:36:17.674Z",
+  "updatedAt": "2026-02-24T17:20:02.285Z",
   "createdAt": "2026-02-10T23:57:16.138Z",
   "id": "9OBcUZ5txNWT6iAe",
   "name": "Generate Avatar Photo",
@@ -99,7 +99,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const items = $input.all();\nconst responseData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nconst candidates = responseData.candidates;\nif (!candidates || candidates.length === 0) {\n  throw new Error('No candidates in Gemini response');\n}\n\nconst parts = candidates[0].content.parts;\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nfor (const part of parts) {\n  if (part.inlineData) {\n    imageBase64 = part.inlineData.data;\n    mimeType = part.inlineData.mimeType || 'image/png';\n  }\n}\n\nif (!imageBase64) {\n  throw new Error('No image found in Gemini response');\n}\n\nreturn [{ json: {\n  file: 'data:' + mimeType + ';base64,' + imageBase64,\n  folder: 'avatars/' + (webhookBody.client_slug || 'general') + '/ai-generated',\n  public_id: 'ai_gen_' + Date.now(),\n  job_id: webhookBody.job_id\n} }];"
+        "jsCode": "const items = $input.all();\nconst responseData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nconst candidates = responseData.candidates;\nif (!candidates || candidates.length === 0) {\n  throw new Error('No candidates in Gemini response');\n}\n\nconst candidate = candidates[0];\n\n// Gemini safety filter can block the image — no content/parts returned\nif (!candidate.content || !candidate.content.parts || !Array.isArray(candidate.content.parts)) {\n  const reason = candidate.finishReason || 'unknown';\n  throw new Error('Gemini blocked the image (finishReason: ' + reason + '). The prompt may have violated content policy. Try rephrasing.');\n}\n\nconst parts = candidate.content.parts;\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nfor (const part of parts) {\n  if (part.inlineData) {\n    imageBase64 = part.inlineData.data;\n    mimeType = part.inlineData.mimeType || 'image/png';\n  }\n}\n\nif (!imageBase64) {\n  throw new Error('No image found in Gemini response — only text was returned');\n}\n\nreturn [{ json: {\n  file: 'data:' + mimeType + ';base64,' + imageBase64,\n  folder: 'avatars/' + (webhookBody.client_slug || 'general') + '/ai-generated',\n  public_id: 'ai_gen_' + Date.now(),\n  job_id: webhookBody.job_id\n} }];"
       }
     },
     {
@@ -317,8 +317,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "1e593eb5-efc2-49c8-abae-c2dca7adfd0a",
-  "activeVersionId": "1e593eb5-efc2-49c8-abae-c2dca7adfd0a",
+  "versionId": "14328090-22c5-4c66-b99d-4b375230e5f1",
+  "activeVersionId": "14328090-22c5-4c66-b99d-4b375230e5f1",
   "triggerCount": 1,
   "shared": [
     {
@@ -330,9 +330,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-11T01:36:17.678Z",
-    "createdAt": "2026-02-11T01:36:17.678Z",
-    "versionId": "1e593eb5-efc2-49c8-abae-c2dca7adfd0a",
+    "updatedAt": "2026-02-24T17:20:02.289Z",
+    "createdAt": "2026-02-24T17:20:02.289Z",
+    "versionId": "14328090-22c5-4c66-b99d-4b375230e5f1",
     "workflowId": "9OBcUZ5txNWT6iAe",
     "nodes": [
       {
@@ -428,7 +428,7 @@
         ],
         "parameters": {
           "language": "javaScript",
-          "jsCode": "const items = $input.all();\nconst responseData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nconst candidates = responseData.candidates;\nif (!candidates || candidates.length === 0) {\n  throw new Error('No candidates in Gemini response');\n}\n\nconst parts = candidates[0].content.parts;\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nfor (const part of parts) {\n  if (part.inlineData) {\n    imageBase64 = part.inlineData.data;\n    mimeType = part.inlineData.mimeType || 'image/png';\n  }\n}\n\nif (!imageBase64) {\n  throw new Error('No image found in Gemini response');\n}\n\nreturn [{ json: {\n  file: 'data:' + mimeType + ';base64,' + imageBase64,\n  folder: 'avatars/' + (webhookBody.client_slug || 'general') + '/ai-generated',\n  public_id: 'ai_gen_' + Date.now(),\n  job_id: webhookBody.job_id\n} }];"
+          "jsCode": "const items = $input.all();\nconst responseData = items[0].json;\nconst webhookBody = $('Webhook').item.json.body;\n\nconst candidates = responseData.candidates;\nif (!candidates || candidates.length === 0) {\n  throw new Error('No candidates in Gemini response');\n}\n\nconst candidate = candidates[0];\n\n// Gemini safety filter can block the image — no content/parts returned\nif (!candidate.content || !candidate.content.parts || !Array.isArray(candidate.content.parts)) {\n  const reason = candidate.finishReason || 'unknown';\n  throw new Error('Gemini blocked the image (finishReason: ' + reason + '). The prompt may have violated content policy. Try rephrasing.');\n}\n\nconst parts = candidate.content.parts;\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nfor (const part of parts) {\n  if (part.inlineData) {\n    imageBase64 = part.inlineData.data;\n    mimeType = part.inlineData.mimeType || 'image/png';\n  }\n}\n\nif (!imageBase64) {\n  throw new Error('No image found in Gemini response — only text was returned');\n}\n\nreturn [{ json: {\n  file: 'data:' + mimeType + ';base64,' + imageBase64,\n  folder: 'avatars/' + (webhookBody.client_slug || 'general') + '/ai-generated',\n  public_id: 'ai_gen_' + Date.now(),\n  job_id: webhookBody.job_id\n} }];"
         }
       },
       {
