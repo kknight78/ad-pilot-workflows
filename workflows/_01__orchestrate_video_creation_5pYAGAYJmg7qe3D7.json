@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-22T19:29:41.644Z",
+  "updatedAt": "2026-02-24T23:14:41.318Z",
   "createdAt": "2026-01-26T23:34:50.230Z",
   "id": "5pYAGAYJmg7qe3D7",
   "name": "[01] Orchestrate Video Creation",
@@ -190,35 +190,24 @@
       "name": "Split by Ratios"
     },
     {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "rCHIIq9b5UxNMP06",
-          "mode": "list",
-          "cachedResultName": "[04] Generate Video"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "mode": "each",
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
+      "id": "call-video",
+      "name": "Call '[04] Generate Video'",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         3392,
         192
       ],
-      "id": "call-video",
-      "name": "Call '[04] Generate Video'",
-      "alwaysOutputData": true
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-video",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 600000
+        }
+      }
     },
     {
       "parameters": {
@@ -268,34 +257,24 @@
       "name": "Prepare for Banners"
     },
     {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "wHt5nlcB8Lq5pqR4",
-          "mode": "list",
-          "cachedResultName": "[08] Add Platform Banners"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "mode": "each",
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
+      "id": "call-banners",
+      "name": "Call '[08] Add Platform Banners'",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         4064,
         176
       ],
-      "id": "call-banners",
-      "name": "Call '[08] Add Platform Banners'"
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/add-platform-banners",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 600000
+        }
+      }
     },
     {
       "parameters": {
@@ -1444,8 +1423,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b8e2ddd6-ed3d-4b0d-828e-a4678c748c44",
-  "activeVersionId": "b8e2ddd6-ed3d-4b0d-828e-a4678c748c44",
+  "versionId": "562a9b36-ed25-4c16-b096-a078c9b284be",
+  "activeVersionId": "562a9b36-ed25-4c16-b096-a078c9b284be",
   "triggerCount": 1,
   "shared": [
     {
@@ -1457,9 +1436,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-22T19:29:41.649Z",
-    "createdAt": "2026-02-22T19:29:41.649Z",
-    "versionId": "b8e2ddd6-ed3d-4b0d-828e-a4678c748c44",
+    "updatedAt": "2026-02-24T23:14:41.321Z",
+    "createdAt": "2026-02-24T23:14:41.321Z",
+    "versionId": "562a9b36-ed25-4c16-b096-a078c9b284be",
     "workflowId": "5pYAGAYJmg7qe3D7",
     "nodes": [
       {
@@ -1646,35 +1625,24 @@
         "name": "Split by Ratios"
       },
       {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "rCHIIq9b5UxNMP06",
-            "mode": "list",
-            "cachedResultName": "[04] Generate Video"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "mode": "each",
-          "options": {
-            "waitForSubWorkflow": true
-          }
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.2,
+        "id": "call-video",
+        "name": "Call '[04] Generate Video'",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
         "position": [
           3392,
           192
         ],
-        "id": "call-video",
-        "name": "Call '[04] Generate Video'",
-        "alwaysOutputData": true
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/generate-video",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "timeout": 600000
+          }
+        }
       },
       {
         "parameters": {
@@ -1724,34 +1692,24 @@
         "name": "Prepare for Banners"
       },
       {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "wHt5nlcB8Lq5pqR4",
-            "mode": "list",
-            "cachedResultName": "[08] Add Platform Banners"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "mode": "each",
-          "options": {
-            "waitForSubWorkflow": true
-          }
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.2,
+        "id": "call-banners",
+        "name": "Call '[08] Add Platform Banners'",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
         "position": [
           4064,
           176
         ],
-        "id": "call-banners",
-        "name": "Call '[08] Add Platform Banners'"
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/add-platform-banners",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "timeout": 600000
+          }
+        }
       },
       {
         "parameters": {
