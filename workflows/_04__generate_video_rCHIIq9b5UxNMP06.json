@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-22T22:11:49.801Z",
+  "updatedAt": "2026-02-24T23:05:10.526Z",
   "createdAt": "2026-01-26T23:34:40.537Z",
   "id": "rCHIIq9b5UxNMP06",
   "name": "[04] Generate Video",
@@ -488,6 +488,53 @@
       "id": "call-remove-bg",
       "name": "Call: Remove Background",
       "onError": "continueErrorOutput"
+    },
+    {
+      "id": "21c8af17-0c2d-42c1-b2b2-459fa930714b",
+      "name": "Webhook: Generate Video",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        80
+      ],
+      "parameters": {
+        "path": "generate-video",
+        "responseMode": "responseNode",
+        "httpMethod": "POST",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "e7e05c2d-40e9-4a20-be39-e0f9a6e21d45"
+    },
+    {
+      "id": "c6c234a1-9326-4312-b950-54432a53f044",
+      "name": "Parse Webhook Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        80
+      ],
+      "parameters": {
+        "jsCode": "// Extract POST body so downstream nodes see the same data as executeWorkflow passthrough\nreturn [{ json: $json.body }];"
+      }
+    },
+    {
+      "id": "645bea45-6f4e-47ac-a757-6e498ab3aa3f",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1544,
+        112
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -653,7 +700,13 @@
     },
     "Parse Video Creation Response": {
       "main": [
-        []
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "API: Creatomate, Check Status": {
@@ -782,6 +835,28 @@
           }
         ]
       ]
+    },
+    "Webhook: Generate Video": {
+      "main": [
+        [
+          {
+            "node": "Parse Webhook Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Webhook Body": {
+      "main": [
+        [
+          {
+            "node": "Process All Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -792,9 +867,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "fab4185d-61c4-4fde-9566-7aadc7321273",
-  "activeVersionId": "fab4185d-61c4-4fde-9566-7aadc7321273",
-  "triggerCount": 0,
+  "versionId": "58fa261a-ab9e-4324-8e46-d61a956ed91c",
+  "activeVersionId": "58fa261a-ab9e-4324-8e46-d61a956ed91c",
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2026-01-26T23:34:40.537Z",
@@ -805,9 +880,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-22T22:11:49.805Z",
-    "createdAt": "2026-02-22T22:11:49.805Z",
-    "versionId": "fab4185d-61c4-4fde-9566-7aadc7321273",
+    "updatedAt": "2026-02-24T23:05:10.529Z",
+    "createdAt": "2026-02-24T23:05:10.529Z",
+    "versionId": "58fa261a-ab9e-4324-8e46-d61a956ed91c",
     "workflowId": "rCHIIq9b5UxNMP06",
     "nodes": [
       {
@@ -1292,6 +1367,53 @@
         "id": "call-remove-bg",
         "name": "Call: Remove Background",
         "onError": "continueErrorOutput"
+      },
+      {
+        "id": "21c8af17-0c2d-42c1-b2b2-459fa930714b",
+        "name": "Webhook: Generate Video",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -416,
+          80
+        ],
+        "parameters": {
+          "path": "generate-video",
+          "responseMode": "responseNode",
+          "httpMethod": "POST",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "webhookId": "e7e05c2d-40e9-4a20-be39-e0f9a6e21d45"
+      },
+      {
+        "id": "c6c234a1-9326-4312-b950-54432a53f044",
+        "name": "Parse Webhook Body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -224,
+          80
+        ],
+        "parameters": {
+          "jsCode": "// Extract POST body so downstream nodes see the same data as executeWorkflow passthrough\nreturn [{ json: $json.body }];"
+        }
+      },
+      {
+        "id": "645bea45-6f4e-47ac-a757-6e498ab3aa3f",
+        "name": "Respond to Webhook",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1544,
+          112
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
       }
     ],
     "connections": {
@@ -1457,7 +1579,13 @@
       },
       "Parse Video Creation Response": {
         "main": [
-          []
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
         ]
       },
       "API: Creatomate, Check Status": {
@@ -1581,6 +1709,28 @@
           [
             {
               "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: Generate Video": {
+        "main": [
+          [
+            {
+              "node": "Parse Webhook Body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Webhook Body": {
+        "main": [
+          [
+            {
+              "node": "Process All Vehicles",
               "type": "main",
               "index": 0
             }
