@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-23T21:54:54.861Z",
+  "updatedAt": "2026-03-24T14:43:36.360Z",
   "createdAt": "2026-01-26T23:34:49.104Z",
   "id": "kPaW5F8agVPNVDdA",
   "name": "[06] HeyGen Webhook Receiver",
@@ -19,7 +19,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        240
+        456
       ],
       "id": "webhook-heygen",
       "name": "Webhook: HeyGen Events",
@@ -38,7 +38,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        512
+        776
       ],
       "id": "webhook-heygen-options",
       "name": "Webhook: HeyGen OPTIONS",
@@ -55,7 +55,7 @@
       "typeVersion": 1.1,
       "position": [
         224,
-        512
+        776
       ],
       "id": "respond-options",
       "name": "Respond OPTIONS OK"
@@ -68,7 +68,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        240
+        456
       ],
       "id": "parse-webhook",
       "name": "Parse Webhook Event"
@@ -102,7 +102,7 @@
       "typeVersion": 2.2,
       "position": [
         448,
-        240
+        456
       ],
       "id": "if-motion-success",
       "name": "If: Motion Success"
@@ -125,7 +125,7 @@
       "typeVersion": 4.2,
       "position": [
         672,
-        144
+        360
       ],
       "id": "get-avatar-details",
       "name": "API: Get Avatar Details",
@@ -139,7 +139,7 @@
       "typeVersion": 2,
       "position": [
         896,
-        144
+        240
       ],
       "id": "extract-avatar-info",
       "name": "Extract Avatar Info"
@@ -153,8 +153,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1344,
-        144
+        1792,
+        192
       ],
       "id": "respond-success",
       "name": "Respond Success"
@@ -169,7 +169,7 @@
       "typeVersion": 1.1,
       "position": [
         672,
-        400
+        552
       ],
       "id": "respond-unhandled",
       "name": "Respond Unhandled"
@@ -177,7 +177,6 @@
     {
       "parameters": {
         "content": "# HeyGen Webhook Receiver\n\nNow uses service workflows:\n- [Service] Send User Notification\n- [Service] Email Error Notification",
-        "height": 160,
         "width": 280,
         "color": 5
       },
@@ -199,8 +198,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1120,
-        144
+        1568,
+        96
       ],
       "id": "postgres-update-avatar",
       "name": "DB: Update Avatar Complete",
@@ -221,8 +220,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1344,
-        -48
+        1792,
+        0
       ],
       "id": "get-person-info",
       "name": "DB: Get Person Info",
@@ -241,7 +240,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1568,
+        2016,
         -48
       ],
       "id": "prep-notification",
@@ -259,7 +258,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1792,
+        2240,
         -48
       ],
       "id": "call-notification",
@@ -272,8 +271,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1344,
-        352
+        2016,
+        432
       ],
       "id": "format-error",
       "name": "Format Error"
@@ -290,8 +289,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1568,
-        352
+        2240,
+        432
       ],
       "id": "call-error-email",
       "name": "Call: Email Error"
@@ -305,19 +304,19 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        900,
-        300
+        1120,
+        240
       ],
       "id": "db-check-avatar-exists",
       "name": "DB: Check Avatar Exists",
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "ZUwzqy3kvUJpXrDM",
           "name": "Postgres (Dev)"
         }
       },
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -345,23 +344,23 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1100,
-        300
+        1344,
+        240
       ],
       "id": "if-avatar-exists",
       "name": "If: Avatar Exists in DB"
     },
     {
       "parameters": {
-        "options": {},
         "respondWith": "json",
-        "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}"
+        "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}",
+        "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1300,
-        400
+        1568,
+        336
       ],
       "id": "respond-not-ours",
       "name": "Respond: Not Our Avatar"
@@ -548,9 +547,9 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "45daa42c-a68d-4eac-a514-b309b9b67dc1",
-  "activeVersionId": "45daa42c-a68d-4eac-a514-b309b9b67dc1",
+  "pinData": {},
+  "versionId": "fa1eeb18-e512-458b-a07e-968753ff6f97",
+  "activeVersionId": "fa1eeb18-e512-458b-a07e-968753ff6f97",
   "triggerCount": 2,
   "shared": [
     {
@@ -562,9 +561,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-23T21:54:54.863Z",
-    "createdAt": "2026-02-23T21:54:54.863Z",
-    "versionId": "45daa42c-a68d-4eac-a514-b309b9b67dc1",
+    "updatedAt": "2026-03-24T14:43:42.019Z",
+    "createdAt": "2026-03-24T14:43:36.366Z",
+    "versionId": "fa1eeb18-e512-458b-a07e-968753ff6f97",
     "workflowId": "kPaW5F8agVPNVDdA",
     "nodes": [
       {
@@ -580,7 +579,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          240
+          456
         ],
         "id": "webhook-heygen",
         "name": "Webhook: HeyGen Events",
@@ -599,7 +598,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          512
+          776
         ],
         "id": "webhook-heygen-options",
         "name": "Webhook: HeyGen OPTIONS",
@@ -616,7 +615,7 @@
         "typeVersion": 1.1,
         "position": [
           224,
-          512
+          776
         ],
         "id": "respond-options",
         "name": "Respond OPTIONS OK"
@@ -629,7 +628,7 @@
         "typeVersion": 2,
         "position": [
           224,
-          240
+          456
         ],
         "id": "parse-webhook",
         "name": "Parse Webhook Event"
@@ -663,7 +662,7 @@
         "typeVersion": 2.2,
         "position": [
           448,
-          240
+          456
         ],
         "id": "if-motion-success",
         "name": "If: Motion Success"
@@ -686,7 +685,7 @@
         "typeVersion": 4.2,
         "position": [
           672,
-          144
+          360
         ],
         "id": "get-avatar-details",
         "name": "API: Get Avatar Details",
@@ -700,7 +699,7 @@
         "typeVersion": 2,
         "position": [
           896,
-          144
+          240
         ],
         "id": "extract-avatar-info",
         "name": "Extract Avatar Info"
@@ -714,8 +713,8 @@
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1344,
-          144
+          1792,
+          192
         ],
         "id": "respond-success",
         "name": "Respond Success"
@@ -730,7 +729,7 @@
         "typeVersion": 1.1,
         "position": [
           672,
-          400
+          552
         ],
         "id": "respond-unhandled",
         "name": "Respond Unhandled"
@@ -738,7 +737,6 @@
       {
         "parameters": {
           "content": "# HeyGen Webhook Receiver\n\nNow uses service workflows:\n- [Service] Send User Notification\n- [Service] Email Error Notification",
-          "height": 160,
           "width": 280,
           "color": 5
         },
@@ -760,8 +758,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1120,
-          144
+          1568,
+          96
         ],
         "id": "postgres-update-avatar",
         "name": "DB: Update Avatar Complete",
@@ -782,8 +780,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1344,
-          -48
+          1792,
+          0
         ],
         "id": "get-person-info",
         "name": "DB: Get Person Info",
@@ -802,7 +800,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1568,
+          2016,
           -48
         ],
         "id": "prep-notification",
@@ -820,7 +818,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1792,
+          2240,
           -48
         ],
         "id": "call-notification",
@@ -833,8 +831,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1344,
-          352
+          2016,
+          432
         ],
         "id": "format-error",
         "name": "Format Error"
@@ -851,8 +849,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          1568,
-          352
+          2240,
+          432
         ],
         "id": "call-error-email",
         "name": "Call: Email Error"
@@ -866,19 +864,19 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          900,
-          300
+          1120,
+          240
         ],
         "id": "db-check-avatar-exists",
         "name": "DB: Check Avatar Exists",
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "ZUwzqy3kvUJpXrDM",
             "name": "Postgres (Dev)"
           }
         },
-        "onError": "continueRegularOutput",
-        "alwaysOutputData": true
+        "onError": "continueRegularOutput"
       },
       {
         "parameters": {
@@ -906,23 +904,23 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1100,
-          300
+          1344,
+          240
         ],
         "id": "if-avatar-exists",
         "name": "If: Avatar Exists in DB"
       },
       {
         "parameters": {
-          "options": {},
           "respondWith": "json",
-          "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}"
+          "responseBody": "={\"success\": true, \"message\": \"Avatar not in this environment, ignored\"}",
+          "options": {}
         },
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.1,
         "position": [
-          1300,
-          400
+          1568,
+          336
         ],
         "id": "respond-not-ours",
         "name": "Respond: Not Our Avatar"
@@ -1103,9 +1101,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "name": "Version fa1eeb18",
+    "description": "",
+    "autosaved": true
   },
   "tags": []
 }
