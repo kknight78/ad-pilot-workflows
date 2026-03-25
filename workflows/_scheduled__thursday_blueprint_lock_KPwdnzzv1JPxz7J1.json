@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T13:04:59.540Z",
+  "updatedAt": "2026-03-24T14:38:34.543Z",
   "createdAt": "2026-02-16T22:38:04.038Z",
   "id": "KPwdnzzv1JPxz7J1",
   "name": "[SCHEDULED] Thursday Blueprint Lock",
@@ -165,7 +165,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.WEBHOOK_URL ? $env.WEBHOOK_URL.replace(/\\/$/, '') + '/webhook/prep' : 'https://ad-pilot-n8n-development.up.railway.app/webhook/prep' }}",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/prep",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ plan_id: $('Auto-Confirm Plans').first().json.plan_id }) }}",
@@ -276,8 +276,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "d46c67da-5790-466a-b637-221ab9acb6b2",
-  "activeVersionId": "d46c67da-5790-466a-b637-221ab9acb6b2",
+  "versionId": "fd58abdd-6c50-48ce-8426-450f6bc28691",
+  "activeVersionId": "fd58abdd-6c50-48ce-8426-450f6bc28691",
   "triggerCount": 1,
   "shared": [
     {
@@ -289,9 +289,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-21T13:04:59.546Z",
-    "createdAt": "2026-02-21T13:04:59.546Z",
-    "versionId": "d46c67da-5790-466a-b637-221ab9acb6b2",
+    "updatedAt": "2026-03-24T14:38:34.548Z",
+    "createdAt": "2026-03-24T14:38:34.548Z",
+    "versionId": "fd58abdd-6c50-48ce-8426-450f6bc28691",
     "workflowId": "KPwdnzzv1JPxz7J1",
     "nodes": [
       {
@@ -453,7 +453,7 @@
         ],
         "parameters": {
           "method": "POST",
-          "url": "={{ $env.WEBHOOK_URL ? $env.WEBHOOK_URL.replace(/\\/$/, '') + '/webhook/prep' : 'https://ad-pilot-n8n-development.up.railway.app/webhook/prep' }}",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/prep",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ JSON.stringify({ plan_id: $('Auto-Confirm Plans').first().json.plan_id }) }}",
