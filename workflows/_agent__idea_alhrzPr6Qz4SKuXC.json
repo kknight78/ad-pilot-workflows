@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-25T00:14:58.092Z",
+  "updatedAt": "2026-03-24T14:56:28.087Z",
   "createdAt": "2026-02-17T14:37:38.076Z",
   "id": "alhrzPr6Qz4SKuXC",
   "name": "[AGENT] Idea",
@@ -331,7 +331,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\nconst approvers = pingData.approvers || [];\nconst slug = pingData.client_slug || 'app';\nconst reviewUrl = 'https://' + slug + '.ad-pilot.ai/review/' + pingData.plan_id + '?token=' + pingData.auth_token;\n\nconst recipients = approvers.length > 0\n  ? approvers\n  : [{ email: 'kelly@ad-pilot.ai', first_name: 'Kelly', notification_preference: 'email' }];\n\nreturn recipients.map(approver => ({\n  json: {\n    person_id: approver.person_id || null,\n    email: approver.email,\n    notification_type: 'email',\n    subject: theme.emoji + ' This Week\\'s Idea: ' + theme.name + ' — ' + pingData.client_name,\n    message: 'Hey ' + (approver.first_name || 'there') + '! ' + pingData.idea_ping_summary + '\\n\\nTap below to approve or suggest a different direction:',\n    link: reviewUrl\n  }\n}));"
+        "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\nconst approvers = pingData.approvers || [];\nconst slug = pingData.client_slug || 'app';\nconst reviewUrl = 'https://ad-pilot-app-git-dev-kknight78s-projects.vercel.app/review/' + pingData.plan_id + '?token=' + pingData.auth_token;\n\nconst recipients = approvers.length > 0\n  ? approvers\n  : [{ email: 'kelly@ad-pilot.ai', first_name: 'Kelly', notification_preference: 'email' }];\n\nreturn recipients.map(approver => ({\n  json: {\n    person_id: approver.person_id || null,\n    email: approver.email,\n    notification_type: 'email',\n    subject: theme.emoji + ' This Week\\'s Idea: ' + theme.name + ' — ' + pingData.client_name,\n    message: 'Hey ' + (approver.first_name || 'there') + '! ' + pingData.idea_ping_summary + '\\n\\nTap below to approve or suggest a different direction:',\n    link: reviewUrl\n  }\n}));"
       },
       "id": "send-idea-ping-email",
       "name": "Send Idea Ping Email",
@@ -796,8 +796,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "ae3677cd-692c-4c7f-b1d7-d5013fb7d6ef",
-  "activeVersionId": "ae3677cd-692c-4c7f-b1d7-d5013fb7d6ef",
+  "versionId": "821e038f-ff71-4b2e-b522-438ff555a94e",
+  "activeVersionId": "821e038f-ff71-4b2e-b522-438ff555a94e",
   "triggerCount": 2,
   "shared": [
     {
@@ -809,9 +809,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-25T00:14:58.095Z",
-    "createdAt": "2026-02-25T00:14:58.095Z",
-    "versionId": "ae3677cd-692c-4c7f-b1d7-d5013fb7d6ef",
+    "updatedAt": "2026-03-24T14:56:28.099Z",
+    "createdAt": "2026-03-24T14:56:28.099Z",
+    "versionId": "821e038f-ff71-4b2e-b522-438ff555a94e",
     "workflowId": "alhrzPr6Qz4SKuXC",
     "nodes": [
       {
@@ -1139,7 +1139,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\nconst approvers = pingData.approvers || [];\nconst slug = pingData.client_slug || 'app';\nconst reviewUrl = 'https://' + slug + '.ad-pilot.ai/review/' + pingData.plan_id + '?token=' + pingData.auth_token;\n\nconst recipients = approvers.length > 0\n  ? approvers\n  : [{ email: 'kelly@ad-pilot.ai', first_name: 'Kelly', notification_preference: 'email' }];\n\nreturn recipients.map(approver => ({\n  json: {\n    person_id: approver.person_id || null,\n    email: approver.email,\n    notification_type: 'email',\n    subject: theme.emoji + ' This Week\\'s Idea: ' + theme.name + ' — ' + pingData.client_name,\n    message: 'Hey ' + (approver.first_name || 'there') + '! ' + pingData.idea_ping_summary + '\\n\\nTap below to approve or suggest a different direction:',\n    link: reviewUrl\n  }\n}));"
+          "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\nconst approvers = pingData.approvers || [];\nconst slug = pingData.client_slug || 'app';\nconst reviewUrl = 'https://ad-pilot-app-git-dev-kknight78s-projects.vercel.app/review/' + pingData.plan_id + '?token=' + pingData.auth_token;\n\nconst recipients = approvers.length > 0\n  ? approvers\n  : [{ email: 'kelly@ad-pilot.ai', first_name: 'Kelly', notification_preference: 'email' }];\n\nreturn recipients.map(approver => ({\n  json: {\n    person_id: approver.person_id || null,\n    email: approver.email,\n    notification_type: 'email',\n    subject: theme.emoji + ' This Week\\'s Idea: ' + theme.name + ' — ' + pingData.client_name,\n    message: 'Hey ' + (approver.first_name || 'there') + '! ' + pingData.idea_ping_summary + '\\n\\nTap below to approve or suggest a different direction:',\n    link: reviewUrl\n  }\n}));"
         },
         "id": "send-idea-ping-email",
         "name": "Send Idea Ping Email",
