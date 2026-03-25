@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T11:31:00.868Z",
+  "updatedAt": "2026-03-24T14:59:21.936Z",
   "createdAt": "2026-02-12T19:13:41.196Z",
   "id": "LnCOycG3LN0jkMuR",
   "name": "[FALLBACK] Auto-Confirm",
@@ -165,7 +165,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.WEBHOOK_URL ? $env.WEBHOOK_URL.replace(/\\/$/, '') + '/webhook/prep' : 'https://ad-pilot-n8n-production.up.railway.app/webhook/prep' }}",
+        "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/prep",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ plan_id: $('Auto-Confirm Plans').first().json.plan_id }) }}",
@@ -273,7 +273,7 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "1ecb3b05-0578-4d2c-b819-0b4d76855d11",
+  "versionId": "dbc27875-4df6-40c0-9813-f2ba0300415e",
   "activeVersionId": null,
   "triggerCount": 1,
   "shared": [
