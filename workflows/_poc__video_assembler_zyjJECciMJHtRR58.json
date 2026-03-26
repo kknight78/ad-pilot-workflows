@@ -1,0 +1,148 @@
+{
+  "updatedAt": "2026-03-26T00:27:59.201Z",
+  "createdAt": "2026-03-25T23:58:21.355Z",
+  "id": "zyjJECciMJHtRR58",
+  "name": "[POC] Video Assembler",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1000000-0000-0000-0000-000000000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// SET TEST DATA\n// Provides hardcoded test input for the POC\n// ============================================\n\nreturn {\n  json: {\n    scene_audios: [\n      { scene: 'hook',     duration: 2.5,  audio_url: null },\n      { scene: 'solution', duration: 8.0,  audio_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1760562362/Alex_MakeMusic_-_I_Am_Good_tmyztb.mp3' },\n      { scene: 'cta',      duration: 3.0,  audio_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1760562362/Alex_MakeMusic_-_I_Am_Good_tmyztb.mp3' }\n    ],\n    scene_avatars: [\n      { scene: 'solution', video_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1774484701/kelly-avatar-preview_ngqdwl.mp4', mask_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1774484702/kelly-avatar-alpha-preview_x3z4vs.mp4' },\n      { scene: 'cta',      video_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1774484701/kelly-avatar-preview_ngqdwl.mp4', mask_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1774484702/kelly-avatar-alpha-preview_x3z4vs.mp4' }\n    ],\n    items: [\n      { photo_url: 'https://imageserver.promaxinventory.com/9199/image/2140834dc8d97808068160158ed7ae69.jpg', title: '2024 Nissan Kicks SV', price: '$21,995', mileage: '34K MI' },\n      { photo_url: 'https://imageserver.promaxinventory.com/9199/image/e88db80cefd9f7cf2414a573a313b151.jpg', title: '2019 Jeep Cherokee Latitude+', price: '$17,995', mileage: '52K MI' },\n      { photo_url: 'https://imageserver.promaxinventory.com/9199/image/653e7fbb0e99b2902b33ee79d72a6241.jpg', title: '2021 Jeep Renegade Limited', price: '$22,995', mileage: '28K MI' }\n    ],\n    client: {\n      business_name: 'Capitol Car Credit',\n      address_1: '123 N Tanner Rd',\n      address_2: 'Rantoul IL 61866',\n      website: 'capitolcarcredit.com',\n      phone: '217-892-1600'\n    },\n    logos: {\n      square: 'https://res.cloudinary.com/dtpqxuwby/image/upload/v1774484649/ap-darkbg-square_ojvqju.svg',\n      horizontal: 'https://res.cloudinary.com/dtpqxuwby/image/upload/v1774484649/ap-darkbg-square_ojvqju.svg'\n    },\n    background_image_url: 'https://res.cloudinary.com/dtpqxuwby/image/upload/v1770564763/backgrounds/ap-exterior-back-porch-9x16.jpg',\n    background_music_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1760562362/Alex_MakeMusic_-_I_Am_Good_tmyztb.mp3'\n  }\n};"
+      },
+      "id": "a1000000-0000-0000-0000-000000000002",
+      "name": "Set Test Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// ASSEMBLE VIDEO (POC)\n// Fetches both source templates, merges elements,\n// applies hardcoded test recipe, returns Creatomate source.\n// ============================================\n\nreturn (async () => {\n\n// TODO: Move to n8n environment variable\nconst CREATOMATE_API_KEY = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\nconst input = $json;\n\n// ============================================\n// HELPERS\n// ============================================\n\nfunction cloneElement(el) {\n  return JSON.parse(JSON.stringify(el));\n}\n\nfunction findChild(composition, name) {\n  if (!composition.elements) return null;\n  return composition.elements.find(el => el.name === name) || null;\n}\n\nfunction generateId() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {\n    const r = Math.random() * 16 | 0;\n    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);\n  });\n}\n\nfunction regenerateIds(el) {\n  if (el.id) el.id = generateId();\n  if (el.elements) el.elements.forEach(child => regenerateIds(child));\n}\n\nfunction injectAvatarUrls(variantComposition, videoUrl, maskUrl) {\n  if (!variantComposition.elements) return;\n  variantComposition.elements.forEach(child => {\n    if (child.name === 'avatar-1') child.source = videoUrl;\n    if (child.name === 'avatar-1-mask') child.source = maskUrl;\n  });\n}\n\nfunction injectItemData(variantComposition, itemData) {\n  if (!variantComposition.elements) return;\n  variantComposition.elements.forEach(child => {\n    if (child.name === 'item-photo') child.source = itemData.photo_url;\n    if (child.name === 'title')      child.text   = itemData.title;\n    if (child.name === 'price')      child.text   = itemData.price;\n    if (child.name === 'mileage')    child.text   = itemData.mileage;\n  });\n}\n\nfunction injectContactData(variantComposition, client) {\n  if (!variantComposition.elements) return;\n  variantComposition.elements.forEach(child => {\n    if (child.name === 'business-name') child.text = client.business_name;\n    if (child.name === 'address-1')     child.text = client.address_1;\n    if (child.name === 'address-2')     child.text = client.address_2;\n    if (child.name === 'website')       child.text = client.website;\n    if (child.name === 'phone')         child.text = client.phone;\n  });\n}\n\nfunction removeExitAnimation(el) {\n  if (el.animations) {\n    el.animations = el.animations.filter(a => a.time !== 'end');\n  }\n  if (el.elements) el.elements.forEach(child => removeExitAnimation(child));\n}\n\n// Show one variant inside a parent composition, hide all others\nfunction selectVariant(parentEl, variantName) {\n  if (!parentEl.elements) return null;\n  let selected = null;\n  parentEl.elements.forEach(child => {\n    if (child.name === variantName) {\n      child.visible = true;\n      selected = child;\n    } else {\n      child.visible = false;\n    }\n  });\n  return selected;\n}\n\n// ============================================\n// STEP 1: FETCH & MERGE TEMPLATES\n// ============================================\n\nasync function fetchTemplateByTag(tag) {\n  const list = await this.helpers.httpRequest({\n    method: 'GET',\n    url: 'https://api.creatomate.com/v1/templates?tags=' + encodeURIComponent(tag),\n    headers: { 'Authorization': 'Bearer ' + CREATOMATE_API_KEY },\n    json: true\n  });\n  if (!list || !list.length) throw new Error('No template found with tag: ' + tag);\n\n  return await this.helpers.httpRequest({\n    method: 'GET',\n    url: 'https://api.creatomate.com/v1/templates/' + list[0].id,\n    headers: { 'Authorization': 'Bearer ' + CREATOMATE_API_KEY },\n    json: true\n  });\n}\n\nconsole.log('Fetching source templates...');\nconst trackTemplate = await fetchTemplateByTag('ALL-TRACKS_9:16');\nconst animTemplate  = await fetchTemplateByTag('ANIMATIONS-IN_9:16');\nconsole.log('Templates fetched. Tracks: ' + trackTemplate.source.elements.length + ', Animations: ' + animTemplate.source.elements.length);\n\n// Build element pools (top-level name -> element)\nconst trackPool = {};\ntrackTemplate.source.elements.forEach(el => {\n  if (el.name) trackPool[el.name] = el;\n});\n\nconst animPool = {};\nanimTemplate.source.elements.forEach(el => {\n  if (el.name) animPool[el.name] = el;\n});\n\nconsole.log('Track pool: ' + Object.keys(trackPool).join(', '));\nconsole.log('Anim pool: ' + Object.keys(animPool).length + ' animations');\n\n// ============================================\n// STEP 2: HARDCODED TEST RECIPE\n// ============================================\n\nconst TEST_RECIPE = {\n  ratio: '9:16',\n  scenes: [\n    {\n      name: 'hook',\n      animation: 'lightning-zap',\n      avatar: null,\n      avatar_variant: null,\n      items: null,\n      item_count: 0,\n      headline: ['YOUR CAR PAYMENT', 'IS TOO HIGH'],\n      caption_variant: null,\n      logo: null,\n      contact: null\n    },\n    {\n      name: 'solution',\n      animation: 'particle-blast',\n      avatar: true,\n      avatar_variant: 'Avatar-small-left',\n      items: 'Item-large-nobg-detailed',\n      item_count: 3,\n      headline: null,\n      caption_variant: 'transcribe-small',\n      logo: null,\n      contact: null\n    },\n    {\n      name: 'cta',\n      animation: null,\n      avatar: true,\n      avatar_variant: 'Avatar-default-center',\n      items: null,\n      item_count: 0,\n      headline: null,\n      caption_variant: 'transcribe-default',\n      logo: 'square-logo',\n      contact: 'Contact-small-right'\n    }\n  ]\n};\n\n// ============================================\n// STEP 3: CALCULATE SCENE TIMINGS\n// ============================================\n\nfunction calcSceneTimings(sceneAudios) {\n  let cursor = 0;\n  return sceneAudios.map(s => {\n    const timing = {\n      scene: s.scene,\n      start: cursor,\n      duration: s.duration,\n      end: cursor + s.duration\n    };\n    cursor += s.duration;\n    return timing;\n  });\n}\n\nconst sceneTimings = calcSceneTimings(input.scene_audios);\nconst totalDuration = sceneTimings[sceneTimings.length - 1].end;\nconsole.log('Scene timings:', JSON.stringify(sceneTimings));\nconsole.log('Total duration: ' + totalDuration + 's');\n\n// ============================================\n// STEP 4: PROCESS EACH SCENE\n// ============================================\n\nconst outputElements = [];\nlet trackCounter = 3; // tracks 1-2 reserved for background image + music\n\nfor (const scene of TEST_RECIPE.scenes) {\n  const timing = sceneTimings.find(t => t.scene === scene.name);\n  if (!timing) throw new Error('No timing found for scene: ' + scene.name);\n\n  console.log('Processing scene: ' + scene.name + ' (start=' + timing.start + ', duration=' + timing.duration + ')');\n\n  // --- 4a. Animation track ---\n  if (scene.animation) {\n    if (!animPool[scene.animation]) throw new Error('Animation not found: ' + scene.animation);\n    const el = cloneElement(animPool[scene.animation]);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = 1.5;\n    el.track = trackCounter++;\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Animation: ' + scene.animation + ' at t=' + timing.start);\n  }\n\n  // --- 4b. Avatar track ---\n  if (scene.avatar && scene.avatar_variant) {\n    const avatarData = input.scene_avatars.find(a => a.scene === scene.name);\n    if (!avatarData) throw new Error('No avatar data for scene: ' + scene.name);\n    if (!trackPool['Avatar']) throw new Error('Avatar not found in track pool');\n\n    const el = cloneElement(trackPool['Avatar']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = trackCounter++;\n\n    // Select the variant and inject avatar URLs\n    const variant = selectVariant(el, scene.avatar_variant);\n    if (!variant) throw new Error('Avatar variant not found: ' + scene.avatar_variant);\n    injectAvatarUrls(variant, avatarData.video_url, avatarData.mask_url);\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Avatar: ' + scene.avatar_variant + ' at t=' + timing.start);\n  }\n\n  // --- 4c. Item tracks (Nx cloning) ---\n  if (scene.items && scene.item_count > 0) {\n    const itemDuration = timing.duration / scene.item_count;\n\n    for (let i = 0; i < scene.item_count; i++) {\n      const itemData = input.items[i];\n      if (!itemData) throw new Error('No item data for index ' + i);\n      if (!trackPool['Item']) throw new Error('Item not found in track pool');\n\n      const el = cloneElement(trackPool['Item']);\n      el.visible = true;\n      el.time = timing.start + (i * itemDuration);\n      el.duration = itemDuration;\n      el.track = trackCounter++;\n\n      // Select the item variant and inject data\n      const variant = selectVariant(el, scene.items);\n      if (!variant) throw new Error('Item variant not found: ' + scene.items);\n      injectItemData(variant, itemData);\n\n      // Remove exit animation on last item (bookend override)\n      if (i === scene.item_count - 1) {\n        removeExitAnimation(variant);\n      }\n\n      regenerateIds(el);\n      outputElements.push(el);\n      console.log('  + Item ' + (i + 1) + ': ' + itemData.title + ' at t=' + el.time + ' dur=' + itemDuration);\n\n      // Animation at each item boundary (except first - already handled above)\n      if (scene.animation && i > 0) {\n        const animEl = cloneElement(animPool[scene.animation]);\n        animEl.visible = true;\n        animEl.time = timing.start + (i * itemDuration);\n        animEl.duration = 1.5;\n        animEl.track = trackCounter++;\n        regenerateIds(animEl);\n        outputElements.push(animEl);\n        console.log('    + Transition animation at t=' + animEl.time);\n      }\n    }\n  }\n\n  // --- 4d. Headline tracks ---\n  if (scene.headline && scene.headline.length > 0) {\n    if (!trackPool['Headline']) throw new Error('Headline not found in track pool');\n    const el = cloneElement(trackPool['Headline']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = trackCounter++;\n\n    const positions = ['headline-top', 'headline-middle', 'headline-bottom'];\n    scene.headline.forEach((text, idx) => {\n      const child = findChild(el, positions[idx]);\n      if (child) {\n        child.text = text;\n        child.visible = true;\n      }\n    });\n    // Hide unused positions\n    positions.slice(scene.headline.length).forEach(pos => {\n      const child = findChild(el, pos);\n      if (child) child.visible = false;\n    });\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Headline: ' + scene.headline.join(' | '));\n  }\n\n  // --- 4e. Caption track ---\n  if (scene.caption_variant) {\n    if (!trackPool['Subtitles']) throw new Error('Subtitles not found in track pool');\n    const el = cloneElement(trackPool['Subtitles']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = trackCounter++;\n\n    selectVariant(el, scene.caption_variant);\n    // Clear transcript_source for POC (requires real avatar audio)\n    if (el.elements) {\n      el.elements.forEach(child => {\n        delete child.transcript_source;\n        delete child.transcript_effect;\n        delete child.transcript_placement;\n        delete child.transcript_color;\n        delete child.transcript_maximum_length;\n        child.text = '(captions here)';\n      });\n    }\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Captions: ' + scene.caption_variant);\n  }\n\n  // --- 4f. Logo track ---\n  if (scene.logo) {\n    if (!trackPool['Logo']) throw new Error('Logo not found in track pool');\n    const el = cloneElement(trackPool['Logo']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = trackCounter++;\n\n    if (scene.logo === 'square-logo') {\n      const sq = findChild(el, 'square-logo');\n      const hz = findChild(el, 'horizontal-logo');\n      if (sq) { sq.visible = true;  sq.source = input.logos.square; }\n      if (hz) { hz.visible = false; }\n    } else {\n      const sq = findChild(el, 'square-logo');\n      const hz = findChild(el, 'horizontal-logo');\n      if (hz) { hz.visible = true;  hz.source = input.logos.horizontal; }\n      if (sq) { sq.visible = false; }\n    }\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Logo: ' + scene.logo);\n  }\n\n  // --- 4g. Contact track ---\n  if (scene.contact) {\n    if (!trackPool['Contact']) throw new Error('Contact not found in track pool');\n    const el = cloneElement(trackPool['Contact']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = trackCounter++;\n\n    const variant = selectVariant(el, scene.contact);\n    if (variant) {\n      injectContactData(variant, input.client);\n    }\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Contact: ' + scene.contact);\n  }\n}\n\n// ============================================\n// STEP 5: ADD BASE TRACKS\n// ============================================\n\n// Background image (track 1)\nconst bgEl = cloneElement(trackPool['background-image']);\nbgEl.visible = true;\nbgEl.time = 0;\nbgEl.duration = totalDuration;\nbgEl.track = 1;\nif (input.background_image_url) bgEl.source = input.background_image_url;\nregenerateIds(bgEl);\n\n// Background music (track 2)\nconst musicEl = cloneElement(trackPool['background-music']);\nmusicEl.visible = true;\nmusicEl.time = 0;\nmusicEl.duration = totalDuration;\nmusicEl.track = 2;\nif (input.background_music_url) musicEl.source = input.background_music_url;\nregenerateIds(musicEl);\n\n// Insert base tracks at beginning (lowest layer)\noutputElements.unshift(bgEl, musicEl);\n\nconsole.log('Total elements: ' + outputElements.length);\nconsole.log('Total tracks: ' + trackCounter);\n\n// ============================================\n// STEP 6: BUILD FINAL SOURCE\n// ============================================\n\nconst finalSource = {\n  output_format: 'mp4',\n  width: 720,\n  height: 1280,\n  duration: totalDuration,\n  elements: outputElements\n};\n\nconsole.log('Assembly complete. Duration: ' + totalDuration + 's, Elements: ' + outputElements.length);\n\nreturn {\n  json: {\n    ...input,\n    creatomate: { source: finalSource },\n    _total_duration: totalDuration,\n    _scene_timings: sceneTimings\n  }\n};\n\n})();"
+      },
+      "id": "a1000000-0000-0000-0000-000000000003",
+      "name": "Assemble Video (POC)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.creatomate }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000004",
+      "name": "API: Creatomate, Create Render",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Video Assembler POC\n\nPhase 1: Prove composable video architecture end-to-end.\n\n**Flow:**\n1. Manual Trigger → test data\n2. Assemble Video → fetches ALL-TRACKS + ANIMATIONS-IN templates, merges, applies recipe\n3. Submit to Creatomate for render\n\n**Test Recipe:** 3-scene car dealership ad\n- Hook: lightning-zap animation + headline\n- Solution: avatar (small-left) + 3 items with particle-blast transitions\n- CTA: avatar (default-center) + logo + contact info",
+        "width": 400,
+        "height": 340
+      },
+      "id": "a1000000-0000-0000-0000-000000000005",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -60
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Test Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Test Data": {
+      "main": [
+        [
+          {
+            "node": "Assemble Video (POC)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Video (POC)": {
+      "main": [
+        [
+          {
+            "node": "API: Creatomate, Create Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "aae76d17-31f5-4797-8ae4-4222d036c34f",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-25T23:58:21.355Z",
+      "createdAt": "2026-03-25T23:58:21.355Z",
+      "role": "workflow:owner",
+      "workflowId": "zyjJECciMJHtRR58",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
