@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-25T00:01:34.089Z",
+  "updatedAt": "2026-03-27T11:57:14.488Z",
   "createdAt": "2026-01-26T23:34:54.488Z",
   "id": "qXvDgLuvrY7u6d7w",
   "name": "[02] Generate Script",
@@ -1473,6 +1473,128 @@
         }
       },
       "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT sr.slug, sr.scene_type, sr.name, sr.definition, vr.slug as video_recipe_slug, vr.name as video_recipe_name, vr.scene_slugs\nFROM video_recipes vr\nJOIN scene_recipes sr ON sr.slug = ANY(\n  SELECT jsonb_array_elements_text(vr.scene_slugs)\n)\nWHERE vr.id = '{{ $('Resolve Config').first().json.video_recipe_id }}'::uuid\nAND sr.is_active = true",
+        "options": {}
+      },
+      "id": "scene-001",
+      "name": "Fetch Scene Recipes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2480,
+        1200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "scene-check",
+              "leftValue": "={{ $('Resolve Config').first().json.video_recipe_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "scene-002",
+      "name": "If: Scene Pipeline",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2704,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// BUILD SCRIPT PROMPT — SCENE-BASED\n// Uses scene recipes to tell Claude the exact structure needed.\n// Reuses system prompt from Assemble System Prompt.\n// ═══════════════════════════════════════════════════════════════\n\nconst config = $('Resolve Config').first().json;\nconst systemPrompt = $('Assemble System Prompt').first().json.system_prompt;\nconst recipeRows = $('Fetch Scene Recipes').all().map(r => r.json);\nconst timingDefaults = $('Fetch Timing Defaults').first().json;\n\n// Parse scene recipe definitions\nconst sceneRecipes = {};\nlet videoRecipeSlug = '';\nlet sceneSlugs = [];\nfor (const row of recipeRows) {\n  const def = typeof row.definition === 'string' ? JSON.parse(row.definition) : row.definition;\n  sceneRecipes[row.slug] = {\n    slug: row.slug,\n    scene_type: row.scene_type,\n    name: row.name,\n    definition: def\n  };\n  videoRecipeSlug = row.video_recipe_slug;\n  sceneSlugs = typeof row.scene_slugs === 'string' ? JSON.parse(row.scene_slugs) : row.scene_slugs;\n}\n\nconsole.log('Video recipe: ' + videoRecipeSlug + ' (' + sceneSlugs.length + ' scenes)');\n\n// Get timing config\nconst timing = {\n  hook_words: timingDefaults.hook_words || 12,\n  segment_words: timingDefaults.segment_words || 15,\n  cta_words: timingDefaults.cta_words || 12\n};\n\n// Get items from config (processed or raw)\nconst items = config.processed_items || config.vehicles || [];\nconst themePack = config.theme_pack || null;\n\n// Build scene descriptions for Claude\nconst sceneInstructions = sceneSlugs.map((slug, idx) => {\n  const recipe = sceneRecipes[slug];\n  if (!recipe) throw new Error('Scene recipe not found: ' + slug);\n  const def = recipe.definition;\n\n  let wordLimit;\n  if (recipe.scene_type === 'hook') wordLimit = timing.hook_words;\n  else if (recipe.scene_type === 'cta') wordLimit = timing.cta_words;\n  else {\n    // Body scenes: segment words × item count (or just segment words if no items)\n    const itemCount = def.items ? Math.min(items.length, def.items.max || 5) : 0;\n    wordLimit = itemCount > 0 ? timing.segment_words * itemCount : timing.segment_words;\n  }\n\n  let desc = 'Scene ' + (idx + 1) + ': \"' + recipe.name + '\" (type: ' + recipe.scene_type + ')';\n  desc += '\\n  scene_slug: \"' + slug + '\"';\n  desc += '\\n  Word limit: ~' + wordLimit + ' words for audio_text';\n\n  if (def.headline && def.headline.allowed) {\n    desc += '\\n  Headline: Required. Max ' + (def.headline.max_lines || 2) + ' lines. Short, punchy phrases (2-4 words each). Return as array of strings.';\n  } else {\n    desc += '\\n  Headline: null (not used in this scene)';\n  }\n\n  if (def.items && items.length > 0) {\n    const itemCount = Math.min(items.length, def.items.max || 5);\n    desc += '\\n  Items: ' + itemCount + ' inventory items will be shown. Mention each in the audio naturally.';\n    desc += '\\n  Available items:';\n    items.slice(0, itemCount).forEach((item, i) => {\n      const title = item.title || (item.year + ' ' + item.make + ' ' + item.model) || 'Item ' + (i + 1);\n      const price = item.price || '';\n      desc += '\\n    ' + (i + 1) + '. ' + title + (price ? ' — ' + price : '');\n    });\n  } else {\n    desc += '\\n  Items: none';\n  }\n\n  if (def.avatar && def.avatar.required) {\n    desc += '\\n  Avatar: visible (the presenter is on screen)';\n  } else {\n    desc += '\\n  Avatar: not visible';\n  }\n\n  if (def.contact) {\n    desc += '\\n  Contact info is displayed — include a call-to-action';\n  }\n\n  return desc;\n}).join('\\n\\n');\n\n// Build user prompt\nconst userPrompt = \\`Write a video ad script following this exact scene structure.\n\nSCENE STRUCTURE:\n\\${sceneInstructions}\n\n\\${themePack ? 'WEEKLY THEME: ' + (themePack.theme_name || '') + '\\nDirection: ' + (themePack.theme_direction || '') + '\\n' : ''}\n\nCLIENT: \\${config.business_name || 'the business'}\n\\${config.location ? 'LOCATION: ' + config.location : ''}\n\\${config.service_area ? 'SERVICE AREA: ' + config.service_area : ''}\n\nReturn ONLY valid JSON matching this exact schema:\n{\n  \"scenes\": [\n    {\n      \"scene_slug\": \"<must match the scene_slug above>\",\n      \"scene_type\": \"<hook|body|cta>\",\n      \"position\": <0-indexed>,\n      \"audio_text\": \"<the script text for this scene — spoken by the presenter>\",\n      \"headline_text\": <[\"LINE 1\", \"LINE 2\"] or null if headline not used>,\n      \"background_url\": null,\n      \"items\": [<array of {photo_url, title, price, mileage} for body scenes with items, empty array otherwise>]\n    }\n  ],\n  \"thumbnail_text\": \"<short catchy text for video thumbnail, 3-5 words>\"\n}\n\nIMPORTANT:\n- Each scene's audio_text must respect the word limit specified above\n- headline_text is an array of short phrases (2-4 words each), or null\n- Items array should mirror the items listed above with their exact data\n- background_url is always null (will be set separately)\n- thumbnail_text should be attention-grabbing and relate to the hook\\`;\n\n// Build messages array for Claude\nconst messages = [\n  { role: 'user', content: userPrompt }\n];\n\nconsole.log('Scene prompt built. ' + sceneSlugs.length + ' scenes, ' + items.length + ' items');\n\nreturn [{\n  json: {\n    ...config,\n    _scene_pipeline: true,\n    _scene_recipes: sceneRecipes,\n    _scene_slugs: sceneSlugs,\n    _items: items,\n    system_prompt: systemPrompt,\n    messages: messages,\n    model: 'claude-sonnet-4-20250514'\n  }\n}];"
+      },
+      "id": "scene-003",
+      "name": "Build Script Prompt (Scenes)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2928,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": {{ JSON.stringify($json.model || 'claude-sonnet-4-20250514') }},\n  \"max_tokens\": 4096,\n  \"system\": {{ JSON.stringify($json.system_prompt || '') }},\n  \"messages\": {{ JSON.stringify($json.messages) }}\n}",
+        "options": {}
+      },
+      "id": "scene-004",
+      "name": "API: Claude, Script (Scenes)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3200,
+        1200
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "Cias5aAJewPKMMCa",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// PARSE SCRIPT — SCENE-BASED OUTPUT\n// Parses Claude's response into scenes[] structure.\n// Adds background_url field (null for now, populated by Planner).\n// Builds full_script for TTS compatibility.\n// ═══════════════════════════════════════════════════════════════\n\nconst config = $('Build Script Prompt (Scenes)').first().json;\nconst apiResponse = $json.content[0].text;\n\n// Parse JSON response\nconst cleanText = apiResponse\n  .replace(/```json\\n?/g, '')\n  .replace(/```\\n?/g, '')\n  .trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleanText);\n} catch (error) {\n  throw new Error('Failed to parse scene script response: ' + error.message + '\\nRaw: ' + cleanText.substring(0, 200));\n}\n\n// Validate scenes array\nif (!parsed.scenes || !Array.isArray(parsed.scenes)) {\n  throw new Error('Script response missing scenes array');\n}\n\nconst expectedSlugs = config._scene_slugs;\nif (parsed.scenes.length !== expectedSlugs.length) {\n  throw new Error('Expected ' + expectedSlugs.length + ' scenes but got ' + parsed.scenes.length);\n}\n\n// Validate each scene and ensure background_url field exists\nconst scenes = parsed.scenes.map((scene, idx) => {\n  if (scene.scene_slug !== expectedSlugs[idx]) {\n    console.log('WARNING: Scene ' + idx + ' slug mismatch: expected ' + expectedSlugs[idx] + ', got ' + scene.scene_slug);\n    scene.scene_slug = expectedSlugs[idx];\n  }\n\n  // Ensure all required fields\n  return {\n    scene_slug: scene.scene_slug,\n    scene_type: scene.scene_type || config._scene_recipes[scene.scene_slug]?.scene_type || 'body',\n    position: idx,\n    audio_text: scene.audio_text || '',\n    headline_text: scene.headline_text || null,\n    background_url: scene.background_url || null,\n    items: scene.items || []\n  };\n});\n\n// Build full_script by concatenating all audio_text (for TTS)\nconst fullScript = scenes.map(s => s.audio_text).join(' ');\n\n// Build backward-compatible script object\nconst script = {\n  scenes: scenes,\n  full_script: fullScript,\n  thumbnail_text: parsed.thumbnail_text || '',\n  // Backward compatibility: map to hook/segments/cta\n  hook: scenes.find(s => s.scene_type === 'hook')?.audio_text || '',\n  segments: scenes.filter(s => s.scene_type === 'body').map(s => s.audio_text),\n  cta: scenes.find(s => s.scene_type === 'cta')?.audio_text || ''\n};\n\nconsole.log('Parsed ' + scenes.length + ' scenes. Full script: ' + fullScript.length + ' chars');\nconsole.log('Thumbnail: ' + script.thumbnail_text);\n\n// Strip prompt data, return clean config + script\nconst { system_prompt, messages, _scene_pipeline, ...cleanConfig } = config;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    script: script,\n    _scene_pipeline: true\n  }\n}];"
+      },
+      "id": "scene-005",
+      "name": "Parse Script (Scenes)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3440,
+        1200
+      ]
     }
   ],
   "connections": {
@@ -1989,7 +2111,7 @@
       "main": [
         [
           {
-            "node": "Route by Source",
+            "node": "If: Scene Pipeline",
             "type": "main",
             "index": 0
           }
@@ -2171,6 +2293,11 @@
             "node": "Fetch Global TTS Rules",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Fetch Scene Recipes",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -2275,6 +2402,64 @@
           }
         ]
       ]
+    },
+    "If: Scene Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Build Script Prompt (Scenes)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route by Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Script Prompt (Scenes)": {
+      "main": [
+        [
+          {
+            "node": "API: Claude, Script (Scenes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Claude, Script (Scenes)": {
+      "main": [
+        [
+          {
+            "node": "Parse Script (Scenes)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Script Creation Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Script (Scenes)": {
+      "main": [
+        [
+          {
+            "node": "Return Script for Caller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2285,8 +2470,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "d7812ebd-2575-4420-bb44-7fa9608f9b43",
-  "activeVersionId": "d7812ebd-2575-4420-bb44-7fa9608f9b43",
+  "versionId": "8c1ba181-43b5-44ec-80a5-de51634df3aa",
+  "activeVersionId": "8c1ba181-43b5-44ec-80a5-de51634df3aa",
   "triggerCount": 1,
   "shared": [
     {
@@ -2298,9 +2483,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-25T00:01:34.103Z",
-    "createdAt": "2026-02-25T00:01:34.103Z",
-    "versionId": "d7812ebd-2575-4420-bb44-7fa9608f9b43",
+    "updatedAt": "2026-03-27T11:57:14.522Z",
+    "createdAt": "2026-03-27T11:57:14.522Z",
+    "versionId": "8c1ba181-43b5-44ec-80a5-de51634df3aa",
     "workflowId": "qXvDgLuvrY7u6d7w",
     "nodes": [
       {
@@ -3770,6 +3955,128 @@
           }
         },
         "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT sr.slug, sr.scene_type, sr.name, sr.definition, vr.slug as video_recipe_slug, vr.name as video_recipe_name, vr.scene_slugs\nFROM video_recipes vr\nJOIN scene_recipes sr ON sr.slug = ANY(\n  SELECT jsonb_array_elements_text(vr.scene_slugs)\n)\nWHERE vr.id = '{{ $('Resolve Config').first().json.video_recipe_id }}'::uuid\nAND sr.is_active = true",
+          "options": {}
+        },
+        "id": "scene-001",
+        "name": "Fetch Scene Recipes",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2480,
+          1200
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "scene-check",
+                "leftValue": "={{ $('Resolve Config').first().json.video_recipe_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "scene-002",
+        "name": "If: Scene Pipeline",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2704,
+          1100
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// ═══════════════════════════════════════════════════════════════\n// BUILD SCRIPT PROMPT — SCENE-BASED\n// Uses scene recipes to tell Claude the exact structure needed.\n// Reuses system prompt from Assemble System Prompt.\n// ═══════════════════════════════════════════════════════════════\n\nconst config = $('Resolve Config').first().json;\nconst systemPrompt = $('Assemble System Prompt').first().json.system_prompt;\nconst recipeRows = $('Fetch Scene Recipes').all().map(r => r.json);\nconst timingDefaults = $('Fetch Timing Defaults').first().json;\n\n// Parse scene recipe definitions\nconst sceneRecipes = {};\nlet videoRecipeSlug = '';\nlet sceneSlugs = [];\nfor (const row of recipeRows) {\n  const def = typeof row.definition === 'string' ? JSON.parse(row.definition) : row.definition;\n  sceneRecipes[row.slug] = {\n    slug: row.slug,\n    scene_type: row.scene_type,\n    name: row.name,\n    definition: def\n  };\n  videoRecipeSlug = row.video_recipe_slug;\n  sceneSlugs = typeof row.scene_slugs === 'string' ? JSON.parse(row.scene_slugs) : row.scene_slugs;\n}\n\nconsole.log('Video recipe: ' + videoRecipeSlug + ' (' + sceneSlugs.length + ' scenes)');\n\n// Get timing config\nconst timing = {\n  hook_words: timingDefaults.hook_words || 12,\n  segment_words: timingDefaults.segment_words || 15,\n  cta_words: timingDefaults.cta_words || 12\n};\n\n// Get items from config (processed or raw)\nconst items = config.processed_items || config.vehicles || [];\nconst themePack = config.theme_pack || null;\n\n// Build scene descriptions for Claude\nconst sceneInstructions = sceneSlugs.map((slug, idx) => {\n  const recipe = sceneRecipes[slug];\n  if (!recipe) throw new Error('Scene recipe not found: ' + slug);\n  const def = recipe.definition;\n\n  let wordLimit;\n  if (recipe.scene_type === 'hook') wordLimit = timing.hook_words;\n  else if (recipe.scene_type === 'cta') wordLimit = timing.cta_words;\n  else {\n    // Body scenes: segment words × item count (or just segment words if no items)\n    const itemCount = def.items ? Math.min(items.length, def.items.max || 5) : 0;\n    wordLimit = itemCount > 0 ? timing.segment_words * itemCount : timing.segment_words;\n  }\n\n  let desc = 'Scene ' + (idx + 1) + ': \"' + recipe.name + '\" (type: ' + recipe.scene_type + ')';\n  desc += '\\n  scene_slug: \"' + slug + '\"';\n  desc += '\\n  Word limit: ~' + wordLimit + ' words for audio_text';\n\n  if (def.headline && def.headline.allowed) {\n    desc += '\\n  Headline: Required. Max ' + (def.headline.max_lines || 2) + ' lines. Short, punchy phrases (2-4 words each). Return as array of strings.';\n  } else {\n    desc += '\\n  Headline: null (not used in this scene)';\n  }\n\n  if (def.items && items.length > 0) {\n    const itemCount = Math.min(items.length, def.items.max || 5);\n    desc += '\\n  Items: ' + itemCount + ' inventory items will be shown. Mention each in the audio naturally.';\n    desc += '\\n  Available items:';\n    items.slice(0, itemCount).forEach((item, i) => {\n      const title = item.title || (item.year + ' ' + item.make + ' ' + item.model) || 'Item ' + (i + 1);\n      const price = item.price || '';\n      desc += '\\n    ' + (i + 1) + '. ' + title + (price ? ' — ' + price : '');\n    });\n  } else {\n    desc += '\\n  Items: none';\n  }\n\n  if (def.avatar && def.avatar.required) {\n    desc += '\\n  Avatar: visible (the presenter is on screen)';\n  } else {\n    desc += '\\n  Avatar: not visible';\n  }\n\n  if (def.contact) {\n    desc += '\\n  Contact info is displayed — include a call-to-action';\n  }\n\n  return desc;\n}).join('\\n\\n');\n\n// Build user prompt\nconst userPrompt = \\`Write a video ad script following this exact scene structure.\n\nSCENE STRUCTURE:\n\\${sceneInstructions}\n\n\\${themePack ? 'WEEKLY THEME: ' + (themePack.theme_name || '') + '\\nDirection: ' + (themePack.theme_direction || '') + '\\n' : ''}\n\nCLIENT: \\${config.business_name || 'the business'}\n\\${config.location ? 'LOCATION: ' + config.location : ''}\n\\${config.service_area ? 'SERVICE AREA: ' + config.service_area : ''}\n\nReturn ONLY valid JSON matching this exact schema:\n{\n  \"scenes\": [\n    {\n      \"scene_slug\": \"<must match the scene_slug above>\",\n      \"scene_type\": \"<hook|body|cta>\",\n      \"position\": <0-indexed>,\n      \"audio_text\": \"<the script text for this scene — spoken by the presenter>\",\n      \"headline_text\": <[\"LINE 1\", \"LINE 2\"] or null if headline not used>,\n      \"background_url\": null,\n      \"items\": [<array of {photo_url, title, price, mileage} for body scenes with items, empty array otherwise>]\n    }\n  ],\n  \"thumbnail_text\": \"<short catchy text for video thumbnail, 3-5 words>\"\n}\n\nIMPORTANT:\n- Each scene's audio_text must respect the word limit specified above\n- headline_text is an array of short phrases (2-4 words each), or null\n- Items array should mirror the items listed above with their exact data\n- background_url is always null (will be set separately)\n- thumbnail_text should be attention-grabbing and relate to the hook\\`;\n\n// Build messages array for Claude\nconst messages = [\n  { role: 'user', content: userPrompt }\n];\n\nconsole.log('Scene prompt built. ' + sceneSlugs.length + ' scenes, ' + items.length + ' items');\n\nreturn [{\n  json: {\n    ...config,\n    _scene_pipeline: true,\n    _scene_recipes: sceneRecipes,\n    _scene_slugs: sceneSlugs,\n    _items: items,\n    system_prompt: systemPrompt,\n    messages: messages,\n    model: 'claude-sonnet-4-20250514'\n  }\n}];"
+        },
+        "id": "scene-003",
+        "name": "Build Script Prompt (Scenes)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2928,
+          1200
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              },
+              {
+                "name": "content-type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": {{ JSON.stringify($json.model || 'claude-sonnet-4-20250514') }},\n  \"max_tokens\": 4096,\n  \"system\": {{ JSON.stringify($json.system_prompt || '') }},\n  \"messages\": {{ JSON.stringify($json.messages) }}\n}",
+          "options": {}
+        },
+        "id": "scene-004",
+        "name": "API: Claude, Script (Scenes)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3200,
+          1200
+        ],
+        "credentials": {
+          "anthropicApi": {
+            "id": "Cias5aAJewPKMMCa",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// ═══════════════════════════════════════════════════════════════\n// PARSE SCRIPT — SCENE-BASED OUTPUT\n// Parses Claude's response into scenes[] structure.\n// Adds background_url field (null for now, populated by Planner).\n// Builds full_script for TTS compatibility.\n// ═══════════════════════════════════════════════════════════════\n\nconst config = $('Build Script Prompt (Scenes)').first().json;\nconst apiResponse = $json.content[0].text;\n\n// Parse JSON response\nconst cleanText = apiResponse\n  .replace(/```json\\n?/g, '')\n  .replace(/```\\n?/g, '')\n  .trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleanText);\n} catch (error) {\n  throw new Error('Failed to parse scene script response: ' + error.message + '\\nRaw: ' + cleanText.substring(0, 200));\n}\n\n// Validate scenes array\nif (!parsed.scenes || !Array.isArray(parsed.scenes)) {\n  throw new Error('Script response missing scenes array');\n}\n\nconst expectedSlugs = config._scene_slugs;\nif (parsed.scenes.length !== expectedSlugs.length) {\n  throw new Error('Expected ' + expectedSlugs.length + ' scenes but got ' + parsed.scenes.length);\n}\n\n// Validate each scene and ensure background_url field exists\nconst scenes = parsed.scenes.map((scene, idx) => {\n  if (scene.scene_slug !== expectedSlugs[idx]) {\n    console.log('WARNING: Scene ' + idx + ' slug mismatch: expected ' + expectedSlugs[idx] + ', got ' + scene.scene_slug);\n    scene.scene_slug = expectedSlugs[idx];\n  }\n\n  // Ensure all required fields\n  return {\n    scene_slug: scene.scene_slug,\n    scene_type: scene.scene_type || config._scene_recipes[scene.scene_slug]?.scene_type || 'body',\n    position: idx,\n    audio_text: scene.audio_text || '',\n    headline_text: scene.headline_text || null,\n    background_url: scene.background_url || null,\n    items: scene.items || []\n  };\n});\n\n// Build full_script by concatenating all audio_text (for TTS)\nconst fullScript = scenes.map(s => s.audio_text).join(' ');\n\n// Build backward-compatible script object\nconst script = {\n  scenes: scenes,\n  full_script: fullScript,\n  thumbnail_text: parsed.thumbnail_text || '',\n  // Backward compatibility: map to hook/segments/cta\n  hook: scenes.find(s => s.scene_type === 'hook')?.audio_text || '',\n  segments: scenes.filter(s => s.scene_type === 'body').map(s => s.audio_text),\n  cta: scenes.find(s => s.scene_type === 'cta')?.audio_text || ''\n};\n\nconsole.log('Parsed ' + scenes.length + ' scenes. Full script: ' + fullScript.length + ' chars');\nconsole.log('Thumbnail: ' + script.thumbnail_text);\n\n// Strip prompt data, return clean config + script\nconst { system_prompt, messages, _scene_pipeline, ...cleanConfig } = config;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    script: script,\n    _scene_pipeline: true\n  }\n}];"
+        },
+        "id": "scene-005",
+        "name": "Parse Script (Scenes)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3440,
+          1200
+        ]
       }
     ],
     "connections": {
@@ -4286,7 +4593,7 @@
         "main": [
           [
             {
-              "node": "Route by Source",
+              "node": "If: Scene Pipeline",
               "type": "main",
               "index": 0
             }
@@ -4468,6 +4775,11 @@
               "node": "Fetch Global TTS Rules",
               "type": "main",
               "index": 0
+            },
+            {
+              "node": "Fetch Scene Recipes",
+              "type": "main",
+              "index": 0
             }
           ]
         ]
@@ -4563,6 +4875,64 @@
         ]
       },
       "Fetch Client Pronunciations": {
+        "main": [
+          [
+            {
+              "node": "Return Script for Caller",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Scene Pipeline": {
+        "main": [
+          [
+            {
+              "node": "Build Script Prompt (Scenes)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Route by Source",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Script Prompt (Scenes)": {
+        "main": [
+          [
+            {
+              "node": "API: Claude, Script (Scenes)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Claude, Script (Scenes)": {
+        "main": [
+          [
+            {
+              "node": "Parse Script (Scenes)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Script Creation Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Script (Scenes)": {
         "main": [
           [
             {
