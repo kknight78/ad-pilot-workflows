@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-23T22:14:21.283Z",
+  "updatedAt": "2026-04-02T21:31:44.245Z",
   "createdAt": "2025-12-17T14:15:04.048Z",
   "id": "FAvXS0078ZfxhOOu",
   "name": "[05] Process Avatar Photo",
@@ -44,7 +44,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -220,7 +220,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -254,7 +254,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -580,7 +580,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -614,7 +614,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -861,7 +861,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -1483,8 +1483,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "3b9871f0-5d69-4662-b1ca-6eee7ff85ae5",
-  "activeVersionId": "3b9871f0-5d69-4662-b1ca-6eee7ff85ae5",
+  "versionId": "31b7ac05-f3f3-47c9-9f15-c182460ce47a",
+  "activeVersionId": "31b7ac05-f3f3-47c9-9f15-c182460ce47a",
   "triggerCount": 1,
   "shared": [
     {
@@ -1496,9 +1496,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-23T22:14:21.288Z",
-    "createdAt": "2026-02-23T22:14:21.288Z",
-    "versionId": "3b9871f0-5d69-4662-b1ca-6eee7ff85ae5",
+    "updatedAt": "2026-04-02T21:31:44.287Z",
+    "createdAt": "2026-04-02T21:31:44.287Z",
+    "versionId": "31b7ac05-f3f3-47c9-9f15-c182460ce47a",
     "workflowId": "FAvXS0078ZfxhOOu",
     "nodes": [
       {
@@ -1539,7 +1539,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -1715,7 +1715,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -1749,7 +1749,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -2075,7 +2075,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -2109,7 +2109,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -2356,7 +2356,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
