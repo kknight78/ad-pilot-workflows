@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:10.167Z",
+  "updatedAt": "2026-04-02T21:30:57.233Z",
   "createdAt": "2026-01-26T23:34:58.522Z",
   "id": "KFxZ3AYn1gEVbSy9",
   "name": "Voice Clone API",
@@ -201,7 +201,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -313,7 +313,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -761,8 +761,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "45cc0b17-8506-4ef0-a648-bd706370cd73",
-  "activeVersionId": "45cc0b17-8506-4ef0-a648-bd706370cd73",
+  "versionId": "7a987d88-3755-410c-a14b-1911e27ee02e",
+  "activeVersionId": "7a987d88-3755-410c-a14b-1911e27ee02e",
   "triggerCount": 4,
   "shared": [
     {
@@ -774,9 +774,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T01:12:10.171Z",
-    "createdAt": "2026-01-30T01:12:10.171Z",
-    "versionId": "45cc0b17-8506-4ef0-a648-bd706370cd73",
+    "updatedAt": "2026-04-02T21:30:57.238Z",
+    "createdAt": "2026-04-02T21:30:57.238Z",
+    "versionId": "7a987d88-3755-410c-a14b-1911e27ee02e",
     "workflowId": "KFxZ3AYn1gEVbSy9",
     "nodes": [
       {
@@ -974,7 +974,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
@@ -1086,7 +1086,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
