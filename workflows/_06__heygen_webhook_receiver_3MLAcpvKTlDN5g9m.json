@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-23T21:54:56.084Z",
+  "updatedAt": "2026-04-02T21:31:41.254Z",
   "createdAt": "2025-12-19T01:37:49.969Z",
   "id": "3MLAcpvKTlDN5g9m",
   "name": "[06] HeyGen Webhook Receiver",
@@ -79,7 +79,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -324,7 +324,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -548,8 +548,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "29aa1785-df88-41c2-80c2-b0414b1f2304",
-  "activeVersionId": "29aa1785-df88-41c2-80c2-b0414b1f2304",
+  "versionId": "24c237a6-a6a1-4e18-a648-2ad67a23758c",
+  "activeVersionId": "24c237a6-a6a1-4e18-a648-2ad67a23758c",
   "triggerCount": 2,
   "shared": [
     {
@@ -561,9 +561,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-23T21:54:56.094Z",
-    "createdAt": "2026-02-23T21:54:56.094Z",
-    "versionId": "29aa1785-df88-41c2-80c2-b0414b1f2304",
+    "updatedAt": "2026-04-02T21:31:41.297Z",
+    "createdAt": "2026-04-02T21:31:41.297Z",
+    "versionId": "24c237a6-a6a1-4e18-a648-2ad67a23758c",
     "workflowId": "3MLAcpvKTlDN5g9m",
     "nodes": [
       {
@@ -639,7 +639,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -884,7 +884,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
