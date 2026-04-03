@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-12T14:53:00.217Z",
+  "updatedAt": "2026-04-02T21:31:06.719Z",
   "createdAt": "2026-02-12T14:53:00.217Z",
   "id": "wXBTp1MfTDALCS6i",
   "name": "[HEALTH] Meta Token Check",
@@ -86,7 +86,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -226,7 +226,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "2072af6e-ce8e-4f4f-a335-9dc703e525b7",
+  "versionId": "2ca6e355-b8cd-45b8-b207-3edfe2226875",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
