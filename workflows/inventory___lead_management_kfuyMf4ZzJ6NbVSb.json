@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T15:28:51.759Z",
+  "updatedAt": "2026-04-02T21:30:54.899Z",
   "createdAt": "2026-01-26T23:34:51.446Z",
   "id": "kfuyMf4ZzJ6NbVSb",
   "name": "Inventory & Lead Management",
@@ -36,7 +36,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -883,7 +883,7 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "54a45442-49dd-4127-b64d-271994344977",
+  "versionId": "3b20bbc8-29d0-41d5-85b5-397a71e56ccf",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
