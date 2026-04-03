@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-03T21:14:45.111Z",
+  "updatedAt": "2026-04-02T21:31:08.863Z",
   "createdAt": "2026-01-26T23:34:59.596Z",
   "id": "ZgAvfbXlnG7OzQUz",
   "name": "[Service] Replicate Alpha Video",
@@ -38,7 +38,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -264,8 +264,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "2a7dd243-46f2-4526-b2cc-6bb5ed8c0234",
-  "activeVersionId": "2a7dd243-46f2-4526-b2cc-6bb5ed8c0234",
+  "versionId": "23974351-4744-4775-a88d-76f9f4c61d56",
+  "activeVersionId": "23974351-4744-4775-a88d-76f9f4c61d56",
   "triggerCount": 0,
   "shared": [
     {
@@ -277,9 +277,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-03T21:14:55.341Z",
-    "createdAt": "2026-02-03T21:14:45.118Z",
-    "versionId": "2a7dd243-46f2-4526-b2cc-6bb5ed8c0234",
+    "updatedAt": "2026-04-02T21:31:08.867Z",
+    "createdAt": "2026-04-02T21:31:08.867Z",
+    "versionId": "23974351-4744-4775-a88d-76f9f4c61d56",
     "workflowId": "ZgAvfbXlnG7OzQUz",
     "nodes": [
       {
@@ -314,7 +314,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
@@ -533,9 +533,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 2a7dd243",
-    "description": "",
-    "autosaved": true
+    "name": null,
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
