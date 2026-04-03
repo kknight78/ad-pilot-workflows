@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-24T23:05:10.526Z",
+  "updatedAt": "2026-04-02T21:31:03.752Z",
   "createdAt": "2026-01-26T23:34:40.537Z",
   "id": "rCHIIq9b5UxNMP06",
   "name": "[04] Generate Video",
@@ -250,7 +250,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -377,7 +377,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 3
           },
           "conditions": [
@@ -867,8 +867,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "58fa261a-ab9e-4324-8e46-d61a956ed91c",
-  "activeVersionId": "58fa261a-ab9e-4324-8e46-d61a956ed91c",
+  "versionId": "8560963b-ce10-4367-99c2-023008cfd8a2",
+  "activeVersionId": "8560963b-ce10-4367-99c2-023008cfd8a2",
   "triggerCount": 1,
   "shared": [
     {
@@ -880,9 +880,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-24T23:05:10.529Z",
-    "createdAt": "2026-02-24T23:05:10.529Z",
-    "versionId": "58fa261a-ab9e-4324-8e46-d61a956ed91c",
+    "updatedAt": "2026-04-02T21:31:03.755Z",
+    "createdAt": "2026-04-02T21:31:03.755Z",
+    "versionId": "8560963b-ce10-4367-99c2-023008cfd8a2",
     "workflowId": "rCHIIq9b5UxNMP06",
     "nodes": [
       {
@@ -1129,7 +1129,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -1256,7 +1256,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 3
             },
             "conditions": [
