@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-09T14:51:33.933Z",
+  "updatedAt": "2026-04-02T21:31:46.020Z",
   "createdAt": "2025-12-13T13:57:36.843Z",
   "id": "gM6DTZfNbcSofqQO",
   "name": "[02] Generate Script",
@@ -235,7 +235,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -1836,8 +1836,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "06a24d5c-c703-491f-ac5c-a719dd83bc16",
-  "activeVersionId": "06a24d5c-c703-491f-ac5c-a719dd83bc16",
+  "versionId": "a4e7d952-9ad8-4423-861b-349b7b94ce09",
+  "activeVersionId": "a4e7d952-9ad8-4423-861b-349b7b94ce09",
   "triggerCount": 1,
   "shared": [
     {
@@ -1849,9 +1849,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-09T14:51:33.938Z",
-    "createdAt": "2026-02-09T14:51:33.938Z",
-    "versionId": "06a24d5c-c703-491f-ac5c-a719dd83bc16",
+    "updatedAt": "2026-04-02T21:31:46.064Z",
+    "createdAt": "2026-04-02T21:31:46.064Z",
+    "versionId": "a4e7d952-9ad8-4423-861b-349b7b94ce09",
     "workflowId": "gM6DTZfNbcSofqQO",
     "nodes": [
       {
@@ -2083,7 +2083,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
