@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:07.062Z",
+  "updatedAt": "2026-04-02T21:30:59.269Z",
   "createdAt": "2026-01-26T23:35:01.040Z",
   "id": "nauW53iR4T9JkgM1",
   "name": "Weekly Intel Agent",
@@ -355,7 +355,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -734,7 +734,7 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "969f670c-a3f0-4ecf-aae7-0bf8ae6e0f8a",
+  "versionId": "a2d17a2d-d9a1-4ba4-89c6-4cb5575cb029",
   "activeVersionId": null,
   "triggerCount": 2,
   "shared": [
