@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-24T14:59:21.936Z",
+  "updatedAt": "2026-04-02T21:31:49.860Z",
   "createdAt": "2026-02-12T19:13:41.196Z",
   "id": "LnCOycG3LN0jkMuR",
   "name": "[FALLBACK] Auto-Confirm",
@@ -71,7 +71,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -273,7 +273,7 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "dbc27875-4df6-40c0-9813-f2ba0300415e",
+  "versionId": "124d5a1f-adf7-4514-ba3d-a223f6f8540b",
   "activeVersionId": null,
   "triggerCount": 1,
   "shared": [
