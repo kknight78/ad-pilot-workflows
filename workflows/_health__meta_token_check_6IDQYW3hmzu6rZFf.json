@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-12T14:59:33.391Z",
+  "updatedAt": "2026-04-02T21:31:41.953Z",
   "createdAt": "2026-02-12T14:59:33.391Z",
   "id": "6IDQYW3hmzu6rZFf",
   "name": "[HEALTH] Meta Token Check",
@@ -86,7 +86,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -230,8 +230,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "826eecce-1c9c-40d3-8314-4065eb22b8f4",
-  "activeVersionId": "826eecce-1c9c-40d3-8314-4065eb22b8f4",
+  "versionId": "60442717-983e-4fa2-b47d-a95af3489500",
+  "activeVersionId": "60442717-983e-4fa2-b47d-a95af3489500",
   "triggerCount": 1,
   "shared": [
     {
@@ -243,9 +243,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-12T14:59:33.428Z",
-    "createdAt": "2026-02-12T14:59:33.428Z",
-    "versionId": "826eecce-1c9c-40d3-8314-4065eb22b8f4",
+    "updatedAt": "2026-04-02T21:31:41.994Z",
+    "createdAt": "2026-04-02T21:31:41.994Z",
+    "versionId": "60442717-983e-4fa2-b47d-a95af3489500",
     "workflowId": "6IDQYW3hmzu6rZFf",
     "nodes": [
       {
@@ -328,7 +328,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
