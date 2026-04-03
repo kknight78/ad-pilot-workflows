@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T23:28:13.594Z",
+  "updatedAt": "2026-04-02T21:30:48.673Z",
   "createdAt": "2026-02-08T15:19:48.079Z",
   "id": "7yR23WHEwDmTvukL",
   "name": "Client Factory - Generate Images",
@@ -91,7 +91,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -268,8 +268,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "9adcfb91-6089-4cef-9065-a7a08ca36788",
-  "activeVersionId": "9adcfb91-6089-4cef-9065-a7a08ca36788",
+  "versionId": "c645cdcb-0716-484d-a75f-59ca8bd73b6c",
+  "activeVersionId": "c645cdcb-0716-484d-a75f-59ca8bd73b6c",
   "triggerCount": 1,
   "shared": [
     {
@@ -281,9 +281,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-21T23:28:13.596Z",
-    "createdAt": "2026-02-21T23:28:13.596Z",
-    "versionId": "9adcfb91-6089-4cef-9065-a7a08ca36788",
+    "updatedAt": "2026-04-02T21:30:48.676Z",
+    "createdAt": "2026-04-02T21:30:48.676Z",
+    "versionId": "c645cdcb-0716-484d-a75f-59ca8bd73b6c",
     "workflowId": "7yR23WHEwDmTvukL",
     "nodes": [
       {
@@ -371,7 +371,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
