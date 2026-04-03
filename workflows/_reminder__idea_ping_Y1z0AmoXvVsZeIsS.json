@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T00:10:05.179Z",
+  "updatedAt": "2026-04-02T20:36:04.188Z",
   "createdAt": "2026-02-16T22:37:28.083Z",
   "id": "Y1z0AmoXvVsZeIsS",
   "name": "[REMINDER] Idea Ping",
@@ -71,7 +71,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -207,8 +207,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "f21d48d7-a327-4420-bb9f-407ce2b6927d",
-  "activeVersionId": "f21d48d7-a327-4420-bb9f-407ce2b6927d",
+  "versionId": "6e4b273b-a011-45a6-9817-13d73048b361",
+  "activeVersionId": "6e4b273b-a011-45a6-9817-13d73048b361",
   "triggerCount": 1,
   "shared": [
     {
@@ -220,9 +220,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-17T00:10:05.185Z",
-    "createdAt": "2026-02-17T00:10:05.185Z",
-    "versionId": "f21d48d7-a327-4420-bb9f-407ce2b6927d",
+    "updatedAt": "2026-04-02T20:36:04.194Z",
+    "createdAt": "2026-04-02T20:36:04.194Z",
+    "versionId": "6e4b273b-a011-45a6-9817-13d73048b361",
     "workflowId": "Y1z0AmoXvVsZeIsS",
     "nodes": [
       {
@@ -290,7 +290,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
