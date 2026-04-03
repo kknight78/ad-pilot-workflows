@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T13:38:53.497Z",
+  "updatedAt": "2026-04-02T21:31:07.342Z",
   "createdAt": "2026-01-26T23:34:50.982Z",
   "id": "yqw6OsqdPKXdRJQx",
   "name": "Sync HeyGen Avatars to DB",
@@ -81,7 +81,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -307,8 +307,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "9681dcb4-4f25-47fe-9b9f-6645d1dae161",
-  "activeVersionId": "9681dcb4-4f25-47fe-9b9f-6645d1dae161",
+  "versionId": "27edb475-b064-47e4-8adb-28da5c66d50a",
+  "activeVersionId": "27edb475-b064-47e4-8adb-28da5c66d50a",
   "triggerCount": 1,
   "shared": [
     {
@@ -320,9 +320,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-08T13:38:53.499Z",
-    "createdAt": "2026-02-08T13:38:53.499Z",
-    "versionId": "9681dcb4-4f25-47fe-9b9f-6645d1dae161",
+    "updatedAt": "2026-04-02T21:31:07.348Z",
+    "createdAt": "2026-04-02T21:31:07.348Z",
+    "versionId": "27edb475-b064-47e4-8adb-28da5c66d50a",
     "workflowId": "yqw6OsqdPKXdRJQx",
     "nodes": [
       {
@@ -400,7 +400,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
