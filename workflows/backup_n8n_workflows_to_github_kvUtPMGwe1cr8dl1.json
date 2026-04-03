@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-16T12:15:10.785Z",
+  "updatedAt": "2026-04-02T21:31:49.366Z",
   "createdAt": "2025-12-13T13:57:20.492Z",
   "id": "kvUtPMGwe1cr8dl1",
   "name": "Backup n8n Workflows to GitHub",
@@ -324,7 +324,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -575,8 +575,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "63900cad-b92e-4f9b-8dff-475578e39a34",
-  "activeVersionId": "63900cad-b92e-4f9b-8dff-475578e39a34",
+  "versionId": "10f4839b-c264-4bd7-a61a-a8b5f7c04295",
+  "activeVersionId": "10f4839b-c264-4bd7-a61a-a8b5f7c04295",
   "triggerCount": 1,
   "shared": [
     {
@@ -588,9 +588,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-16T12:15:14.869Z",
-    "createdAt": "2026-01-16T12:15:10.788Z",
-    "versionId": "63900cad-b92e-4f9b-8dff-475578e39a34",
+    "updatedAt": "2026-04-02T21:31:49.407Z",
+    "createdAt": "2026-04-02T21:31:49.407Z",
+    "versionId": "10f4839b-c264-4bd7-a61a-a8b5f7c04295",
     "workflowId": "kvUtPMGwe1cr8dl1",
     "nodes": [
       {
@@ -911,7 +911,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -1151,8 +1151,8 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 63900cad",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false
   },
   "tags": []
