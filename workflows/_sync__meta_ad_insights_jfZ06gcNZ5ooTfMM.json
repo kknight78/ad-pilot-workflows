@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T12:42:06.117Z",
+  "updatedAt": "2026-04-02T21:31:48.221Z",
   "createdAt": "2026-02-06T23:25:10.831Z",
   "id": "jfZ06gcNZ5ooTfMM",
   "name": "[SYNC] Meta Ad Insights",
@@ -134,7 +134,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -263,7 +263,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -477,7 +477,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -556,7 +556,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -1003,8 +1003,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "d06cf884-c4f0-4c76-8e32-663f023a24de",
-  "activeVersionId": "d06cf884-c4f0-4c76-8e32-663f023a24de",
+  "versionId": "a6657e67-1281-4260-85d2-87d02655e15e",
+  "activeVersionId": "a6657e67-1281-4260-85d2-87d02655e15e",
   "triggerCount": 2,
   "shared": [
     {
@@ -1016,9 +1016,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-21T12:42:06.121Z",
-    "createdAt": "2026-02-21T12:42:06.121Z",
-    "versionId": "d06cf884-c4f0-4c76-8e32-663f023a24de",
+    "updatedAt": "2026-04-02T21:31:48.263Z",
+    "createdAt": "2026-04-02T21:31:48.263Z",
+    "versionId": "a6657e67-1281-4260-85d2-87d02655e15e",
     "workflowId": "jfZ06gcNZ5ooTfMM",
     "nodes": [
       {
@@ -1149,7 +1149,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1278,7 +1278,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1492,7 +1492,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1571,7 +1571,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
