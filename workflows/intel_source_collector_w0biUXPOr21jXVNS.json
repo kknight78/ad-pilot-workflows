@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-26T23:34:55.943Z",
+  "updatedAt": "2026-04-02T21:31:06.310Z",
   "createdAt": "2026-01-26T23:34:55.943Z",
   "id": "w0biUXPOr21jXVNS",
   "name": "Intel Source Collector",
@@ -59,7 +59,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -385,7 +385,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "34261af0-69a1-4591-bb83-a774b720832d",
+  "versionId": "89666b0f-c9c4-4fb3-9440-6aca9182aaad",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
