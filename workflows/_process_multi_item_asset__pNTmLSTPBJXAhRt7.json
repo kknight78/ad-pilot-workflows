@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-14T13:20:25.634Z",
+  "updatedAt": "2026-04-02T21:31:00.355Z",
   "createdAt": "2026-01-26T23:34:41.120Z",
   "id": "pNTmLSTPBJXAhRt7",
   "name": "[Process Multi-Item Asset]",
@@ -404,7 +404,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -733,8 +733,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "3fa2ba56-6324-4835-b54b-25d59f6d4697",
-  "activeVersionId": "3fa2ba56-6324-4835-b54b-25d59f6d4697",
+  "versionId": "d3fc6349-98a8-4441-bd8d-a68f9ad13476",
+  "activeVersionId": "d3fc6349-98a8-4441-bd8d-a68f9ad13476",
   "triggerCount": 1,
   "shared": [
     {
@@ -746,9 +746,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-14T13:20:25.639Z",
-    "createdAt": "2026-02-14T13:20:25.639Z",
-    "versionId": "3fa2ba56-6324-4835-b54b-25d59f6d4697",
+    "updatedAt": "2026-04-02T21:31:00.369Z",
+    "createdAt": "2026-04-02T21:31:00.369Z",
+    "versionId": "d3fc6349-98a8-4441-bd8d-a68f9ad13476",
     "workflowId": "pNTmLSTPBJXAhRt7",
     "nodes": [
       {
@@ -1149,7 +1149,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
