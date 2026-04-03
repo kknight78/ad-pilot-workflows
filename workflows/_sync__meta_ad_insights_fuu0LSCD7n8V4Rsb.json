@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T12:37:13.440Z",
+  "updatedAt": "2026-04-02T21:30:52.893Z",
   "createdAt": "2026-01-28T11:18:31.304Z",
   "id": "fuu0LSCD7n8V4Rsb",
   "name": "[SYNC] Meta Ad Insights",
@@ -134,7 +134,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -263,7 +263,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -477,7 +477,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -556,7 +556,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -1001,8 +1001,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "09a17093-fa42-4d5b-85a8-20d6b51ed8a9",
-  "activeVersionId": "09a17093-fa42-4d5b-85a8-20d6b51ed8a9",
+  "versionId": "eada0400-189e-4ac2-b7f0-2c57685c7907",
+  "activeVersionId": "eada0400-189e-4ac2-b7f0-2c57685c7907",
   "triggerCount": 2,
   "shared": [
     {
@@ -1014,9 +1014,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-21T12:37:13.443Z",
-    "createdAt": "2026-02-21T12:37:13.443Z",
-    "versionId": "09a17093-fa42-4d5b-85a8-20d6b51ed8a9",
+    "updatedAt": "2026-04-02T21:30:52.898Z",
+    "createdAt": "2026-04-02T21:30:52.898Z",
+    "versionId": "eada0400-189e-4ac2-b7f0-2c57685c7907",
     "workflowId": "fuu0LSCD7n8V4Rsb",
     "nodes": [
       {
@@ -1147,7 +1147,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1276,7 +1276,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1490,7 +1490,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1569,7 +1569,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
