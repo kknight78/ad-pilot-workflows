@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T14:34:31.044Z",
+  "updatedAt": "2026-04-02T20:35:58.426Z",
   "createdAt": "2026-02-12T17:45:38.817Z",
   "id": "euvpckPFrlvz4RGg",
   "name": "[AGENT] Idea Ping Reminder",
@@ -74,7 +74,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -260,8 +260,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "6444579e-12c5-4261-bf91-be6b21825793",
-  "activeVersionId": "6444579e-12c5-4261-bf91-be6b21825793",
+  "versionId": "fb93164e-860e-4344-8ce4-4611fb110689",
+  "activeVersionId": "fb93164e-860e-4344-8ce4-4611fb110689",
   "triggerCount": 1,
   "shared": [
     {
@@ -273,9 +273,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-17T14:34:31.051Z",
-    "createdAt": "2026-02-17T14:34:31.051Z",
-    "versionId": "6444579e-12c5-4261-bf91-be6b21825793",
+    "updatedAt": "2026-04-02T20:35:58.429Z",
+    "createdAt": "2026-04-02T20:35:58.429Z",
+    "versionId": "fb93164e-860e-4344-8ce4-4611fb110689",
     "workflowId": "euvpckPFrlvz4RGg",
     "nodes": [
       {
@@ -346,7 +346,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
