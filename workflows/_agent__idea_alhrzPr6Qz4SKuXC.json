@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-24T14:56:28.087Z",
+  "updatedAt": "2026-04-02T21:30:49.913Z",
   "createdAt": "2026-02-17T14:37:38.076Z",
   "id": "alhrzPr6Qz4SKuXC",
   "name": "[AGENT] Idea",
@@ -14,7 +14,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        300
+        304
       ]
     },
     {
@@ -22,12 +22,11 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 13,
-              "triggerAtMinute": 0,
               "field": "weeks",
               "triggerAtDay": [
                 1
-              ]
+              ],
+              "triggerAtHour": 7
             }
           ]
         }
@@ -38,14 +37,13 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        540
+        544
       ]
     },
     {
       "parameters": {
-        "path": "idea-agent",
         "httpMethod": "POST",
-        "responseMode": "onReceived",
+        "path": "idea-agent",
         "options": {}
       },
       "id": "webhook-trigger",
@@ -54,7 +52,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        780
+        784
       ],
       "webhookId": "idea-agent"
     },
@@ -69,8 +67,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        300,
-        540
+        304,
+        544
       ],
       "credentials": {
         "postgres": {
@@ -88,25 +86,23 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        520,
-        540
+        528,
+        544
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "WITH\nbrain AS (\n  SELECT bi.insights\n  FROM brain_insights bi\n  JOIN clients c ON c.slug = bi.client_id\n  WHERE c.id = '{{ $json.client_id }}'\n  ORDER BY bi.week_start DESC LIMIT 1\n),\nrecent_plans AS (\n  SELECT theme_name, theme_emoji, theme_direction, week_start\n  FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n  ORDER BY week_start DESC LIMIT 6\n),\nexisting_plan AS (\n  SELECT id FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n    AND week_start = '{{ $json.week_start }}'::date\n  LIMIT 1\n),\ninventory_summary AS (\n  SELECT\n    COUNT(*) AS total_count,\n    COUNT(*) FILTER (WHERE first_seen_at <= NOW() - INTERVAL '45 days') AS aged_count,\n    COUNT(*) FILTER (WHERE first_seen_at >= NOW() - INTERVAL '7 days') AS new_arrivals,\n    MIN(price) AS min_price,\n    MAX(price) AS max_price,\n    ROUND(AVG(price)::numeric, 0) AS avg_price\n  FROM inventory_items\n  WHERE client_id = '{{ $json.client_id }}' AND status = 'active'\n),\napprovers AS (\n  SELECT p.id AS person_id, p.email, p.first_name, p.notification_preference\n  FROM client_persons cp\n  JOIN persons p ON cp.person_id = p.id\n  WHERE cp.client_id = '{{ $json.client_id }}'\n    AND cp.can_approve_plans = true\n    AND cp.is_active = true\n)\nSELECT\n  (SELECT json_agg(row_to_json(brain)) FROM brain) AS brain,\n  (SELECT json_agg(row_to_json(recent_plans)) FROM recent_plans) AS recent_plans,\n  (SELECT row_to_json(inventory_summary) FROM inventory_summary) AS inventory_summary,\n  (SELECT json_agg(row_to_json(approvers)) FROM approvers) AS approvers,\n  (SELECT id FROM existing_plan) AS existing_plan_id",
-        "options": {
-          "alwaysOutputData": true
-        }
+        "options": {}
       },
       "id": "run-idea-queries",
       "name": "Run Idea Queries",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        740,
-        540
+        752,
+        544
       ],
       "credentials": {
         "postgres": {
@@ -125,7 +121,7 @@
       "typeVersion": 2,
       "position": [
         960,
-        540
+        544
       ]
     },
     {
@@ -134,7 +130,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose",
+            "version": 2
           },
           "conditions": [
             {
@@ -157,8 +154,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1180,
-        540
+        1184,
+        544
       ]
     },
     {
@@ -170,8 +167,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        440
+        1408,
+        448
       ]
     },
     {
@@ -183,8 +180,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1620,
-        440
+        1632,
+        448
       ]
     },
     {
@@ -204,14 +201,14 @@
         },
         "sendBody": true,
         "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._claudeBody) }}",
         "options": {
           "response": {
             "response": {
               "neverError": true
             }
           }
-        },
-        "jsonBody": "={{ JSON.stringify($json._claudeBody) }}"
+        }
       },
       "id": "call-claude",
       "name": "Call Claude",
@@ -219,7 +216,7 @@
       "typeVersion": 4.2,
       "position": [
         1840,
-        440
+        448
       ],
       "credentials": {
         "anthropicApi": {
@@ -237,8 +234,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2060,
-        440
+        2064,
+        448
       ]
     },
     {
@@ -247,7 +244,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -270,8 +267,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2280,
-        440
+        2288,
+        448
       ]
     },
     {
@@ -285,8 +282,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2500,
-        340
+        2512,
+        352
       ],
       "credentials": {
         "postgres": {
@@ -305,7 +302,7 @@
       "typeVersion": 2,
       "position": [
         2720,
-        340
+        352
       ]
     },
     {
@@ -319,8 +316,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2940,
-        340
+        2944,
+        352
       ],
       "credentials": {
         "postgres": {
@@ -338,8 +335,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3160,
-        340
+        3168,
+        352
       ]
     },
     {
@@ -356,8 +353,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        3380,
-        340
+        3392,
+        352
       ]
     },
     {
@@ -370,7 +367,7 @@
       "typeVersion": 2,
       "position": [
         3600,
-        340
+        352
       ]
     },
     {
@@ -381,22 +378,22 @@
         "nodeCredentialType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
         "options": {
           "response": {
             "response": {
               "neverError": true
             }
           }
-        },
-        "jsonBody": "={{ JSON.stringify($json._emailBody) }}"
+        }
       },
       "id": "email-kelly-admin",
       "name": "Email Kelly (Admin)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3820,
-        340
+        3824,
+        352
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -422,7 +419,6 @@
         "specifyBody": "string",
         "body": "={{ JSON.stringify({ plan_id: $('Create Idea Ping').first().json.plan_id }) }}",
         "options": {
-          "neverError": true,
           "timeout": 10000
         }
       },
@@ -431,8 +427,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4040,
-        340
+        4048,
+        352
       ]
     },
     {
@@ -444,8 +440,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2500,
-        600
+        2512,
+        608
       ]
     },
     {
@@ -456,14 +452,14 @@
         "nodeCredentialType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
         "options": {
           "response": {
             "response": {
               "neverError": true
             }
           }
-        },
-        "jsonBody": "={{ JSON.stringify($json._emailBody) }}"
+        }
       },
       "id": "error-email",
       "name": "Error Email",
@@ -471,7 +467,7 @@
       "typeVersion": 4.2,
       "position": [
         2720,
-        600
+        608
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -489,8 +485,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        700
+        1408,
+        704
       ]
     },
     {
@@ -501,22 +497,22 @@
         "nodeCredentialType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
         "options": {
           "response": {
             "response": {
               "neverError": true
             }
           }
-        },
-        "jsonBody": "={{ JSON.stringify($json._emailBody) }}"
+        }
       },
       "id": "send-skip-email",
       "name": "Send Skip Email",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1620,
-        700
+        1632,
+        704
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -795,9 +791,9 @@
     }
   },
   "meta": null,
-  "pinData": null,
-  "versionId": "821e038f-ff71-4b2e-b522-438ff555a94e",
-  "activeVersionId": "821e038f-ff71-4b2e-b522-438ff555a94e",
+  "pinData": {},
+  "versionId": "c88b8905-52dd-4e6c-b866-49e8f93927cf",
+  "activeVersionId": "c88b8905-52dd-4e6c-b866-49e8f93927cf",
   "triggerCount": 2,
   "shared": [
     {
@@ -809,9 +805,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-03-24T14:56:28.099Z",
-    "createdAt": "2026-03-24T14:56:28.099Z",
-    "versionId": "821e038f-ff71-4b2e-b522-438ff555a94e",
+    "updatedAt": "2026-04-02T21:30:49.917Z",
+    "createdAt": "2026-04-02T21:30:49.917Z",
+    "versionId": "c88b8905-52dd-4e6c-b866-49e8f93927cf",
     "workflowId": "alhrzPr6Qz4SKuXC",
     "nodes": [
       {
@@ -822,7 +818,7 @@
         "typeVersion": 1,
         "position": [
           0,
-          300
+          304
         ]
       },
       {
@@ -830,12 +826,11 @@
           "rule": {
             "interval": [
               {
-                "triggerAtHour": 13,
-                "triggerAtMinute": 0,
                 "field": "weeks",
                 "triggerAtDay": [
                   1
-                ]
+                ],
+                "triggerAtHour": 7
               }
             ]
           }
@@ -846,14 +841,13 @@
         "typeVersion": 1.2,
         "position": [
           0,
-          540
+          544
         ]
       },
       {
         "parameters": {
-          "path": "idea-agent",
           "httpMethod": "POST",
-          "responseMode": "onReceived",
+          "path": "idea-agent",
           "options": {}
         },
         "id": "webhook-trigger",
@@ -862,7 +856,7 @@
         "typeVersion": 2,
         "position": [
           0,
-          780
+          784
         ],
         "webhookId": "idea-agent"
       },
@@ -877,8 +871,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          300,
-          540
+          304,
+          544
         ],
         "credentials": {
           "postgres": {
@@ -896,25 +890,23 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          520,
-          540
+          528,
+          544
         ]
       },
       {
         "parameters": {
           "operation": "executeQuery",
           "query": "WITH\nbrain AS (\n  SELECT bi.insights\n  FROM brain_insights bi\n  JOIN clients c ON c.slug = bi.client_id\n  WHERE c.id = '{{ $json.client_id }}'\n  ORDER BY bi.week_start DESC LIMIT 1\n),\nrecent_plans AS (\n  SELECT theme_name, theme_emoji, theme_direction, week_start\n  FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n  ORDER BY week_start DESC LIMIT 6\n),\nexisting_plan AS (\n  SELECT id FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n    AND week_start = '{{ $json.week_start }}'::date\n  LIMIT 1\n),\ninventory_summary AS (\n  SELECT\n    COUNT(*) AS total_count,\n    COUNT(*) FILTER (WHERE first_seen_at <= NOW() - INTERVAL '45 days') AS aged_count,\n    COUNT(*) FILTER (WHERE first_seen_at >= NOW() - INTERVAL '7 days') AS new_arrivals,\n    MIN(price) AS min_price,\n    MAX(price) AS max_price,\n    ROUND(AVG(price)::numeric, 0) AS avg_price\n  FROM inventory_items\n  WHERE client_id = '{{ $json.client_id }}' AND status = 'active'\n),\napprovers AS (\n  SELECT p.id AS person_id, p.email, p.first_name, p.notification_preference\n  FROM client_persons cp\n  JOIN persons p ON cp.person_id = p.id\n  WHERE cp.client_id = '{{ $json.client_id }}'\n    AND cp.can_approve_plans = true\n    AND cp.is_active = true\n)\nSELECT\n  (SELECT json_agg(row_to_json(brain)) FROM brain) AS brain,\n  (SELECT json_agg(row_to_json(recent_plans)) FROM recent_plans) AS recent_plans,\n  (SELECT row_to_json(inventory_summary) FROM inventory_summary) AS inventory_summary,\n  (SELECT json_agg(row_to_json(approvers)) FROM approvers) AS approvers,\n  (SELECT id FROM existing_plan) AS existing_plan_id",
-          "options": {
-            "alwaysOutputData": true
-          }
+          "options": {}
         },
         "id": "run-idea-queries",
         "name": "Run Idea Queries",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          740,
-          540
+          752,
+          544
         ],
         "credentials": {
           "postgres": {
@@ -933,7 +925,7 @@
         "typeVersion": 2,
         "position": [
           960,
-          540
+          544
         ]
       },
       {
@@ -942,7 +934,8 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose",
+              "version": 2
             },
             "conditions": [
               {
@@ -965,8 +958,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          1180,
-          540
+          1184,
+          544
         ]
       },
       {
@@ -978,8 +971,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1400,
-          440
+          1408,
+          448
         ]
       },
       {
@@ -991,8 +984,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1620,
-          440
+          1632,
+          448
         ]
       },
       {
@@ -1012,14 +1005,14 @@
           },
           "sendBody": true,
           "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._claudeBody) }}",
           "options": {
             "response": {
               "response": {
                 "neverError": true
               }
             }
-          },
-          "jsonBody": "={{ JSON.stringify($json._claudeBody) }}"
+          }
         },
         "id": "call-claude",
         "name": "Call Claude",
@@ -1027,7 +1020,7 @@
         "typeVersion": 4.2,
         "position": [
           1840,
-          440
+          448
         ],
         "credentials": {
           "anthropicApi": {
@@ -1045,8 +1038,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2060,
-          440
+          2064,
+          448
         ]
       },
       {
@@ -1055,7 +1048,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
@@ -1078,8 +1071,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
         "position": [
-          2280,
-          440
+          2288,
+          448
         ]
       },
       {
@@ -1093,8 +1086,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2500,
-          340
+          2512,
+          352
         ],
         "credentials": {
           "postgres": {
@@ -1113,7 +1106,7 @@
         "typeVersion": 2,
         "position": [
           2720,
-          340
+          352
         ]
       },
       {
@@ -1127,8 +1120,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2940,
-          340
+          2944,
+          352
         ],
         "credentials": {
           "postgres": {
@@ -1146,8 +1139,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3160,
-          340
+          3168,
+          352
         ]
       },
       {
@@ -1164,8 +1157,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          3380,
-          340
+          3392,
+          352
         ]
       },
       {
@@ -1178,7 +1171,7 @@
         "typeVersion": 2,
         "position": [
           3600,
-          340
+          352
         ]
       },
       {
@@ -1189,22 +1182,22 @@
           "nodeCredentialType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
           "options": {
             "response": {
               "response": {
                 "neverError": true
               }
             }
-          },
-          "jsonBody": "={{ JSON.stringify($json._emailBody) }}"
+          }
         },
         "id": "email-kelly-admin",
         "name": "Email Kelly (Admin)",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          3820,
-          340
+          3824,
+          352
         ],
         "credentials": {
           "httpBearerAuth": {
@@ -1230,7 +1223,6 @@
           "specifyBody": "string",
           "body": "={{ JSON.stringify({ plan_id: $('Create Idea Ping').first().json.plan_id }) }}",
           "options": {
-            "neverError": true,
             "timeout": 10000
           }
         },
@@ -1239,8 +1231,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          4040,
-          340
+          4048,
+          352
         ]
       },
       {
@@ -1252,8 +1244,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2500,
-          600
+          2512,
+          608
         ]
       },
       {
@@ -1264,14 +1256,14 @@
           "nodeCredentialType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
           "options": {
             "response": {
               "response": {
                 "neverError": true
               }
             }
-          },
-          "jsonBody": "={{ JSON.stringify($json._emailBody) }}"
+          }
         },
         "id": "error-email",
         "name": "Error Email",
@@ -1279,7 +1271,7 @@
         "typeVersion": 4.2,
         "position": [
           2720,
-          600
+          608
         ],
         "credentials": {
           "httpBearerAuth": {
@@ -1297,8 +1289,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1400,
-          700
+          1408,
+          704
         ]
       },
       {
@@ -1309,22 +1301,22 @@
           "nodeCredentialType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
           "options": {
             "response": {
               "response": {
                 "neverError": true
               }
             }
-          },
-          "jsonBody": "={{ JSON.stringify($json._emailBody) }}"
+          }
         },
         "id": "send-skip-email",
         "name": "Send Skip Email",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1620,
-          700
+          1632,
+          704
         ],
         "credentials": {
           "httpBearerAuth": {
