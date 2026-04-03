@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:14:51.211Z",
+  "updatedAt": "2026-04-02T21:30:54.341Z",
   "createdAt": "2026-01-26T23:34:47.158Z",
   "id": "HTZEFTRmmJEQTbbH",
   "name": "COPY [02] Generate Script copy",
@@ -248,7 +248,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -1569,7 +1569,7 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "59f4f11b-c9f3-4cde-bd2d-b81ef49d9c11",
+  "versionId": "95411715-6c16-4628-b1fb-1a0395be864e",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
