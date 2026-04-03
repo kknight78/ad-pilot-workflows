@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T23:56:13.278Z",
+  "updatedAt": "2026-04-02T21:31:04.375Z",
   "createdAt": "2026-02-17T04:14:48.194Z",
   "id": "Tng3ki5oXDnYbb0j",
   "name": "[AGENT] Prep",
@@ -222,7 +222,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -269,7 +269,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -927,8 +927,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "d315821b-dcf6-41b3-8174-282c6aa9bc7f",
-  "activeVersionId": "d315821b-dcf6-41b3-8174-282c6aa9bc7f",
+  "versionId": "1b624e35-9796-497d-be08-aff88c91e38d",
+  "activeVersionId": "1b624e35-9796-497d-be08-aff88c91e38d",
   "triggerCount": 1,
   "shared": [
     {
@@ -940,9 +940,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-21T23:56:13.283Z",
-    "createdAt": "2026-02-21T23:56:13.283Z",
-    "versionId": "d315821b-dcf6-41b3-8174-282c6aa9bc7f",
+    "updatedAt": "2026-04-02T21:31:04.379Z",
+    "createdAt": "2026-04-02T21:31:04.379Z",
+    "versionId": "1b624e35-9796-497d-be08-aff88c91e38d",
     "workflowId": "Tng3ki5oXDnYbb0j",
     "nodes": [
       {
@@ -1161,7 +1161,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1208,7 +1208,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
