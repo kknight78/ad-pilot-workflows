@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-24T14:39:25.511Z",
+  "updatedAt": "2026-04-02T21:30:53.570Z",
   "createdAt": "2026-01-26T23:34:56.704Z",
   "id": "hqfMwxKgqE3DD8VZ",
   "name": "[Service] Send User Notification",
@@ -38,7 +38,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -130,7 +130,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -189,7 +189,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -463,8 +463,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "e23c9186-f668-4e4a-96b9-8c9093f2ec7f",
-  "activeVersionId": "e23c9186-f668-4e4a-96b9-8c9093f2ec7f",
+  "versionId": "5f0b001f-bd7c-4b91-9ba3-131c968faee4",
+  "activeVersionId": "5f0b001f-bd7c-4b91-9ba3-131c968faee4",
   "triggerCount": 0,
   "shared": [
     {
@@ -476,9 +476,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-03-24T14:39:25.514Z",
-    "createdAt": "2026-03-24T14:39:25.514Z",
-    "versionId": "e23c9186-f668-4e4a-96b9-8c9093f2ec7f",
+    "updatedAt": "2026-04-02T21:30:53.575Z",
+    "createdAt": "2026-04-02T21:30:53.575Z",
+    "versionId": "5f0b001f-bd7c-4b91-9ba3-131c968faee4",
     "workflowId": "hqfMwxKgqE3DD8VZ",
     "nodes": [
       {
@@ -513,7 +513,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
@@ -605,7 +605,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
@@ -664,7 +664,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
