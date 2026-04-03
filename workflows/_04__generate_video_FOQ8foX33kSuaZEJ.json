@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:46.352Z",
+  "updatedAt": "2026-04-02T21:31:45.107Z",
   "createdAt": "2025-12-13T13:57:28.375Z",
   "id": "FOQ8foX33kSuaZEJ",
   "name": "[04] Generate Video",
@@ -250,7 +250,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -377,7 +377,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 3
           },
           "conditions": [
@@ -792,8 +792,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "65e760ed-f7b8-40a6-a992-39ec375f736c",
-  "activeVersionId": "65e760ed-f7b8-40a6-a992-39ec375f736c",
+  "versionId": "e973a518-24ae-42b2-bc5f-9d27744f7ceb",
+  "activeVersionId": "e973a518-24ae-42b2-bc5f-9d27744f7ceb",
   "triggerCount": 0,
   "shared": [
     {
@@ -805,9 +805,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:23:46.356Z",
-    "createdAt": "2026-02-06T23:23:46.356Z",
-    "versionId": "65e760ed-f7b8-40a6-a992-39ec375f736c",
+    "updatedAt": "2026-04-02T21:31:45.149Z",
+    "createdAt": "2026-04-02T21:31:45.149Z",
+    "versionId": "e973a518-24ae-42b2-bc5f-9d27744f7ceb",
     "workflowId": "FOQ8foX33kSuaZEJ",
     "nodes": [
       {
@@ -1054,7 +1054,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -1181,7 +1181,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 3
             },
             "conditions": [
