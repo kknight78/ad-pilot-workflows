@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-15T00:20:04.485Z",
+  "updatedAt": "2026-04-02T21:31:50.465Z",
   "createdAt": "2026-01-15T00:20:04.485Z",
   "id": "pAizNLUoZZ83v1Lx",
   "name": "Intel Source Collector",
@@ -59,7 +59,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -385,8 +385,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "40945160-e275-42cd-bdee-af80159e41b2",
-  "activeVersionId": "40945160-e275-42cd-bdee-af80159e41b2",
+  "versionId": "043302f3-7ebc-4b31-b6cf-d2fdad1781c9",
+  "activeVersionId": "043302f3-7ebc-4b31-b6cf-d2fdad1781c9",
   "triggerCount": 0,
   "shared": [
     {
@@ -398,9 +398,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-15T00:20:04.514Z",
-    "createdAt": "2026-01-15T00:20:04.514Z",
-    "versionId": "40945160-e275-42cd-bdee-af80159e41b2",
+    "updatedAt": "2026-04-02T21:31:50.506Z",
+    "createdAt": "2026-04-02T21:31:50.506Z",
+    "versionId": "043302f3-7ebc-4b31-b6cf-d2fdad1781c9",
     "workflowId": "pAizNLUoZZ83v1Lx",
     "nodes": [
       {
@@ -456,7 +456,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
