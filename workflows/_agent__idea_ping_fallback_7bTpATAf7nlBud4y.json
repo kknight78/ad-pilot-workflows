@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T14:34:16.884Z",
+  "updatedAt": "2026-04-02T20:28:06.297Z",
   "createdAt": "2026-02-12T17:45:39.373Z",
   "id": "7bTpATAf7nlBud4y",
   "name": "[AGENT] Idea Ping Fallback",
@@ -74,7 +74,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -275,8 +275,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "9ae85409-679c-41b7-b1fe-1dfacaec8ff4",
-  "activeVersionId": "9ae85409-679c-41b7-b1fe-1dfacaec8ff4",
+  "versionId": "f67d8ded-4777-4559-8e9f-f409e570c12e",
+  "activeVersionId": "f67d8ded-4777-4559-8e9f-f409e570c12e",
   "triggerCount": 1,
   "shared": [
     {
@@ -288,9 +288,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-17T14:34:16.897Z",
-    "createdAt": "2026-02-17T14:34:16.897Z",
-    "versionId": "9ae85409-679c-41b7-b1fe-1dfacaec8ff4",
+    "updatedAt": "2026-04-02T20:28:06.301Z",
+    "createdAt": "2026-04-02T20:28:06.301Z",
+    "versionId": "f67d8ded-4777-4559-8e9f-f409e570c12e",
     "workflowId": "7bTpATAf7nlBud4y",
     "nodes": [
       {
@@ -361,7 +361,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
