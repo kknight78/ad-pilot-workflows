@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-16T16:23:07.726Z",
+  "updatedAt": "2026-04-02T21:30:51.277Z",
   "createdAt": "2026-02-12T14:28:30.580Z",
   "id": "du08waHHBEbIyrgC",
   "name": "[AGENT] Brain Analysis",
@@ -194,7 +194,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -639,8 +639,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "fb4fce8e-2f0a-4425-a9e3-4f56de75ae3f",
-  "activeVersionId": "fb4fce8e-2f0a-4425-a9e3-4f56de75ae3f",
+  "versionId": "5992b2a1-b4a7-4232-b4ae-11b447ce526c",
+  "activeVersionId": "5992b2a1-b4a7-4232-b4ae-11b447ce526c",
   "triggerCount": 2,
   "shared": [
     {
@@ -652,9 +652,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-03-16T16:23:07.734Z",
-    "createdAt": "2026-03-16T16:23:07.734Z",
-    "versionId": "fb4fce8e-2f0a-4425-a9e3-4f56de75ae3f",
+    "updatedAt": "2026-04-02T21:30:51.281Z",
+    "createdAt": "2026-04-02T21:30:51.281Z",
+    "versionId": "5992b2a1-b4a7-4232-b4ae-11b447ce526c",
     "workflowId": "du08waHHBEbIyrgC",
     "nodes": [
       {
@@ -845,7 +845,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
