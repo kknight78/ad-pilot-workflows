@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-26T23:46:24.815Z",
+  "updatedAt": "2026-04-02T21:30:47.732Z",
   "createdAt": "2026-02-12T18:24:06.924Z",
   "id": "0bgi8ne2AOmS8h6f",
   "name": "[AGENT] Planner",
@@ -84,7 +84,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -195,7 +195,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -450,7 +450,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -702,8 +702,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "d3d5098e-c960-44b3-9aba-d8419327e7f4",
-  "activeVersionId": "d3d5098e-c960-44b3-9aba-d8419327e7f4",
+  "versionId": "5ea19173-5dba-4e40-9204-798924be11fe",
+  "activeVersionId": "5ea19173-5dba-4e40-9204-798924be11fe",
   "triggerCount": 1,
   "shared": [
     {
@@ -715,9 +715,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-03-26T23:46:24.822Z",
-    "createdAt": "2026-03-26T23:46:24.822Z",
-    "versionId": "d3d5098e-c960-44b3-9aba-d8419327e7f4",
+    "updatedAt": "2026-04-02T21:30:47.740Z",
+    "createdAt": "2026-04-02T21:30:47.740Z",
+    "versionId": "5ea19173-5dba-4e40-9204-798924be11fe",
     "workflowId": "0bgi8ne2AOmS8h6f",
     "nodes": [
       {
@@ -798,7 +798,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -909,7 +909,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1164,7 +1164,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
