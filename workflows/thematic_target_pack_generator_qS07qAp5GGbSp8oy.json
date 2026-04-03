@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T15:28:51.058Z",
+  "updatedAt": "2026-04-02T21:31:01.319Z",
   "createdAt": "2026-01-26T23:34:57.749Z",
   "id": "qS07qAp5GGbSp8oy",
   "name": "Thematic Target Pack Generator",
@@ -132,7 +132,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -625,8 +625,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "52f11287-ad0c-4dac-a3ae-d30cf92b2d3d",
-  "activeVersionId": "52f11287-ad0c-4dac-a3ae-d30cf92b2d3d",
+  "versionId": "974c6a69-95ad-4fdf-a5d7-6f0f112cfad7",
+  "activeVersionId": "974c6a69-95ad-4fdf-a5d7-6f0f112cfad7",
   "triggerCount": 1,
   "shared": [
     {
@@ -638,9 +638,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-08T15:28:51.062Z",
-    "createdAt": "2026-02-08T15:28:51.062Z",
-    "versionId": "52f11287-ad0c-4dac-a3ae-d30cf92b2d3d",
+    "updatedAt": "2026-04-02T21:31:01.326Z",
+    "createdAt": "2026-04-02T21:31:01.326Z",
+    "versionId": "974c6a69-95ad-4fdf-a5d7-6f0f112cfad7",
     "workflowId": "qS07qAp5GGbSp8oy",
     "nodes": [
       {
@@ -769,7 +769,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
