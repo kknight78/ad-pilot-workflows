@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-29T23:37:40.303Z",
+  "updatedAt": "2026-04-02T21:31:51.706Z",
   "createdAt": "2026-01-22T21:48:02.323Z",
   "id": "TmNkxHfIzdlZTz79",
   "name": "Weekly Intel Agent",
@@ -350,7 +350,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
@@ -760,7 +760,8 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
   "staticData": {
     "node:Sunday 8pm Trigger": {
@@ -769,8 +770,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "f6b015e2-b979-472f-80e1-d794a4c624b5",
-  "activeVersionId": "f6b015e2-b979-472f-80e1-d794a4c624b5",
+  "versionId": "ad878ff6-ecd7-49ff-b3fa-e350c86ad9da",
+  "activeVersionId": "ad878ff6-ecd7-49ff-b3fa-e350c86ad9da",
   "triggerCount": 2,
   "shared": [
     {
@@ -782,9 +783,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-29T23:37:44.739Z",
-    "createdAt": "2026-01-29T23:37:40.306Z",
-    "versionId": "f6b015e2-b979-472f-80e1-d794a4c624b5",
+    "updatedAt": "2026-04-02T21:31:51.751Z",
+    "createdAt": "2026-04-02T21:31:51.751Z",
+    "versionId": "ad878ff6-ecd7-49ff-b3fa-e350c86ad9da",
     "workflowId": "TmNkxHfIzdlZTz79",
     "nodes": [
       {
@@ -1131,7 +1132,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "conditions": [
               {
@@ -1540,9 +1541,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version f6b015e2",
-    "description": "",
-    "autosaved": true
+    "name": null,
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
