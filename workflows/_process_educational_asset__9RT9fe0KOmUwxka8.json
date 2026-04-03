@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-14T13:20:28.284Z",
+  "updatedAt": "2026-04-02T21:30:49.227Z",
   "createdAt": "2026-01-26T23:34:57.395Z",
   "id": "9RT9fe0KOmUwxka8",
   "name": "[Process Educational Asset]",
@@ -170,7 +170,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -338,8 +338,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "ea0b53c9-01a0-4fb2-a40c-e36903264e65",
-  "activeVersionId": "ea0b53c9-01a0-4fb2-a40c-e36903264e65",
+  "versionId": "ed6500f2-78fe-421d-b8f1-4a1916d9288f",
+  "activeVersionId": "ed6500f2-78fe-421d-b8f1-4a1916d9288f",
   "triggerCount": 1,
   "shared": [
     {
@@ -351,9 +351,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-14T13:20:28.288Z",
-    "createdAt": "2026-02-14T13:20:28.288Z",
-    "versionId": "ea0b53c9-01a0-4fb2-a40c-e36903264e65",
+    "updatedAt": "2026-04-02T21:30:49.231Z",
+    "createdAt": "2026-04-02T21:30:49.231Z",
+    "versionId": "ed6500f2-78fe-421d-b8f1-4a1916d9288f",
     "workflowId": "9RT9fe0KOmUwxka8",
     "nodes": [
       {
@@ -520,7 +520,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
