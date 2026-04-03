@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-13T13:21:52.273Z",
+  "updatedAt": "2026-04-02T21:30:50.637Z",
   "createdAt": "2026-01-26T23:34:47.996Z",
   "id": "bzUEnf4bejo7eneZ",
   "name": "Backup n8n Workflows to GitHub",
@@ -302,7 +302,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 2
           },
           "conditions": [
@@ -575,8 +575,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "ba31a550-8019-4b6e-b853-970f8d618a2f",
-  "activeVersionId": "ba31a550-8019-4b6e-b853-970f8d618a2f",
+  "versionId": "4d7a3bd8-c89e-4e10-8a0c-2e0c2f3c089c",
+  "activeVersionId": "4d7a3bd8-c89e-4e10-8a0c-2e0c2f3c089c",
   "triggerCount": 1,
   "shared": [
     {
@@ -588,9 +588,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-13T13:21:55.586Z",
-    "createdAt": "2026-02-13T13:21:52.275Z",
-    "versionId": "ba31a550-8019-4b6e-b853-970f8d618a2f",
+    "updatedAt": "2026-04-02T21:30:50.642Z",
+    "createdAt": "2026-04-02T21:30:50.642Z",
+    "versionId": "4d7a3bd8-c89e-4e10-8a0c-2e0c2f3c089c",
     "workflowId": "bzUEnf4bejo7eneZ",
     "nodes": [
       {
@@ -889,7 +889,7 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict",
+              "typeValidation": "loose",
               "version": 2
             },
             "conditions": [
@@ -1151,9 +1151,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version ba31a550",
-    "description": "",
-    "autosaved": true
+    "name": null,
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
