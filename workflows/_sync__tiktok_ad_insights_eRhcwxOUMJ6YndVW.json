@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-17T11:33:39.998Z",
+  "updatedAt": "2026-04-02T21:30:52.096Z",
   "createdAt": "2026-02-17T04:16:28.200Z",
   "id": "eRhcwxOUMJ6YndVW",
   "name": "[SYNC] TikTok Ad Insights",
@@ -151,7 +151,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -291,7 +291,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -445,7 +445,7 @@
             "version": 2,
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "combinator": "and",
           "conditions": [
@@ -855,8 +855,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "122d5cff-98de-4035-bcd5-0ace086122f8",
-  "activeVersionId": "122d5cff-98de-4035-bcd5-0ace086122f8",
+  "versionId": "83201d05-c81a-499f-93a2-591d5b550fae",
+  "activeVersionId": "83201d05-c81a-499f-93a2-591d5b550fae",
   "triggerCount": 1,
   "shared": [
     {
@@ -868,9 +868,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-17T11:33:40.000Z",
-    "createdAt": "2026-02-17T11:33:40.000Z",
-    "versionId": "122d5cff-98de-4035-bcd5-0ace086122f8",
+    "updatedAt": "2026-04-02T21:30:52.100Z",
+    "createdAt": "2026-04-02T21:30:52.100Z",
+    "versionId": "83201d05-c81a-499f-93a2-591d5b550fae",
     "workflowId": "eRhcwxOUMJ6YndVW",
     "nodes": [
       {
@@ -1018,7 +1018,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1158,7 +1158,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
@@ -1312,7 +1312,7 @@
               "version": 2,
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "loose"
             },
             "combinator": "and",
             "conditions": [
