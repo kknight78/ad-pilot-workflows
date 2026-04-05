@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:53.501Z",
+  "updatedAt": "2026-04-04T13:29:59.416Z",
   "createdAt": "2026-02-09T17:42:22.796Z",
   "id": "zTSILEd24saLGNrO",
   "name": "Meta Lead Webhook - CCC",
@@ -173,7 +173,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT id FROM leads WHERE meta_lead_id = '{{ $('Parse Webhook Payload').first().json.leadgen_id }}' LIMIT 1",
+        "query": "SELECT id FROM leads WHERE meta_lead_id = '{{ $('Parse Webhook Payload').first().json.leadgen_id }}' LIMIT 1",
         "options": {}
       },
       "id": "check-duplicate",
@@ -308,7 +308,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Known standard fields — include both underscore and space variants\nconst standardFields = new Set([\n  'full_name', 'name', 'first_name', 'last_name',\n  'first name', 'last name',\n  'email', 'email_address',\n  'phone_number', 'phone'\n]);\n\n// Try various field name formats Meta might use (underscore AND space)\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || getField('first name') || '';\nconst lastName = getField('last_name') || getField('last name') || '';\n\n// Prefer explicit first+last when available, then fall back to full_name\nconst contactName = (firstName && lastName)\n  ? firstName + ' ' + lastName\n  : (firstName || lastName)\n    ? (fullName || firstName || lastName)\n    : (fullName || 'Unknown');\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\n// Capture any extra form fields beyond standard contact fields\nconst extraFields = fieldData\n  .filter(f => !standardFields.has(f.name))\n  .map(f => ({\n    name: f.name,\n    value: f.values ? f.values[0] : null\n  }));\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    extra_fields: extraFields,\n    raw_payload: webhookData.raw_payload\n  }\n}];\n"
+        "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field?.values?.[0] ?? null;\n};\n\n// Known standard fields — include both underscore and space variants\nconst standardFields = new Set([\n  'full_name', 'name', 'first_name', 'last_name',\n  'first name', 'last name',\n  'email', 'email_address',\n  'phone_number', 'phone'\n]);\n\n// Try various field name formats Meta might use (underscore AND space)\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || getField('first name') || '';\nconst lastName = getField('last_name') || getField('last name') || '';\n\n// Prefer explicit first+last when available, then fall back to full_name\nconst contactName = (firstName && lastName)\n  ? firstName + ' ' + lastName\n  : (firstName || lastName)\n    ? (fullName || firstName || lastName)\n    : (fullName || 'Unknown');\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\n// Capture any extra form fields beyond standard contact fields\nconst extraFields = fieldData\n  .filter(f => !standardFields.has(f.name))\n  .map(f => ({\n    name: f.name,\n    value: f.values ? f.values[0] : null\n  }));\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    extra_fields: extraFields,\n    raw_payload: webhookData.raw_payload\n  }\n}];\n"
       },
       "id": "parse-contact",
       "name": "Parse Contact Info",
@@ -322,7 +322,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT iv.stock_number, iv.vin, iv.year, iv.make, iv.model, iv.trim, iv.mileage, iv.body_style, iv.drivetrain, ii.price, ii.url, ii.hero_image_url, ii.hero_cloudinary_url FROM inventory_vehicles iv JOIN inventory_items ii ON iv.item_id = ii.id WHERE iv.vin = '{{ $json.retailer_item_id }}' OR iv.stock_number = '{{ $json.retailer_item_id }}' LIMIT 1",
+        "query": "SELECT iv.stock_number, iv.vin, iv.year, iv.make, iv.model, iv.trim, iv.mileage, iv.body_style, iv.drivetrain, ii.price, ii.url, ii.hero_image_url, ii.hero_cloudinary_url FROM inventory_vehicles iv JOIN inventory_items ii ON iv.item_id = ii.id WHERE iv.vin = '{{ $json.retailer_item_id }}' OR iv.stock_number = '{{ $json.retailer_item_id }}' LIMIT 1",
         "options": {}
       },
       "id": "lookup-vehicle",
@@ -358,7 +358,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json.sql_insert }}",
+        "query": "{{ $json.sql_insert }}",
         "options": {}
       },
       "id": "insert-lead",
@@ -422,7 +422,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=INSERT INTO leads_failed (raw_payload, error_message) VALUES ('{{ JSON.stringify($json.raw_payload).replace(/'/g, \"''\") }}'::jsonb, '{{ ($json.error_message || '').replace(/'/g, \"''\") }}')",
+        "query": "INSERT INTO leads_failed (raw_payload, error_message) VALUES ('{{ JSON.stringify($json.raw_payload).replace(/'/g, \"''\") }}'::jsonb, '{{ ($json.error_message || '').replace(/'/g, \"''\") }}')",
         "options": {}
       },
       "id": "store-failed-lead",
@@ -821,8 +821,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "c560d7da-7b9a-41be-9be5-076894ac52e5",
-  "activeVersionId": "c560d7da-7b9a-41be-9be5-076894ac52e5",
+  "versionId": "774ab557-5d13-4806-8b1c-80c71efb8d3f",
+  "activeVersionId": "774ab557-5d13-4806-8b1c-80c71efb8d3f",
   "triggerCount": 2,
   "shared": [
     {
@@ -834,9 +834,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:31:53.542Z",
-    "createdAt": "2026-04-02T21:31:53.542Z",
-    "versionId": "c560d7da-7b9a-41be-9be5-076894ac52e5",
+    "updatedAt": "2026-04-04T13:29:50.169Z",
+    "createdAt": "2026-04-04T13:29:45.565Z",
+    "versionId": "774ab557-5d13-4806-8b1c-80c71efb8d3f",
     "workflowId": "zTSILEd24saLGNrO",
     "nodes": [
       {
@@ -1006,7 +1006,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=SELECT id FROM leads WHERE meta_lead_id = '{{ $('Parse Webhook Payload').first().json.leadgen_id }}' LIMIT 1",
+          "query": "SELECT id FROM leads WHERE meta_lead_id = '{{ $('Parse Webhook Payload').first().json.leadgen_id }}' LIMIT 1",
           "options": {}
         },
         "id": "check-duplicate",
@@ -1141,7 +1141,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field ? field.values[0] : null;\n};\n\n// Known standard fields — include both underscore and space variants\nconst standardFields = new Set([\n  'full_name', 'name', 'first_name', 'last_name',\n  'first name', 'last name',\n  'email', 'email_address',\n  'phone_number', 'phone'\n]);\n\n// Try various field name formats Meta might use (underscore AND space)\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || getField('first name') || '';\nconst lastName = getField('last_name') || getField('last name') || '';\n\n// Prefer explicit first+last when available, then fall back to full_name\nconst contactName = (firstName && lastName)\n  ? firstName + ' ' + lastName\n  : (firstName || lastName)\n    ? (fullName || firstName || lastName)\n    : (fullName || 'Unknown');\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\n// Capture any extra form fields beyond standard contact fields\nconst extraFields = fieldData\n  .filter(f => !standardFields.has(f.name))\n  .map(f => ({\n    name: f.name,\n    value: f.values ? f.values[0] : null\n  }));\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    extra_fields: extraFields,\n    raw_payload: webhookData.raw_payload\n  }\n}];\n"
+          "jsCode": "// Parse the Meta Lead API response and extract contact info\nconst metaLead = $input.first().json;\nconst webhookData = $('Parse Webhook Payload').first().json;\n\n// Extract fields from field_data array\nconst fieldData = metaLead.field_data || [];\nconst getField = (name) => {\n  const field = fieldData.find(f => f.name === name);\n  return field?.values?.[0] ?? null;\n};\n\n// Known standard fields — include both underscore and space variants\nconst standardFields = new Set([\n  'full_name', 'name', 'first_name', 'last_name',\n  'first name', 'last name',\n  'email', 'email_address',\n  'phone_number', 'phone'\n]);\n\n// Try various field name formats Meta might use (underscore AND space)\nconst fullName = getField('full_name') || getField('name') || '';\nconst firstName = getField('first_name') || getField('first name') || '';\nconst lastName = getField('last_name') || getField('last name') || '';\n\n// Prefer explicit first+last when available, then fall back to full_name\nconst contactName = (firstName && lastName)\n  ? firstName + ' ' + lastName\n  : (firstName || lastName)\n    ? (fullName || firstName || lastName)\n    : (fullName || 'Unknown');\n\nconst email = getField('email') || getField('email_address') || null;\nconst phone = getField('phone_number') || getField('phone') || null;\n\n// Format phone for display: (309) 555-1234\nlet phoneDisplay = phone;\nif (phone) {\n  const digits = phone.replace(/\\D/g, '');\n  if (digits.length === 11 && digits.startsWith('1')) {\n    const d = digits.slice(1);\n    phoneDisplay = `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;\n  } else if (digits.length === 10) {\n    phoneDisplay = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;\n  }\n}\n\n// Capture any extra form fields beyond standard contact fields\nconst extraFields = fieldData\n  .filter(f => !standardFields.has(f.name))\n  .map(f => ({\n    name: f.name,\n    value: f.values ? f.values[0] : null\n  }));\n\nreturn [{\n  json: {\n    meta_lead_id: metaLead.id || webhookData.leadgen_id,\n    meta_ad_id: metaLead.ad_id || webhookData.ad_id,\n    meta_form_id: metaLead.form_id || webhookData.form_id,\n    contact_name: contactName,\n    contact_email: email,\n    contact_phone: phone,\n    contact_phone_display: phoneDisplay,\n    retailer_item_id: metaLead.retailer_item_id || null,\n    lead_created_time: metaLead.created_time || null,\n    extra_fields: extraFields,\n    raw_payload: webhookData.raw_payload\n  }\n}];\n"
         },
         "id": "parse-contact",
         "name": "Parse Contact Info",
@@ -1155,7 +1155,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=SELECT iv.stock_number, iv.vin, iv.year, iv.make, iv.model, iv.trim, iv.mileage, iv.body_style, iv.drivetrain, ii.price, ii.url, ii.hero_image_url, ii.hero_cloudinary_url FROM inventory_vehicles iv JOIN inventory_items ii ON iv.item_id = ii.id WHERE iv.vin = '{{ $json.retailer_item_id }}' OR iv.stock_number = '{{ $json.retailer_item_id }}' LIMIT 1",
+          "query": "SELECT iv.stock_number, iv.vin, iv.year, iv.make, iv.model, iv.trim, iv.mileage, iv.body_style, iv.drivetrain, ii.price, ii.url, ii.hero_image_url, ii.hero_cloudinary_url FROM inventory_vehicles iv JOIN inventory_items ii ON iv.item_id = ii.id WHERE iv.vin = '{{ $json.retailer_item_id }}' OR iv.stock_number = '{{ $json.retailer_item_id }}' LIMIT 1",
           "options": {}
         },
         "id": "lookup-vehicle",
@@ -1191,7 +1191,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "={{ $json.sql_insert }}",
+          "query": "{{ $json.sql_insert }}",
           "options": {}
         },
         "id": "insert-lead",
@@ -1255,7 +1255,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=INSERT INTO leads_failed (raw_payload, error_message) VALUES ('{{ JSON.stringify($json.raw_payload).replace(/'/g, \"''\") }}'::jsonb, '{{ ($json.error_message || '').replace(/'/g, \"''\") }}')",
+          "query": "INSERT INTO leads_failed (raw_payload, error_message) VALUES ('{{ JSON.stringify($json.raw_payload).replace(/'/g, \"''\") }}'::jsonb, '{{ ($json.error_message || '').replace(/'/g, \"''\") }}')",
           "options": {}
         },
         "id": "store-failed-lead",
@@ -1647,9 +1647,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "name": "Version 774ab557",
+    "description": "",
+    "autosaved": true
   },
   "tags": []
 }
