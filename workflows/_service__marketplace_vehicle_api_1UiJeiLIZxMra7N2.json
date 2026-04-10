@@ -1,0 +1,241 @@
+{
+  "updatedAt": "2026-04-09T21:33:44.414Z",
+  "createdAt": "2026-04-09T20:15:15.575Z",
+  "id": "1UiJeiLIZxMra7N2",
+  "name": "[Service] Marketplace Vehicle API",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "marketplace-vehicle",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "marketplace-vehicle"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT v.stock_number AS vehicle_id, i.title, v.year, v.make, v.model, v.trim, v.vin, i.price::int, v.mileage, v.body_style, v.exterior_color, v.interior_color, v.transmission, v.drivetrain, v.fuel_type, v.condition, v.stock_number, i.description, i.hero_image_url, i.image_urls FROM inventory_items i JOIN inventory_vehicles v ON v.item_id = i.id WHERE v.stock_number = '{{ $json.query.id }}' AND i.status = 'active' LIMIT 1",
+        "options": {}
+      },
+      "id": "postgres-1",
+      "name": "Get Vehicle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-1",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Vehicle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Vehicle": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "81a812b2-c3e4-4301-881f-48a0e94a2128",
+  "activeVersionId": "81a812b2-c3e4-4301-881f-48a0e94a2128",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-09T20:15:15.575Z",
+      "createdAt": "2026-04-09T20:15:15.575Z",
+      "role": "workflow:owner",
+      "workflowId": "1UiJeiLIZxMra7N2",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-04-09T21:33:44.417Z",
+    "createdAt": "2026-04-09T21:33:44.417Z",
+    "versionId": "81a812b2-c3e4-4301-881f-48a0e94a2128",
+    "workflowId": "1UiJeiLIZxMra7N2",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "marketplace-vehicle",
+          "responseMode": "responseNode",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "webhook-1",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "marketplace-vehicle"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT v.stock_number AS vehicle_id, i.title, v.year, v.make, v.model, v.trim, v.vin, i.price::int, v.mileage, v.body_style, v.exterior_color, v.interior_color, v.transmission, v.drivetrain, v.fuel_type, v.condition, v.stock_number, i.description, i.hero_image_url, i.image_urls FROM inventory_items i JOIN inventory_vehicles v ON v.item_id = i.id WHERE v.stock_number = '{{ $json.query.id }}' AND i.status = 'active' LIMIT 1",
+          "options": {}
+        },
+        "id": "postgres-1",
+        "name": "Get Vehicle",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-1",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          680,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Get Vehicle",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Vehicle": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
