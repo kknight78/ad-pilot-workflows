@@ -1,0 +1,215 @@
+{
+  "updatedAt": "2026-04-09T21:47:15.429Z",
+  "createdAt": "2026-04-09T21:47:15.429Z",
+  "id": "ilfxFBb9euVRVmxH",
+  "name": "[Service] Marketplace Posted Webhook",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "marketplace-posted",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "marketplace-posted"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO marketplace_listings (vehicle_id, item_id, status, fb_listing_url, posted_at, expires_at, last_action, last_action_at, payload_snapshot) SELECT '{{ $json.body.vehicle_id }}', i.id, 'active', '{{ $json.body.fb_listing_url }}', '{{ $json.body.posted_at }}'::timestamptz, ('{{ $json.body.posted_at }}'::timestamptz + interval '30 days'), 'new', now(), '{}'::jsonb FROM inventory_items i JOIN inventory_vehicles v ON v.item_id = i.id WHERE v.stock_number = '{{ $json.body.vehicle_id }}' LIMIT 1 ON CONFLICT (vehicle_id) WHERE status = 'active' DO UPDATE SET fb_listing_url = EXCLUDED.fb_listing_url, posted_at = EXCLUDED.posted_at, expires_at = EXCLUDED.expires_at, last_action = 'renew', last_action_at = now(), updated_at = now() RETURNING *",
+        "options": {}
+      },
+      "id": "postgres-1",
+      "name": "Record Listing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, listing_id: $json.id, status: $json.status }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-1",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Record Listing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Listing": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "0b2e7ace-27f2-48cf-b886-e31d9410e894",
+  "activeVersionId": "0b2e7ace-27f2-48cf-b886-e31d9410e894",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-09T21:47:15.429Z",
+      "createdAt": "2026-04-09T21:47:15.429Z",
+      "role": "workflow:owner",
+      "workflowId": "ilfxFBb9euVRVmxH",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-04-09T21:47:15.593Z",
+    "createdAt": "2026-04-09T21:47:15.593Z",
+    "versionId": "0b2e7ace-27f2-48cf-b886-e31d9410e894",
+    "workflowId": "ilfxFBb9euVRVmxH",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "marketplace-posted",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook-1",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "marketplace-posted"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO marketplace_listings (vehicle_id, item_id, status, fb_listing_url, posted_at, expires_at, last_action, last_action_at, payload_snapshot) SELECT '{{ $json.body.vehicle_id }}', i.id, 'active', '{{ $json.body.fb_listing_url }}', '{{ $json.body.posted_at }}'::timestamptz, ('{{ $json.body.posted_at }}'::timestamptz + interval '30 days'), 'new', now(), '{}'::jsonb FROM inventory_items i JOIN inventory_vehicles v ON v.item_id = i.id WHERE v.stock_number = '{{ $json.body.vehicle_id }}' LIMIT 1 ON CONFLICT (vehicle_id) WHERE status = 'active' DO UPDATE SET fb_listing_url = EXCLUDED.fb_listing_url, posted_at = EXCLUDED.posted_at, expires_at = EXCLUDED.expires_at, last_action = 'renew', last_action_at = now(), updated_at = now() RETURNING *",
+          "options": {}
+        },
+        "id": "postgres-1",
+        "name": "Record Listing",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ success: true, listing_id: $json.id, status: $json.status }) }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-1",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          680,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Record Listing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Record Listing": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
