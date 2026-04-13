@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-10T14:17:09.969Z",
+  "updatedAt": "2026-04-12T13:00:22.105Z",
   "createdAt": "2026-04-09T22:46:47.191Z",
   "id": "y38A3aGPxaOdHdFm",
   "name": "[SCHEDULED] Marketplace Daily Check",
@@ -11,13 +11,13 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 8
+              "triggerAtHour": 6
             }
           ]
         }
       },
       "id": "schedule-1",
-      "name": "Daily 8am",
+      "name": "Daily 6am",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -144,17 +144,6 @@
     }
   ],
   "connections": {
-    "Daily 8am": {
-      "main": [
-        [
-          {
-            "node": "Check Inventory",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Check Inventory": {
       "main": [
         [
@@ -205,6 +194,17 @@
           }
         ]
       ]
+    },
+    "Daily 6am": {
+      "main": [
+        [
+          {
+            "node": "Check Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -215,12 +215,15 @@
   "staticData": {
     "node:Daily 8am": {
       "recurrenceRules": []
+    },
+    "node:Daily 6am": {
+      "recurrenceRules": []
     }
   },
   "meta": null,
   "pinData": null,
-  "versionId": "2ca34064-dd8b-4bf0-96f4-9dd773b7f1d4",
-  "activeVersionId": "2ca34064-dd8b-4bf0-96f4-9dd773b7f1d4",
+  "versionId": "ee40957a-133f-447f-9339-39f42b4c5281",
+  "activeVersionId": "ee40957a-133f-447f-9339-39f42b4c5281",
   "triggerCount": 2,
   "shared": [
     {
@@ -232,9 +235,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-10T14:17:10.045Z",
-    "createdAt": "2026-04-10T14:17:10.045Z",
-    "versionId": "2ca34064-dd8b-4bf0-96f4-9dd773b7f1d4",
+    "updatedAt": "2026-04-12T13:00:22.168Z",
+    "createdAt": "2026-04-12T13:00:22.168Z",
+    "versionId": "ee40957a-133f-447f-9339-39f42b4c5281",
     "workflowId": "y38A3aGPxaOdHdFm",
     "nodes": [
       {
@@ -242,13 +245,13 @@
           "rule": {
             "interval": [
               {
-                "triggerAtHour": 8
+                "triggerAtHour": 6
               }
             ]
           }
         },
         "id": "schedule-1",
-        "name": "Daily 8am",
+        "name": "Daily 6am",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.2,
         "position": [
@@ -375,17 +378,6 @@
       }
     ],
     "connections": {
-      "Daily 8am": {
-        "main": [
-          [
-            {
-              "node": "Check Inventory",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Check Inventory": {
         "main": [
           [
@@ -427,6 +419,17 @@
         ]
       },
       "Manual Test": {
+        "main": [
+          [
+            {
+              "node": "Check Inventory",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Daily 6am": {
         "main": [
           [
             {
