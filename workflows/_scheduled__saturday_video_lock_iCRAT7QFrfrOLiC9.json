@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T13:05:01.301Z",
+  "updatedAt": "2026-04-13T14:02:18.290Z",
   "createdAt": "2026-02-18T03:34:53.750Z",
   "id": "iCRAT7QFrfrOLiC9",
   "name": "[SCHEDULED] Saturday Video Lock",
@@ -92,7 +92,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE weekly_plans SET status = 'publish_ready', updated_at = NOW() WHERE id = '{{ $json.plan_id }}'::uuid AND status IN ('scripts_locked', 'rendering', 'videos_ready')",
+        "query": "UPDATE weekly_plans SET status = 'publish_ready', updated_at = NOW() WHERE id = '{{ $json.plan_id }}'::uuid AND status IN ('scripts_locked', 'rendering', 'videos_ready')\n  AND EXISTS (SELECT 1 FROM assets a WHERE a.plan_id = wp.id AND a.included = true AND a.rendered_outputs != '[]'::jsonb);",
         "options": {}
       },
       "id": "node-lock",
@@ -228,8 +228,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "6c956169-8e53-4abd-b320-c6e814120132",
-  "activeVersionId": "6c956169-8e53-4abd-b320-c6e814120132",
+  "versionId": "57568c29-4252-4b10-a5b9-99926b512d78",
+  "activeVersionId": "57568c29-4252-4b10-a5b9-99926b512d78",
   "triggerCount": 1,
   "shared": [
     {
@@ -241,9 +241,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-21T13:05:01.303Z",
-    "createdAt": "2026-02-21T13:05:01.303Z",
-    "versionId": "6c956169-8e53-4abd-b320-c6e814120132",
+    "updatedAt": "2026-04-13T14:02:18.294Z",
+    "createdAt": "2026-04-13T14:02:18.294Z",
+    "versionId": "57568c29-4252-4b10-a5b9-99926b512d78",
     "workflowId": "iCRAT7QFrfrOLiC9",
     "nodes": [
       {
@@ -332,7 +332,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "UPDATE weekly_plans SET status = 'publish_ready', updated_at = NOW() WHERE id = '{{ $json.plan_id }}'::uuid AND status IN ('scripts_locked', 'rendering', 'videos_ready')",
+          "query": "UPDATE weekly_plans SET status = 'publish_ready', updated_at = NOW() WHERE id = '{{ $json.plan_id }}'::uuid AND status IN ('scripts_locked', 'rendering', 'videos_ready')\n  AND EXISTS (SELECT 1 FROM assets a WHERE a.plan_id = wp.id AND a.included = true AND a.rendered_outputs != '[]'::jsonb);",
           "options": {}
         },
         "id": "node-lock",
