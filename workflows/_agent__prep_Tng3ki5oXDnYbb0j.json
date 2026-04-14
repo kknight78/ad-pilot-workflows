@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-12T13:25:16.506Z",
+  "updatedAt": "2026-04-13T14:02:16.968Z",
   "createdAt": "2026-02-17T04:14:48.194Z",
   "id": "Tng3ki5oXDnYbb0j",
   "name": "[AGENT] Prep",
@@ -562,7 +562,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Aggregate all accumulated results from static data\nconst staticData = $getWorkflowStaticData('global');\nconst allResults = staticData._results || [];\nconst firstPrep = $('Prep Assets').first().json;\nconst planId = firstPrep.plan_id;\nconst clientName = firstPrep.client_name;\nconst errors = [];\nconst results = { processed: 0, scripts: 0, copy: 0 };\nconst scriptUpdates = [];\nconst copyUpdates = [];\n\nfor (const r of allResults) {\n  if (r.is_video) results.processed++;\n  if (r._labeled_script) {\n    scriptUpdates.push({\n      id: r.asset_id,\n      text: r._labeled_script,\n      phonetic: r._phonetic_script || ''\n    });\n    results.scripts++;\n  }\n  if (r._copy_success && r._platform_copy) {\n    copyUpdates.push({\n      id: r.asset_id,\n      copy: r._platform_copy\n    });\n    results.copy++;\n  }\n}\n\n// Build SQL for saving scripts — both display and phonetic versions\nlet scriptUpdateSql = 'SELECT 1';\nif (scriptUpdates.length > 0) {\n  scriptUpdateSql = scriptUpdates.map(u =>\n    \"UPDATE assets SET script_text = $adpilot$\" + u.text + \"$adpilot$, phonetic_script = $adpilot$\" + u.phonetic + \"$adpilot$, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\n// Build SQL for saving platform_copy JSONB to assets table\nlet copyUpdateSql = 'SELECT 1';\nif (copyUpdates.length > 0) {\n  copyUpdateSql = copyUpdates.map(u =>\n    \"UPDATE assets SET platform_copy = '\" + JSON.stringify(u.copy).replace(/'/g, \"''\") + \"'::jsonb, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\nconst success = errors.length === 0 || results.copy > 0;\n\n// Clean up static data\ndelete staticData._results;\n\nreturn [{ json: {\n  success, plan_id: planId, client_name: clientName,\n  results, errors, total_assets: allResults.length,\n  video_count: allResults.filter(r => r.is_video).length,\n  scriptUpdateSql,\n  copyUpdateSql\n}}];"
+        "jsCode": "// Aggregate all accumulated results from static data\nconst staticData = $getWorkflowStaticData('global');\nconst allResults = staticData._results || [];\nconst firstPrep = $('Prep Assets').first().json;\nconst planId = firstPrep.plan_id;\nconst clientName = firstPrep.client_name;\nconst errors = [];\nconst results = { processed: 0, scripts: 0, copy: 0 };\nconst scriptUpdates = [];\nconst copyUpdates = [];\n\nfor (const r of allResults) {\n  if (r.is_video) results.processed++;\n  if (r._labeled_script) {\n    scriptUpdates.push({\n      id: r.asset_id,\n      text: r._labeled_script,\n      phonetic: r._phonetic_script || ''\n    });\n    results.scripts++;\n  }\n  if (r._copy_success && r._platform_copy) {\n    copyUpdates.push({\n      id: r.asset_id,\n      copy: r._platform_copy\n    });\n    results.copy++;\n  }\n}\n\n// Build SQL for saving scripts — both display and phonetic versions\nlet scriptUpdateSql = 'SELECT 1';\nif (scriptUpdates.length > 0) {\n  scriptUpdateSql = scriptUpdates.map(u =>\n    \"UPDATE assets SET script_text = $adpilot$\" + u.text + \"$adpilot$, phonetic_script = $adpilot$\" + u.phonetic + \"$adpilot$, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\n// Build SQL for saving platform_copy JSONB to assets table\nlet copyUpdateSql = 'SELECT 1';\nif (copyUpdates.length > 0) {\n  copyUpdateSql = copyUpdates.map(u =>\n    \"UPDATE assets SET platform_copy = '\" + JSON.stringify(u.copy).replace(/'/g, \"''\") + \"'::jsonb, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\nconst success = results.scripts > 0 && (errors.length === 0 || results.copy > 0);\n\n// Clean up static data\ndelete staticData._results;\n\nreturn [{ json: {\n  success, plan_id: planId, client_name: clientName,\n  results, errors, total_assets: allResults.length,\n  video_count: allResults.filter(r => r.is_video).length,\n  scriptUpdateSql,\n  copyUpdateSql\n}}];"
       },
       "name": "Aggregate Results",
       "type": "n8n-nodes-base.code",
@@ -927,8 +927,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "df11111d-c266-4b62-a048-a4078d4ad223",
-  "activeVersionId": "df11111d-c266-4b62-a048-a4078d4ad223",
+  "versionId": "52f0a9da-1af0-4e62-90f3-1b62d5cc29db",
+  "activeVersionId": "52f0a9da-1af0-4e62-90f3-1b62d5cc29db",
   "triggerCount": 1,
   "shared": [
     {
@@ -940,9 +940,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-12T13:25:16.511Z",
-    "createdAt": "2026-04-12T13:25:16.511Z",
-    "versionId": "df11111d-c266-4b62-a048-a4078d4ad223",
+    "updatedAt": "2026-04-13T14:02:16.972Z",
+    "createdAt": "2026-04-13T14:02:16.972Z",
+    "versionId": "52f0a9da-1af0-4e62-90f3-1b62d5cc29db",
     "workflowId": "Tng3ki5oXDnYbb0j",
     "nodes": [
       {
@@ -1501,7 +1501,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Aggregate all accumulated results from static data\nconst staticData = $getWorkflowStaticData('global');\nconst allResults = staticData._results || [];\nconst firstPrep = $('Prep Assets').first().json;\nconst planId = firstPrep.plan_id;\nconst clientName = firstPrep.client_name;\nconst errors = [];\nconst results = { processed: 0, scripts: 0, copy: 0 };\nconst scriptUpdates = [];\nconst copyUpdates = [];\n\nfor (const r of allResults) {\n  if (r.is_video) results.processed++;\n  if (r._labeled_script) {\n    scriptUpdates.push({\n      id: r.asset_id,\n      text: r._labeled_script,\n      phonetic: r._phonetic_script || ''\n    });\n    results.scripts++;\n  }\n  if (r._copy_success && r._platform_copy) {\n    copyUpdates.push({\n      id: r.asset_id,\n      copy: r._platform_copy\n    });\n    results.copy++;\n  }\n}\n\n// Build SQL for saving scripts — both display and phonetic versions\nlet scriptUpdateSql = 'SELECT 1';\nif (scriptUpdates.length > 0) {\n  scriptUpdateSql = scriptUpdates.map(u =>\n    \"UPDATE assets SET script_text = $adpilot$\" + u.text + \"$adpilot$, phonetic_script = $adpilot$\" + u.phonetic + \"$adpilot$, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\n// Build SQL for saving platform_copy JSONB to assets table\nlet copyUpdateSql = 'SELECT 1';\nif (copyUpdates.length > 0) {\n  copyUpdateSql = copyUpdates.map(u =>\n    \"UPDATE assets SET platform_copy = '\" + JSON.stringify(u.copy).replace(/'/g, \"''\") + \"'::jsonb, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\nconst success = errors.length === 0 || results.copy > 0;\n\n// Clean up static data\ndelete staticData._results;\n\nreturn [{ json: {\n  success, plan_id: planId, client_name: clientName,\n  results, errors, total_assets: allResults.length,\n  video_count: allResults.filter(r => r.is_video).length,\n  scriptUpdateSql,\n  copyUpdateSql\n}}];"
+          "jsCode": "// Aggregate all accumulated results from static data\nconst staticData = $getWorkflowStaticData('global');\nconst allResults = staticData._results || [];\nconst firstPrep = $('Prep Assets').first().json;\nconst planId = firstPrep.plan_id;\nconst clientName = firstPrep.client_name;\nconst errors = [];\nconst results = { processed: 0, scripts: 0, copy: 0 };\nconst scriptUpdates = [];\nconst copyUpdates = [];\n\nfor (const r of allResults) {\n  if (r.is_video) results.processed++;\n  if (r._labeled_script) {\n    scriptUpdates.push({\n      id: r.asset_id,\n      text: r._labeled_script,\n      phonetic: r._phonetic_script || ''\n    });\n    results.scripts++;\n  }\n  if (r._copy_success && r._platform_copy) {\n    copyUpdates.push({\n      id: r.asset_id,\n      copy: r._platform_copy\n    });\n    results.copy++;\n  }\n}\n\n// Build SQL for saving scripts — both display and phonetic versions\nlet scriptUpdateSql = 'SELECT 1';\nif (scriptUpdates.length > 0) {\n  scriptUpdateSql = scriptUpdates.map(u =>\n    \"UPDATE assets SET script_text = $adpilot$\" + u.text + \"$adpilot$, phonetic_script = $adpilot$\" + u.phonetic + \"$adpilot$, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\n// Build SQL for saving platform_copy JSONB to assets table\nlet copyUpdateSql = 'SELECT 1';\nif (copyUpdates.length > 0) {\n  copyUpdateSql = copyUpdates.map(u =>\n    \"UPDATE assets SET platform_copy = '\" + JSON.stringify(u.copy).replace(/'/g, \"''\") + \"'::jsonb, updated_at = NOW() WHERE id = '\" + u.id + \"'::uuid\"\n  ).join(';\\n') + ';';\n}\n\nconst success = results.scripts > 0 && (errors.length === 0 || results.copy > 0);\n\n// Clean up static data\ndelete staticData._results;\n\nreturn [{ json: {\n  success, plan_id: planId, client_name: clientName,\n  results, errors, total_assets: allResults.length,\n  video_count: allResults.filter(r => r.is_video).length,\n  scriptUpdateSql,\n  copyUpdateSql\n}}];"
         },
         "name": "Aggregate Results",
         "type": "n8n-nodes-base.code",
