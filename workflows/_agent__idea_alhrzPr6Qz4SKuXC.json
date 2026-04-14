@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:30:49.913Z",
+  "updatedAt": "2026-04-13T14:09:33.798Z",
   "createdAt": "2026-02-17T14:37:38.076Z",
   "id": "alhrzPr6Qz4SKuXC",
   "name": "[AGENT] Idea",
@@ -207,7 +207,13 @@
             "response": {
               "neverError": true
             }
-          }
+          },
+          "retry": {
+            "maxTries": 3,
+            "retryInterval": 5000,
+            "retryIntervalMax": 30000
+          },
+          "timeout": 60000
         }
       },
       "id": "call-claude",
@@ -792,8 +798,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "c88b8905-52dd-4e6c-b866-49e8f93927cf",
-  "activeVersionId": "c88b8905-52dd-4e6c-b866-49e8f93927cf",
+  "versionId": "8a0841cf-0d8f-47a9-b5b5-3c5cb734baad",
+  "activeVersionId": "8a0841cf-0d8f-47a9-b5b5-3c5cb734baad",
   "triggerCount": 2,
   "shared": [
     {
@@ -805,9 +811,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:30:49.917Z",
-    "createdAt": "2026-04-02T21:30:49.917Z",
-    "versionId": "c88b8905-52dd-4e6c-b866-49e8f93927cf",
+    "updatedAt": "2026-04-13T14:09:33.803Z",
+    "createdAt": "2026-04-13T14:09:33.803Z",
+    "versionId": "8a0841cf-0d8f-47a9-b5b5-3c5cb734baad",
     "workflowId": "alhrzPr6Qz4SKuXC",
     "nodes": [
       {
@@ -1011,7 +1017,13 @@
               "response": {
                 "neverError": true
               }
-            }
+            },
+            "retry": {
+              "maxTries": 3,
+              "retryInterval": 5000,
+              "retryIntervalMax": 30000
+            },
+            "timeout": 60000
           }
         },
         "id": "call-claude",
