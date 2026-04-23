@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-13T14:09:33.798Z",
+  "updatedAt": "2026-04-22T12:19:35.882Z",
   "createdAt": "2026-02-17T14:37:38.076Z",
   "id": "alhrzPr6Qz4SKuXC",
   "name": "[AGENT] Idea",
@@ -425,7 +425,7 @@
         "specifyBody": "string",
         "body": "={{ JSON.stringify({ plan_id: $('Create Idea Ping').first().json.plan_id }) }}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "id": "send-idea-ping-sms",
@@ -435,7 +435,10 @@
       "position": [
         4048,
         352
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
     },
     {
       "parameters": {
@@ -798,8 +801,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "8a0841cf-0d8f-47a9-b5b5-3c5cb734baad",
-  "activeVersionId": "8a0841cf-0d8f-47a9-b5b5-3c5cb734baad",
+  "versionId": "701fbf1e-c675-4488-b056-03d022b679d5",
+  "activeVersionId": "701fbf1e-c675-4488-b056-03d022b679d5",
   "triggerCount": 2,
   "shared": [
     {
@@ -811,9 +814,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-13T14:09:33.803Z",
-    "createdAt": "2026-04-13T14:09:33.803Z",
-    "versionId": "8a0841cf-0d8f-47a9-b5b5-3c5cb734baad",
+    "updatedAt": "2026-04-22T12:19:36.099Z",
+    "createdAt": "2026-04-22T12:19:36.099Z",
+    "versionId": "701fbf1e-c675-4488-b056-03d022b679d5",
     "workflowId": "alhrzPr6Qz4SKuXC",
     "nodes": [
       {
@@ -1235,7 +1238,7 @@
           "specifyBody": "string",
           "body": "={{ JSON.stringify({ plan_id: $('Create Idea Ping').first().json.plan_id }) }}",
           "options": {
-            "timeout": 10000
+            "timeout": 60000
           }
         },
         "id": "send-idea-ping-sms",
@@ -1245,7 +1248,10 @@
         "position": [
           4048,
           352
-        ]
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000
       },
       {
         "parameters": {
