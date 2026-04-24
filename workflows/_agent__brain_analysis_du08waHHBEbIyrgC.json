@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:30:51.277Z",
+  "updatedAt": "2026-04-23T12:59:06.870Z",
   "createdAt": "2026-02-12T14:28:30.580Z",
   "id": "du08waHHBEbIyrgC",
   "name": "[AGENT] Brain Analysis",
@@ -23,13 +23,13 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 1 * * 4"
+              "expression": "0 6 * * 1"
             }
           ]
         }
       },
       "id": "trigger-cron",
-      "name": "Wednesday 7pm CT",
+      "name": "Monday 6am CT",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -639,8 +639,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "5992b2a1-b4a7-4232-b4ae-11b447ce526c",
-  "activeVersionId": "5992b2a1-b4a7-4232-b4ae-11b447ce526c",
+  "versionId": "af6d056b-679e-4fba-b0d5-b44be226847d",
+  "activeVersionId": "af6d056b-679e-4fba-b0d5-b44be226847d",
   "triggerCount": 2,
   "shared": [
     {
@@ -652,9 +652,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:30:51.281Z",
-    "createdAt": "2026-04-02T21:30:51.281Z",
-    "versionId": "5992b2a1-b4a7-4232-b4ae-11b447ce526c",
+    "updatedAt": "2026-04-23T12:59:06.874Z",
+    "createdAt": "2026-04-23T12:59:06.874Z",
+    "versionId": "af6d056b-679e-4fba-b0d5-b44be226847d",
     "workflowId": "du08waHHBEbIyrgC",
     "nodes": [
       {
@@ -674,13 +674,13 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "0 1 * * 4"
+                "expression": "0 6 * * 1"
               }
             ]
           }
         },
         "id": "trigger-cron",
-        "name": "Wednesday 7pm CT",
+        "name": "Monday 6am CT",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.2,
         "position": [
