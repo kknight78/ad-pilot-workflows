@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:51.706Z",
+  "updatedAt": "2026-04-23T18:46:18.545Z",
   "createdAt": "2026-01-22T21:48:02.323Z",
   "id": "TmNkxHfIzdlZTz79",
   "name": "Weekly Intel Agent",
@@ -192,7 +192,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare prompt for LLM with HeyGen critical monitoring\nconst allItems = $input.all();\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Organize sources by category\nconst categories = {\n  stack: { name: 'Core Stack (HeyGen, ElevenLabs, n8n, etc.)', items: [] },\n  llm: { name: 'LLM / AI News', items: [] },\n  platform: { name: 'Ad Platforms (Meta, TikTok)', items: [] },\n  competitor: { name: 'Competitors & Industry', items: [] },\n  legal: { name: 'Legal & Compliance', items: [] },\n  emerging: { name: 'Emerging Platforms', items: [] }\n};\n\nconst failed = [];\nlet criticalAlerts = [];\n\nfor (const item of allItems) {\n  const data = item.json;\n  \n  if (data.success && data.content) {\n    const cat = categories[data.category] || categories.competitor;\n    cat.items.push(data);\n    \n    // Check for critical alerts\n    if (data.critical && data.criticalMatches && data.criticalMatches.length > 0) {\n      criticalAlerts.push({\n        source: data.source,\n        matches: data.criticalMatches\n      });\n    }\n  } else {\n    failed.push({\n      source: data.source,\n      error: data.error || 'Unknown error'\n    });\n  }\n}\n\n// Build sources summary\nlet sourcesSummary = '';\nfor (const [key, cat] of Object.entries(categories)) {\n  if (cat.items.length > 0) {\n    sourcesSummary += `\\n### ${cat.name}\\n\\n`;\n    for (const source of cat.items) {\n      sourcesSummary += `**${source.source}:**\\n${source.content}\\n\\n`;\n    }\n  }\n}\n\n// Build failed note\nlet failedNote = '';\nif (failed.length > 0) {\n  failedNote = `\\n\\n---\\nNote: Failed to fetch ${failed.length} sources: ${failed.map(f => f.source).join(', ')}`;\n}\n\n// Build critical alerts section\nlet criticalSection = '';\nif (criticalAlerts.length > 0) {\n  criticalSection = `\\n\\n## 🚨 CRITICAL ALERTS DETECTED\\n`;\n  for (const alert of criticalAlerts) {\n    criticalSection += `- **${alert.source}** contains keywords: ${alert.matches.join(', ')}\\n`;\n  }\n  criticalSection += `\\nPay special attention to these sources!\\n`;\n}\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n${criticalSection}\n\n## YOUR TASK\nAnalyze the following data and produce THREE outputs:\n1. Kelly's Intel Brief (technical, actionable)\n2. Eric's Sales Sheet (conversational, client-facing)\n3. Client Report Blurb (only if newsworthy)\n\n## AD PILOT'S TECH STACK (know this well!)\n- **HeyGen**: AI avatar video generation — CRITICAL dependency\n  - We use motion_type: \"kling\" via API (pulls from API credits, NOT GenCredits)\n  - We use saved motion avatars for reuse\n  - 11Labs voice integration (hidden third-party charges via plan_credit)\n- **ElevenLabs**: Voice synthesis for custom voices\n- **Creatomate**: Video template rendering\n- **n8n**: Workflow automation (self-hosted on Railway)\n- **Cloudinary**: Media management and transformations\n- **Railway**: Hosting for n8n and services\n- **Vercel**: Frontend hosting\n- **Meta/TikTok**: Ad publishing platforms\n\n## ⚠️ HEYGEN API CRITICAL MONITORING\n\nAd Pilot depends heavily on HeyGen's API. IMMEDIATELY FLAG if you see ANY mention of:\n- motion_type deprecation or changes\n- kling, consistent, or consistent_gen_3 being removed or changed\n- API credits moving to GenCredits for motion generation\n- Avatar IV becoming mandatory\n- Third-party pricing changes (affects 11Labs integration costs)\n- Photo avatar or motion avatar policy changes\n- Any \"breaking changes\" or \"deprecation\" notices\n\nThese changes could break Ad Pilot's video generation or significantly increase costs.\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\n\nReturn a valid JSON object with exactly three keys. No markdown code blocks, just the raw JSON:\n\n{\n  \"kellyBrief\": {\n    \"criticalAlerts\": [\"ONLY if HeyGen/stack breaking changes detected - include full details\"],\n    \"actionRequired\": [\"item 1 with link\", \"item 2 with link\"],\n    \"investigateThisWeek\": [\"item 1 with link\", \"item 2 with link\"],\n    \"awareness\": [\"item 1\", \"item 2\"]\n  },\n  \"ericSheet\": {\n    \"whatsNewToSell\": [\"capability 1 - how to pitch it\", \"capability 2 - how to pitch it\"],\n    \"competitorIntel\": [\"insight 1\", \"insight 2\"],\n    \"objectionPrep\": [\n      {\"objection\": \"Client might say: I saw [article]...\", \"response\": \"Here's what that means for them...\"}\n    ],\n    \"conversationStarters\": [\"Did you hear about X? Here's what it means for your business...\"]\n  },\n  \"clientBlurb\": {\n    \"include\": true,\n    \"whatsNew\": \"One sentence about relevant AI marketing news\",\n    \"whatWeAreDoing\": \"How Ad Pilot is leveraging this for clients\",\n    \"tipOfTheWeek\": \"Optional helpful tip for their video ads\"\n  }\n}\n\n## GUIDELINES\n- Be specific and actionable — no fluff\n- Include direct links where available\n- Focus on Ad Pilot's stack FIRST, then broader industry\n- If nothing relevant for a section, return empty array or include: false\n- ALWAYS check HeyGen news carefully — flag any API changes in criticalAlerts\n- Eric's content should be quotable in client conversations (casual, friendly tone)\n- Client blurb only if there's genuinely interesting news (set include: false if nothing noteworthy)\n- Keep each item concise but informative`;\n\nreturn [{ json: { prompt: prompt, today: today } }];"
+        "jsCode": "// Prepare prompt for LLM with HeyGen critical monitoring\nconst allItems = $input.all();\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// ─── Infra version snapshot (added 2026-04-23) ─────────────────\nlet versionContext = '';\ntry {\n  const vc = $('Build Version Context').first().json;\n  if (vc && vc.summary) {\n    versionContext = '\\n## INFRA VERSION STATUS\\n' + vc.summary + '\\n';\n    if (vc.errors && vc.errors.length) {\n      versionContext += '_(note: ' + vc.errors.length + ' version fetch(es) failed — proceed without)_\\n';\n    }\n  }\n} catch (e) {\n  versionContext = '';\n}\n// ────────────────────────────────────────────────────────────────\n\n\n// Organize sources by category\nconst categories = {\n  stack: { name: 'Core Stack (HeyGen, ElevenLabs, n8n, etc.)', items: [] },\n  llm: { name: 'LLM / AI News', items: [] },\n  platform: { name: 'Ad Platforms (Meta, TikTok)', items: [] },\n  competitor: { name: 'Competitors & Industry', items: [] },\n  legal: { name: 'Legal & Compliance', items: [] },\n  emerging: { name: 'Emerging Platforms', items: [] }\n};\n\nconst failed = [];\nlet criticalAlerts = [];\n\nfor (const item of allItems) {\n  const data = item.json;\n  \n  if (data.success && data.content) {\n    const cat = categories[data.category] || categories.competitor;\n    cat.items.push(data);\n    \n    // Check for critical alerts\n    if (data.critical && data.criticalMatches && data.criticalMatches.length > 0) {\n      criticalAlerts.push({\n        source: data.source,\n        matches: data.criticalMatches\n      });\n    }\n  } else {\n    failed.push({\n      source: data.source,\n      error: data.error || 'Unknown error'\n    });\n  }\n}\n\n// Build sources summary\nlet sourcesSummary = '';\nfor (const [key, cat] of Object.entries(categories)) {\n  if (cat.items.length > 0) {\n    sourcesSummary += `\\n### ${cat.name}\\n\\n`;\n    for (const source of cat.items) {\n      sourcesSummary += `**${source.source}:**\\n${source.content}\\n\\n`;\n    }\n  }\n}\n\n// Build failed note\nlet failedNote = '';\nif (failed.length > 0) {\n  failedNote = `\\n\\n---\\nNote: Failed to fetch ${failed.length} sources: ${failed.map(f => f.source).join(', ')}`;\n}\n\n// Build critical alerts section\nlet criticalSection = '';\nif (criticalAlerts.length > 0) {\n  criticalSection = `\\n\\n## 🚨 CRITICAL ALERTS DETECTED\\n`;\n  for (const alert of criticalAlerts) {\n    criticalSection += `- **${alert.source}** contains keywords: ${alert.matches.join(', ')}\\n`;\n  }\n  criticalSection += `\\nPay special attention to these sources!\\n`;\n}\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n${criticalSection}\n${versionContext}\n\n## YOUR TASK\nAnalyze the following data and produce THREE outputs:\n1. Kelly's Intel Brief (technical, actionable)\n2. Eric's Sales Sheet (conversational, client-facing)\n3. Client Report Blurb (only if newsworthy)\n\n## AD PILOT'S TECH STACK (know this well!)\n- **HeyGen**: AI avatar video generation — CRITICAL dependency\n  - We use motion_type: \"kling\" via API (pulls from API credits, NOT GenCredits)\n  - We use saved motion avatars for reuse\n  - 11Labs voice integration (hidden third-party charges via plan_credit)\n- **ElevenLabs**: Voice synthesis for custom voices\n- **Creatomate**: Video template rendering\n- **n8n**: Workflow automation (self-hosted on Railway)\n- **Cloudinary**: Media management and transformations\n- **Railway**: Hosting for n8n and services\n- **Vercel**: Frontend hosting\n- **Meta/TikTok**: Ad publishing platforms\n\n## ⚠️ HEYGEN API CRITICAL MONITORING\n\nAd Pilot depends heavily on HeyGen's API. IMMEDIATELY FLAG if you see ANY mention of:\n- motion_type deprecation or changes\n- kling, consistent, or consistent_gen_3 being removed or changed\n- API credits moving to GenCredits for motion generation\n- Avatar IV becoming mandatory\n- Third-party pricing changes (affects 11Labs integration costs)\n- Photo avatar or motion avatar policy changes\n- Any \"breaking changes\" or \"deprecation\" notices\n\nThese changes could break Ad Pilot's video generation or significantly increase costs.\n\n## ⚠️ N8N VERSION AWARENESS\nYou have INFRA VERSION STATUS above showing the currently-pinned n8n versions vs the latest stable release.\n- If prod is 5+ minor versions behind, surface an \"actionRequired\" item recommending an upgrade and link to https://github.com/n8n-io/n8n/releases\n- If the latest-release data or source content mentions new n8n features/fixes relevant to workflows we use, surface them\n- Do NOT suggest upgrading past the latest stable release (e.g. to a beta)\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\n\nReturn a valid JSON object with exactly three keys. No markdown code blocks, just the raw JSON:\n\n{\n  \"kellyBrief\": {\n    \"criticalAlerts\": [\"ONLY if HeyGen/stack breaking changes detected - include full details\"],\n    \"actionRequired\": [\"item 1 with link\", \"item 2 with link\"],\n    \"investigateThisWeek\": [\"item 1 with link\", \"item 2 with link\"],\n    \"awareness\": [\"item 1\", \"item 2\"]\n  },\n  \"ericSheet\": {\n    \"whatsNewToSell\": [\"capability 1 - how to pitch it\", \"capability 2 - how to pitch it\"],\n    \"competitorIntel\": [\"insight 1\", \"insight 2\"],\n    \"objectionPrep\": [\n      {\"objection\": \"Client might say: I saw [article]...\", \"response\": \"Here's what that means for them...\"}\n    ],\n    \"conversationStarters\": [\"Did you hear about X? Here's what it means for your business...\"]\n  },\n  \"clientBlurb\": {\n    \"include\": true,\n    \"whatsNew\": \"One sentence about relevant AI marketing news\",\n    \"whatWeAreDoing\": \"How Ad Pilot is leveraging this for clients\",\n    \"tipOfTheWeek\": \"Optional helpful tip for their video ads\"\n  }\n}\n\n## GUIDELINES\n- Be specific and actionable — no fluff\n- Include direct links where available\n- Focus on Ad Pilot's stack FIRST, then broader industry\n- If nothing relevant for a section, return empty array or include: false\n- ALWAYS check HeyGen news carefully — flag any API changes in criticalAlerts\n- Eric's content should be quotable in client conversations (casual, friendly tone)\n- Client blurb only if there's genuinely interesting news (set include: false if nothing noteworthy)\n- Keep each item concise but informative`;\n\nreturn [{ json: { prompt: prompt, today: today } }];"
       },
       "id": "prepare-prompt",
       "name": "Prepare Prompt",
@@ -488,6 +488,141 @@
       "id": "776f2793-40e2-40d8-a074-c91e5dace294",
       "name": "Wait after email 2",
       "webhookId": "17198b43-a27a-4416-8fae-81bc610abb83"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/kknight78/ad-pilot-n8n/contents/Dockerfile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ref",
+              "value": "main"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        480
+      ],
+      "id": "fetchproddockerfile000001",
+      "name": "Fetch Prod Dockerfile",
+      "credentials": {
+        "githubApi": {
+          "id": "cuZkd1EB5raWuKGR",
+          "name": "GitHub account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/kknight78/ad-pilot-n8n/contents/Dockerfile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ref",
+              "value": "dev"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        480
+      ],
+      "id": "fetchdevdockerfile0000001",
+      "name": "Fetch Dev Dockerfile",
+      "credentials": {
+        "githubApi": {
+          "id": "cuZkd1EB5raWuKGR",
+          "name": "GitHub account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/n8n-io/n8n/releases",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "20"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "ad-pilot-intel-agent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        480
+      ],
+      "id": "fetchlatestrelease0000001",
+      "name": "Fetch Latest n8n Release",
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Version Context\n// Reads outputs of the three previous fetches and produces a structured\n// version summary for the Prepare Prompt node. Uses try/catch everywhere —\n// the workflow must continue even if any fetch failed (e.g. GitHub rate-limit).\n\nfunction extractN8nVersion(dockerfileText) {\n  // Looks for: FROM docker.n8n.io/n8nio/n8n:X.Y.Z\n  const m = /n8nio\\/n8n:([0-9]+\\.[0-9]+\\.[0-9]+)/.exec(dockerfileText || '');\n  return m ? m[1] : null;\n}\n\nfunction decodeBase64Content(resp) {\n  try {\n    const content = resp && resp.content;\n    if (!content) return null;\n    // GitHub returns base64 with \\n line breaks\n    const raw = Buffer.from(content.replace(/\\n/g, ''), 'base64').toString('utf8');\n    return raw;\n  } catch (e) {\n    return null;\n  }\n}\n\nfunction safeSemverCmp(a, b) {\n  // Returns positive if b > a, negative if a > b, 0 if equal. Null on bad input.\n  if (!a || !b) return null;\n  const pa = a.split('.').map(n => parseInt(n, 10));\n  const pb = b.split('.').map(n => parseInt(n, 10));\n  for (let i = 0; i < 3; i++) {\n    if ((pb[i] || 0) !== (pa[i] || 0)) return (pb[i] || 0) - (pa[i] || 0);\n  }\n  return 0;\n}\n\nlet mainVer = null, devVer = null, latestVer = null, latestDate = null;\nconst errors = [];\n\ntry {\n  const prodResp = $('Fetch Prod Dockerfile').first().json;\n  const text = decodeBase64Content(prodResp);\n  mainVer = extractN8nVersion(text);\n  if (!mainVer) errors.push('could not parse main Dockerfile');\n} catch (e) { errors.push('prod fetch failed: ' + e.message); }\n\ntry {\n  const devResp = $('Fetch Dev Dockerfile').first().json;\n  const text = decodeBase64Content(devResp);\n  devVer = extractN8nVersion(text);\n  if (!devVer) errors.push('could not parse dev Dockerfile');\n} catch (e) { errors.push('dev fetch failed: ' + e.message); }\n\ntry {\n  // The HTTP node's `fetchLatestN8nRelease` returns the releases list as an array\n  // of items in `$('Fetch Latest n8n Release').all()` — each item is one release.\n  // We filter: prerelease===false, tag matches n8n@2.X.Y (current major line).\n  const allReleases = $('Fetch Latest n8n Release').all();\n  const candidates = [];\n  for (const it of allReleases) {\n    const r = it.json || {};\n    if (r.prerelease) continue;\n    const tag = r.tag_name || '';\n    const m = /^n8n@(2\\.[0-9]+\\.[0-9]+)$/.exec(tag);\n    if (m) candidates.push({ version: m[1], published: r.published_at });\n  }\n  // Sort descending by semver and take first\n  candidates.sort((a, b) => {\n    const pa = a.version.split('.').map(n => parseInt(n, 10));\n    const pb = b.version.split('.').map(n => parseInt(n, 10));\n    for (let i = 0; i < 3; i++) {\n      if (pa[i] !== pb[i]) return pb[i] - pa[i]; // desc: larger first\n    }\n    return 0;\n  });\n  if (candidates.length) {\n    latestVer = candidates[0].version;\n    latestDate = candidates[0].published;\n  } else {\n    errors.push('no non-prerelease n8n@2.x release found in list');\n  }\n} catch (e) { errors.push('latest-release fetch failed: ' + e.message); }\n\nconst mainBehind = safeSemverCmp(mainVer, latestVer);\nconst devBehind = safeSemverCmp(devVer, latestVer);\n\n// Build a human-readable summary block for the LLM prompt\nlet summary = '';\nif (mainVer || devVer || latestVer) {\n  summary = 'Ad Pilot n8n deployment snapshot (read from Dockerfile on GitHub):\\n';\n  summary += `- prod (ad-pilot-n8n main branch): ${mainVer || 'unknown'}\\n`;\n  summary += `- dev  (ad-pilot-n8n dev branch):  ${devVer || 'unknown'}\\n`;\n  summary += `- latest stable on GitHub:         ${latestVer || 'unknown'}`;\n  if (latestDate) summary += ` (released ${latestDate.slice(0, 10)})`;\n  summary += '\\n';\n  if (mainBehind && mainBehind > 0) {\n    summary += `- prod is ${mainBehind} patch/minor version(s) behind latest.\\n`;\n  }\n  if (devBehind && devBehind > 0) {\n    summary += `- dev is ${devBehind} patch/minor version(s) behind latest.\\n`;\n  }\n} else {\n  summary = 'Version snapshot unavailable (all three GitHub fetches failed).';\n}\n\nreturn [{\n  json: {\n    n8n: {\n      prod_version: mainVer,\n      dev_version: devVer,\n      latest_stable: latestVer,\n      latest_released_at: latestDate,\n      prod_behind_by: mainBehind,\n      dev_behind_by: devBehind\n    },\n    summary: summary,\n    errors: errors\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        480
+      ],
+      "id": "buildversioncontext000001",
+      "name": "Build Version Context"
     }
   ],
   "connections": {
@@ -495,7 +630,7 @@
       "main": [
         [
           {
-            "node": "Config Sources",
+            "node": "Fetch Prod Dockerfile",
             "type": "main",
             "index": 0
           }
@@ -506,7 +641,7 @@
       "main": [
         [
           {
-            "node": "Config Sources",
+            "node": "Fetch Prod Dockerfile",
             "type": "main",
             "index": 0
           }
@@ -756,6 +891,50 @@
           }
         ]
       ]
+    },
+    "Fetch Prod Dockerfile": {
+      "main": [
+        [
+          {
+            "node": "Fetch Dev Dockerfile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Dev Dockerfile": {
+      "main": [
+        [
+          {
+            "node": "Fetch Latest n8n Release",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Latest n8n Release": {
+      "main": [
+        [
+          {
+            "node": "Build Version Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Version Context": {
+      "main": [
+        [
+          {
+            "node": "Config Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -770,8 +949,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "ad878ff6-ecd7-49ff-b3fa-e350c86ad9da",
-  "activeVersionId": "ad878ff6-ecd7-49ff-b3fa-e350c86ad9da",
+  "versionId": "269e6c5b-2e21-4184-b831-0ead7ec2468f",
+  "activeVersionId": "269e6c5b-2e21-4184-b831-0ead7ec2468f",
   "triggerCount": 2,
   "shared": [
     {
@@ -783,9 +962,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:31:51.751Z",
-    "createdAt": "2026-04-02T21:31:51.751Z",
-    "versionId": "ad878ff6-ecd7-49ff-b3fa-e350c86ad9da",
+    "updatedAt": "2026-04-23T18:46:18.617Z",
+    "createdAt": "2026-04-23T18:46:18.617Z",
+    "versionId": "269e6c5b-2e21-4184-b831-0ead7ec2468f",
     "workflowId": "TmNkxHfIzdlZTz79",
     "nodes": [
       {
@@ -974,7 +1153,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Prepare prompt for LLM with HeyGen critical monitoring\nconst allItems = $input.all();\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Organize sources by category\nconst categories = {\n  stack: { name: 'Core Stack (HeyGen, ElevenLabs, n8n, etc.)', items: [] },\n  llm: { name: 'LLM / AI News', items: [] },\n  platform: { name: 'Ad Platforms (Meta, TikTok)', items: [] },\n  competitor: { name: 'Competitors & Industry', items: [] },\n  legal: { name: 'Legal & Compliance', items: [] },\n  emerging: { name: 'Emerging Platforms', items: [] }\n};\n\nconst failed = [];\nlet criticalAlerts = [];\n\nfor (const item of allItems) {\n  const data = item.json;\n  \n  if (data.success && data.content) {\n    const cat = categories[data.category] || categories.competitor;\n    cat.items.push(data);\n    \n    // Check for critical alerts\n    if (data.critical && data.criticalMatches && data.criticalMatches.length > 0) {\n      criticalAlerts.push({\n        source: data.source,\n        matches: data.criticalMatches\n      });\n    }\n  } else {\n    failed.push({\n      source: data.source,\n      error: data.error || 'Unknown error'\n    });\n  }\n}\n\n// Build sources summary\nlet sourcesSummary = '';\nfor (const [key, cat] of Object.entries(categories)) {\n  if (cat.items.length > 0) {\n    sourcesSummary += `\\n### ${cat.name}\\n\\n`;\n    for (const source of cat.items) {\n      sourcesSummary += `**${source.source}:**\\n${source.content}\\n\\n`;\n    }\n  }\n}\n\n// Build failed note\nlet failedNote = '';\nif (failed.length > 0) {\n  failedNote = `\\n\\n---\\nNote: Failed to fetch ${failed.length} sources: ${failed.map(f => f.source).join(', ')}`;\n}\n\n// Build critical alerts section\nlet criticalSection = '';\nif (criticalAlerts.length > 0) {\n  criticalSection = `\\n\\n## 🚨 CRITICAL ALERTS DETECTED\\n`;\n  for (const alert of criticalAlerts) {\n    criticalSection += `- **${alert.source}** contains keywords: ${alert.matches.join(', ')}\\n`;\n  }\n  criticalSection += `\\nPay special attention to these sources!\\n`;\n}\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n${criticalSection}\n\n## YOUR TASK\nAnalyze the following data and produce THREE outputs:\n1. Kelly's Intel Brief (technical, actionable)\n2. Eric's Sales Sheet (conversational, client-facing)\n3. Client Report Blurb (only if newsworthy)\n\n## AD PILOT'S TECH STACK (know this well!)\n- **HeyGen**: AI avatar video generation — CRITICAL dependency\n  - We use motion_type: \"kling\" via API (pulls from API credits, NOT GenCredits)\n  - We use saved motion avatars for reuse\n  - 11Labs voice integration (hidden third-party charges via plan_credit)\n- **ElevenLabs**: Voice synthesis for custom voices\n- **Creatomate**: Video template rendering\n- **n8n**: Workflow automation (self-hosted on Railway)\n- **Cloudinary**: Media management and transformations\n- **Railway**: Hosting for n8n and services\n- **Vercel**: Frontend hosting\n- **Meta/TikTok**: Ad publishing platforms\n\n## ⚠️ HEYGEN API CRITICAL MONITORING\n\nAd Pilot depends heavily on HeyGen's API. IMMEDIATELY FLAG if you see ANY mention of:\n- motion_type deprecation or changes\n- kling, consistent, or consistent_gen_3 being removed or changed\n- API credits moving to GenCredits for motion generation\n- Avatar IV becoming mandatory\n- Third-party pricing changes (affects 11Labs integration costs)\n- Photo avatar or motion avatar policy changes\n- Any \"breaking changes\" or \"deprecation\" notices\n\nThese changes could break Ad Pilot's video generation or significantly increase costs.\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\n\nReturn a valid JSON object with exactly three keys. No markdown code blocks, just the raw JSON:\n\n{\n  \"kellyBrief\": {\n    \"criticalAlerts\": [\"ONLY if HeyGen/stack breaking changes detected - include full details\"],\n    \"actionRequired\": [\"item 1 with link\", \"item 2 with link\"],\n    \"investigateThisWeek\": [\"item 1 with link\", \"item 2 with link\"],\n    \"awareness\": [\"item 1\", \"item 2\"]\n  },\n  \"ericSheet\": {\n    \"whatsNewToSell\": [\"capability 1 - how to pitch it\", \"capability 2 - how to pitch it\"],\n    \"competitorIntel\": [\"insight 1\", \"insight 2\"],\n    \"objectionPrep\": [\n      {\"objection\": \"Client might say: I saw [article]...\", \"response\": \"Here's what that means for them...\"}\n    ],\n    \"conversationStarters\": [\"Did you hear about X? Here's what it means for your business...\"]\n  },\n  \"clientBlurb\": {\n    \"include\": true,\n    \"whatsNew\": \"One sentence about relevant AI marketing news\",\n    \"whatWeAreDoing\": \"How Ad Pilot is leveraging this for clients\",\n    \"tipOfTheWeek\": \"Optional helpful tip for their video ads\"\n  }\n}\n\n## GUIDELINES\n- Be specific and actionable — no fluff\n- Include direct links where available\n- Focus on Ad Pilot's stack FIRST, then broader industry\n- If nothing relevant for a section, return empty array or include: false\n- ALWAYS check HeyGen news carefully — flag any API changes in criticalAlerts\n- Eric's content should be quotable in client conversations (casual, friendly tone)\n- Client blurb only if there's genuinely interesting news (set include: false if nothing noteworthy)\n- Keep each item concise but informative`;\n\nreturn [{ json: { prompt: prompt, today: today } }];"
+          "jsCode": "// Prepare prompt for LLM with HeyGen critical monitoring\nconst allItems = $input.all();\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// ─── Infra version snapshot (added 2026-04-23) ─────────────────\nlet versionContext = '';\ntry {\n  const vc = $('Build Version Context').first().json;\n  if (vc && vc.summary) {\n    versionContext = '\\n## INFRA VERSION STATUS\\n' + vc.summary + '\\n';\n    if (vc.errors && vc.errors.length) {\n      versionContext += '_(note: ' + vc.errors.length + ' version fetch(es) failed — proceed without)_\\n';\n    }\n  }\n} catch (e) {\n  versionContext = '';\n}\n// ────────────────────────────────────────────────────────────────\n\n\n// Organize sources by category\nconst categories = {\n  stack: { name: 'Core Stack (HeyGen, ElevenLabs, n8n, etc.)', items: [] },\n  llm: { name: 'LLM / AI News', items: [] },\n  platform: { name: 'Ad Platforms (Meta, TikTok)', items: [] },\n  competitor: { name: 'Competitors & Industry', items: [] },\n  legal: { name: 'Legal & Compliance', items: [] },\n  emerging: { name: 'Emerging Platforms', items: [] }\n};\n\nconst failed = [];\nlet criticalAlerts = [];\n\nfor (const item of allItems) {\n  const data = item.json;\n  \n  if (data.success && data.content) {\n    const cat = categories[data.category] || categories.competitor;\n    cat.items.push(data);\n    \n    // Check for critical alerts\n    if (data.critical && data.criticalMatches && data.criticalMatches.length > 0) {\n      criticalAlerts.push({\n        source: data.source,\n        matches: data.criticalMatches\n      });\n    }\n  } else {\n    failed.push({\n      source: data.source,\n      error: data.error || 'Unknown error'\n    });\n  }\n}\n\n// Build sources summary\nlet sourcesSummary = '';\nfor (const [key, cat] of Object.entries(categories)) {\n  if (cat.items.length > 0) {\n    sourcesSummary += `\\n### ${cat.name}\\n\\n`;\n    for (const source of cat.items) {\n      sourcesSummary += `**${source.source}:**\\n${source.content}\\n\\n`;\n    }\n  }\n}\n\n// Build failed note\nlet failedNote = '';\nif (failed.length > 0) {\n  failedNote = `\\n\\n---\\nNote: Failed to fetch ${failed.length} sources: ${failed.map(f => f.source).join(', ')}`;\n}\n\n// Build critical alerts section\nlet criticalSection = '';\nif (criticalAlerts.length > 0) {\n  criticalSection = `\\n\\n## 🚨 CRITICAL ALERTS DETECTED\\n`;\n  for (const alert of criticalAlerts) {\n    criticalSection += `- **${alert.source}** contains keywords: ${alert.matches.join(', ')}\\n`;\n  }\n  criticalSection += `\\nPay special attention to these sources!\\n`;\n}\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n${criticalSection}\n${versionContext}\n\n## YOUR TASK\nAnalyze the following data and produce THREE outputs:\n1. Kelly's Intel Brief (technical, actionable)\n2. Eric's Sales Sheet (conversational, client-facing)\n3. Client Report Blurb (only if newsworthy)\n\n## AD PILOT'S TECH STACK (know this well!)\n- **HeyGen**: AI avatar video generation — CRITICAL dependency\n  - We use motion_type: \"kling\" via API (pulls from API credits, NOT GenCredits)\n  - We use saved motion avatars for reuse\n  - 11Labs voice integration (hidden third-party charges via plan_credit)\n- **ElevenLabs**: Voice synthesis for custom voices\n- **Creatomate**: Video template rendering\n- **n8n**: Workflow automation (self-hosted on Railway)\n- **Cloudinary**: Media management and transformations\n- **Railway**: Hosting for n8n and services\n- **Vercel**: Frontend hosting\n- **Meta/TikTok**: Ad publishing platforms\n\n## ⚠️ HEYGEN API CRITICAL MONITORING\n\nAd Pilot depends heavily on HeyGen's API. IMMEDIATELY FLAG if you see ANY mention of:\n- motion_type deprecation or changes\n- kling, consistent, or consistent_gen_3 being removed or changed\n- API credits moving to GenCredits for motion generation\n- Avatar IV becoming mandatory\n- Third-party pricing changes (affects 11Labs integration costs)\n- Photo avatar or motion avatar policy changes\n- Any \"breaking changes\" or \"deprecation\" notices\n\nThese changes could break Ad Pilot's video generation or significantly increase costs.\n\n## ⚠️ N8N VERSION AWARENESS\nYou have INFRA VERSION STATUS above showing the currently-pinned n8n versions vs the latest stable release.\n- If prod is 5+ minor versions behind, surface an \"actionRequired\" item recommending an upgrade and link to https://github.com/n8n-io/n8n/releases\n- If the latest-release data or source content mentions new n8n features/fixes relevant to workflows we use, surface them\n- Do NOT suggest upgrading past the latest stable release (e.g. to a beta)\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\n\nReturn a valid JSON object with exactly three keys. No markdown code blocks, just the raw JSON:\n\n{\n  \"kellyBrief\": {\n    \"criticalAlerts\": [\"ONLY if HeyGen/stack breaking changes detected - include full details\"],\n    \"actionRequired\": [\"item 1 with link\", \"item 2 with link\"],\n    \"investigateThisWeek\": [\"item 1 with link\", \"item 2 with link\"],\n    \"awareness\": [\"item 1\", \"item 2\"]\n  },\n  \"ericSheet\": {\n    \"whatsNewToSell\": [\"capability 1 - how to pitch it\", \"capability 2 - how to pitch it\"],\n    \"competitorIntel\": [\"insight 1\", \"insight 2\"],\n    \"objectionPrep\": [\n      {\"objection\": \"Client might say: I saw [article]...\", \"response\": \"Here's what that means for them...\"}\n    ],\n    \"conversationStarters\": [\"Did you hear about X? Here's what it means for your business...\"]\n  },\n  \"clientBlurb\": {\n    \"include\": true,\n    \"whatsNew\": \"One sentence about relevant AI marketing news\",\n    \"whatWeAreDoing\": \"How Ad Pilot is leveraging this for clients\",\n    \"tipOfTheWeek\": \"Optional helpful tip for their video ads\"\n  }\n}\n\n## GUIDELINES\n- Be specific and actionable — no fluff\n- Include direct links where available\n- Focus on Ad Pilot's stack FIRST, then broader industry\n- If nothing relevant for a section, return empty array or include: false\n- ALWAYS check HeyGen news carefully — flag any API changes in criticalAlerts\n- Eric's content should be quotable in client conversations (casual, friendly tone)\n- Client blurb only if there's genuinely interesting news (set include: false if nothing noteworthy)\n- Keep each item concise but informative`;\n\nreturn [{ json: { prompt: prompt, today: today } }];"
         },
         "id": "prepare-prompt",
         "name": "Prepare Prompt",
@@ -1270,6 +1449,141 @@
         "id": "776f2793-40e2-40d8-a074-c91e5dace294",
         "name": "Wait after email 2",
         "webhookId": "17198b43-a27a-4416-8fae-81bc610abb83"
+      },
+      {
+        "parameters": {
+          "url": "https://api.github.com/repos/kknight78/ad-pilot-n8n/contents/Dockerfile",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "ref",
+                "value": "main"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          224,
+          480
+        ],
+        "id": "fetchproddockerfile000001",
+        "name": "Fetch Prod Dockerfile",
+        "credentials": {
+          "githubApi": {
+            "id": "cuZkd1EB5raWuKGR",
+            "name": "GitHub account"
+          }
+        },
+        "continueOnFail": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "url": "https://api.github.com/repos/kknight78/ad-pilot-n8n/contents/Dockerfile",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "ref",
+                "value": "dev"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          448,
+          480
+        ],
+        "id": "fetchdevdockerfile0000001",
+        "name": "Fetch Dev Dockerfile",
+        "credentials": {
+          "githubApi": {
+            "id": "cuZkd1EB5raWuKGR",
+            "name": "GitHub account"
+          }
+        },
+        "continueOnFail": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "url": "https://api.github.com/repos/n8n-io/n8n/releases",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "per_page",
+                "value": "20"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              },
+              {
+                "name": "User-Agent",
+                "value": "ad-pilot-intel-agent"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          480
+        ],
+        "id": "fetchlatestrelease0000001",
+        "name": "Fetch Latest n8n Release",
+        "continueOnFail": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Build Version Context\n// Reads outputs of the three previous fetches and produces a structured\n// version summary for the Prepare Prompt node. Uses try/catch everywhere —\n// the workflow must continue even if any fetch failed (e.g. GitHub rate-limit).\n\nfunction extractN8nVersion(dockerfileText) {\n  // Looks for: FROM docker.n8n.io/n8nio/n8n:X.Y.Z\n  const m = /n8nio\\/n8n:([0-9]+\\.[0-9]+\\.[0-9]+)/.exec(dockerfileText || '');\n  return m ? m[1] : null;\n}\n\nfunction decodeBase64Content(resp) {\n  try {\n    const content = resp && resp.content;\n    if (!content) return null;\n    // GitHub returns base64 with \\n line breaks\n    const raw = Buffer.from(content.replace(/\\n/g, ''), 'base64').toString('utf8');\n    return raw;\n  } catch (e) {\n    return null;\n  }\n}\n\nfunction safeSemverCmp(a, b) {\n  // Returns positive if b > a, negative if a > b, 0 if equal. Null on bad input.\n  if (!a || !b) return null;\n  const pa = a.split('.').map(n => parseInt(n, 10));\n  const pb = b.split('.').map(n => parseInt(n, 10));\n  for (let i = 0; i < 3; i++) {\n    if ((pb[i] || 0) !== (pa[i] || 0)) return (pb[i] || 0) - (pa[i] || 0);\n  }\n  return 0;\n}\n\nlet mainVer = null, devVer = null, latestVer = null, latestDate = null;\nconst errors = [];\n\ntry {\n  const prodResp = $('Fetch Prod Dockerfile').first().json;\n  const text = decodeBase64Content(prodResp);\n  mainVer = extractN8nVersion(text);\n  if (!mainVer) errors.push('could not parse main Dockerfile');\n} catch (e) { errors.push('prod fetch failed: ' + e.message); }\n\ntry {\n  const devResp = $('Fetch Dev Dockerfile').first().json;\n  const text = decodeBase64Content(devResp);\n  devVer = extractN8nVersion(text);\n  if (!devVer) errors.push('could not parse dev Dockerfile');\n} catch (e) { errors.push('dev fetch failed: ' + e.message); }\n\ntry {\n  // The HTTP node's `fetchLatestN8nRelease` returns the releases list as an array\n  // of items in `$('Fetch Latest n8n Release').all()` — each item is one release.\n  // We filter: prerelease===false, tag matches n8n@2.X.Y (current major line).\n  const allReleases = $('Fetch Latest n8n Release').all();\n  const candidates = [];\n  for (const it of allReleases) {\n    const r = it.json || {};\n    if (r.prerelease) continue;\n    const tag = r.tag_name || '';\n    const m = /^n8n@(2\\.[0-9]+\\.[0-9]+)$/.exec(tag);\n    if (m) candidates.push({ version: m[1], published: r.published_at });\n  }\n  // Sort descending by semver and take first\n  candidates.sort((a, b) => {\n    const pa = a.version.split('.').map(n => parseInt(n, 10));\n    const pb = b.version.split('.').map(n => parseInt(n, 10));\n    for (let i = 0; i < 3; i++) {\n      if (pa[i] !== pb[i]) return pb[i] - pa[i]; // desc: larger first\n    }\n    return 0;\n  });\n  if (candidates.length) {\n    latestVer = candidates[0].version;\n    latestDate = candidates[0].published;\n  } else {\n    errors.push('no non-prerelease n8n@2.x release found in list');\n  }\n} catch (e) { errors.push('latest-release fetch failed: ' + e.message); }\n\nconst mainBehind = safeSemverCmp(mainVer, latestVer);\nconst devBehind = safeSemverCmp(devVer, latestVer);\n\n// Build a human-readable summary block for the LLM prompt\nlet summary = '';\nif (mainVer || devVer || latestVer) {\n  summary = 'Ad Pilot n8n deployment snapshot (read from Dockerfile on GitHub):\\n';\n  summary += `- prod (ad-pilot-n8n main branch): ${mainVer || 'unknown'}\\n`;\n  summary += `- dev  (ad-pilot-n8n dev branch):  ${devVer || 'unknown'}\\n`;\n  summary += `- latest stable on GitHub:         ${latestVer || 'unknown'}`;\n  if (latestDate) summary += ` (released ${latestDate.slice(0, 10)})`;\n  summary += '\\n';\n  if (mainBehind && mainBehind > 0) {\n    summary += `- prod is ${mainBehind} patch/minor version(s) behind latest.\\n`;\n  }\n  if (devBehind && devBehind > 0) {\n    summary += `- dev is ${devBehind} patch/minor version(s) behind latest.\\n`;\n  }\n} else {\n  summary = 'Version snapshot unavailable (all three GitHub fetches failed).';\n}\n\nreturn [{\n  json: {\n    n8n: {\n      prod_version: mainVer,\n      dev_version: devVer,\n      latest_stable: latestVer,\n      latest_released_at: latestDate,\n      prod_behind_by: mainBehind,\n      dev_behind_by: devBehind\n    },\n    summary: summary,\n    errors: errors\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          480
+        ],
+        "id": "buildversioncontext000001",
+        "name": "Build Version Context"
       }
     ],
     "connections": {
@@ -1277,7 +1591,7 @@
         "main": [
           [
             {
-              "node": "Config Sources",
+              "node": "Fetch Prod Dockerfile",
               "type": "main",
               "index": 0
             }
@@ -1288,7 +1602,7 @@
         "main": [
           [
             {
-              "node": "Config Sources",
+              "node": "Fetch Prod Dockerfile",
               "type": "main",
               "index": 0
             }
@@ -1533,6 +1847,50 @@
           [
             {
               "node": "Format Client Blurb",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Prod Dockerfile": {
+        "main": [
+          [
+            {
+              "node": "Fetch Dev Dockerfile",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Dev Dockerfile": {
+        "main": [
+          [
+            {
+              "node": "Fetch Latest n8n Release",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Latest n8n Release": {
+        "main": [
+          [
+            {
+              "node": "Build Version Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Version Context": {
+        "main": [
+          [
+            {
+              "node": "Config Sources",
               "type": "main",
               "index": 0
             }
