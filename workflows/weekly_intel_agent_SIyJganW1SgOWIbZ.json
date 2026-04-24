@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:18.305Z",
+  "updatedAt": "2026-04-23T18:15:29.478Z",
   "createdAt": "2026-01-26T23:34:42.409Z",
   "id": "SIyJganW1SgOWIbZ",
   "name": "Weekly Intel Agent",
@@ -23,16 +23,14 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        208
+        304
       ]
     },
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "intel-agent-test",
-        "options": {
-          "allowedOrigins": "*"
-        }
+        "options": {}
       },
       "id": "manual-trigger",
       "name": "Manual Test Trigger",
@@ -40,13 +38,13 @@
       "typeVersion": 2,
       "position": [
         0,
-        0
+        112
       ],
       "webhookId": "intel-agent-test"
     },
     {
       "parameters": {
-        "jsCode": "// Source configuration\nconst sources = [\n  { name: 'OpenAI Blog', url: 'https://openai.com/blog/rss.xml', type: 'rss', category: 'llm' },\n  { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss', type: 'rss', category: 'llm' },\n  { name: 'Google Developers Blog', url: 'https://developers.googleblog.com/feeds/posts/default', type: 'rss', category: 'llm' },\n  { name: 'n8n GitHub Releases', url: 'https://github.com/n8n-io/n8n/releases.atom', type: 'rss', category: 'stack' },\n  { name: 'n8n Blog', url: 'https://blog.n8n.io/rss/', type: 'rss', category: 'stack' }\n];\n\nreturn sources.map(source => ({ json: source }));"
+        "jsCode": "// Weekly Intel Agent - Source Configuration\n// Last updated: 2026-01-22\n\nconst sources = [\n  // ═══════════════════════════════════════════════════════════════════════════\n  // LLM / AI NEWS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'OpenAI News', url: 'https://openai.com/news/rss.xml', type: 'rss', category: 'llm' },\n  { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss', type: 'rss', category: 'llm' },\n  { name: 'Anthropic News', url: 'https://www.anthropic.com/news', type: 'scrape', category: 'llm' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // CORE STACK — RSS FEEDS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Cloudinary Blog', url: 'https://cloudinary.com/blog/feed', type: 'rss', category: 'stack' },\n  { name: 'n8n GitHub Releases', url: 'https://github.com/n8n-io/n8n/releases.atom', type: 'rss', category: 'stack' },\n  { name: 'n8n Blog', url: 'https://blog.n8n.io/rss/', type: 'rss', category: 'stack' },\n  { name: 'Vercel Changelog', url: 'https://vercel.com/atom', type: 'rss', category: 'stack' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // CORE STACK — WEB SCRAPE (no RSS available)\n  // ═══════════════════════════════════════════════════════════════════════════\n  {\n    name: 'HeyGen API Changelog',\n    url: 'https://docs.heygen.com/changelog',\n    type: 'scrape',\n    category: 'stack',\n    critical: true,\n    watchFor: ['motion_type', 'kling', 'consistent', 'deprecat', 'removed', 'sunset', 'third party', 'credit', 'Avatar IV', 'pricing', 'breaking']\n  },\n  { name: 'HeyGen Blog', url: 'https://www.heygen.com/blog', type: 'scrape', category: 'stack' },\n  { name: 'ElevenLabs Changelog', url: 'https://elevenlabs.io/docs/changelog', type: 'scrape', category: 'stack' },\n  { name: 'Railway Changelog', url: 'https://railway.com/changelog', type: 'scrape', category: 'stack' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // PLATFORMS\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Meta Engineering', url: 'https://engineering.fb.com/feed/', type: 'rss', category: 'platform' },\n  { name: 'Meta for Business', url: 'https://www.facebook.com/business/news/rss', type: 'rss', category: 'platform' },\n  { name: 'TikTok Newsroom', url: 'https://newsroom.tiktok.com/en-us', type: 'scrape', category: 'platform' },\n\n  // ═══════════════════════════════════════════════════════════════════════════\n  // COMPETITORS / INDUSTRY\n  // ═══════════════════════════════════════════════════════════════════════════\n  { name: 'Synthesia Blog', url: 'https://www.synthesia.io/blog', type: 'scrape', category: 'competitor' },\n  { name: 'Product Hunt AI', url: 'https://www.producthunt.com/feed?category=artificial-intelligence', type: 'rss', category: 'competitor' }\n];\n\nreturn sources.map(source => ({ json: source }));"
       },
       "id": "config-sources",
       "name": "Config Sources",
@@ -54,7 +52,70 @@
       "typeVersion": 2,
       "position": [
         224,
-        112
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "rss-condition",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "rss",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RSS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "scrape-condition",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "scrape",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Scrape"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-type",
+      "name": "Switch: RSS or Scrape",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        208
       ]
     },
     {
@@ -69,64 +130,77 @@
           "timeout": 30000
         }
       },
-      "id": "fetch-sources",
-      "name": "Fetch Sources",
+      "id": "fetch-rss",
+      "name": "Fetch RSS",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        448,
+        672,
         112
       ],
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Parse RSS/Atom feeds\nconst results = [];\nconst sourceConfigs = $('Config Sources').all();\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const item = $input.all()[i];\n  const xml = item.json.data || '';\n  const sourceConfig = sourceConfigs[i] ? sourceConfigs[i].json : {};\n  const sourceName = sourceConfig.name || 'Unknown';\n  const sourceUrl = sourceConfig.url || '';\n  \n  try {\n    const items = [];\n    const itemMatches = xml.match(/<(item|entry)[^>]*>[\\s\\S]*?<\\/\\1>/gi) || [];\n    \n    for (const entry of itemMatches.slice(0, 5)) {\n      const titleMatch = entry.match(/<title[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i);\n      let title = titleMatch ? titleMatch[1].trim().replace(/<[^>]+>/g, '') : 'No title';\n      \n      let link = '';\n      const linkHrefMatch = entry.match(/<link[^>]*href=[\"']([^\"']+)[\"']/i);\n      const linkTextMatch = entry.match(/<link[^>]*>([^<]+)<\\/link>/i);\n      link = linkHrefMatch ? linkHrefMatch[1] : (linkTextMatch ? linkTextMatch[1] : '');\n      \n      const dateMatch = entry.match(/<(pubDate|updated|published)[^>]*>([^<]+)<\\/\\1>/i);\n      const date = dateMatch ? dateMatch[2].trim() : '';\n      \n      const descMatch = entry.match(/<(description|summary|content)[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/\\1>/i);\n      let description = descMatch ? descMatch[2].trim() : '';\n      description = description.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 300);\n      \n      items.push({ title, link, date, description });\n    }\n    \n    results.push({ source: sourceName, sourceUrl, status: items.length > 0 ? 'success' : 'empty', itemCount: items.length, items });\n  } catch (error) {\n    results.push({ source: sourceName, sourceUrl, status: 'error', error: error.message, items: [] });\n  }\n}\n\nreturn [{ json: { collectedSources: results } }];"
+        "jsCode": "// Scrape Handler - extracts content from pages without RSS feeds\nconst source = $input.item.json;\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'GET',\n    url: source.url,\n    headers: {\n      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',\n      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',\n      'Accept-Language': 'en-US,en;q=0.5'\n    },\n    returnFullResponse: true\n  });\n\n  const html = response.body;\n\n  // Remove script, style, nav, header, footer content\n  let text = html\n    .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n    .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')\n    .replace(/<nav[^>]*>[\\s\\S]*?<\\/nav>/gi, '')\n    .replace(/<header[^>]*>[\\s\\S]*?<\\/header>/gi, '')\n    .replace(/<footer[^>]*>[\\s\\S]*?<\\/footer>/gi, '');\n\n  // Try to extract content from common content areas\n  const contentPatterns = [\n    /<main[^>]*>([\\s\\S]*?)<\\/main>/gi,\n    /<article[^>]*>([\\s\\S]*?)<\\/article>/gi,\n    /<div[^>]*class=\"[^\"]*content[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*changelog[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*blog[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi,\n    /<div[^>]*class=\"[^\"]*post[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/gi\n  ];\n\n  let extractedContent = '';\n  for (const pattern of contentPatterns) {\n    const matches = text.matchAll(pattern);\n    for (const match of matches) {\n      extractedContent += match[1] + '\\n';\n    }\n  }\n\n  if (!extractedContent) {\n    extractedContent = text;\n  }\n\n  // Strip HTML tags and clean up\n  extractedContent = extractedContent\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  // Limit content length\n  const maxLength = 4000;\n  if (extractedContent.length > maxLength) {\n    extractedContent = extractedContent.substring(0, maxLength) + '... [truncated]';\n  }\n\n  // Check for critical keywords\n  let criticalMatches = [];\n  if (source.critical && source.watchFor) {\n    const lowerContent = extractedContent.toLowerCase();\n    criticalMatches = source.watchFor.filter(keyword =>\n      lowerContent.includes(keyword.toLowerCase())\n    );\n  }\n\n  return {\n    json: {\n      source: source.name,\n      url: source.url,\n      type: 'scrape',\n      category: source.category,\n      critical: source.critical || false,\n      criticalMatches: criticalMatches,\n      content: extractedContent,\n      fetchedAt: new Date().toISOString(),\n      success: true\n    }\n  };\n\n} catch (error) {\n  return {\n    json: {\n      source: source.name,\n      url: source.url,\n      type: 'scrape',\n      category: source.category,\n      critical: source.critical || false,\n      content: '',\n      fetchedAt: new Date().toISOString(),\n      success: false,\n      error: error.message\n    }\n  };\n}"
+      },
+      "id": "scrape-handler",
+      "name": "Scrape Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse RSS/Atom feeds\nconst results = [];\nconst allConfigItems = $('Config Sources').all();\nconst rssConfigItems = allConfigItems.filter(item => item.json.type === 'rss');\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const item = $input.all()[i];\n  const xml = item.json.data || '';\n  const sourceConfig = rssConfigItems[i] ? rssConfigItems[i].json : {};\n  const sourceName = sourceConfig.name || 'Unknown';\n  const sourceUrl = sourceConfig.url || '';\n  const sourceCategory = sourceConfig.category || 'unknown';\n  \n  try {\n    const items = [];\n    const itemMatches = xml.match(/<(item|entry)[^>]*>[\\s\\S]*?<\\/\\1>/gi) || [];\n    \n    for (const entry of itemMatches.slice(0, 5)) {\n      const titleMatch = entry.match(/<title[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i);\n      let title = titleMatch ? titleMatch[1].trim().replace(/<[^>]+>/g, '') : 'No title';\n      \n      let link = '';\n      const linkHrefMatch = entry.match(/<link[^>]*href=[\"']([^\"']+)[\"']/i);\n      const linkTextMatch = entry.match(/<link[^>]*>([^<]+)<\\/link>/i);\n      link = linkHrefMatch ? linkHrefMatch[1] : (linkTextMatch ? linkTextMatch[1] : '');\n      \n      const dateMatch = entry.match(/<(pubDate|updated|published)[^>]*>([^<]+)<\\/\\1>/i);\n      const date = dateMatch ? dateMatch[2].trim() : '';\n      \n      const descMatch = entry.match(/<(description|summary|content)[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/\\1>/i);\n      let description = descMatch ? descMatch[2].trim() : '';\n      description = description.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 300);\n      \n      items.push({ title, link, date, description });\n    }\n    \n    results.push({\n      json: {\n        source: sourceName,\n        url: sourceUrl,\n        type: 'rss',\n        category: sourceCategory,\n        success: items.length > 0,\n        content: items.map(item => `- **${item.title}**${item.date ? ` (${item.date})` : ''}\\n  ${item.description}\\n  Link: ${item.link}`).join('\\n\\n'),\n        items: items\n      }\n    });\n  } catch (error) {\n    results.push({\n      json: {\n        source: sourceName,\n        url: sourceUrl,\n        type: 'rss',\n        category: sourceCategory,\n        success: false,\n        error: error.message,\n        content: ''\n      }\n    });\n  }\n}\n\nreturn results;"
       },
       "id": "parse-feeds",
       "name": "Parse Feeds",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
+        896,
         112
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Handle fetch errors\nconst results = [];\nconst sourceConfigs = $('Config Sources').all();\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const sourceConfig = sourceConfigs[i] ? sourceConfigs[i].json : {};\n  results.push({ source: sourceConfig.name || 'Unknown', sourceUrl: sourceConfig.url || '', status: 'failed', error: 'HTTP fetch failed', items: [] });\n}\n\nreturn [{ json: { collectedSources: results } }];"
+        "jsCode": "// Handle RSS fetch errors\nconst allConfigItems = $('Config Sources').all();\nconst rssConfigItems = allConfigItems.filter(item => item.json.type === 'rss');\nconst results = [];\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const sourceConfig = rssConfigItems[i] ? rssConfigItems[i].json : {};\n  results.push({\n    json: {\n      source: sourceConfig.name || 'Unknown',\n      url: sourceConfig.url || '',\n      type: 'rss',\n      category: sourceConfig.category || 'unknown',\n      success: false,\n      error: 'HTTP fetch failed',\n      content: ''\n    }\n  });\n}\n\nreturn results;"
       },
       "id": "handle-fetch-error",
-      "name": "Handle Fetch Error",
+      "name": "Handle RSS Error",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
+        896,
         208
       ]
     },
     {
       "parameters": {},
       "id": "merge-results",
-      "name": "Merge Results",
+      "name": "Merge All Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        880,
-        160
+        1120,
+        208
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Prepare prompt for Gemini\nconst allItems = $input.all();\nconst allSources = [];\n\nfor (const item of allItems) {\n  if (item.json.collectedSources) {\n    allSources.push(...item.json.collectedSources);\n  }\n}\n\nconst today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\n\nlet sourcesSummary = '';\nlet failedSources = [];\n\nfor (const source of allSources) {\n  if (source.status === 'success' || source.status === 'empty') {\n    sourcesSummary += `\\n\\n## ${source.source}\\n`;\n    if (source.items && source.items.length > 0) {\n      for (const item of source.items.slice(0, 5)) {\n        sourcesSummary += `- **${item.title}**`;\n        if (item.date) sourcesSummary += ` (${item.date})`;\n        sourcesSummary += `\\n`;\n        if (item.description) sourcesSummary += `  ${item.description.slice(0, 200)}...\\n`;\n        if (item.link) sourcesSummary += `  Link: ${item.link}\\n`;\n      }\n    } else {\n      sourcesSummary += `- No recent updates found\\n`;\n    }\n  } else {\n    failedSources.push(source.source);\n  }\n}\n\nlet failedNote = failedSources.length > 0 ? `\\n\\n**Note:** The following sources were unavailable this week: ${failedSources.join(', ')}` : '';\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n\n## YOUR TASK\nAnalyze the following data and produce Kelly's Weekly Intel Brief.\n\n## AD PILOT'S TECH STACK\n- HeyGen: AI avatar video generation\n- ElevenLabs: Voice synthesis\n- Creatomate: Video template rendering\n- n8n: Workflow automation (self-hosted on Railway)\n- Cloudinary: Media management\n- Meta/TikTok: Ad publishing platforms\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\nProduce a concise, actionable brief:\n\n### 🔴 ACTION REQUIRED\nBreaking changes, security incidents, significantly better alternatives. Include links.\n\n### 🟡 INVESTIGATE THIS WEEK\nNew features worth testing, cost optimizations, emerging tools.\n\n### 🟢 AWARENESS\nIndustry news clients might ask about, competitor moves, 30/60/90 day horizon.\n\n## GUIDELINES\n- Be specific and actionable - no fluff\n- Include direct links\n- Focus on Ad Pilot's stack\n- If nothing relevant, say \"Nothing critical this week\"\n- Prioritize: security > breaking changes > cost savings > new features`;\n\nreturn [{ json: { prompt, today, emailTo: 'kelly@ad-pilot.ai', emailFrom: 'info@ad-pilot.ai' } }];"
+        "jsCode": "// Prepare prompt for LLM with HeyGen critical monitoring\nconst allItems = $input.all();\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// ─── Infra version snapshot (added 2026-04-23) ─────────────────\nlet versionContext = '';\ntry {\n  const vc = $('Build Version Context').first().json;\n  if (vc && vc.summary) {\n    versionContext = '\\n## INFRA VERSION STATUS\\n' + vc.summary + '\\n';\n    if (vc.errors && vc.errors.length) {\n      versionContext += '_(note: ' + vc.errors.length + ' version fetch(es) failed — proceed without)_\\n';\n    }\n  }\n} catch (e) {\n  versionContext = '';\n}\n// ────────────────────────────────────────────────────────────────\n\n\n// Organize sources by category\nconst categories = {\n  stack: { name: 'Core Stack (HeyGen, ElevenLabs, n8n, etc.)', items: [] },\n  llm: { name: 'LLM / AI News', items: [] },\n  platform: { name: 'Ad Platforms (Meta, TikTok)', items: [] },\n  competitor: { name: 'Competitors & Industry', items: [] },\n  legal: { name: 'Legal & Compliance', items: [] },\n  emerging: { name: 'Emerging Platforms', items: [] }\n};\n\nconst failed = [];\nlet criticalAlerts = [];\n\nfor (const item of allItems) {\n  const data = item.json;\n  \n  if (data.success && data.content) {\n    const cat = categories[data.category] || categories.competitor;\n    cat.items.push(data);\n    \n    // Check for critical alerts\n    if (data.critical && data.criticalMatches && data.criticalMatches.length > 0) {\n      criticalAlerts.push({\n        source: data.source,\n        matches: data.criticalMatches\n      });\n    }\n  } else {\n    failed.push({\n      source: data.source,\n      error: data.error || 'Unknown error'\n    });\n  }\n}\n\n// Build sources summary\nlet sourcesSummary = '';\nfor (const [key, cat] of Object.entries(categories)) {\n  if (cat.items.length > 0) {\n    sourcesSummary += `\\n### ${cat.name}\\n\\n`;\n    for (const source of cat.items) {\n      sourcesSummary += `**${source.source}:**\\n${source.content}\\n\\n`;\n    }\n  }\n}\n\n// Build failed note\nlet failedNote = '';\nif (failed.length > 0) {\n  failedNote = `\\n\\n---\\nNote: Failed to fetch ${failed.length} sources: ${failed.map(f => f.source).join(', ')}`;\n}\n\n// Build critical alerts section\nlet criticalSection = '';\nif (criticalAlerts.length > 0) {\n  criticalSection = `\\n\\n## 🚨 CRITICAL ALERTS DETECTED\\n`;\n  for (const alert of criticalAlerts) {\n    criticalSection += `- **${alert.source}** contains keywords: ${alert.matches.join(', ')}\\n`;\n  }\n  criticalSection += `\\nPay special attention to these sources!\\n`;\n}\n\nconst prompt = `You are the Weekly Intel Agent for Ad Pilot, an AI-powered video advertising platform for small local businesses.\n\nToday's date: ${today}\n${criticalSection}\n${versionContext}\n\n## YOUR TASK\nAnalyze the following data and produce THREE outputs:\n1. Kelly's Intel Brief (technical, actionable)\n2. Eric's Sales Sheet (conversational, client-facing)\n3. Client Report Blurb (only if newsworthy)\n\n## AD PILOT'S TECH STACK (know this well!)\n- **HeyGen**: AI avatar video generation — CRITICAL dependency\n  - We use motion_type: \"kling\" via API (pulls from API credits, NOT GenCredits)\n  - We use saved motion avatars for reuse\n  - 11Labs voice integration (hidden third-party charges via plan_credit)\n- **ElevenLabs**: Voice synthesis for custom voices\n- **Creatomate**: Video template rendering\n- **n8n**: Workflow automation (self-hosted on Railway)\n- **Cloudinary**: Media management and transformations\n- **Railway**: Hosting for n8n and services\n- **Vercel**: Frontend hosting\n- **Meta/TikTok**: Ad publishing platforms\n\n## ⚠️ HEYGEN API CRITICAL MONITORING\n\nAd Pilot depends heavily on HeyGen's API. IMMEDIATELY FLAG if you see ANY mention of:\n- motion_type deprecation or changes\n- kling, consistent, or consistent_gen_3 being removed or changed\n- API credits moving to GenCredits for motion generation\n- Avatar IV becoming mandatory\n- Third-party pricing changes (affects 11Labs integration costs)\n- Photo avatar or motion avatar policy changes\n- Any \"breaking changes\" or \"deprecation\" notices\n\nThese changes could break Ad Pilot's video generation or significantly increase costs.\n\n## ⚠️ N8N VERSION AWARENESS\nYou have INFRA VERSION STATUS above showing the currently-pinned n8n versions vs the latest stable release.\n- If prod is 5+ minor versions behind, surface an \"actionRequired\" item recommending an upgrade and link to https://github.com/n8n-io/n8n/releases\n- If the latest-release data or source content mentions new n8n features/fixes relevant to workflows we use, surface them\n- Do NOT suggest upgrading past the latest stable release (e.g. to a beta)\n\n## COLLECTED SOURCE DATA\n${sourcesSummary}\n${failedNote}\n\n## OUTPUT FORMAT\n\nReturn a valid JSON object with exactly three keys. No markdown code blocks, just the raw JSON:\n\n{\n  \"kellyBrief\": {\n    \"criticalAlerts\": [\"ONLY if HeyGen/stack breaking changes detected - include full details\"],\n    \"actionRequired\": [\"item 1 with link\", \"item 2 with link\"],\n    \"investigateThisWeek\": [\"item 1 with link\", \"item 2 with link\"],\n    \"awareness\": [\"item 1\", \"item 2\"]\n  },\n  \"ericSheet\": {\n    \"whatsNewToSell\": [\"capability 1 - how to pitch it\", \"capability 2 - how to pitch it\"],\n    \"competitorIntel\": [\"insight 1\", \"insight 2\"],\n    \"objectionPrep\": [\n      {\"objection\": \"Client might say: I saw [article]...\", \"response\": \"Here's what that means for them...\"}\n    ],\n    \"conversationStarters\": [\"Did you hear about X? Here's what it means for your business...\"]\n  },\n  \"clientBlurb\": {\n    \"include\": true,\n    \"whatsNew\": \"One sentence about relevant AI marketing news\",\n    \"whatWeAreDoing\": \"How Ad Pilot is leveraging this for clients\",\n    \"tipOfTheWeek\": \"Optional helpful tip for their video ads\"\n  }\n}\n\n## GUIDELINES\n- Be specific and actionable — no fluff\n- Include direct links where available\n- Focus on Ad Pilot's stack FIRST, then broader industry\n- If nothing relevant for a section, return empty array or include: false\n- ALWAYS check HeyGen news carefully — flag any API changes in criticalAlerts\n- Eric's content should be quotable in client conversations (casual, friendly tone)\n- Client blurb only if there's genuinely interesting news (set include: false if nothing noteworthy)\n- Keep each item concise but informative`;\n\nreturn [{ json: { prompt: prompt, today: today } }];"
       },
       "id": "prepare-prompt",
       "name": "Prepare Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        160
+        1344,
+        208
       ]
     },
     {
@@ -139,8 +213,8 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.4,
       "position": [
-        1280,
-        160
+        1568,
+        208
       ]
     },
     {
@@ -154,8 +228,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        1328,
-        352
+        1616,
+        400
       ],
       "credentials": {
         "googlePalmApi": {
@@ -166,15 +240,54 @@
     },
     {
       "parameters": {
-        "jsCode": "// Format the LLM output as HTML email\nconst llmOutput = $input.first().json.text || $input.first().json.response || 'Analysis failed';\nconst today = new Date();\nconst dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });\n\nlet htmlContent = llmOutput\n  .replace(/### 🔴 ACTION REQUIRED/g, '<h2 style=\"color: #dc2626; margin-top: 24px;\">🔴 ACTION REQUIRED</h2>')\n  .replace(/### 🟡 INVESTIGATE THIS WEEK/g, '<h2 style=\"color: #ca8a04; margin-top: 24px;\">🟡 INVESTIGATE THIS WEEK</h2>')\n  .replace(/### 🟢 AWARENESS/g, '<h2 style=\"color: #16a34a; margin-top: 24px;\">🟢 AWARENESS</h2>')\n  .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')\n  .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href=\"$2\" style=\"color: #2563eb;\">$1</a>')\n  .replace(/^- /gm, '• ')\n  .replace(/\\n\\n/g, '</p><p style=\"margin: 12px 0;\">')\n  .replace(/\\n/g, '<br>');\n\nconst emailHtml = `<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"><style>\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 680px; margin: 0 auto; padding: 20px; }\n  h1 { color: #111827; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px; }\n  h2 { margin-top: 24px; margin-bottom: 12px; }\n  a { color: #2563eb; }\n  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n</style></head>\n<body>\n  <h1>🦅 Weekly Intel Brief</h1>\n  <p style=\"color: #6b7280; margin-bottom: 24px;\">${dateStr}</p>\n  <p style=\"margin: 12px 0;\">${htmlContent}</p>\n  <div class=\"footer\">\n    <p>Generated by Ad Pilot Intel Agent</p>\n    <p>Sources: OpenAI, Google AI, n8n</p>\n  </div>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    emailSubject: `🦅 Weekly Intel Brief — ${dateStr}`,\n    emailHtml,\n    rawOutput: llmOutput,\n    emailTo: $('Prepare Prompt').item.json.emailTo,\n    emailFrom: $('Prepare Prompt').item.json.emailFrom\n  }\n}];"
+        "jsCode": "// Parse LLM Response - safely extract JSON\nconst response = $input.item.json.text || $input.item.json.response || $input.item.json.content || '';\n\nlet parsed;\ntry {\n  let jsonStr = response;\n\n  // Remove markdown code blocks if present\n  const jsonMatch = response.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (jsonMatch) {\n    jsonStr = jsonMatch[1];\n  }\n\n  parsed = JSON.parse(jsonStr.trim());\n\n  // Validate structure\n  if (!parsed.kellyBrief || !parsed.ericSheet || !parsed.clientBlurb) {\n    throw new Error('Missing required keys in response');\n  }\n\n} catch (error) {\n  // Return safe default if parsing fails\n  parsed = {\n    kellyBrief: {\n      criticalAlerts: [],\n      actionRequired: ['⚠️ LLM response parsing failed - check workflow logs'],\n      investigateThisWeek: [],\n      awareness: ['Raw response saved for debugging']\n    },\n    ericSheet: {\n      whatsNewToSell: [],\n      competitorIntel: [],\n      objectionPrep: [],\n      conversationStarters: []\n    },\n    clientBlurb: {\n      include: false\n    },\n    _parseError: error.message,\n    _rawResponse: response.substring(0, 1000)\n  };\n}\n\nreturn [{ json: parsed }];"
       },
-      "id": "format-email",
-      "name": "Format Email",
+      "id": "parse-response",
+      "name": "Parse LLM Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1552,
-        160
+        1840,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Kelly's Intel Brief\nconst data = $input.item.json;\nconst kelly = data.kellyBrief;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #1a56db; border-bottom: 3px solid #1a56db; padding-bottom: 10px; }\n    h2 { margin-top: 30px; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 10px; }\n    a { color: #1a56db; }\n    .critical { background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }\n    .critical h2 { color: #dc2626; margin-top: 0; }\n    .action { background: #fefce8; border-left: 4px solid #ca8a04; padding: 15px; margin: 20px 0; }\n    .action h2 { color: #ca8a04; margin-top: 0; }\n    .investigate { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }\n    .investigate h2 { color: #b45309; margin-top: 0; }\n    .awareness { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; }\n    .awareness h2 { color: #16a34a; margin-top: 0; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>Ad Pilot Weekly Intel Brief</h1>\n  <p><em>${dateStr}</em></p>\n`;\n\n// Critical Alerts\nif (kelly.criticalAlerts && kelly.criticalAlerts.length > 0) {\n  html += `<div class=\"critical\"><h2>🚨 CRITICAL ALERTS</h2><ul>`;\n  kelly.criticalAlerts.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Action Required\nif (kelly.actionRequired && kelly.actionRequired.length > 0) {\n  html += `<div class=\"action\"><h2>🔴 ACTION REQUIRED</h2><ul>`;\n  kelly.actionRequired.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Investigate This Week\nif (kelly.investigateThisWeek && kelly.investigateThisWeek.length > 0) {\n  html += `<div class=\"investigate\"><h2>🟡 INVESTIGATE THIS WEEK</h2><ul>`;\n  kelly.investigateThisWeek.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Awareness\nif (kelly.awareness && kelly.awareness.length > 0) {\n  html += `<div class=\"awareness\"><h2>🟢 AWARENESS</h2><ul>`;\n  kelly.awareness.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Nothing this week\nconst hasContent = (kelly.criticalAlerts?.length > 0) ||\n                   (kelly.actionRequired?.length > 0) ||\n                   (kelly.investigateThisWeek?.length > 0) ||\n                   (kelly.awareness?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"awareness\"><p>✅ All quiet this week. Stack is stable, no critical updates detected.</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Generated by Ad Pilot Weekly Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `${kelly.criticalAlerts?.length > 0 ? '🚨' : '📊'} Weekly Intel Brief - ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'kelly'\n  }\n}];"
+      },
+      "id": "format-kelly",
+      "name": "Format Kelly's Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Eric's Sales Sheet\nconst data = $('Parse LLM Response').item.json;\nconst eric = data.ericSheet;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }\n    h1 { color: #7c3aed; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }\n    h2 { margin-top: 30px; color: #4c1d95; }\n    ul { padding-left: 20px; }\n    li { margin-bottom: 12px; }\n    .intro { font-size: 18px; color: #6b7280; margin-bottom: 30px; }\n    .section { background: #faf5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }\n    .objection { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }\n    .objection strong { color: #5b21b6; }\n    .response { color: #4c1d95; margin-top: 8px; }\n    .conversation { background: #ecfdf5; border-radius: 8px; padding: 15px; margin: 10px 0; font-style: italic; }\n    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }\n  </style>\n</head>\n<body>\n  <h1>📊 Ad Pilot Sales Sheet</h1>\n  <p class=\"intro\">Hey Eric! Here's what's relevant for client conversations this week.</p>\n  <p><em>Week of ${dateStr}</em></p>\n`;\n\n// What's New to Sell\nif (eric.whatsNewToSell && eric.whatsNewToSell.length > 0) {\n  html += `<div class=\"section\"><h2>🚀 What's New to Sell</h2><ul>`;\n  eric.whatsNewToSell.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Competitor Intel\nif (eric.competitorIntel && eric.competitorIntel.length > 0) {\n  html += `<div class=\"section\"><h2>🔍 Competitor Intel</h2><ul>`;\n  eric.competitorIntel.forEach(item => {\n    html += `<li>${item}</li>`;\n  });\n  html += `</ul></div>`;\n}\n\n// Objection Prep\nif (eric.objectionPrep && eric.objectionPrep.length > 0) {\n  html += `<h2>💬 Objection Prep</h2>`;\n  eric.objectionPrep.forEach(item => {\n    html += `<div class=\"objection\">\n      <strong>\"${item.objection}\"</strong>\n      <div class=\"response\">→ ${item.response}</div>\n    </div>`;\n  });\n}\n\n// Conversation Starters\nif (eric.conversationStarters && eric.conversationStarters.length > 0) {\n  html += `<h2>🗣️ Conversation Starters</h2>`;\n  eric.conversationStarters.forEach(item => {\n    html += `<div class=\"conversation\">\"${item}\"</div>`;\n  });\n}\n\n// Nothing this week\nconst hasContent = (eric.whatsNewToSell?.length > 0) ||\n                   (eric.competitorIntel?.length > 0) ||\n                   (eric.objectionPrep?.length > 0) ||\n                   (eric.conversationStarters?.length > 0);\n\nif (!hasContent) {\n  html += `<div class=\"section\"><p>Quiet week on the news front! Business as usual — our tech stack is stable and clients are happy. 🎉</p></div>`;\n}\n\nhtml += `\n  <div class=\"footer\">\n    <p>Let's fly! 🐦 — Generated by Ad Pilot Intel Agent</p>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai,eric@ad-pilot.ai',\n    subject: `📊 Sales Sheet - Week of ${new Date().toLocaleDateString()}`,\n    html: html,\n    type: 'eric'\n  }\n}];"
+      },
+      "id": "format-eric",
+      "name": "Format Eric's Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Client Blurb (only if include: true)\nconst data = $('Parse LLM Response').item.json;\nconst blurb = data.clientBlurb;\nconst dateStr = new Date().toLocaleDateString('en-US', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Only generate if there's something worth sharing\nif (!blurb || !blurb.include) {\n  return [{\n    json: {\n      skip: true,\n      reason: 'No newsworthy content for clients this week',\n      type: 'client'\n    }\n  }];\n}\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }\n    h1 { color: #059669; }\n    .blurb-box { background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 20px 0; }\n    .blurb-section { margin-bottom: 15px; }\n    .blurb-section strong { color: #047857; }\n    .tip { background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .tip strong { color: #b45309; }\n    .usage-note { background: #f3f4f6; border-radius: 8px; padding: 15px; margin-top: 30px; font-size: 14px; color: #6b7280; }\n    .footer { margin-top: 30px; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <h1>📰 Client Report Blurb</h1>\n  <p><em>Week of ${dateStr}</em></p>\n  <p>Here's a ready-to-use blurb for this week's client reports:</p>\n\n  <div class=\"blurb-box\">\n    <div class=\"blurb-section\">\n      <strong>What's New in AI Marketing:</strong><br>\n      ${blurb.whatsNew || 'No major updates this week.'}\n    </div>\n\n    <div class=\"blurb-section\">\n      <strong>What We're Doing About It:</strong><br>\n      ${blurb.whatWeAreDoing || 'Continuing to optimize your campaigns with our latest tools.'}\n    </div>\n\n    ${blurb.tipOfTheWeek ? `\n    <div class=\"tip\">\n      <strong>💡 Tip of the Week:</strong><br>\n      ${blurb.tipOfTheWeek}\n    </div>\n    ` : ''}\n  </div>\n\n  <div class=\"usage-note\">\n    <strong>Usage:</strong> Copy the content above into the \"Industry Updates\" section of client weekly reports. Feel free to customize the tone for each client.\n  </div>\n\n  <div class=\"footer\">\n    Generated by Ad Pilot Weekly Intel Agent\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    to: 'kelly@ad-pilot.ai',\n    subject: `📰 Client Blurb Ready - ${new Date().toLocaleDateString()}`,\n    html: html,\n    skip: false,\n    type: 'client'\n  }\n}];"
+      },
+      "id": "format-client",
+      "name": "Format Client Blurb",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        368
       ]
     },
     {
@@ -185,16 +298,16 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"{{ $json.emailFrom }}\",\n  \"to\": \"{{ $json.emailTo }}\",\n  \"subject\": \"{{ $json.emailSubject }}\",\n  \"html\": {{ JSON.stringify($json.emailHtml) }}\n}",
+        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
         "options": {}
       },
-      "id": "send-email",
-      "name": "Send via Resend API",
+      "id": "send-kelly",
+      "name": "Send Kelly's Brief",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1760,
-        160
+        2192,
+        48
       ],
       "credentials": {
         "httpBearerAuth": {
@@ -202,7 +315,96 @@
           "name": "Resend"
         }
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": {{ JSON.stringify($json.to.split(',').map(e => e.trim())) }},\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "options": {}
+      },
+      "id": "send-eric",
+      "name": "Send Eric's Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2192,
+        208
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-client-blurb",
+      "name": "If Client Blurb",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2192,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"info@ad-pilot.ai\",\n  \"to\": \"{{ $json.to }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "options": {}
+      },
+      "id": "send-client",
+      "name": "Send Client Blurb",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2352,
+        352
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "disabled": true
     },
     {
       "parameters": {
@@ -217,7 +419,7 @@
             {
               "id": "message",
               "name": "message",
-              "value": "Intel brief sent successfully",
+              "value": "All intel emails sent successfully",
               "type": "string"
             }
           ]
@@ -229,22 +431,201 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1984,
-        64
+        2512,
+        336
       ]
     },
     {
       "parameters": {
-        "jsCode": "console.error('Email failed:', JSON.stringify($input.first().json));\nreturn [{ json: { status: 'email_failed', message: 'Brief generated but email failed.', rawOutput: $('Format Email').item.json.rawOutput, emailHtml: $('Format Email').item.json.emailHtml } }];"
+        "assignments": {
+          "assignments": [
+            {
+              "id": "skip-status",
+              "name": "status",
+              "value": "skipped",
+              "type": "string"
+            },
+            {
+              "id": "skip-message",
+              "name": "message",
+              "value": "Client blurb skipped - nothing newsworthy",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "handle-email-error",
-      "name": "Log Email Error",
+      "id": "client-skipped",
+      "name": "Client Skipped",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2352,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2352,
+        32
+      ],
+      "id": "00098bc0-c07f-4b38-96d1-de6665a48163",
+      "name": "Wait after email 1",
+      "webhookId": "7c7d78fb-0fc6-4d3d-be9a-b717a758789e"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2352,
+        192
+      ],
+      "id": "776f2793-40e2-40d8-a074-c91e5dace294",
+      "name": "Wait after email 2",
+      "webhookId": "17198b43-a27a-4416-8fae-81bc610abb83"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/kknight78/ad-pilot-n8n/contents/Dockerfile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ref",
+              "value": "main"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        480
+      ],
+      "id": "fetchproddockerfile000001",
+      "name": "Fetch Prod Dockerfile",
+      "credentials": {
+        "githubApi": {
+          "id": "kVCHIpOK0jtcRafh",
+          "name": "GitHub account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/kknight78/ad-pilot-n8n/contents/Dockerfile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ref",
+              "value": "dev"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        480
+      ],
+      "id": "fetchdevdockerfile0000001",
+      "name": "Fetch Dev Dockerfile",
+      "credentials": {
+        "githubApi": {
+          "id": "kVCHIpOK0jtcRafh",
+          "name": "GitHub account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/n8n-io/n8n/releases",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "20"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "ad-pilot-intel-agent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        480
+      ],
+      "id": "fetchlatestrelease0000001",
+      "name": "Fetch Latest n8n Release",
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Version Context\n// Reads outputs of the three previous fetches and produces a structured\n// version summary for the Prepare Prompt node. Uses try/catch everywhere —\n// the workflow must continue even if any fetch failed (e.g. GitHub rate-limit).\n\nfunction extractN8nVersion(dockerfileText) {\n  // Looks for: FROM docker.n8n.io/n8nio/n8n:X.Y.Z\n  const m = /n8nio\\/n8n:([0-9]+\\.[0-9]+\\.[0-9]+)/.exec(dockerfileText || '');\n  return m ? m[1] : null;\n}\n\nfunction decodeBase64Content(resp) {\n  try {\n    const content = resp && resp.content;\n    if (!content) return null;\n    // GitHub returns base64 with \\n line breaks\n    const raw = Buffer.from(content.replace(/\\n/g, ''), 'base64').toString('utf8');\n    return raw;\n  } catch (e) {\n    return null;\n  }\n}\n\nfunction safeSemverCmp(a, b) {\n  // Returns positive if b > a, negative if a > b, 0 if equal. Null on bad input.\n  if (!a || !b) return null;\n  const pa = a.split('.').map(n => parseInt(n, 10));\n  const pb = b.split('.').map(n => parseInt(n, 10));\n  for (let i = 0; i < 3; i++) {\n    if ((pb[i] || 0) !== (pa[i] || 0)) return (pb[i] || 0) - (pa[i] || 0);\n  }\n  return 0;\n}\n\nlet mainVer = null, devVer = null, latestVer = null, latestDate = null;\nconst errors = [];\n\ntry {\n  const prodResp = $('Fetch Prod Dockerfile').first().json;\n  const text = decodeBase64Content(prodResp);\n  mainVer = extractN8nVersion(text);\n  if (!mainVer) errors.push('could not parse main Dockerfile');\n} catch (e) { errors.push('prod fetch failed: ' + e.message); }\n\ntry {\n  const devResp = $('Fetch Dev Dockerfile').first().json;\n  const text = decodeBase64Content(devResp);\n  devVer = extractN8nVersion(text);\n  if (!devVer) errors.push('could not parse dev Dockerfile');\n} catch (e) { errors.push('dev fetch failed: ' + e.message); }\n\ntry {\n  // The HTTP node's `fetchLatestN8nRelease` returns the releases list as an array\n  // of items in `$('Fetch Latest n8n Release').all()` — each item is one release.\n  // We filter: prerelease===false, tag matches n8n@2.X.Y (current major line).\n  const allReleases = $('Fetch Latest n8n Release').all();\n  const candidates = [];\n  for (const it of allReleases) {\n    const r = it.json || {};\n    if (r.prerelease) continue;\n    const tag = r.tag_name || '';\n    const m = /^n8n@(2\\.[0-9]+\\.[0-9]+)$/.exec(tag);\n    if (m) candidates.push({ version: m[1], published: r.published_at });\n  }\n  // Sort descending by semver and take first\n  candidates.sort((a, b) => {\n    const pa = a.version.split('.').map(n => parseInt(n, 10));\n    const pb = b.version.split('.').map(n => parseInt(n, 10));\n    for (let i = 0; i < 3; i++) {\n      if (pa[i] !== pb[i]) return pb[i] - pa[i]; // desc: larger first\n    }\n    return 0;\n  });\n  if (candidates.length) {\n    latestVer = candidates[0].version;\n    latestDate = candidates[0].published;\n  } else {\n    errors.push('no non-prerelease n8n@2.x release found in list');\n  }\n} catch (e) { errors.push('latest-release fetch failed: ' + e.message); }\n\nconst mainBehind = safeSemverCmp(mainVer, latestVer);\nconst devBehind = safeSemverCmp(devVer, latestVer);\n\n// Build a human-readable summary block for the LLM prompt\nlet summary = '';\nif (mainVer || devVer || latestVer) {\n  summary = 'Ad Pilot n8n deployment snapshot (read from Dockerfile on GitHub):\\n';\n  summary += `- prod (ad-pilot-n8n main branch): ${mainVer || 'unknown'}\\n`;\n  summary += `- dev  (ad-pilot-n8n dev branch):  ${devVer || 'unknown'}\\n`;\n  summary += `- latest stable on GitHub:         ${latestVer || 'unknown'}`;\n  if (latestDate) summary += ` (released ${latestDate.slice(0, 10)})`;\n  summary += '\\n';\n  if (mainBehind && mainBehind > 0) {\n    summary += `- prod is ${mainBehind} patch/minor version(s) behind latest.\\n`;\n  }\n  if (devBehind && devBehind > 0) {\n    summary += `- dev is ${devBehind} patch/minor version(s) behind latest.\\n`;\n  }\n} else {\n  summary = 'Version snapshot unavailable (all three GitHub fetches failed).';\n}\n\nreturn [{\n  json: {\n    n8n: {\n      prod_version: mainVer,\n      dev_version: devVer,\n      latest_stable: latestVer,\n      latest_released_at: latestDate,\n      prod_behind_by: mainBehind,\n      dev_behind_by: devBehind\n    },\n    summary: summary,\n    errors: errors\n  }\n}];"
+      },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1984,
-        256
-      ]
+        896,
+        480
+      ],
+      "id": "buildversioncontext000001",
+      "name": "Build Version Context"
     }
   ],
   "connections": {
@@ -252,7 +633,7 @@
       "main": [
         [
           {
-            "node": "Config Sources",
+            "node": "Fetch Prod Dockerfile",
             "type": "main",
             "index": 0
           }
@@ -263,7 +644,7 @@
       "main": [
         [
           {
-            "node": "Config Sources",
+            "node": "Fetch Prod Dockerfile",
             "type": "main",
             "index": 0
           }
@@ -274,14 +655,32 @@
       "main": [
         [
           {
-            "node": "Fetch Sources",
+            "node": "Switch: RSS or Scrape",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Fetch Sources": {
+    "Switch: RSS or Scrape": {
+      "main": [
+        [
+          {
+            "node": "Fetch RSS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Scrape Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch RSS": {
       "main": [
         [
           {
@@ -292,9 +691,20 @@
         ],
         [
           {
-            "node": "Handle Fetch Error",
+            "node": "Handle RSS Error",
             "type": "main",
             "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Handler": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
@@ -303,25 +713,25 @@
       "main": [
         [
           {
-            "node": "Merge Results",
+            "node": "Merge All Results",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Handle Fetch Error": {
+    "Handle RSS Error": {
       "main": [
         [
           {
-            "node": "Merge Results",
+            "node": "Merge All Results",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
     },
-    "Merge Results": {
+    "Merge All Results": {
       "main": [
         [
           {
@@ -358,25 +768,100 @@
       "main": [
         [
           {
-            "node": "Format Email",
+            "node": "Parse LLM Response",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format Email": {
+    "Parse LLM Response": {
       "main": [
         [
           {
-            "node": "Send via Resend API",
+            "node": "Format Kelly's Brief",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send via Resend API": {
+    "Format Kelly's Brief": {
+      "main": [
+        [
+          {
+            "node": "Send Kelly's Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Eric's Sheet": {
+      "main": [
+        [
+          {
+            "node": "Send Eric's Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Client Blurb": {
+      "main": [
+        [
+          {
+            "node": "If Client Blurb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Kelly's Brief": {
+      "main": [
+        [
+          {
+            "node": "Wait after email 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Send Eric's Sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait after email 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "If Client Blurb": {
+      "main": [
+        [
+          {
+            "node": "Send Client Blurb",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Client Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Client Blurb": {
       "main": [
         [
           {
@@ -385,9 +870,69 @@
             "index": 0
           }
         ],
+        []
+      ]
+    },
+    "Wait after email 1": {
+      "main": [
         [
           {
-            "node": "Log Email Error",
+            "node": "Format Eric's Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait after email 2": {
+      "main": [
+        [
+          {
+            "node": "Format Client Blurb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Prod Dockerfile": {
+      "main": [
+        [
+          {
+            "node": "Fetch Dev Dockerfile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Dev Dockerfile": {
+      "main": [
+        [
+          {
+            "node": "Fetch Latest n8n Release",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Latest n8n Release": {
+      "main": [
+        [
+          {
+            "node": "Build Version Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Version Context": {
+      "main": [
+        [
+          {
+            "node": "Config Sources",
             "type": "main",
             "index": 0
           }
@@ -407,7 +952,7 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "a4bf8972-053a-4562-a253-27a9ec9ab0eb",
+  "versionId": "4b2e30e1-a05e-4a8e-91b9-a7aba53863ae",
   "activeVersionId": null,
   "triggerCount": 2,
   "shared": [
