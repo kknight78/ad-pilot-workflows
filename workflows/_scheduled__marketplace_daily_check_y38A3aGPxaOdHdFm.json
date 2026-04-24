@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-12T13:00:22.105Z",
+  "updatedAt": "2026-04-23T21:29:51.228Z",
   "createdAt": "2026-04-09T22:46:47.191Z",
   "id": "y38A3aGPxaOdHdFm",
   "name": "[SCHEDULED] Marketplace Daily Check",
@@ -110,7 +110,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"from\": \"Ad Pilot <notification@ad-pilot.ai>\", \"to\": [\"wedin95@aol.com\", \"kelly@ad-pilot.ai\"], \"subject\": \"{{ $json.subject }}\", \"html\": {{ JSON.stringify($json.html) }} }",
+        "jsonBody": "={\"from\": \"Ad Pilot <notification@ad-pilot.ai>\", \"to\": [\"shaddelaney@carmackcars.com\", \"kelly@ad-pilot.ai\"], \"subject\": \"{{ $json.subject }}\", \"html\": {{ JSON.stringify($json.html) }} }",
         "options": {}
       }
     },
@@ -222,8 +222,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "ee40957a-133f-447f-9339-39f42b4c5281",
-  "activeVersionId": "ee40957a-133f-447f-9339-39f42b4c5281",
+  "versionId": "56073932-33a6-4095-ae68-cfe068b2539d",
+  "activeVersionId": "56073932-33a6-4095-ae68-cfe068b2539d",
   "triggerCount": 2,
   "shared": [
     {
@@ -235,9 +235,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-12T13:00:22.168Z",
-    "createdAt": "2026-04-12T13:00:22.168Z",
-    "versionId": "ee40957a-133f-447f-9339-39f42b4c5281",
+    "updatedAt": "2026-04-23T21:29:51.298Z",
+    "createdAt": "2026-04-23T21:29:51.298Z",
+    "versionId": "56073932-33a6-4095-ae68-cfe068b2539d",
     "workflowId": "y38A3aGPxaOdHdFm",
     "nodes": [
       {
@@ -344,7 +344,7 @@
           "genericAuthType": "httpBearerAuth",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\"from\": \"Ad Pilot <notification@ad-pilot.ai>\", \"to\": [\"wedin95@aol.com\", \"kelly@ad-pilot.ai\"], \"subject\": \"{{ $json.subject }}\", \"html\": {{ JSON.stringify($json.html) }} }",
+          "jsonBody": "={\"from\": \"Ad Pilot <notification@ad-pilot.ai>\", \"to\": [\"shaddelaney@carmackcars.com\", \"kelly@ad-pilot.ai\"], \"subject\": \"{{ $json.subject }}\", \"html\": {{ JSON.stringify($json.html) }} }",
           "options": {}
         }
       },
