@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:03.752Z",
+  "updatedAt": "2026-04-29T17:55:20.543Z",
   "createdAt": "2026-01-26T23:34:40.537Z",
   "id": "rCHIIq9b5UxNMP06",
   "name": "[04] Generate Video",
@@ -867,8 +867,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "8560963b-ce10-4367-99c2-023008cfd8a2",
-  "activeVersionId": "8560963b-ce10-4367-99c2-023008cfd8a2",
+  "versionId": "972eaf63-6a05-4806-855a-25bf2c58192e",
+  "activeVersionId": "972eaf63-6a05-4806-855a-25bf2c58192e",
   "triggerCount": 1,
   "shared": [
     {
@@ -880,9 +880,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:31:03.755Z",
-    "createdAt": "2026-04-02T21:31:03.755Z",
-    "versionId": "8560963b-ce10-4367-99c2-023008cfd8a2",
+    "updatedAt": "2026-04-29T17:55:20.549Z",
+    "createdAt": "2026-04-29T17:55:20.549Z",
+    "versionId": "972eaf63-6a05-4806-855a-25bf2c58192e",
     "workflowId": "rCHIIq9b5UxNMP06",
     "nodes": [
       {
