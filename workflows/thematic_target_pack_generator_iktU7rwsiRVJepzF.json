@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:47.688Z",
+  "updatedAt": "2026-04-29T18:50:17.915Z",
   "createdAt": "2026-01-19T20:01:58.634Z",
   "id": "iktU7rwsiRVJepzF",
   "name": "Thematic Target Pack Generator",
@@ -207,7 +207,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googlePalmApi",
         "sendBody": true,
@@ -228,7 +228,10 @@
           ]
         },
         "options": {
-          "timeout": 30000
+          "timeout": 30000,
+          "retry": true,
+          "retryAttempts": 3,
+          "retryDelay": 2000
         }
       },
       "id": "gemini-seed-001",
@@ -249,7 +252,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googlePalmApi",
         "sendBody": true,
@@ -270,7 +273,10 @@
           ]
         },
         "options": {
-          "timeout": 45000
+          "timeout": 45000,
+          "retry": true,
+          "retryAttempts": 3,
+          "retryDelay": 2000
         }
       },
       "id": "gemini-pack-001",
@@ -625,8 +631,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b0790911-8b1a-4f4c-9cd9-80f3c00db9c8",
-  "activeVersionId": "b0790911-8b1a-4f4c-9cd9-80f3c00db9c8",
+  "versionId": "a6044a1e-1a18-44c8-a4ba-03be6245fdb5",
+  "activeVersionId": "a6044a1e-1a18-44c8-a4ba-03be6245fdb5",
   "triggerCount": 1,
   "shared": [
     {
@@ -638,9 +644,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:31:47.729Z",
-    "createdAt": "2026-04-02T21:31:47.729Z",
-    "versionId": "b0790911-8b1a-4f4c-9cd9-80f3c00db9c8",
+    "updatedAt": "2026-04-29T18:50:17.984Z",
+    "createdAt": "2026-04-29T18:50:17.984Z",
+    "versionId": "a6044a1e-1a18-44c8-a4ba-03be6245fdb5",
     "workflowId": "iktU7rwsiRVJepzF",
     "nodes": [
       {
@@ -844,7 +850,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "googlePalmApi",
           "sendBody": true,
@@ -865,7 +871,10 @@
             ]
           },
           "options": {
-            "timeout": 30000
+            "timeout": 30000,
+            "retry": true,
+            "retryAttempts": 3,
+            "retryDelay": 2000
           }
         },
         "id": "gemini-seed-001",
@@ -886,7 +895,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "googlePalmApi",
           "sendBody": true,
@@ -907,7 +916,10 @@
             ]
           },
           "options": {
-            "timeout": 45000
+            "timeout": 45000,
+            "retry": true,
+            "retryAttempts": 3,
+            "retryDelay": 2000
           }
         },
         "id": "gemini-pack-001",
