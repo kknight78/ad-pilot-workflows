@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-13T14:02:17.778Z",
+  "updatedAt": "2026-04-29T12:16:27.899Z",
   "createdAt": "2026-02-18T03:32:31.693Z",
   "id": "lggMXNxZCjvBoSil",
   "name": "[SCHEDULED] Friday Scripts Lock",
@@ -100,7 +100,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE weekly_plans\nSET status = 'scripts_locked',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'scripts_ready'\n  AND EXISTS (SELECT 1 FROM assets a WHERE a.plan_id = wp.id AND a.included = true AND a.script_text IS NOT NULL);",
+        "query": "UPDATE weekly_plans AS wp\nSET status = 'scripts_locked',\n    updated_at = NOW()\nWHERE wp.id = '{{ $json.plan_id }}'::uuid\n  AND wp.status = 'scripts_ready'\n  AND EXISTS (SELECT 1 FROM assets a WHERE a.plan_id = wp.id AND a.included = true AND a.script_text IS NOT NULL);",
         "options": {}
       },
       "credentials": {
@@ -258,8 +258,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "9191fafd-b04f-4468-abae-30a6d0cb8137",
-  "activeVersionId": "9191fafd-b04f-4468-abae-30a6d0cb8137",
+  "versionId": "b14b84e7-33ad-4380-a1dc-a0034d972645",
+  "activeVersionId": "b14b84e7-33ad-4380-a1dc-a0034d972645",
   "triggerCount": 1,
   "shared": [
     {
@@ -271,9 +271,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-13T14:02:17.780Z",
-    "createdAt": "2026-04-13T14:02:17.780Z",
-    "versionId": "9191fafd-b04f-4468-abae-30a6d0cb8137",
+    "updatedAt": "2026-04-29T12:16:27.907Z",
+    "createdAt": "2026-04-29T12:16:27.907Z",
+    "versionId": "b14b84e7-33ad-4380-a1dc-a0034d972645",
     "workflowId": "lggMXNxZCjvBoSil",
     "nodes": [
       {
@@ -370,7 +370,7 @@
         ],
         "parameters": {
           "operation": "executeQuery",
-          "query": "UPDATE weekly_plans\nSET status = 'scripts_locked',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'scripts_ready'\n  AND EXISTS (SELECT 1 FROM assets a WHERE a.plan_id = wp.id AND a.included = true AND a.script_text IS NOT NULL);",
+          "query": "UPDATE weekly_plans AS wp\nSET status = 'scripts_locked',\n    updated_at = NOW()\nWHERE wp.id = '{{ $json.plan_id }}'::uuid\n  AND wp.status = 'scripts_ready'\n  AND EXISTS (SELECT 1 FROM assets a WHERE a.plan_id = wp.id AND a.included = true AND a.script_text IS NOT NULL);",
           "options": {}
         },
         "credentials": {
