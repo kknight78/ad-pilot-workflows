@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:02.554Z",
+  "updatedAt": "2026-05-04T12:48:37.159Z",
   "createdAt": "2026-01-26T23:34:54.488Z",
   "id": "qXvDgLuvrY7u6d7w",
   "name": "[02] Generate Script",
@@ -1216,7 +1216,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extract config from the processed asset data\n// Matches the shape that Pass Config provides for the orchestration path\nconst asset = $('Fetch Processed Asset').first().json;\nconst avatars = typeof asset.avatars === 'string'\n  ? JSON.parse(asset.avatars)\n  : (asset.avatars || []);\n\n// Map frontend target_length to timing_defaults codes\n// Frontend uses: brief, standard, detailed\n// DB timing_defaults uses: quick, standard, detailed\nconst lengthMap = { brief: 'quick', standard: 'standard', detailed: 'detailed' };\nconst script_length = lengthMap[asset.target_length] || asset.target_length || 'standard';\n\nreturn [{\n  json: {\n    client_id: asset.client_id,\n    template_id: asset.template_code || asset.template_id,\n    script_length: script_length,\n    avatars: avatars,\n    business_name: asset.client_name,\n    client_name: asset.client_name,\n    _source: 'asset'\n  }\n}];"
+        "jsCode": "// Extract config from the processed asset data\n// Matches the shape that Pass Config provides for the orchestration path\nconst asset = $('Fetch Processed Asset').first().json;\nconst avatars = typeof asset.avatars === 'string'\n  ? JSON.parse(asset.avatars)\n  : (asset.avatars || []);\n\n// Map frontend target_length to timing_defaults codes\n// Frontend uses: brief, standard, detailed\n// DB timing_defaults uses: quick, standard, detailed\nconst lengthMap = { brief: 'quick', standard: 'standard', detailed: 'detailed' };\nconst script_length = lengthMap[asset.target_length] || asset.target_length || 'standard';\n\nreturn [{\n  json: {\n    client_id: asset.client_id,\n    template_id: asset.template_code || asset.template_id,\n    script_length: script_length,\n    avatars: avatars,\n    business_name: asset.client_name,\n    client_name: asset.client_name,\n    _source: 'asset',\n    video_recipe_id: asset.video_recipe_id || undefined\n  }\n}];"
       },
       "id": "prepare-asset-config-001",
       "name": "Prepare Asset Config",
@@ -1508,10 +1508,10 @@
             {
               "id": "scene-check",
               "leftValue": "={{ $('Resolve Config').first().json.video_recipe_id }}",
-              "rightValue": "",
+              "rightValue": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
               "operator": {
                 "type": "string",
-                "operation": "exists"
+                "operation": "regex"
               }
             }
           ],
@@ -2293,11 +2293,6 @@
             "node": "Fetch Global TTS Rules",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Fetch Scene Recipes",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -2407,7 +2402,7 @@
       "main": [
         [
           {
-            "node": "Build Script Prompt (Scenes)",
+            "node": "Fetch Scene Recipes",
             "type": "main",
             "index": 0
           }
@@ -2460,6 +2455,17 @@
           }
         ]
       ]
+    },
+    "Fetch Scene Recipes": {
+      "main": [
+        [
+          {
+            "node": "Build Script Prompt (Scenes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2470,8 +2476,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "a372c0a2-4798-4bec-8cdf-4d337ccc7699",
-  "activeVersionId": "a372c0a2-4798-4bec-8cdf-4d337ccc7699",
+  "versionId": "1d89087a-1782-4682-b867-bf92c9862292",
+  "activeVersionId": "1d89087a-1782-4682-b867-bf92c9862292",
   "triggerCount": 1,
   "shared": [
     {
@@ -2483,9 +2489,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:31:02.574Z",
-    "createdAt": "2026-04-02T21:31:02.574Z",
-    "versionId": "a372c0a2-4798-4bec-8cdf-4d337ccc7699",
+    "updatedAt": "2026-05-04T12:48:37.165Z",
+    "createdAt": "2026-05-04T12:48:37.165Z",
+    "versionId": "1d89087a-1782-4682-b867-bf92c9862292",
     "workflowId": "qXvDgLuvrY7u6d7w",
     "nodes": [
       {
@@ -3698,7 +3704,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Extract config from the processed asset data\n// Matches the shape that Pass Config provides for the orchestration path\nconst asset = $('Fetch Processed Asset').first().json;\nconst avatars = typeof asset.avatars === 'string'\n  ? JSON.parse(asset.avatars)\n  : (asset.avatars || []);\n\n// Map frontend target_length to timing_defaults codes\n// Frontend uses: brief, standard, detailed\n// DB timing_defaults uses: quick, standard, detailed\nconst lengthMap = { brief: 'quick', standard: 'standard', detailed: 'detailed' };\nconst script_length = lengthMap[asset.target_length] || asset.target_length || 'standard';\n\nreturn [{\n  json: {\n    client_id: asset.client_id,\n    template_id: asset.template_code || asset.template_id,\n    script_length: script_length,\n    avatars: avatars,\n    business_name: asset.client_name,\n    client_name: asset.client_name,\n    _source: 'asset'\n  }\n}];"
+          "jsCode": "// Extract config from the processed asset data\n// Matches the shape that Pass Config provides for the orchestration path\nconst asset = $('Fetch Processed Asset').first().json;\nconst avatars = typeof asset.avatars === 'string'\n  ? JSON.parse(asset.avatars)\n  : (asset.avatars || []);\n\n// Map frontend target_length to timing_defaults codes\n// Frontend uses: brief, standard, detailed\n// DB timing_defaults uses: quick, standard, detailed\nconst lengthMap = { brief: 'quick', standard: 'standard', detailed: 'detailed' };\nconst script_length = lengthMap[asset.target_length] || asset.target_length || 'standard';\n\nreturn [{\n  json: {\n    client_id: asset.client_id,\n    template_id: asset.template_code || asset.template_id,\n    script_length: script_length,\n    avatars: avatars,\n    business_name: asset.client_name,\n    client_name: asset.client_name,\n    _source: 'asset',\n    video_recipe_id: asset.video_recipe_id || undefined\n  }\n}];"
         },
         "id": "prepare-asset-config-001",
         "name": "Prepare Asset Config",
@@ -3990,10 +3996,10 @@
               {
                 "id": "scene-check",
                 "leftValue": "={{ $('Resolve Config').first().json.video_recipe_id }}",
-                "rightValue": "",
+                "rightValue": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
                 "operator": {
                   "type": "string",
-                  "operation": "exists"
+                  "operation": "regex"
                 }
               }
             ],
@@ -4775,11 +4781,6 @@
               "node": "Fetch Global TTS Rules",
               "type": "main",
               "index": 0
-            },
-            {
-              "node": "Fetch Scene Recipes",
-              "type": "main",
-              "index": 0
             }
           ]
         ]
@@ -4889,7 +4890,7 @@
         "main": [
           [
             {
-              "node": "Build Script Prompt (Scenes)",
+              "node": "Fetch Scene Recipes",
               "type": "main",
               "index": 0
             }
@@ -4937,6 +4938,17 @@
           [
             {
               "node": "Return Script for Caller",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Scene Recipes": {
+        "main": [
+          [
+            {
+              "node": "Build Script Prompt (Scenes)",
               "type": "main",
               "index": 0
             }
