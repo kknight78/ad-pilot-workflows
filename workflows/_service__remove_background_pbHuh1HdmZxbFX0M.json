@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-18T01:52:17.593Z",
+  "updatedAt": "2026-05-11T18:30:27.535Z",
   "createdAt": "2026-01-18T01:52:17.593Z",
   "id": "pbHuh1HdmZxbFX0M",
   "name": "[Service] Remove Background",
@@ -21,7 +21,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.image_url) {\n  throw new Error('image_url is required');\n}\n\n// Set defaults for optional parameters\nreturn [{\n  json: {\n    image_url: input.image_url,\n    size: input.size || 'auto',\n    format: input.format || 'png',\n    crop: input.crop !== false,\n    crop_margin: input.crop_margin || '10%',\n    // Pass through any additional context\n    context: input.context || {}\n  }\n}];"
+        "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.image_url) {\n  throw new Error('image_url is required');\n}\n\n// Set defaults for optional parameters\nreturn [{\n  json: {\n    image_url: input.image_url,\n    size: input.size || 'auto',\n    format: input.format || 'png',\n    crop: input.crop !== false,\n    crop_margin: input.crop_margin || '10%',\n    // Pass through any additional context\n    context: input.context || {}\n  }\n}];",
+        "mode": "runOnceForEachItem"
       },
       "id": "validate-input",
       "name": "Validate Input",
@@ -82,7 +83,8 @@
     },
     {
       "parameters": {
-        "jsCode": "// Handle error from Remove.bg API\nconst error = $json;\n\nlet errorMessage = 'Unknown error';\n\n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nif (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  errorMessage = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n} else if (error.message) {\n  errorMessage = error.message;\n}\n\nreturn [{\n  json: {\n    success: false,\n    error: errorMessage,\n    raw_error: JSON.stringify(error, null, 2)\n  }\n}];"
+        "jsCode": "// Handle error from Remove.bg API\nconst error = $json;\n\nlet errorMessage = 'Unknown error';\n\n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nif (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  errorMessage = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n} else if (error.message) {\n  errorMessage = error.message;\n}\n\nreturn [{\n  json: {\n    success: false,\n    error: errorMessage,\n    raw_error: JSON.stringify(error, null, 2)\n  }\n}];",
+        "mode": "runOnceForEachItem"
       },
       "id": "format-error",
       "name": "Format Error Response",
@@ -154,8 +156,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "e16d7bd7-1a60-4c7f-95d1-48ccfbdcfbb5",
-  "activeVersionId": "e16d7bd7-1a60-4c7f-95d1-48ccfbdcfbb5",
+  "versionId": "84e645b2-1d7d-43c1-b457-e8daf13f9b6d",
+  "activeVersionId": "84e645b2-1d7d-43c1-b457-e8daf13f9b6d",
   "triggerCount": 0,
   "shared": [
     {
@@ -167,9 +169,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-18T01:52:17.618Z",
-    "createdAt": "2026-01-18T01:52:17.618Z",
-    "versionId": "e16d7bd7-1a60-4c7f-95d1-48ccfbdcfbb5",
+    "updatedAt": "2026-05-11T18:30:27.608Z",
+    "createdAt": "2026-05-11T18:30:27.608Z",
+    "versionId": "84e645b2-1d7d-43c1-b457-e8daf13f9b6d",
     "workflowId": "pbHuh1HdmZxbFX0M",
     "nodes": [
       {
@@ -187,7 +189,8 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.image_url) {\n  throw new Error('image_url is required');\n}\n\n// Set defaults for optional parameters\nreturn [{\n  json: {\n    image_url: input.image_url,\n    size: input.size || 'auto',\n    format: input.format || 'png',\n    crop: input.crop !== false,\n    crop_margin: input.crop_margin || '10%',\n    // Pass through any additional context\n    context: input.context || {}\n  }\n}];"
+          "jsCode": "const input = $json;\n\n// Validate required fields\nif (!input.image_url) {\n  throw new Error('image_url is required');\n}\n\n// Set defaults for optional parameters\nreturn [{\n  json: {\n    image_url: input.image_url,\n    size: input.size || 'auto',\n    format: input.format || 'png',\n    crop: input.crop !== false,\n    crop_margin: input.crop_margin || '10%',\n    // Pass through any additional context\n    context: input.context || {}\n  }\n}];",
+          "mode": "runOnceForEachItem"
         },
         "id": "validate-input",
         "name": "Validate Input",
@@ -248,7 +251,8 @@
       },
       {
         "parameters": {
-          "jsCode": "// Handle error from Remove.bg API\nconst error = $json;\n\nlet errorMessage = 'Unknown error';\n\n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nif (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  errorMessage = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n} else if (error.message) {\n  errorMessage = error.message;\n}\n\nreturn [{\n  json: {\n    success: false,\n    error: errorMessage,\n    raw_error: JSON.stringify(error, null, 2)\n  }\n}];"
+          "jsCode": "// Handle error from Remove.bg API\nconst error = $json;\n\nlet errorMessage = 'Unknown error';\n\n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nif (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  errorMessage = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n} else if (error.message) {\n  errorMessage = error.message;\n}\n\nreturn [{\n  json: {\n    success: false,\n    error: errorMessage,\n    raw_error: JSON.stringify(error, null, 2)\n  }\n}];",
+          "mode": "runOnceForEachItem"
         },
         "id": "format-error",
         "name": "Format Error Response",
