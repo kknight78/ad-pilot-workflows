@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-24T14:38:34.543Z",
+  "updatedAt": "2026-05-11T14:02:24.333Z",
   "createdAt": "2026-02-16T22:38:04.038Z",
   "id": "KPwdnzzv1JPxz7J1",
   "name": "[SCHEDULED] Thursday Blueprint Lock",
@@ -99,8 +99,10 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- Blueprint lock: confirm the plan\nUPDATE weekly_plans\nSET status = 'confirmed',\n    approved_at = NOW(),\n    approved_by = 'blueprint_lock',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'draft';\n\n-- Mark idea ping as blueprint-lock approved\nUPDATE idea_ping_responses\nSET theme_approved = true,\n    response_channel = 'blueprint_lock',\n    responded_at = NOW()\nWHERE plan_id = '{{ $json.plan_id }}'::uuid\n  AND responded_at IS NULL;\n\nSELECT '{{ $json.client_name }}' AS client_name, '{{ $json.theme_emoji }}' AS theme_emoji, '{{ $json.theme_name }}' AS theme_name, '{{ $json.plan_id }}' AS plan_id;",
-        "options": {}
+        "query": "-- Blueprint lock: confirm the plan\nUPDATE weekly_plans\nSET status = 'confirmed',\n    approved_at = NOW(),\n    approved_by = 'blueprint_lock',\n    updated_at = NOW()\nWHERE id = $1::uuid\n  AND status = 'draft';\n\n-- Mark idea ping as blueprint-lock approved\nUPDATE idea_ping_responses\nSET theme_approved = true,\n    response_channel = 'blueprint_lock',\n    responded_at = NOW()\nWHERE plan_id = $1::uuid\n  AND responded_at IS NULL;\n\nSELECT $2 AS client_name, $3 AS theme_emoji, $4 AS theme_name, $1 AS plan_id;",
+        "options": {
+          "queryReplacement": "={{ $json.plan_id }},{{ $json.client_name }},{{ $json.theme_emoji }},{{ $json.theme_name }}"
+        }
       },
       "credentials": {
         "postgres": {
@@ -276,8 +278,8 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "fd58abdd-6c50-48ce-8426-450f6bc28691",
-  "activeVersionId": "fd58abdd-6c50-48ce-8426-450f6bc28691",
+  "versionId": "b00dfea0-a40b-401a-a880-b0954f0ad8ac",
+  "activeVersionId": "b00dfea0-a40b-401a-a880-b0954f0ad8ac",
   "triggerCount": 1,
   "shared": [
     {
@@ -289,9 +291,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-03-24T14:38:34.548Z",
-    "createdAt": "2026-03-24T14:38:34.548Z",
-    "versionId": "fd58abdd-6c50-48ce-8426-450f6bc28691",
+    "updatedAt": "2026-05-11T14:02:24.337Z",
+    "createdAt": "2026-05-11T14:02:24.337Z",
+    "versionId": "b00dfea0-a40b-401a-a880-b0954f0ad8ac",
     "workflowId": "KPwdnzzv1JPxz7J1",
     "nodes": [
       {
@@ -387,8 +389,10 @@
         ],
         "parameters": {
           "operation": "executeQuery",
-          "query": "-- Blueprint lock: confirm the plan\nUPDATE weekly_plans\nSET status = 'confirmed',\n    approved_at = NOW(),\n    approved_by = 'blueprint_lock',\n    updated_at = NOW()\nWHERE id = '{{ $json.plan_id }}'::uuid\n  AND status = 'draft';\n\n-- Mark idea ping as blueprint-lock approved\nUPDATE idea_ping_responses\nSET theme_approved = true,\n    response_channel = 'blueprint_lock',\n    responded_at = NOW()\nWHERE plan_id = '{{ $json.plan_id }}'::uuid\n  AND responded_at IS NULL;\n\nSELECT '{{ $json.client_name }}' AS client_name, '{{ $json.theme_emoji }}' AS theme_emoji, '{{ $json.theme_name }}' AS theme_name, '{{ $json.plan_id }}' AS plan_id;",
-          "options": {}
+          "query": "-- Blueprint lock: confirm the plan\nUPDATE weekly_plans\nSET status = 'confirmed',\n    approved_at = NOW(),\n    approved_by = 'blueprint_lock',\n    updated_at = NOW()\nWHERE id = $1::uuid\n  AND status = 'draft';\n\n-- Mark idea ping as blueprint-lock approved\nUPDATE idea_ping_responses\nSET theme_approved = true,\n    response_channel = 'blueprint_lock',\n    responded_at = NOW()\nWHERE plan_id = $1::uuid\n  AND responded_at IS NULL;\n\nSELECT $2 AS client_name, $3 AS theme_emoji, $4 AS theme_name, $1 AS plan_id;",
+          "options": {
+            "queryReplacement": "={{ $json.plan_id }},{{ $json.client_name }},{{ $json.theme_emoji }},{{ $json.theme_name }}"
+          }
         },
         "credentials": {
           "postgres": {
