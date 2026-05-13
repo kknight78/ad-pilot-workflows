@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-14T15:24:22.447Z",
+  "updatedAt": "2026-05-12T22:17:48.127Z",
   "createdAt": "2026-01-26T23:34:49.477Z",
   "id": "g3Uw2wgALuQvGkCE",
   "name": "[03] Generate Avatar",
@@ -459,7 +459,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify(($json.script.phonetic && $json.script.phonetic.full_script) || $json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
         "options": {
           "timeout": 120000
         }
@@ -918,8 +918,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "2ec13137-9e94-420f-9fff-a8e5f26024c5",
-  "activeVersionId": "2ec13137-9e94-420f-9fff-a8e5f26024c5",
+  "versionId": "83ae9849-e1d3-4448-99ef-042ebeee22e3",
+  "activeVersionId": "83ae9849-e1d3-4448-99ef-042ebeee22e3",
   "triggerCount": 0,
   "shared": [
     {
@@ -931,9 +931,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-14T15:24:28.500Z",
-    "createdAt": "2026-02-14T15:24:22.452Z",
-    "versionId": "2ec13137-9e94-420f-9fff-a8e5f26024c5",
+    "updatedAt": "2026-05-12T22:17:48.130Z",
+    "createdAt": "2026-05-12T22:17:48.130Z",
+    "versionId": "83ae9849-e1d3-4448-99ef-042ebeee22e3",
     "workflowId": "g3Uw2wgALuQvGkCE",
     "nodes": [
       {
@@ -1389,7 +1389,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify(($json.script.phonetic && $json.script.phonetic.full_script) || $json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
           "options": {
             "timeout": 120000
           }
@@ -1841,9 +1841,9 @@
       }
     },
     "authors": "Kelly Knight",
-    "name": "Version 2ec13137",
-    "description": "",
-    "autosaved": true
+    "name": null,
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
