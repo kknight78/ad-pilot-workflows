@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:59.998Z",
+  "updatedAt": "2026-05-13T14:24:48.778Z",
   "createdAt": "2026-01-18T16:43:38.898Z",
   "id": "6Y4lKunKTyyouh4n",
   "name": "Direction Generator",
@@ -44,7 +44,7 @@
             {
               "id": "client_id",
               "name": "client_id",
-              "value": "={{ $json.body.client_id || 'ccc' }}",
+              "value": "={{ (() => { if (!$json.body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed'); return $json.body.client_id; })() }}",
               "type": "string"
             },
             {
@@ -1165,8 +1165,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "6296af12-c163-4c88-81c6-36a5c03ffea0",
-  "activeVersionId": "6296af12-c163-4c88-81c6-36a5c03ffea0",
+  "versionId": "51f7400b-0eff-40b8-8db0-1ec93c5c8a1f",
+  "activeVersionId": "51f7400b-0eff-40b8-8db0-1ec93c5c8a1f",
   "triggerCount": 1,
   "shared": [
     {
@@ -1178,9 +1178,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:24:00.002Z",
-    "createdAt": "2026-02-06T23:24:00.002Z",
-    "versionId": "6296af12-c163-4c88-81c6-36a5c03ffea0",
+    "updatedAt": "2026-05-13T14:24:48.848Z",
+    "createdAt": "2026-05-13T14:24:48.848Z",
+    "versionId": "51f7400b-0eff-40b8-8db0-1ec93c5c8a1f",
     "workflowId": "6Y4lKunKTyyouh4n",
     "nodes": [
       {
@@ -1221,7 +1221,7 @@
               {
                 "id": "client_id",
                 "name": "client_id",
-                "value": "={{ $json.body.client_id || 'ccc' }}",
+                "value": "={{ (() => { if (!$json.body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed'); return $json.body.client_id; })() }}",
                 "type": "string"
               },
               {
