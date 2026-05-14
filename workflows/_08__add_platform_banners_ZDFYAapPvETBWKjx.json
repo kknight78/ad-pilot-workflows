@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-19T15:05:18.855Z",
+  "updatedAt": "2026-05-13T14:55:39.376Z",
   "createdAt": "2026-01-07T19:48:03.949Z",
   "id": "ZDFYAapPvETBWKjx",
   "name": "[08] Add Platform Banners",
@@ -170,6 +170,53 @@
       ],
       "id": "handle-ffmpeg-error",
       "name": "Handle ffmpeg Error"
+    },
+    {
+      "id": "a4f37c80-4205-4027-8135-2f430ce73249",
+      "name": "Webhook: Add Banners",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        400
+      ],
+      "parameters": {
+        "path": "add-platform-banners",
+        "responseMode": "responseNode",
+        "httpMethod": "POST",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "0beb4c95-305b-4fce-a201-e509264f33d8"
+    },
+    {
+      "id": "0733d2fa-02f3-4036-8c68-3c4996c2bde8",
+      "name": "Parse Webhook Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        400
+      ],
+      "parameters": {
+        "jsCode": "// Extract POST body so downstream nodes see the same data as executeWorkflow passthrough\nreturn [{ json: $json.body }];"
+      }
+    },
+    {
+      "id": "e9645116-b9a8-41f2-8df1-5fd3ce1baf57",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        944,
+        176
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -274,6 +321,39 @@
           }
         ]
       ]
+    },
+    "Webhook: Add Banners": {
+      "main": [
+        [
+          {
+            "node": "Parse Webhook Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Webhook Body": {
+      "main": [
+        [
+          {
+            "node": "Split by Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -284,9 +364,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "8cee4fcb-b955-4708-9e11-c4d0444d6450",
-  "activeVersionId": "e90c7f36-2c83-4140-9530-292bf8eeed84",
-  "triggerCount": 0,
+  "versionId": "487c26aa-194d-474a-8dfd-792ca2a09092",
+  "activeVersionId": "487c26aa-194d-474a-8dfd-792ca2a09092",
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2026-01-07T19:48:03.949Z",
@@ -297,9 +377,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-12T00:52:41.432Z",
-    "createdAt": "2026-01-12T00:52:41.432Z",
-    "versionId": "e90c7f36-2c83-4140-9530-292bf8eeed84",
+    "updatedAt": "2026-05-13T14:55:39.449Z",
+    "createdAt": "2026-05-13T14:55:39.449Z",
+    "versionId": "487c26aa-194d-474a-8dfd-792ca2a09092",
     "workflowId": "ZDFYAapPvETBWKjx",
     "nodes": [
       {
@@ -392,7 +472,7 @@
         "typeVersion": 2,
         "position": [
           400,
-          112
+          48
         ],
         "id": "parse-ffmpeg-response",
         "name": "Parse ffmpeg Response"
@@ -406,8 +486,8 @@
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
         "position": [
-          608,
-          208
+          592,
+          176
         ],
         "id": "aggregate-results",
         "name": "Aggregate Platform Videos"
@@ -419,8 +499,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          800,
-          208
+          752,
+          176
         ],
         "id": "format-output",
         "name": "Format Output"
@@ -449,7 +529,7 @@
         "typeVersion": 2,
         "position": [
           208,
-          288
+          272
         ],
         "id": "no-platforms-passthrough",
         "name": "No Platforms - Passthrough"
@@ -462,10 +542,57 @@
         "typeVersion": 2,
         "position": [
           400,
-          224
+          176
         ],
         "id": "handle-ffmpeg-error",
         "name": "Handle ffmpeg Error"
+      },
+      {
+        "id": "a4f37c80-4205-4027-8135-2f430ce73249",
+        "name": "Webhook: Add Banners",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -400,
+          400
+        ],
+        "parameters": {
+          "path": "add-platform-banners",
+          "responseMode": "responseNode",
+          "httpMethod": "POST",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "webhookId": "0beb4c95-305b-4fce-a201-e509264f33d8"
+      },
+      {
+        "id": "0733d2fa-02f3-4036-8c68-3c4996c2bde8",
+        "name": "Parse Webhook Body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -208,
+          400
+        ],
+        "parameters": {
+          "jsCode": "// Extract POST body so downstream nodes see the same data as executeWorkflow passthrough\nreturn [{ json: $json.body }];"
+        }
+      },
+      {
+        "id": "e9645116-b9a8-41f2-8df1-5fd3ce1baf57",
+        "name": "Respond to Webhook",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          944,
+          176
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
       }
     ],
     "connections": {
@@ -565,6 +692,39 @@
           [
             {
               "node": "Format Output",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook: Add Banners": {
+        "main": [
+          [
+            {
+              "node": "Parse Webhook Body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Webhook Body": {
+        "main": [
+          [
+            {
+              "node": "Split by Platforms",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Output": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
               "type": "main",
               "index": 0
             }
