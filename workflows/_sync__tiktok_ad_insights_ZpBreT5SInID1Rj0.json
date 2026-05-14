@@ -1,0 +1,872 @@
+{
+  "updatedAt": "2026-05-13T15:06:08.711Z",
+  "createdAt": "2026-05-13T15:06:08.711Z",
+  "id": "ZpBreT5SInID1Rj0",
+  "name": "[SYNC] TikTok Ad Insights",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-tiktok-insights",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "tt-webhook-trigger",
+      "name": "Webhook Trigger",
+      "webhookId": "sync-tiktok-insights"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "tt-schedule-trigger",
+      "name": "Daily 6am CT",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        384
+      ],
+      "id": "tt-manual-trigger",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, client_id, advertiser_id, advertiser_name, access_token\nFROM tiktok_ad_accounts\nWHERE account_status = 1\n  AND access_token IS NOT NULL",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        192
+      ],
+      "id": "tt-get-active-accounts",
+      "name": "Get Active TikTok Accounts",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare date parameters for TikTok API\n// Supports backfill mode via webhook body: { \"backfill\": true, \"days\": 90 }\n// Default: last 7 days\n// TikTok API has 30-day max span for stat_time_day — chunking handled in Group by Account\n\nconst accounts = $input.all();\n\nlet webhookData = {};\ntry {\n  const webhookNode = $('Webhook Trigger').first();\n  if (webhookNode) {\n    webhookData = webhookNode.json?.body || webhookNode.json || {};\n  }\n} catch(e) {}\n\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 90, 180);\n\nlet startDate, endDate;\nconst now = new Date();\nendDate = now.toISOString().split('T')[0];\n\nif (isBackfill) {\n  const since = new Date();\n  since.setDate(since.getDate() - backfillDays);\n  startDate = since.toISOString().split('T')[0];\n} else {\n  const since = new Date();\n  since.setDate(since.getDate() - 7);\n  startDate = since.toISOString().split('T')[0];\n}\n\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _startDate: startDate,\n    _endDate: endDate,\n    _isBackfill: isBackfill\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        192
+      ],
+      "id": "tt-prepare-date-params",
+      "name": "Prepare Date Params"
+    },
+    {
+      "parameters": {
+        "url": "https://business-api.tiktok.com/open_api/v1.3/ad/get/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Access-Token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "advertiser_id",
+              "value": "={{ $json.advertiser_id }}"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            },
+            {
+              "name": "page_size",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        192
+      ],
+      "id": "tt-get-ads-list",
+      "name": "Get Ads List"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse TikTok ad names to extract template type and theme\n// Same naming convention as Meta: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // NEW naming: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Simpler: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleMatch) {\n    const [, client, templateCode, themePart] = simpleMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  return { template_type: 'unknown', theme: null };\n}\n\nconst accountsData = $('Get Active TikTok Accounts').all();\nconst adsResponses = $input.all();\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const response = adsResponses[i]?.json;\n  \n  if (!account) continue;\n  \n  // TikTok wraps ads in data.list\n  const ads = response?.data?.list || [];\n  \n  if (ads.length === 0) {\n    results.push({ json: { skip: true, reason: 'no ads for account ' + account.advertiser_id } });\n    continue;\n  }\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.ad_name);\n    \n    results.push({\n      json: {\n        tiktok_ad_id: String(ad.ad_id),\n        tiktok_campaign_id: String(ad.campaign_id || ''),\n        tiktok_adgroup_id: String(ad.adgroup_id || ''),\n        advertiser_id: account.advertiser_id,\n        name: ad.ad_name || '',\n        status: ad.operation_status || ad.status || 'UNKNOWN',\n        template_type: template_type,\n        theme: theme\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no ads found' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        192
+      ],
+      "id": "tt-parse-ad-names",
+      "name": "Parse Ad Names"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        192
+      ],
+      "id": "tt-has-ads",
+      "name": "Has Ads?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO tiktok_ads (tiktok_ad_id, tiktok_campaign_id, tiktok_adgroup_id, advertiser_id, name, status, template_type, theme, updated_at)\nVALUES (\n  '{{ $json.tiktok_ad_id }}',\n  '{{ $json.tiktok_campaign_id }}',\n  '{{ $json.tiktok_adgroup_id }}',\n  '{{ $json.advertiser_id }}',\n  '{{ $json.name }}',\n  '{{ $json.status }}',\n  '{{ $json.template_type }}',\n  {{ $json.theme ? \"'\" + $json.theme + \"'\" : 'NULL' }},\n  NOW()\n)\nON CONFLICT (tiktok_ad_id) DO UPDATE SET\n  name = EXCLUDED.name,\n  status = EXCLUDED.status,\n  template_type = EXCLUDED.template_type,\n  theme = EXCLUDED.theme,\n  updated_at = NOW()\nRETURNING tiktok_ad_id, advertiser_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1344,
+        96
+      ],
+      "id": "tt-upsert-ads",
+      "name": "Upsert Ads",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group ads by account for insights fetch\n// TikTok API has 30-day max span for stat_time_day dimension\n// For ranges > 30 days, emit multiple items per account (one per chunk)\n\nconst items = $input.all();\n\n// Get date params from Prepare Date Params (not from Get Active TikTok Accounts — that node doesn't have dates)\nconst dateParamsNode = $('Prepare Date Params').first()?.json || {};\nconst startDate = dateParamsNode._startDate;\nconst endDate = dateParamsNode._endDate;\nconst isBackfill = dateParamsNode._isBackfill || false;\n\n// Build token lookup from original accounts\nconst accounts = $('Get Active TikTok Accounts').all();\nconst tokenMap = new Map();\nfor (const acc of accounts) {\n  tokenMap.set(acc.json.advertiser_id, acc.json.access_token);\n}\n\n// Get unique advertiser IDs from parsed ads\nconst advertiserIds = new Set();\nfor (const item of items) {\n  if (!item.json.skip) {\n    advertiserIds.add(item.json.advertiser_id);\n  }\n}\n\n// Chunk date range into 30-day windows (TikTok API limit)\nfunction chunkDates(start, end) {\n  const chunks = [];\n  let current = new Date(start);\n  const endDt = new Date(end);\n  \n  while (current <= endDt) {\n    const chunkEnd = new Date(current);\n    chunkEnd.setDate(chunkEnd.getDate() + 29);\n    if (chunkEnd > endDt) chunkEnd.setTime(endDt.getTime());\n    \n    chunks.push({\n      start: current.toISOString().split('T')[0],\n      end: chunkEnd.toISOString().split('T')[0]\n    });\n    \n    current = new Date(chunkEnd);\n    current.setDate(current.getDate() + 1);\n  }\n  return chunks;\n}\n\nconst dateChunks = chunkDates(startDate, endDate);\nconst results = [];\n\nfor (const advId of advertiserIds) {\n  for (const chunk of dateChunks) {\n    results.push({\n      json: {\n        advertiser_id: advId,\n        access_token: tokenMap.get(advId),\n        _startDate: chunk.start,\n        _endDate: chunk.end,\n        _isBackfill: isBackfill\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no accounts to fetch insights for' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        96
+      ],
+      "id": "tt-group-by-account",
+      "name": "Group by Account"
+    },
+    {
+      "parameters": {
+        "url": "https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Access-Token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "advertiser_id",
+              "value": "={{ $json.advertiser_id }}"
+            },
+            {
+              "name": "report_type",
+              "value": "BASIC"
+            },
+            {
+              "name": "data_level",
+              "value": "AUCTION_AD"
+            },
+            {
+              "name": "dimensions",
+              "value": "=[\"ad_id\",\"stat_time_day\"]"
+            },
+            {
+              "name": "metrics",
+              "value": "=[\"spend\",\"impressions\",\"clicks\",\"cpc\",\"ctr\",\"cpm\",\"video_play_actions\",\"video_views_p25\",\"video_views_p50\",\"video_views_p75\",\"video_views_p100\",\"likes\",\"comments\",\"shares\",\"follows\",\"profile_visits\",\"conversion\",\"cost_per_conversion\"]"
+            },
+            {
+              "name": "start_date",
+              "value": "={{ $json._startDate }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $json._endDate }}"
+            },
+            {
+              "name": "page_size",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1792,
+        96
+      ],
+      "id": "tt-get-insights",
+      "name": "Get Insights"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform TikTok insights for database\n// TikTok returns ALL metric values as strings — must parseFloat/parseInt\n// Note: after HTTP Request, pairedItem chain breaks — use $json fields directly\n\nconst accountsData = $('Group by Account').all();\nconst insightsResponses = $input.all();\nconst results = [];\n\nfor (let i = 0; i < insightsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const response = insightsResponses[i]?.json;\n  \n  if (!account) continue;\n  \n  // TikTok wraps data in data.list\n  const rows = response?.data?.list || [];\n  \n  for (const row of rows) {\n    const dims = row.dimensions || {};\n    const m = row.metrics || {};\n    \n    const spend = parseFloat(m.spend || '0');\n    const conversions = parseInt(m.conversion || '0');\n    const costPerConversion = parseFloat(m.cost_per_conversion || '0') || null;\n    const leads = conversions;\n    const costPerLead = leads > 0 ? (spend / leads) : null;\n    \n    // TikTok stat_time_day is like \"2026-02-15 00:00:00\" — extract date\n    const statDate = (dims.stat_time_day || '').split(' ')[0];\n    \n    results.push({\n      json: {\n        tiktok_ad_id: String(dims.ad_id),\n        advertiser_id: account.advertiser_id,\n        date_start: statDate,\n        date_stop: statDate,\n        spend: spend,\n        impressions: parseInt(m.impressions || '0'),\n        clicks: parseInt(m.clicks || '0'),\n        ctr: parseFloat(m.ctr || '0'),\n        cpc: parseFloat(m.cpc || '0'),\n        cpm: parseFloat(m.cpm || '0'),\n        video_play_actions: parseInt(m.video_play_actions || '0'),\n        video_views_p25: parseInt(m.video_views_p25 || '0'),\n        video_views_p50: parseInt(m.video_views_p50 || '0'),\n        video_views_p75: parseInt(m.video_views_p75 || '0'),\n        video_views_p100: parseInt(m.video_views_p100 || '0'),\n        likes: parseInt(m.likes || '0'),\n        comments: parseInt(m.comments || '0'),\n        shares: parseInt(m.shares || '0'),\n        follows: parseInt(m.follows || '0'),\n        profile_visits: parseInt(m.profile_visits || '0'),\n        conversions: conversions,\n        cost_per_conversion: costPerConversion,\n        leads: leads,\n        cost_per_lead: costPerLead,\n        actions_raw: JSON.stringify(m)\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no insights' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        96
+      ],
+      "id": "tt-transform-insights",
+      "name": "Transform Insights"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        96
+      ],
+      "id": "tt-has-insights",
+      "name": "Has Insights?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO tiktok_ad_insights (\n  tiktok_ad_id, advertiser_id, date_start, date_stop,\n  spend, impressions, clicks, ctr, cpc, cpm,\n  video_play_actions, video_views_p25, video_views_p50, video_views_p75, video_views_p100,\n  likes, comments, shares, follows, profile_visits,\n  conversions, cost_per_conversion, leads, cost_per_lead, actions_raw\n)\nVALUES (\n  '{{ $json.tiktok_ad_id }}',\n  '{{ $json.advertiser_id }}',\n  '{{ $json.date_start }}',\n  '{{ $json.date_stop }}',\n  {{ $json.spend }},\n  {{ $json.impressions }},\n  {{ $json.clicks }},\n  {{ $json.ctr }},\n  {{ $json.cpc }},\n  {{ $json.cpm }},\n  {{ $json.video_play_actions }},\n  {{ $json.video_views_p25 }},\n  {{ $json.video_views_p50 }},\n  {{ $json.video_views_p75 }},\n  {{ $json.video_views_p100 }},\n  {{ $json.likes }},\n  {{ $json.comments }},\n  {{ $json.shares }},\n  {{ $json.follows }},\n  {{ $json.profile_visits }},\n  {{ $json.conversions }},\n  {{ $json.cost_per_conversion !== null ? $json.cost_per_conversion : 'NULL' }},\n  {{ $json.leads }},\n  {{ $json.cost_per_lead !== null ? $json.cost_per_lead : 'NULL' }},\n  '{{ $json.actions_raw }}'::jsonb\n)\nON CONFLICT (tiktok_ad_id, date_start, date_stop) DO NOTHING\nRETURNING id, tiktok_ad_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2464,
+        0
+      ],
+      "id": "tt-upsert-insights",
+      "name": "Upsert Insights",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2688,
+        0
+      ],
+      "id": "tt-aggregate-results",
+      "name": "Aggregate Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Re-emit one item per account for placement insights fetch\nconst accounts = $('Group by Account').all();\nreturn accounts.map(a => ({ json: a.json }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        0
+      ],
+      "id": "tt-prepare-placement-requests",
+      "name": "Prepare Placement Requests"
+    },
+    {
+      "parameters": {
+        "url": "https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Access-Token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "advertiser_id",
+              "value": "={{ $json.advertiser_id }}"
+            },
+            {
+              "name": "report_type",
+              "value": "AUDIENCE"
+            },
+            {
+              "name": "data_level",
+              "value": "AUCTION_AD"
+            },
+            {
+              "name": "dimensions",
+              "value": "=[\"ad_id\",\"stat_time_day\",\"placement\"]"
+            },
+            {
+              "name": "metrics",
+              "value": "=[\"spend\",\"impressions\",\"clicks\",\"cpc\",\"ctr\",\"cpm\",\"video_play_actions\",\"video_views_p25\",\"video_views_p50\",\"video_views_p75\",\"video_views_p100\",\"likes\",\"comments\",\"shares\",\"conversion\",\"cost_per_conversion\"]"
+            },
+            {
+              "name": "start_date",
+              "value": "={{ $json._startDate }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $json._endDate }}"
+            },
+            {
+              "name": "page_size",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3136,
+        0
+      ],
+      "id": "tt-get-placement-insights",
+      "name": "Get Placement Insights"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform TikTok placement insights and map to our placement codes\n\nconst PLACEMENT_MAP = {\n  'PLACEMENT_TIKTOK': 'tt_feed',\n  'PLACEMENT_PANGLE': 'tt_pangle',\n  'PLACEMENT_GLOBAL_APP_BUNDLE': 'tt_global_app_bundle'\n};\n\nconst accountsData = $('Prepare Placement Requests').all();\nconst responses = $input.all();\nconst results = [];\n\nfor (let i = 0; i < responses.length; i++) {\n  const account = accountsData[i]?.json;\n  const response = responses[i]?.json;\n  \n  if (!account) continue;\n  \n  const rows = response?.data?.list || [];\n  \n  for (const row of rows) {\n    const dims = row.dimensions || {};\n    const m = row.metrics || {};\n    \n    const placement = dims.placement || 'UNKNOWN';\n    const placementCode = PLACEMENT_MAP[placement] || null;\n    \n    const spend = parseFloat(m.spend || '0');\n    const conversions = parseInt(m.conversion || '0');\n    const leads = conversions;\n    const costPerLead = leads > 0 ? (spend / leads) : null;\n    \n    const statDate = (dims.stat_time_day || '').split(' ')[0];\n    \n    results.push({\n      json: {\n        tiktok_ad_id: String(dims.ad_id),\n        advertiser_id: account.advertiser_id,\n        date_start: statDate,\n        date_stop: statDate,\n        placement: placement,\n        placement_code: placementCode,\n        spend: spend,\n        impressions: parseInt(m.impressions || '0'),\n        clicks: parseInt(m.clicks || '0'),\n        ctr: parseFloat(m.ctr || '0'),\n        cpc: parseFloat(m.cpc || '0'),\n        cpm: parseFloat(m.cpm || '0'),\n        video_play_actions: parseInt(m.video_play_actions || '0'),\n        video_views_p25: parseInt(m.video_views_p25 || '0'),\n        video_views_p50: parseInt(m.video_views_p50 || '0'),\n        video_views_p75: parseInt(m.video_views_p75 || '0'),\n        video_views_p100: parseInt(m.video_views_p100 || '0'),\n        likes: parseInt(m.likes || '0'),\n        comments: parseInt(m.comments || '0'),\n        shares: parseInt(m.shares || '0'),\n        leads: leads,\n        cost_per_lead: costPerLead,\n        actions_raw: JSON.stringify(m)\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no placement insights' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        0
+      ],
+      "id": "tt-transform-placement-insights",
+      "name": "Transform Placement Insights"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check-placement",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3584,
+        0
+      ],
+      "id": "tt-has-placement-insights",
+      "name": "Has Placement Insights?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO tiktok_placement_insights (\n  tiktok_ad_id, advertiser_id, date_start, date_stop,\n  placement, placement_code,\n  spend, impressions, clicks, ctr, cpc, cpm,\n  video_play_actions, video_views_p25, video_views_p50, video_views_p75, video_views_p100,\n  likes, comments, shares, leads, cost_per_lead, actions_raw\n)\nVALUES (\n  '{{ $json.tiktok_ad_id }}',\n  '{{ $json.advertiser_id }}',\n  '{{ $json.date_start }}',\n  '{{ $json.date_stop }}',\n  '{{ $json.placement }}',\n  {{ $json.placement_code ? \"'\" + $json.placement_code + \"'\" : 'NULL' }},\n  {{ $json.spend }},\n  {{ $json.impressions }},\n  {{ $json.clicks }},\n  {{ $json.ctr }},\n  {{ $json.cpc }},\n  {{ $json.cpm }},\n  {{ $json.video_play_actions }},\n  {{ $json.video_views_p25 }},\n  {{ $json.video_views_p50 }},\n  {{ $json.video_views_p75 }},\n  {{ $json.video_views_p100 }},\n  {{ $json.likes }},\n  {{ $json.comments }},\n  {{ $json.shares }},\n  {{ $json.leads }},\n  {{ $json.cost_per_lead !== null ? $json.cost_per_lead : 'NULL' }},\n  '{{ $json.actions_raw }}'::jsonb\n)\nON CONFLICT (tiktok_ad_id, date_start, date_stop, placement) DO NOTHING\nRETURNING id, tiktok_ad_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3808,
+        -60
+      ],
+      "id": "tt-upsert-placement-insights",
+      "name": "Upsert Placement Insights",
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// No placement insights - pass through to Format Response\nreturn [{ json: { _placementSkipped: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        120
+      ],
+      "id": "tt-no-placement-response",
+      "name": "No Placement Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build summary response\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\nlet placementCount = 0;\ntry {\n  const placementData = $('Upsert Placement Insights').all();\n  placementCount = placementData.filter(d => d.json && d.json.id).length;\n} catch(e) {}\n\nlet insightsCount = 0;\ntry {\n  const insightsData = $('Upsert Insights').all();\n  insightsCount = insightsData.filter(d => d.json && d.json.id).length;\n} catch(e) {}\n\nconst groupData = $('Group by Account').first()?.json || {};\nconst isBackfill = groupData._isBackfill || false;\n\nreturn [{\n  json: {\n    success: true,\n    message: isBackfill\n      ? 'Backfill complete: synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from TikTok'\n      : 'Synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from TikTok',\n    mode: isBackfill ? 'backfill' : 'daily',\n    ads_synced: adsCount,\n    insights_synced: insightsCount,\n    placement_insights_synced: placementCount,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        0
+      ],
+      "id": "tt-format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        4480,
+        192
+      ],
+      "id": "tt-respond",
+      "name": "Respond"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No ads found\nreturn [{\n  json: {\n    success: true,\n    message: 'No active TikTok ad accounts found or no ads to sync',\n    ads_synced: 0,\n    insights_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        384
+      ],
+      "id": "tt-no-ads-response",
+      "name": "No Ads Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No insights found\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\nreturn [{\n  json: {\n    success: true,\n    message: 'Synced ' + adsCount + ' ads, but no insights data available for date range',\n    ads_synced: adsCount,\n    insights_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        192
+      ],
+      "id": "tt-no-insights-response",
+      "name": "No Insights Response"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active TikTok Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 6am CT": {
+      "main": [
+        [
+          {
+            "node": "Get Active TikTok Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active TikTok Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active TikTok Accounts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Date Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Date Params": {
+      "main": [
+        [
+          {
+            "node": "Get Ads List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ads List": {
+      "main": [
+        [
+          {
+            "node": "Parse Ad Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Ad Names": {
+      "main": [
+        [
+          {
+            "node": "Has Ads?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Ads?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Ads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Ads Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Ads": {
+      "main": [
+        [
+          {
+            "node": "Group by Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group by Account": {
+      "main": [
+        [
+          {
+            "node": "Get Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Insights": {
+      "main": [
+        [
+          {
+            "node": "Transform Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Insights": {
+      "main": [
+        [
+          {
+            "node": "Has Insights?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Insights?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Insights Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Insights": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Prepare Placement Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Placement Requests": {
+      "main": [
+        [
+          {
+            "node": "Get Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Transform Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Has Placement Insights?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Placement Insights?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Placement Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Placement Response": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Ads Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Insights Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "fd6d7b83-feea-42a9-baf5-7e21fa2a297a",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-13T15:06:08.711Z",
+      "createdAt": "2026-05-13T15:06:08.711Z",
+      "role": "workflow:owner",
+      "workflowId": "ZpBreT5SInID1Rj0",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
