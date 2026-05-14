@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-09T14:43:56.402Z",
+  "updatedAt": "2026-05-13T16:03:12.656Z",
   "createdAt": "2026-02-09T13:10:26.974Z",
   "id": "dAuHlZZvs13vJCQM",
   "name": "[Process Spotlight Asset]",
@@ -48,10 +48,10 @@
     },
     {
       "parameters": {
-        "jsCode": "const asset = $input.first().json;\n\n// Parse inventory_items JSON if it's a string\nconst inventoryItems = typeof asset.inventory_items === 'string' \n  ? JSON.parse(asset.inventory_items) \n  : asset.inventory_items;\n\nif (!inventoryItems || inventoryItems.length === 0) {\n  throw new Error('No inventory items found on asset');\n}\n\n// Extract item IDs for the query\nconst itemIds = inventoryItems.map(item => item.id);\n\nconsole.log(`Processing ${itemIds.length} items:`, itemIds);\n\nreturn [{\n  json: {\n    asset,\n    inventoryItems,\n    itemIds\n  }\n}];"
+        "jsCode": "const input = $input.first().json;\nvar isInline = Array.isArray(input.vins);\n\nif (isInline) {\n  // INLINE MODE - from [01] Orchestrate sub-workflow\n  var vins = input.vins;\n  // Spotlight expects a single VIN\n  var vehicleWhereClause = \"v.vin = ANY(ARRAY[\" + vins.map(function(v) { return \"'\" + v.replace(/'/g, \"''\") + \"'\"; }).join(\",\") + \"]::text[])\";\n  var syntheticAsset = {\n    id: null,\n    theme_seed: input.theme_seed || (input.theme_pack ? input.theme_pack.theme_seed : '') || '',\n    theme_emoji: input.theme_emoji || (input.theme_pack ? input.theme_pack.emoji : '') || '',\n    theme_direction: input.theme_direction || (input.theme_pack ? input.theme_pack.direction : '') || '',\n    local_override_text: input.local_override_text || null,\n    location: input.location || 'Rantoul, Illinois',\n    service_area: input.service_area || '',\n  };\n  console.log('[Resolve Input] INLINE mode -', vins.length, 'VIN(s)');\n  return [{ json: { _mode: 'inline', asset: syntheticAsset, inventoryItems: [{ id: vins[0], sort_order: 0 }], _vehicleWhereClause: vehicleWhereClause } }];\n} else {\n  // WEBHOOK MODE - asset from DB\n  var asset = input;\n  var inventoryItems = typeof asset.inventory_items === 'string' ? JSON.parse(asset.inventory_items) : asset.inventory_items;\n  if (!inventoryItems || inventoryItems.length === 0) throw new Error('No inventory items found on asset');\n  var itemIds = inventoryItems.map(function(item) { return item.id; });\n  var vehicleWhereClause = \"v.item_id = ANY(ARRAY[\" + itemIds.map(function(id) { return \"'\" + id.replace(/'/g, \"''\") + \"'\"; }).join(\",\") + \"]::uuid[])\";\n  console.log('[Resolve Input] WEBHOOK mode -', itemIds.length, 'item ID(s)');\n  return [{ json: { _mode: 'webhook', asset: asset, inventoryItems: inventoryItems, itemIds: itemIds, _vehicleWhereClause: vehicleWhereClause } }];\n}"
       },
       "id": "extract-ids",
-      "name": "Extract Item IDs",
+      "name": "Resolve Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -62,7 +62,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT \n  v.*,\n  ii.hero_image_url,\n  ii.hero_cloudinary_url,\n  ii.price,\n  ii.url,\n  v.raw_data->>'Equipment' as equipment_raw,\n  v.raw_data->>'ImageUrlsDelimited' as all_images_delimited\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+        "query": "=SELECT \n  v.*,\n  ii.hero_image_url,\n  ii.hero_cloudinary_url,\n  ii.price,\n  ii.url,\n  v.raw_data->>'Equipment' as equipment_raw,\n  v.raw_data->>'ImageUrlsDelimited' as all_images_delimited\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE {{ $json._vehicleWhereClause }}",
         "options": {}
       },
       "id": "fetch-vehicle",
@@ -82,7 +82,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $('Extract Item IDs').first().json;\nconst asset = input.asset;\nconst vehicle = $input.first().json;\n\n// Parse all images\nconst allImages = vehicle.all_images_delimited \n  ? vehicle.all_images_delimited.split('|').filter(Boolean)\n  : [];\n\n// Parse equipment\nconst equipmentRaw = vehicle.equipment_raw || '';\nconst equipment = equipmentRaw ? equipmentRaw.split('|').map(e => e.trim()).filter(Boolean) : [];\n\nconst processed = {\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: equipment,\n  all_images: allImages,\n  photo_url: vehicle.hero_image_url || (allImages.length > 0 ? allImages[0] : null),\n  hero_cloudinary_url: vehicle.hero_cloudinary_url,\n  url: vehicle.url,\n  days_on_lot: vehicle.days_on_lot || 0\n};\n\nconsole.log(`🚗 Spotlight vehicle: ${processed.year} ${processed.make} ${processed.model}`);\nconsole.log(`📸 ${allImages.length} images available`);\nconsole.log(`🔧 ${equipment.length} equipment items`);\n\nreturn [{\n  json: {\n    asset,\n    vehicle: processed,\n    vehicles: [processed],\n    test_mode: false\n  }\n}];"
+        "jsCode": "const input = $('Resolve Input').first().json;\nconst asset = input.asset;\nconst vehicle = $input.first().json;\n\n// Parse all images\nconst allImages = vehicle.all_images_delimited \n  ? vehicle.all_images_delimited.split('|').filter(Boolean)\n  : [];\n\n// Parse equipment\nconst equipmentRaw = vehicle.equipment_raw || '';\nconst equipment = equipmentRaw ? equipmentRaw.split('|').map(e => e.trim()).filter(Boolean) : [];\n\nconst processed = {\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: equipment,\n  all_images: allImages,\n  photo_url: vehicle.hero_image_url || (allImages.length > 0 ? allImages[0] : null),\n  hero_cloudinary_url: vehicle.hero_cloudinary_url,\n  url: vehicle.url,\n  days_on_lot: vehicle.days_on_lot || 0\n};\n\nconsole.log(`🚗 Spotlight vehicle: ${processed.year} ${processed.make} ${processed.model}`);\nconsole.log(`📸 ${allImages.length} images available`);\nconsole.log(`🔧 ${equipment.length} equipment items`);\n\nreturn [{\n  json: {\n    asset,\n    vehicle: processed,\n    vehicles: [processed],\n    test_mode: false\n  }\n}];"
       },
       "id": "process-vehicle",
       "name": "Process Vehicle",
@@ -489,6 +489,20 @@
     },
     {
       "parameters": {
+        "mode": "chooseBranch",
+        "output": "empty"
+      },
+      "id": "merge-bg",
+      "name": "Merge BG Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4840,
+        300
+      ]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
         "sendBody": true,
@@ -507,7 +521,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const themePackResponse = $json;\n\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items array (single item for spotlight)\nconst processedItems = [{\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: vehicle.equipment || [],\n  photo_url: spotlightData.hero_bg_removed_url || vehicle.photo_url,\n  bg_removed: !spotlightData.needs_bg_removal,\n  days_on_lot: vehicle.days_on_lot || 0,\n  sort_order: 0,\n  // Spotlight-specific enrichments\n  verified_features: spotlightData.verified_features || {},\n  selected_photos: spotlightData.selected_photos || {},\n  all_images: vehicle.all_images || []\n}];\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  core_tension: themePackResponse.core_tension,\n  ad_angle: themePackResponse.ad_angle,\n  local_micro_moments: themePackResponse.local_micro_moments,\n  banned_phrases: themePackResponse.banned_phrases,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_items: processedItems,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
+        "jsCode": "const themePackResponse = $json;\n\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items array (single item for spotlight)\nconst processedItems = [{\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: vehicle.equipment || [],\n  photo_url: spotlightData.hero_bg_removed_url || vehicle.photo_url,\n  bg_removed: !spotlightData.needs_bg_removal,\n  days_on_lot: vehicle.days_on_lot || 0,\n  sort_order: 0,\n  // Spotlight-specific enrichments\n  verified_features: spotlightData.verified_features || {},\n  selected_photos: spotlightData.selected_photos || {},\n  all_images: vehicle.all_images || []\n}];\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  core_tension: themePackResponse.core_tension,\n  ad_angle: themePackResponse.ad_angle,\n  local_micro_moments: themePackResponse.local_micro_moments,\n  banned_phrases: themePackResponse.banned_phrases,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nvar _mode = $('Resolve Input').first().json._mode || 'webhook';\n\nreturn [{\n  json: {\n    _mode,\n    asset_id: asset.id,\n    processed_items: processedItems,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
       },
       "id": "prep-save",
       "name": "Prepare Save Data",
@@ -556,7 +570,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build theme pack request from spotlight data\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\n// Build item summary for single spotlight vehicle\nconst equipment = vehicle.equipment || [];\nconst highlights = equipment.slice(0, 5).join(', ');\nconst itemSummary = `Spotlight: ${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim() +\n  `\\nPrice: $${Number(vehicle.price || 0).toLocaleString()}` +\n  `\\nMileage: ${Number(vehicle.mileage || 0).toLocaleString()}` +\n  (vehicle.exterior_color ? `\\nColor: ${vehicle.exterior_color}` : '') +\n  (highlights ? `\\nKey features: ${highlights}` : '') +\n  (vehicle.days_on_lot > 0 ? `\\nDays on lot: ${vehicle.days_on_lot}` : '');\n\nconsole.log('Building theme pack request for spotlight vehicle:');\nconsole.log(itemSummary);\n\nreturn [{\n  json: {\n    ...spotlightData,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed || '',\n      emoji: asset.theme_emoji || '',\n      direction: asset.theme_direction || '',\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      client_id: asset.client_id,\n      item_summary: itemSummary\n    }\n  }\n}];"
+        "jsCode": "// Build theme pack request from spotlight data\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\n// Build item summary for single spotlight vehicle\nconst equipment = vehicle.equipment || [];\nconst highlights = equipment.slice(0, 5).join(', ');\nconst itemSummary = `Spotlight: ${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim() +\n  `\\nPrice: $${Number(vehicle.price || 0).toLocaleString()}` +\n  `\\nMileage: ${Number(vehicle.mileage || 0).toLocaleString()}` +\n  (vehicle.exterior_color ? `\\nColor: ${vehicle.exterior_color}` : '') +\n  (highlights ? `\\nKey features: ${highlights}` : '') +\n  (vehicle.days_on_lot > 0 ? `\\nDays on lot: ${vehicle.days_on_lot}` : '');\n\nconsole.log('Building theme pack request for spotlight vehicle:');\nconsole.log(itemSummary);\n\nvar _mode = $('Resolve Input').first().json._mode || 'webhook';\n\nreturn [{\n  json: {\n    _mode,\n    ...spotlightData,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed || '',\n      emoji: asset.theme_emoji || '',\n      direction: asset.theme_direction || '',\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      client_id: asset.client_id,\n      item_summary: itemSummary\n    }\n  }\n}];"
       },
       "id": "build-theme-req",
       "name": "Build Theme Pack Request",
@@ -565,6 +579,65 @@
       "position": [
         4900,
         300
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger-inline-001",
+      "name": "When Called as Sub-Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "mode-check",
+              "leftValue": "={{ $json._mode }}",
+              "rightValue": "webhook",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-mode-001",
+      "name": "Route by Mode",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        5720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Return processed data to calling workflow\nreturn [{ json: { processed_items: $json.processed_items || [], theme_pack: $json.theme_pack } }];"
+      },
+      "id": "return-results-001",
+      "name": "Return Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5940,
+        520
       ]
     }
   ],
@@ -584,18 +657,7 @@
       "main": [
         [
           {
-            "node": "Extract Item IDs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract Item IDs": {
-      "main": [
-        [
-          {
-            "node": "Fetch Vehicle Data",
+            "node": "Resolve Input",
             "type": "main",
             "index": 0
           }
@@ -854,6 +916,17 @@
         ]
       ]
     },
+    "Merge BG Paths": {
+      "main": [
+        [
+          {
+            "node": "Generate Theme Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Generate Theme Pack": {
       "main": [
         [
@@ -869,7 +942,7 @@
       "main": [
         [
           {
-            "node": "Save to Asset",
+            "node": "Route by Mode",
             "type": "main",
             "index": 0
           }
@@ -897,6 +970,46 @@
           }
         ]
       ]
+    },
+    "When Called as Sub-Workflow": {
+      "main": [
+        [
+          {
+            "node": "Resolve Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Input": {
+      "main": [
+        [
+          {
+            "node": "Fetch Vehicle Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Mode": {
+      "main": [
+        [
+          {
+            "node": "Save to Asset",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -907,8 +1020,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "ee069791-7f9a-4060-a91c-21f8a11c8811",
-  "activeVersionId": "ee069791-7f9a-4060-a91c-21f8a11c8811",
+  "versionId": "100fa597-7648-4b51-b45d-bbd491735c25",
+  "activeVersionId": "100fa597-7648-4b51-b45d-bbd491735c25",
   "triggerCount": 1,
   "shared": [
     {
@@ -920,9 +1033,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-09T14:43:56.405Z",
-    "createdAt": "2026-02-09T14:43:56.405Z",
-    "versionId": "ee069791-7f9a-4060-a91c-21f8a11c8811",
+    "updatedAt": "2026-05-13T16:03:12.731Z",
+    "createdAt": "2026-05-13T16:03:12.731Z",
+    "versionId": "100fa597-7648-4b51-b45d-bbd491735c25",
     "workflowId": "dAuHlZZvs13vJCQM",
     "nodes": [
       {
@@ -967,10 +1080,10 @@
       },
       {
         "parameters": {
-          "jsCode": "const asset = $input.first().json;\n\n// Parse inventory_items JSON if it's a string\nconst inventoryItems = typeof asset.inventory_items === 'string' \n  ? JSON.parse(asset.inventory_items) \n  : asset.inventory_items;\n\nif (!inventoryItems || inventoryItems.length === 0) {\n  throw new Error('No inventory items found on asset');\n}\n\n// Extract item IDs for the query\nconst itemIds = inventoryItems.map(item => item.id);\n\nconsole.log(`Processing ${itemIds.length} items:`, itemIds);\n\nreturn [{\n  json: {\n    asset,\n    inventoryItems,\n    itemIds\n  }\n}];"
+          "jsCode": "const input = $input.first().json;\nvar isInline = Array.isArray(input.vins);\n\nif (isInline) {\n  // INLINE MODE - from [01] Orchestrate sub-workflow\n  var vins = input.vins;\n  // Spotlight expects a single VIN\n  var vehicleWhereClause = \"v.vin = ANY(ARRAY[\" + vins.map(function(v) { return \"'\" + v.replace(/'/g, \"''\") + \"'\"; }).join(\",\") + \"]::text[])\";\n  var syntheticAsset = {\n    id: null,\n    theme_seed: input.theme_seed || (input.theme_pack ? input.theme_pack.theme_seed : '') || '',\n    theme_emoji: input.theme_emoji || (input.theme_pack ? input.theme_pack.emoji : '') || '',\n    theme_direction: input.theme_direction || (input.theme_pack ? input.theme_pack.direction : '') || '',\n    local_override_text: input.local_override_text || null,\n    location: input.location || 'Rantoul, Illinois',\n    service_area: input.service_area || '',\n  };\n  console.log('[Resolve Input] INLINE mode -', vins.length, 'VIN(s)');\n  return [{ json: { _mode: 'inline', asset: syntheticAsset, inventoryItems: [{ id: vins[0], sort_order: 0 }], _vehicleWhereClause: vehicleWhereClause } }];\n} else {\n  // WEBHOOK MODE - asset from DB\n  var asset = input;\n  var inventoryItems = typeof asset.inventory_items === 'string' ? JSON.parse(asset.inventory_items) : asset.inventory_items;\n  if (!inventoryItems || inventoryItems.length === 0) throw new Error('No inventory items found on asset');\n  var itemIds = inventoryItems.map(function(item) { return item.id; });\n  var vehicleWhereClause = \"v.item_id = ANY(ARRAY[\" + itemIds.map(function(id) { return \"'\" + id.replace(/'/g, \"''\") + \"'\"; }).join(\",\") + \"]::uuid[])\";\n  console.log('[Resolve Input] WEBHOOK mode -', itemIds.length, 'item ID(s)');\n  return [{ json: { _mode: 'webhook', asset: asset, inventoryItems: inventoryItems, itemIds: itemIds, _vehicleWhereClause: vehicleWhereClause } }];\n}"
         },
         "id": "extract-ids",
-        "name": "Extract Item IDs",
+        "name": "Resolve Input",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
@@ -981,7 +1094,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "=SELECT \n  v.*,\n  ii.hero_image_url,\n  ii.hero_cloudinary_url,\n  ii.price,\n  ii.url,\n  v.raw_data->>'Equipment' as equipment_raw,\n  v.raw_data->>'ImageUrlsDelimited' as all_images_delimited\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE v.item_id = ANY(ARRAY[{{ $json.itemIds.map(id => `'${id}'`).join(',') }}]::uuid[])",
+          "query": "=SELECT \n  v.*,\n  ii.hero_image_url,\n  ii.hero_cloudinary_url,\n  ii.price,\n  ii.url,\n  v.raw_data->>'Equipment' as equipment_raw,\n  v.raw_data->>'ImageUrlsDelimited' as all_images_delimited\nFROM inventory_vehicles v\nJOIN inventory_items ii ON ii.id = v.item_id\nWHERE {{ $json._vehicleWhereClause }}",
           "options": {}
         },
         "id": "fetch-vehicle",
@@ -1001,7 +1114,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $('Extract Item IDs').first().json;\nconst asset = input.asset;\nconst vehicle = $input.first().json;\n\n// Parse all images\nconst allImages = vehicle.all_images_delimited \n  ? vehicle.all_images_delimited.split('|').filter(Boolean)\n  : [];\n\n// Parse equipment\nconst equipmentRaw = vehicle.equipment_raw || '';\nconst equipment = equipmentRaw ? equipmentRaw.split('|').map(e => e.trim()).filter(Boolean) : [];\n\nconst processed = {\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: equipment,\n  all_images: allImages,\n  photo_url: vehicle.hero_image_url || (allImages.length > 0 ? allImages[0] : null),\n  hero_cloudinary_url: vehicle.hero_cloudinary_url,\n  url: vehicle.url,\n  days_on_lot: vehicle.days_on_lot || 0\n};\n\nconsole.log(`🚗 Spotlight vehicle: ${processed.year} ${processed.make} ${processed.model}`);\nconsole.log(`📸 ${allImages.length} images available`);\nconsole.log(`🔧 ${equipment.length} equipment items`);\n\nreturn [{\n  json: {\n    asset,\n    vehicle: processed,\n    vehicles: [processed],\n    test_mode: false\n  }\n}];"
+          "jsCode": "const input = $('Resolve Input').first().json;\nconst asset = input.asset;\nconst vehicle = $input.first().json;\n\n// Parse all images\nconst allImages = vehicle.all_images_delimited \n  ? vehicle.all_images_delimited.split('|').filter(Boolean)\n  : [];\n\n// Parse equipment\nconst equipmentRaw = vehicle.equipment_raw || '';\nconst equipment = equipmentRaw ? equipmentRaw.split('|').map(e => e.trim()).filter(Boolean) : [];\n\nconst processed = {\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: equipment,\n  all_images: allImages,\n  photo_url: vehicle.hero_image_url || (allImages.length > 0 ? allImages[0] : null),\n  hero_cloudinary_url: vehicle.hero_cloudinary_url,\n  url: vehicle.url,\n  days_on_lot: vehicle.days_on_lot || 0\n};\n\nconsole.log(`🚗 Spotlight vehicle: ${processed.year} ${processed.make} ${processed.model}`);\nconsole.log(`📸 ${allImages.length} images available`);\nconsole.log(`🔧 ${equipment.length} equipment items`);\n\nreturn [{\n  json: {\n    asset,\n    vehicle: processed,\n    vehicles: [processed],\n    test_mode: false\n  }\n}];"
         },
         "id": "process-vehicle",
         "name": "Process Vehicle",
@@ -1408,6 +1521,20 @@
       },
       {
         "parameters": {
+          "mode": "chooseBranch",
+          "output": "empty"
+        },
+        "id": "merge-bg",
+        "name": "Merge BG Paths",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          4840,
+          300
+        ]
+      },
+      {
+        "parameters": {
           "method": "POST",
           "url": "https://ad-pilot-n8n-production.up.railway.app/webhook/thematic-pack-generate",
           "sendBody": true,
@@ -1426,7 +1553,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const themePackResponse = $json;\n\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items array (single item for spotlight)\nconst processedItems = [{\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: vehicle.equipment || [],\n  photo_url: spotlightData.hero_bg_removed_url || vehicle.photo_url,\n  bg_removed: !spotlightData.needs_bg_removal,\n  days_on_lot: vehicle.days_on_lot || 0,\n  sort_order: 0,\n  // Spotlight-specific enrichments\n  verified_features: spotlightData.verified_features || {},\n  selected_photos: spotlightData.selected_photos || {},\n  all_images: vehicle.all_images || []\n}];\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  core_tension: themePackResponse.core_tension,\n  ad_angle: themePackResponse.ad_angle,\n  local_micro_moments: themePackResponse.local_micro_moments,\n  banned_phrases: themePackResponse.banned_phrases,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nreturn [{\n  json: {\n    asset_id: asset.id,\n    processed_items: processedItems,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
+          "jsCode": "const themePackResponse = $json;\n\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\nconsole.log('Theme pack generated:', themePackResponse.theme_name || themePackResponse.theme_seed);\n\n// Build processed_items array (single item for spotlight)\nconst processedItems = [{\n  item_id: vehicle.item_id,\n  vin: vehicle.vin,\n  year: vehicle.year,\n  make: vehicle.make,\n  model: vehicle.model,\n  trim: vehicle.trim,\n  price: vehicle.price,\n  mileage: vehicle.mileage,\n  drivetrain: vehicle.drivetrain,\n  transmission: vehicle.transmission,\n  engine: vehicle.engine,\n  exterior_color: vehicle.exterior_color,\n  equipment: vehicle.equipment || [],\n  photo_url: spotlightData.hero_bg_removed_url || vehicle.photo_url,\n  bg_removed: !spotlightData.needs_bg_removal,\n  days_on_lot: vehicle.days_on_lot || 0,\n  sort_order: 0,\n  // Spotlight-specific enrichments\n  verified_features: spotlightData.verified_features || {},\n  selected_photos: spotlightData.selected_photos || {},\n  all_images: vehicle.all_images || []\n}];\n\n// Build theme_pack\nconst themePack = {\n  theme_name: themePackResponse.theme_name || asset.theme_seed,\n  hook: themePackResponse.hook,\n  talking_points: themePackResponse.talking_points,\n  core_tension: themePackResponse.core_tension,\n  ad_angle: themePackResponse.ad_angle,\n  local_micro_moments: themePackResponse.local_micro_moments,\n  banned_phrases: themePackResponse.banned_phrases,\n  cta: themePackResponse.cta,\n  emoji: themePackResponse.emoji || asset.theme_emoji\n};\n\nvar _mode = $('Resolve Input').first().json._mode || 'webhook';\n\nreturn [{\n  json: {\n    _mode,\n    asset_id: asset.id,\n    processed_items: processedItems,\n    theme_pack: themePack,\n    processing_status: 'processed'\n  }\n}];"
         },
         "id": "prep-save",
         "name": "Prepare Save Data",
@@ -1475,7 +1602,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Build theme pack request from spotlight data\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\n// Build item summary for single spotlight vehicle\nconst equipment = vehicle.equipment || [];\nconst highlights = equipment.slice(0, 5).join(', ');\nconst itemSummary = `Spotlight: ${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim() +\n  `\\nPrice: $${Number(vehicle.price || 0).toLocaleString()}` +\n  `\\nMileage: ${Number(vehicle.mileage || 0).toLocaleString()}` +\n  (vehicle.exterior_color ? `\\nColor: ${vehicle.exterior_color}` : '') +\n  (highlights ? `\\nKey features: ${highlights}` : '') +\n  (vehicle.days_on_lot > 0 ? `\\nDays on lot: ${vehicle.days_on_lot}` : '');\n\nconsole.log('Building theme pack request for spotlight vehicle:');\nconsole.log(itemSummary);\n\nreturn [{\n  json: {\n    ...spotlightData,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed || '',\n      emoji: asset.theme_emoji || '',\n      direction: asset.theme_direction || '',\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      client_id: asset.client_id,\n      item_summary: itemSummary\n    }\n  }\n}];"
+          "jsCode": "// Build theme pack request from spotlight data\n// Get the spotlight data from whichever BG path ran\nlet spotlightData;\ntry {\n  spotlightData = $('Update Hero URL').first().json;\n} catch(e) {\n  try {\n    spotlightData = $('Skip BG Removal').first().json;\n  } catch(e2) {\n    spotlightData = $('Process Hero Photo for Animation').first().json;\n  }\n}\n\nconst asset = $('Process Vehicle').first().json.asset;\nconst vehicle = spotlightData.vehicles?.[0] || spotlightData.vehicle || {};\n\n// Build item summary for single spotlight vehicle\nconst equipment = vehicle.equipment || [];\nconst highlights = equipment.slice(0, 5).join(', ');\nconst itemSummary = `Spotlight: ${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim() +\n  `\\nPrice: $${Number(vehicle.price || 0).toLocaleString()}` +\n  `\\nMileage: ${Number(vehicle.mileage || 0).toLocaleString()}` +\n  (vehicle.exterior_color ? `\\nColor: ${vehicle.exterior_color}` : '') +\n  (highlights ? `\\nKey features: ${highlights}` : '') +\n  (vehicle.days_on_lot > 0 ? `\\nDays on lot: ${vehicle.days_on_lot}` : '');\n\nconsole.log('Building theme pack request for spotlight vehicle:');\nconsole.log(itemSummary);\n\nvar _mode = $('Resolve Input').first().json._mode || 'webhook';\n\nreturn [{\n  json: {\n    _mode,\n    ...spotlightData,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: asset.theme_seed || '',\n      emoji: asset.theme_emoji || '',\n      direction: asset.theme_direction || '',\n      local_override_text: asset.local_override_text || null,\n      location: 'Rantoul, Illinois',\n      client_id: asset.client_id,\n      item_summary: itemSummary\n    }\n  }\n}];"
         },
         "id": "build-theme-req",
         "name": "Build Theme Pack Request",
@@ -1484,6 +1611,65 @@
         "position": [
           4900,
           300
+        ]
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "trigger-inline-001",
+        "name": "When Called as Sub-Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          220,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "mode-check",
+                "leftValue": "={{ $json._mode }}",
+                "rightValue": "webhook",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "route-mode-001",
+        "name": "Route by Mode",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.1,
+        "position": [
+          5720,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Return processed data to calling workflow\nreturn [{ json: { processed_items: $json.processed_items || [], theme_pack: $json.theme_pack } }];"
+        },
+        "id": "return-results-001",
+        "name": "Return Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5940,
+          520
         ]
       }
     ],
@@ -1503,18 +1689,7 @@
         "main": [
           [
             {
-              "node": "Extract Item IDs",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Extract Item IDs": {
-        "main": [
-          [
-            {
-              "node": "Fetch Vehicle Data",
+              "node": "Resolve Input",
               "type": "main",
               "index": 0
             }
@@ -1773,6 +1948,17 @@
           ]
         ]
       },
+      "Merge BG Paths": {
+        "main": [
+          [
+            {
+              "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
       "Generate Theme Pack": {
         "main": [
           [
@@ -1788,7 +1974,7 @@
         "main": [
           [
             {
-              "node": "Save to Asset",
+              "node": "Route by Mode",
               "type": "main",
               "index": 0
             }
@@ -1811,6 +1997,46 @@
           [
             {
               "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Called as Sub-Workflow": {
+        "main": [
+          [
+            {
+              "node": "Resolve Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resolve Input": {
+        "main": [
+          [
+            {
+              "node": "Fetch Vehicle Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route by Mode": {
+        "main": [
+          [
+            {
+              "node": "Save to Asset",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Return Results",
               "type": "main",
               "index": 0
             }
