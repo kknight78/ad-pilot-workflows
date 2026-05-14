@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:24:00.822Z",
+  "updatedAt": "2026-05-13T14:24:55.171Z",
   "createdAt": "2026-01-14T00:37:07.007Z",
   "id": "xv3sKZ3QO2n9OtOW",
   "name": "Generate Themed Background",
@@ -139,7 +139,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -245,8 +245,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "672f63a9-ca4d-4d2b-886a-68238eedf34a",
-  "activeVersionId": "672f63a9-ca4d-4d2b-886a-68238eedf34a",
+  "versionId": "74046260-ba27-4022-b7c6-7d62881f0a53",
+  "activeVersionId": "74046260-ba27-4022-b7c6-7d62881f0a53",
   "triggerCount": 1,
   "shared": [
     {
@@ -258,9 +258,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:24:00.826Z",
-    "createdAt": "2026-02-06T23:24:00.826Z",
-    "versionId": "672f63a9-ca4d-4d2b-886a-68238eedf34a",
+    "updatedAt": "2026-05-13T14:24:55.240Z",
+    "createdAt": "2026-05-13T14:24:55.240Z",
+    "versionId": "74046260-ba27-4022-b7c6-7d62881f0a53",
     "workflowId": "xv3sKZ3QO2n9OtOW",
     "nodes": [
       {
@@ -396,7 +396,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
           "authentication": "genericCredentialType",
           "genericAuthType": "httpHeaderAuth",
           "sendBody": true,
