@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:53.018Z",
+  "updatedAt": "2026-05-13T14:55:38.464Z",
   "createdAt": "2026-02-12T15:32:25.636Z",
   "id": "ylwigEHxipXjwWZd",
   "name": "[AGENT] Brain Analysis",
@@ -22,8 +22,8 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 6,
-              "triggerAtMinute": 0
+              "field": "cronExpression",
+              "expression": "0 6 * * 1"
             }
           ]
         }
@@ -59,7 +59,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT DISTINCT mac.client_id, c.name as client_name, \n  c.monthly_budget, c.timezone,\n  mac.ig_account_id,\n  (SELECT string_agg(DISTINCT cp.platform, ', ') \n   FROM client_platforms cp \n   JOIN clients cl ON cp.client_id = cl.id \n   WHERE cl.slug = mac.client_id AND cp.is_enabled = true\n  ) as active_platforms\nFROM meta_ad_accounts mac\nJOIN clients c ON mac.client_id = c.slug\nWHERE mac.account_status = 1 \n  AND mac.access_token IS NOT NULL\n  AND (mac.token_expires_at IS NULL OR mac.token_expires_at > NOW())",
+        "query": "SELECT DISTINCT mac.client_id, c.name as client_name, \n  c.monthly_budget, c.timezone,\n  mac.ig_account_id,\n  (SELECT string_agg(DISTINCT cp.platform, ', ') \n   FROM client_platforms cp \n   JOIN clients cl ON cp.client_id = cl.id \n   WHERE cl.slug = mac.client_id AND cp.is_enabled = true\n  ) as active_platforms\nFROM meta_ad_accounts mac\nJOIN clients c ON mac.client_id = c.slug\nWHERE mac.account_status = 1 \n  AND mac.access_token IS NOT NULL\n  AND (mac.token_expires_at IS NULL OR mac.token_expires_at > NOW())\n  AND c.is_active = true",
         "options": {}
       },
       "id": "get-clients",
@@ -632,11 +632,14 @@
   "staticData": {
     "node:Monday 6am CT": {
       "recurrenceRules": []
+    },
+    "node:Wednesday 7pm CT": {
+      "recurrenceRules": []
     }
   },
   "meta": null,
   "pinData": null,
-  "versionId": "add24d5f-79a7-48b4-a647-8ba89ecd7c2c",
+  "versionId": "7fd565cb-f4bd-4517-bed7-c8ba8e5aff36",
   "activeVersionId": null,
   "triggerCount": 2,
   "shared": [
