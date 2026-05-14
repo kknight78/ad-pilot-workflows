@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T20:49:15.162Z",
+  "updatedAt": "2026-05-13T14:55:37.318Z",
   "createdAt": "2025-12-13T13:57:22.103Z",
   "id": "q3QdJpCel2Z3pymA",
   "name": "[00] Job Gateway",
@@ -211,7 +211,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id || 'ccc',\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
+        "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nif (!$json.body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed');\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id,\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -404,7 +404,9 @@
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         },
-        "options": {}
+        "options": {
+          "alwaysOutputData": true
+        }
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
@@ -419,7 +421,8 @@
           "id": "9WK1ZemzeOSj1j4A",
           "name": "Google Sheets account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -879,20 +882,14 @@
         ]
       ]
     },
-    "Create Job Row": {
+    "Generate Job ID": {
       "main": [
         [
           {
             "node": "Job Created",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Generate Job ID": {
-      "main": [
-        [
+          },
           {
             "node": "Create Job Row",
             "type": "main",
@@ -904,6 +901,11 @@
     "Job Created": {
       "main": [
         [
+          {
+            "node": "Prepare Orchestration Payload",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Update Status to Processing",
             "type": "main",
@@ -923,17 +925,6 @@
         ]
       ]
     },
-    "Update Status to Processing": {
-      "main": [
-        [
-          {
-            "node": "Prepare Orchestration Payload",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Call Orchestration": {
       "main": [
         [
@@ -943,11 +934,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "Update Job Complete": {
-      "main": [
-        []
       ]
     },
     "Error Trigger": {
@@ -1003,8 +989,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "a47b0320-a95b-4356-93ab-48ee4191f8c8",
-  "activeVersionId": "a47b0320-a95b-4356-93ab-48ee4191f8c8",
+  "versionId": "4a6c9543-4ba3-4474-bf21-e3569509645a",
+  "activeVersionId": "4a6c9543-4ba3-4474-bf21-e3569509645a",
   "triggerCount": 2,
   "shared": [
     {
@@ -1016,9 +1002,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-08T20:49:15.187Z",
-    "createdAt": "2026-02-08T20:49:15.187Z",
-    "versionId": "a47b0320-a95b-4356-93ab-48ee4191f8c8",
+    "updatedAt": "2026-05-13T14:55:37.391Z",
+    "createdAt": "2026-05-13T14:55:37.391Z",
+    "versionId": "4a6c9543-4ba3-4474-bf21-e3569509645a",
     "workflowId": "q3QdJpCel2Z3pymA",
     "nodes": [
       {
@@ -1226,7 +1212,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id || 'ccc',\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
+          "jsCode": "const jobId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);\nconst now = new Date().toISOString();\n\nif (!$json.body.client_id) throw new Error('client_id is required \\u2014 no fallback allowed');\n\nreturn [{\n  json: {\n    job_id: jobId,\n    status: 'pending',\n    job_type: $json.body.preview_mode ? 'script_preview' : 'full_video',\n    client_id: $json.body.client_id,\n    template_id: $json.body.template_id,\n    created_at: now,\n    updated_at: now,\n    input_payload: JSON.stringify($json.body),\n    script_data: '',\n    video_url: '',\n    error_message: ''\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1419,7 +1405,9 @@
             "attemptToConvertTypes": false,
             "convertFieldsToString": false
           },
-          "options": {}
+          "options": {
+            "alwaysOutputData": true
+          }
         },
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
@@ -1434,7 +1422,8 @@
             "id": "9WK1ZemzeOSj1j4A",
             "name": "Google Sheets account"
           }
-        }
+        },
+        "onError": "continueRegularOutput"
       },
       {
         "parameters": {
@@ -1894,20 +1883,14 @@
           ]
         ]
       },
-      "Create Job Row": {
+      "Generate Job ID": {
         "main": [
           [
             {
               "node": "Job Created",
               "type": "main",
               "index": 0
-            }
-          ]
-        ]
-      },
-      "Generate Job ID": {
-        "main": [
-          [
+            },
             {
               "node": "Create Job Row",
               "type": "main",
@@ -1919,6 +1902,11 @@
       "Job Created": {
         "main": [
           [
+            {
+              "node": "Prepare Orchestration Payload",
+              "type": "main",
+              "index": 0
+            },
             {
               "node": "Update Status to Processing",
               "type": "main",
@@ -1938,17 +1926,6 @@
           ]
         ]
       },
-      "Update Status to Processing": {
-        "main": [
-          [
-            {
-              "node": "Prepare Orchestration Payload",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Call Orchestration": {
         "main": [
           [
@@ -1958,11 +1935,6 @@
               "index": 0
             }
           ]
-        ]
-      },
-      "Update Job Complete": {
-        "main": [
-          []
         ]
       },
       "Error Trigger": {
