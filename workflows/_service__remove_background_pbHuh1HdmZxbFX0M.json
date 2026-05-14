@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-11T18:30:27.535Z",
+  "updatedAt": "2026-05-13T23:58:38.901Z",
   "createdAt": "2026-01-18T01:52:17.593Z",
   "id": "pbHuh1HdmZxbFX0M",
   "name": "[Service] Remove Background",
@@ -70,7 +70,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Get input context from Validate Input node\nconst inputData = $('Validate Input').first().json;\n\n// Get the binary data\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data returned from Remove.bg');\n}\n\n// Return success with binary and context\nreturn {\n  json: {\n    success: true,\n    format: inputData.format,\n    context: inputData.context\n  },\n  binary: {\n    data: binaryData\n  }\n};"
+        "jsCode": "// Get input context from Validate Input node — itemMatching keeps per-item\n// alignment under runOnceForEachItem; .first() always returned index 0 and\n// stamped every cleaned image with the first vehicle's context.\nconst inputData = $('Validate Input').itemMatching($itemIndex).json;\n\n// Get the binary data\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data returned from Remove.bg');\n}\n\n// Return success with binary and context\nreturn {\n  json: {\n    success: true,\n    format: inputData.format,\n    context: inputData.context\n  },\n  binary: {\n    data: binaryData\n  }\n};"
       },
       "id": "format-success",
       "name": "Format Success Response",
@@ -156,8 +156,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "84e645b2-1d7d-43c1-b457-e8daf13f9b6d",
-  "activeVersionId": "84e645b2-1d7d-43c1-b457-e8daf13f9b6d",
+  "versionId": "cd65ace3-8e35-4370-be2d-c5eb25e802e8",
+  "activeVersionId": "cd65ace3-8e35-4370-be2d-c5eb25e802e8",
   "triggerCount": 0,
   "shared": [
     {
@@ -169,9 +169,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-05-11T18:30:27.608Z",
-    "createdAt": "2026-05-11T18:30:27.608Z",
-    "versionId": "84e645b2-1d7d-43c1-b457-e8daf13f9b6d",
+    "updatedAt": "2026-05-13T23:58:38.944Z",
+    "createdAt": "2026-05-13T23:58:38.944Z",
+    "versionId": "cd65ace3-8e35-4370-be2d-c5eb25e802e8",
     "workflowId": "pbHuh1HdmZxbFX0M",
     "nodes": [
       {
@@ -238,7 +238,7 @@
       {
         "parameters": {
           "mode": "runOnceForEachItem",
-          "jsCode": "// Get input context from Validate Input node\nconst inputData = $('Validate Input').first().json;\n\n// Get the binary data\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data returned from Remove.bg');\n}\n\n// Return success with binary and context\nreturn {\n  json: {\n    success: true,\n    format: inputData.format,\n    context: inputData.context\n  },\n  binary: {\n    data: binaryData\n  }\n};"
+          "jsCode": "// Get input context from Validate Input node — itemMatching keeps per-item\n// alignment under runOnceForEachItem; .first() always returned index 0 and\n// stamped every cleaned image with the first vehicle's context.\nconst inputData = $('Validate Input').itemMatching($itemIndex).json;\n\n// Get the binary data\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data returned from Remove.bg');\n}\n\n// Return success with binary and context\nreturn {\n  json: {\n    success: true,\n    format: inputData.format,\n    context: inputData.context\n  },\n  binary: {\n    data: binaryData\n  }\n};"
         },
         "id": "format-success",
         "name": "Format Success Response",
