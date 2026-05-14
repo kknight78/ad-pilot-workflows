@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-06T23:23:45.715Z",
+  "updatedAt": "2026-05-13T14:15:07.817Z",
   "createdAt": "2025-12-13T13:57:30.021Z",
   "id": "h2iTCTTGjddXykMu",
   "name": "[03] Generate Avatar",
@@ -459,7 +459,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+        "jsonBody": "={\n  \"text\": {{ JSON.stringify(($json.script.phonetic && $json.script.phonetic.full_script) || $json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
         "options": {
           "timeout": 120000
         }
@@ -580,7 +580,7 @@
         "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+        "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 0.5\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -918,8 +918,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "323974d1-ac6f-4e17-b7b1-12f5cf35cd04",
-  "activeVersionId": "323974d1-ac6f-4e17-b7b1-12f5cf35cd04",
+  "versionId": "7a42a4f1-dddb-4f78-ac7c-bbe689d9f539",
+  "activeVersionId": "7a42a4f1-dddb-4f78-ac7c-bbe689d9f539",
   "triggerCount": 0,
   "shared": [
     {
@@ -931,9 +931,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-06T23:23:45.719Z",
-    "createdAt": "2026-02-06T23:23:45.719Z",
-    "versionId": "323974d1-ac6f-4e17-b7b1-12f5cf35cd04",
+    "updatedAt": "2026-05-13T14:15:07.869Z",
+    "createdAt": "2026-05-13T14:15:07.869Z",
+    "versionId": "7a42a4f1-dddb-4f78-ac7c-bbe689d9f539",
     "workflowId": "h2iTCTTGjddXykMu",
     "nodes": [
       {
@@ -1389,7 +1389,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"text\": {{ JSON.stringify($json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
+          "jsonBody": "={\n  \"text\": {{ JSON.stringify(($json.script.phonetic && $json.script.phonetic.full_script) || $json.script.full_script) }},\n  \"model_id\": \"eleven_multilingual_v2\"{{ $json.voice_settings ? ', \"voice_settings\": ' + JSON.stringify($json.voice_settings) : '' }}\n}",
           "options": {
             "timeout": 120000
           }
@@ -1510,7 +1510,7 @@
           "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 1.5\n}",
+          "jsonBody": "={\n  \"audio_url\": \"{{ $json.url }}\",\n  \"silence_seconds\": 0.5\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
