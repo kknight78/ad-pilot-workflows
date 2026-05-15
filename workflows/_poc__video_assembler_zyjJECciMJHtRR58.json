@@ -1,0 +1,312 @@
+{
+  "updatedAt": "2026-03-27T14:47:21.249Z",
+  "createdAt": "2026-03-25T23:58:21.355Z",
+  "id": "zyjJECciMJHtRR58",
+  "name": "[POC] Video Assembler",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1000000-0000-0000-0000-000000000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// SET TEST DATA — REAL CCC END-TO-END TEST\n// ============================================\n\nreturn {\n  json: {\n    // Client config\n    client_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',\n    business_name: 'Capitol Car Credit',\n    location: 'Rantoul, IL',\n    service_area: 'Champaign County',\n    \n    // Avatar config (Shad)\n    avatar_id: '7a69f8f3b1994d9f9111c6a6dab78e73',\n    avatar_name: 'Shad',\n    voice_id: 'U4fSqTaQnUkjmN6zAJ5M',\n    \n    // Scene audio - will be populated by TTS step\n    scene_audios: [],\n    \n    // Items\n    items: [\n      { photo_url: 'https://imageserver.promaxinventory.com/9199/image/2140834dc8d97808068160158ed7ae69.jpg', title: '2024 Nissan Kicks SV', price: '$21,995', mileage: '50K MI' },\n      { photo_url: 'https://imageserver.promaxinventory.com/9199/image/e88db80cefd9f7cf2414a573a313b151.jpg', title: '2019 Jeep Cherokee Latitude+', price: '$17,995', mileage: '50K MI' },\n      { photo_url: 'https://imageserver.promaxinventory.com/9199/image/653e7fbb0e99b2902b33ee79d72a6241.jpg', title: '2021 Jeep Renegade Limited', price: '$22,995', mileage: '50K MI' }\n    ],\n    \n    // Client contact\n    client: {\n      business_name: 'Capitol Car Credit',\n      address_1: '301 E Champaign Ave',\n      address_2: 'Rantoul IL 61866',\n      website: 'capitolcarcredit.com',\n      phone: '217-892-1600'\n    },\n    \n    // Logos\n    logos: {\n      square: 'https://res.cloudinary.com/dtpqxuwby/image/upload/v1774484649/ap-darkbg-square_ojvqju.svg',\n      horizontal: 'https://res.cloudinary.com/dtpqxuwby/image/upload/v1774484649/ap-darkbg-square_ojvqju.svg'\n    },\n    \n    // Background + music\n    background_image_url: 'https://res.cloudinary.com/dtpqxuwby/image/upload/v1770779310/backgrounds/ccc-themed-valentines-hearts-9x16.jpg',\n    background_music_url: 'https://res.cloudinary.com/dtpqxuwby/video/upload/v1768684624/songs/full/on-the-highway-124655.aac',\n    \n    // Recipe config\n    video_recipe_slug: 'auto-multi-item',\n    video_recipe_id: '199fcaef-e088-45d5-af62-602944110a7a',\n    _video_recipe: {\n      name: 'Multi-Item Car Ad',\n      slug: 'auto-multi-item',\n      industry: 'auto',\n      scene_slugs: ['hook-bold-claim', 'body-avatar-multi-item', 'cta-avatar-contact']\n    },\n    _scene_recipes: {\n      'hook-bold-claim': {\n        scene_type: 'hook',\n        definition: {\n          avatar: { required: false },\n          animation: { allowed: ['lightning-zap', 'electric-sweep', 'blazing-swipe'], placement: 'scene_start' },\n          items: null,\n          headline: { allowed: true, max_lines: 2 },\n          caption_variant: null,\n          logo: null,\n          contact: null\n        }\n      },\n      'body-avatar-multi-item': {\n        scene_type: 'body',\n        definition: {\n          avatar: { required: true, variant_options: ['Avatar-small-left', 'Avatar-small-center'], default_variant: 'Avatar-small-left' },\n          animation: null,\n          items: { track_variant: 'Item-large-nobg-detailed', min: 2, max: 5 },\n          headline: { allowed: false },\n          caption_variant: 'transcribe-small',\n          logo: null,\n          contact: null\n        }\n      },\n      'cta-avatar-contact': {\n        scene_type: 'cta',\n        definition: {\n          avatar: { required: true, variant_options: ['Avatar-default-center'], default_variant: 'Avatar-default-center' },\n          animation: null,\n          items: null,\n          headline: { allowed: false },\n          caption_variant: 'transcribe-default',\n          logo: 'square-logo',\n          contact: 'Contact-small-right'\n        }\n      }\n    },\n    \n    // Test scenes - script text for each scene\n    test_scenes: [\n      {\n        audio_text: 'Are you paying too much for your car?',\n        headline_text: ['PAYING TOO MUCH', 'FOR YOUR CAR?'],\n        items: []\n      },\n      {\n        audio_text: 'Check out these incredible deals at Capitol Car Credit. We have a 2024 Nissan Kicks for just twenty one nine ninety five. A 2019 Jeep Cherokee Latitude Plus for seventeen nine ninety five. And a 2021 Jeep Renegade Limited for twenty two nine ninety five.',\n        headline_text: null,\n        items: [\n          { photo_url: 'https://imageserver.promaxinventory.com/9199/image/2140834dc8d97808068160158ed7ae69.jpg', title: '2024 Nissan Kicks SV', price: '$21,995', mileage: '50K MI' },\n          { photo_url: 'https://imageserver.promaxinventory.com/9199/image/e88db80cefd9f7cf2414a573a313b151.jpg', title: '2019 Jeep Cherokee Latitude+', price: '$17,995', mileage: '50K MI' },\n          { photo_url: 'https://imageserver.promaxinventory.com/9199/image/653e7fbb0e99b2902b33ee79d72a6241.jpg', title: '2021 Jeep Renegade Limited', price: '$22,995', mileage: '50K MI' }\n        ]\n      },\n      {\n        audio_text: 'Come see Shad at Capitol Car Credit in Rantoul. Financing available for every credit situation.',\n        headline_text: null,\n        items: []\n      }\n    ]\n  }\n};"
+      },
+      "id": "a1000000-0000-0000-0000-000000000002",
+      "name": "Set Test Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// ASSEMBLE VIDEO (POC)\n// Fetches both source templates, merges elements,\n// applies hardcoded test recipe, returns Creatomate source.\n// ============================================\n\nreturn (async () => {\n\n// TODO: Move to n8n environment variable\nconst CREATOMATE_API_KEY = '754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4';\n\nconst input = $json;\n\n// ============================================\n// HELPERS\n// ============================================\n\nfunction cloneElement(el) {\n  return JSON.parse(JSON.stringify(el));\n}\n\nfunction findChild(composition, name) {\n  if (!composition.elements) return null;\n  return composition.elements.find(el => el.name === name) || null;\n}\n\nfunction generateId() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {\n    const r = Math.random() * 16 | 0;\n    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);\n  });\n}\n\nfunction regenerateIds(el) {\n  if (el.id) el.id = generateId();\n  if (el.elements) el.elements.forEach(child => regenerateIds(child));\n}\n\nfunction injectAvatarUrls(variantComposition, videoUrl, maskUrl) {\n  if (!variantComposition.elements) return;\n  variantComposition.elements.forEach(child => {\n    if (child.name === 'avatar-1') child.source = videoUrl;\n    if (child.name === 'avatar-1-mask') child.source = maskUrl;\n  });\n}\n\nfunction injectItemData(variantComposition, itemData) {\n  if (!variantComposition.elements) return;\n  variantComposition.elements.forEach(child => {\n    if (child.name === 'item-photo') child.source = itemData.photo_url;\n    if (child.name === 'title')      child.text   = itemData.title;\n    if (child.name === 'price')      child.text   = itemData.price;\n    if (child.name === 'mileage')    child.text   = itemData.mileage;\n  });\n}\n\nfunction injectContactData(variantComposition, client) {\n  if (!variantComposition.elements) return;\n  variantComposition.elements.forEach(child => {\n    if (child.name === 'business-name') child.text = client.business_name;\n    if (child.name === 'address-1')     child.text = client.address_1;\n    if (child.name === 'address-2')     child.text = client.address_2;\n    if (child.name === 'website')       child.text = client.website;\n    if (child.name === 'phone')         child.text = client.phone;\n  });\n}\n\nfunction removeExitAnimation(el) {\n  if (el.animations) {\n    el.animations = el.animations.filter(a => a.time !== 'end');\n  }\n  if (el.elements) el.elements.forEach(child => removeExitAnimation(child));\n}\n\n// Show one variant inside a parent composition, hide all others\nfunction selectVariant(parentEl, variantName) {\n  if (!parentEl.elements) return null;\n  const selected = parentEl.elements.find(el => el.name === variantName);\n  if (selected) {\n    selected.visible = true;\n    parentEl.elements = [selected];\n  }\n  return selected;\n}\n\n// ============================================\n// STEP 1: FETCH & MERGE TEMPLATES\n// ============================================\n\nasync function fetchTemplateByTag(tag) {\n  const list = await this.helpers.httpRequest({\n    method: 'GET',\n    url: 'https://api.creatomate.com/v1/templates?tags=' + encodeURIComponent(tag),\n    headers: { 'Authorization': 'Bearer ' + CREATOMATE_API_KEY },\n    json: true\n  });\n  if (!list || !list.length) throw new Error('No template found with tag: ' + tag);\n\n  return await this.helpers.httpRequest({\n    method: 'GET',\n    url: 'https://api.creatomate.com/v1/templates/' + list[0].id,\n    headers: { 'Authorization': 'Bearer ' + CREATOMATE_API_KEY },\n    json: true\n  });\n}\n\nconsole.log('Fetching source templates...');\nconst trackTemplate = await fetchTemplateByTag('ALL-TRACKS_9:16');\nconst animTemplate  = await fetchTemplateByTag('ANIMATIONS-IN_9:16');\nconsole.log('Templates fetched. Tracks: ' + trackTemplate.source.elements.length + ', Animations: ' + animTemplate.source.elements.length);\n\n// Build element pools (top-level name -> element)\nconst trackPool = {};\ntrackTemplate.source.elements.forEach(el => {\n  if (el.name) trackPool[el.name] = el;\n});\n\nconst animPool = {};\nanimTemplate.source.elements.forEach(el => {\n  if (el.name) animPool[el.name] = el;\n});\n\nconsole.log('Track pool: ' + Object.keys(trackPool).join(', '));\nconsole.log('Anim pool: ' + Object.keys(animPool).length + ' animations');\n\n// ============================================\n// STEP 2: LOAD RECIPE FROM INPUT\n// ============================================\n\n// Scenes and recipes come from the Group Avatar Continuity node\nconst inputScenes = input.scenes;\nconst sceneRecipes = input._scene_recipes;\nconst avatarGroups = input._avatar_groups || [];\n\nif (!inputScenes || !sceneRecipes) {\n  throw new Error('Missing scenes or _scene_recipes from upstream node');\n}\n\n// Build recipe-compatible scene configs from scene recipes\nconst TEST_RECIPE = {\n  ratio: '9:16',\n  scenes: inputScenes.map(scene => {\n    const recipe = sceneRecipes[scene.scene_slug];\n    if (!recipe) throw new Error('Scene recipe not found: ' + scene.scene_slug);\n    const def = recipe.definition;\n\n    // Pick first allowed animation (or null)\n    const animation = def.animation && def.animation.allowed && def.animation.allowed.length > 0\n      ? def.animation.allowed[0]\n      : null;\n\n    return {\n      name: scene.scene_slug,\n      animation: animation,\n      avatar: def.avatar && def.avatar.required ? true : null,\n      avatar_variant: def.avatar && def.avatar.required ? def.avatar.default_variant : null,\n      items: def.items ? def.items.track_variant : null,\n      item_count: scene.items ? scene.items.length : 0,\n      headline: scene.headline_text,\n      caption_variant: def.caption_variant || null,\n      logo: def.logo || null,\n      contact: def.contact || null,\n      // Pass through scene data for item injection\n      _scene_items: scene.items || []\n    };\n  })\n};\n\nconsole.log('Recipe loaded: ' + TEST_RECIPE.scenes.length + ' scenes');\n\n// ============================================\n// STEP 3: CALCULATE SCENE TIMINGS\n// ============================================\n\nfunction calcSceneTimings(sceneAudios) {\n  let cursor = 0;\n  return sceneAudios.map(s => {\n    const timing = {\n      scene: s.scene,\n      start: cursor,\n      duration: s.duration,\n      end: cursor + s.duration\n    };\n    cursor += s.duration;\n    return timing;\n  });\n}\n\nconst sceneTimings = calcSceneTimings(input.scene_audios);\nconst totalDuration = sceneTimings[sceneTimings.length - 1].end;\nconsole.log('Scene timings:', JSON.stringify(sceneTimings));\nconsole.log('Total duration: ' + totalDuration + 's');\n\n// ============================================\n// STEP 4: PROCESS EACH SCENE\n// ============================================\n\nconst outputElements = [];\n// Use original template track numbers to preserve stacking order:\n// 1=bg-image, 2=bg-music, 3=voiceover, 4=Item, 5=Avatar,\n// 6=Contact, 7=Logo, 8=Headline, 9=Subtitles, 10=Thumbnail, 11=SafeAreas\n// Animations go on top (track 20+)\n\nfor (const scene of TEST_RECIPE.scenes) {\n  const timing = sceneTimings.find(t => t.scene === scene.name);\n  if (!timing) throw new Error('No timing found for scene: ' + scene.name);\n\n  console.log('Processing scene: ' + scene.name + ' (start=' + timing.start + ', duration=' + timing.duration + ')');\n\n  // --- 4a. Animation track ---\n  if (scene.animation) {\n    if (!animPool[scene.animation]) throw new Error('Animation not found: ' + scene.animation);\n    const el = cloneElement(animPool[scene.animation]);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = 1.5;\n    el.track = 20; // animations on top\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Animation: ' + scene.animation + ' at t=' + timing.start);\n  }\n\n  // --- 4b. Avatar track ---\n  if (scene.avatar && scene.avatar_variant) {\n    // Find avatar URLs from the continuity group that contains this scene\n    const avatarGroup = avatarGroups.find(g => g.scenes.includes(scene.name));\n    const avatarData = avatarGroup ? {\n      video_url: avatarGroup.avatar_video_url || input.scene_avatars?.find(a => a.scene === scene.name)?.video_url,\n      mask_url: avatarGroup.avatar_mask_url || input.scene_avatars?.find(a => a.scene === scene.name)?.mask_url\n    } : input.scene_avatars?.find(a => a.scene === scene.name);\n    if (!avatarData || !avatarData.video_url) throw new Error('No avatar data for scene: ' + scene.name);\n    if (!trackPool['Avatar']) throw new Error('Avatar not found in track pool');\n\n    const el = cloneElement(trackPool['Avatar']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = 5; // Avatar layer from template\n\n    // Select the variant and inject avatar URLs\n    const variant = selectVariant(el, scene.avatar_variant);\n    if (!variant) throw new Error('Avatar variant not found: ' + scene.avatar_variant);\n    injectAvatarUrls(variant, avatarData.video_url, avatarData.mask_url);\n    // Mute avatar videos — audio comes from voiceover track only\n    if (variant.elements) {\n      variant.elements.forEach(child => {\n        if (child.name === 'avatar-1') child.volume = '0%';\n      });\n    }\n\n    // Smart avatar transitions based on scene context\n    const sceneIdx = TEST_RECIPE.scenes.indexOf(scene);\n    const prevScene = sceneIdx > 0 ? TEST_RECIPE.scenes[sceneIdx - 1] : null;\n    const nextScene = sceneIdx < TEST_RECIPE.scenes.length - 1 ? TEST_RECIPE.scenes[sceneIdx + 1] : null;\n    const prevHasSameAvatar = prevScene && prevScene.avatar_variant === scene.avatar_variant;\n    const nextHasSameAvatar = nextScene && nextScene.avatar_variant === scene.avatar_variant;\n\n    if (!variant.animations) variant.animations = [];\n\n    if (!prevHasSameAvatar) {\n      variant.animations.push({\n        time: 0,\n        type: 'fade',\n        easing: 'quadratic-out',\n        duration: 0.5\n      });\n      console.log('    + Avatar fade IN (new/changed position)');\n    }\n\n    if (nextScene && !nextHasSameAvatar) {\n      variant.animations.push({\n        time: 'end',\n        type: 'fade',\n        easing: 'quadratic-out',\n        duration: 0.5,\n        reversed: true\n      });\n      console.log('    + Avatar fade OUT (leaving/changing position)');\n    }\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Avatar: ' + scene.avatar_variant + ' at t=' + timing.start);\n  }\n\n  // --- 4c. Item tracks (Nx cloning) ---\n  if (scene.items && scene.item_count > 0) {\n    const itemDuration = timing.duration / scene.item_count;\n\n    for (let i = 0; i < scene.item_count; i++) {\n      const itemData = scene._scene_items[i];\n      if (!itemData) throw new Error('No item data for index ' + i);\n      if (!trackPool['Item']) throw new Error('Item not found in track pool');\n\n      const el = cloneElement(trackPool['Item']);\n      el.visible = true;\n      el.time = timing.start + (i * itemDuration);\n      el.duration = itemDuration;\n      el.track = 4; // Item layer from template\n\n      // Select the item variant and inject data\n      const variant = selectVariant(el, scene.items);\n      if (!variant) throw new Error('Item variant not found: ' + scene.items);\n      injectItemData(variant, itemData);\n\n      // All items keep their enter/exit animations\n\n      regenerateIds(el);\n      outputElements.push(el);\n      console.log('  + Item ' + (i + 1) + ': ' + itemData.title + ' at t=' + el.time + ' dur=' + itemDuration);\n    }\n  }\n\n  // --- 4d. Headline tracks ---\n  if (scene.headline && scene.headline.length > 0) {\n    if (!trackPool['Headline']) throw new Error('Headline not found in track pool');\n    const el = cloneElement(trackPool['Headline']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = 8; // Headline layer from template\n\n    const positions = ['headline-top', 'headline-middle', 'headline-bottom'];\n    scene.headline.forEach((text, idx) => {\n      const child = findChild(el, positions[idx]);\n      if (child) {\n        child.text = text;\n        child.visible = true;\n      }\n    });\n    // Hide unused positions\n    positions.slice(scene.headline.length).forEach(pos => {\n      const child = findChild(el, pos);\n      if (child) child.visible = false;\n    });\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Headline: ' + scene.headline.join(' | '));\n  }\n\n  // --- 4e. Caption track ---\n  if (scene.caption_variant) {\n    if (!trackPool['Subtitles']) throw new Error('Subtitles not found in track pool');\n    const el = cloneElement(trackPool['Subtitles']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = 9; // Subtitles layer from template\n\n    selectVariant(el, scene.caption_variant);\n    // Set transcript source and fix duration on children\n    if (el.elements) {\n      el.elements.forEach(child => {\n        // Override the template's 0.1s duration — match scene duration\n        child.duration = timing.duration;\n        if (input.full_audio_url) {\n          // Real audio: use voiceover track as transcript source\n          child.transcript_source = 'voiceover';\n        } else {\n          // POC mode: no real audio, use placeholder text\n          delete child.transcript_source;\n          delete child.transcript_effect;\n          delete child.transcript_placement;\n          delete child.transcript_color;\n          delete child.transcript_maximum_length;\n          child.text = '(captions here)';\n        }\n      });\n    }\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Captions: ' + scene.caption_variant);\n  }\n\n  // --- 4f. Logo track ---\n  if (scene.logo) {\n    if (!trackPool['Logo']) throw new Error('Logo not found in track pool');\n    const el = cloneElement(trackPool['Logo']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = 7; // Logo layer from template\n\n    if (scene.logo === 'square-logo') {\n      const sq = findChild(el, 'square-logo');\n      const hz = findChild(el, 'horizontal-logo');\n      if (sq) { sq.visible = true;  sq.source = input.logos.square; }\n      if (hz) { hz.visible = false; }\n    } else {\n      const sq = findChild(el, 'square-logo');\n      const hz = findChild(el, 'horizontal-logo');\n      if (hz) { hz.visible = true;  hz.source = input.logos.horizontal; }\n      if (sq) { sq.visible = false; }\n    }\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Logo: ' + scene.logo);\n  }\n\n  // --- 4g. Contact track ---\n  if (scene.contact) {\n    if (!trackPool['Contact']) throw new Error('Contact not found in track pool');\n    const el = cloneElement(trackPool['Contact']);\n    el.visible = true;\n    el.time = timing.start;\n    el.duration = timing.duration;\n    el.track = 6; // Contact layer from template\n\n    const variant = selectVariant(el, scene.contact);\n    if (variant) {\n      injectContactData(variant, input.client);\n    }\n\n    regenerateIds(el);\n    outputElements.push(el);\n    console.log('  + Contact: ' + scene.contact);\n  }\n\n  // --- 4h. Per-scene background (overrides default) ---\n  if (scene._scene_bg_url || (inputScenes[TEST_RECIPE.scenes.indexOf(scene)] && inputScenes[TEST_RECIPE.scenes.indexOf(scene)].background_url)) {\n    const sceneBgUrl = scene._scene_bg_url || inputScenes[TEST_RECIPE.scenes.indexOf(scene)].background_url;\n    if (sceneBgUrl && trackPool['background-image']) {\n      const bgEl = cloneElement(trackPool['background-image']);\n      bgEl.visible = true;\n      bgEl.time = timing.start;\n      bgEl.duration = timing.duration;\n      bgEl.track = 1; // Same track as default bg — overlaps and covers it for this scene\n      bgEl.source = sceneBgUrl;\n      // Add fade transitions at boundaries\n      bgEl.animations = [\n        { time: 0, type: 'fade', easing: 'quadratic-out', duration: 0.5 },\n        { time: 'end', type: 'fade', easing: 'quadratic-out', duration: 0.5, reversed: true }\n      ];\n      regenerateIds(bgEl);\n      outputElements.push(bgEl);\n      console.log('  + Scene background: ' + sceneBgUrl);\n    }\n  }\n} // end for-each scene\n\n// ============================================\n// STEP 5: ADD BASE TRACKS\n// ============================================\n\n// Background image (track 1)\nconst bgEl = cloneElement(trackPool['background-image']);\nbgEl.visible = true;\nbgEl.time = 0;\nbgEl.duration = totalDuration;\nbgEl.track = 1;\nif (input.background_image_url) bgEl.source = input.background_image_url;\nregenerateIds(bgEl);\n\n// Voiceover (track 3) - full TTS audio runs entire video\nif (trackPool['voiceover'] && input.full_audio_url) {\n  const voiceEl = cloneElement(trackPool['voiceover']);\n  voiceEl.visible = true;\n  voiceEl.time = 0;\n  voiceEl.duration = totalDuration;\n  voiceEl.track = 3;\n  voiceEl.source = input.full_audio_url;\n  regenerateIds(voiceEl);\n  outputElements.unshift(voiceEl);\n  console.log('  + Voiceover track: ' + input.full_audio_url);\n}\n\n// Background music (track 2)\nconst musicEl = cloneElement(trackPool['background-music']);\nmusicEl.visible = true;\nmusicEl.time = 0;\nmusicEl.duration = totalDuration;\nmusicEl.track = 2;\nif (input.background_music_url) musicEl.source = input.background_music_url;\nregenerateIds(musicEl);\n\n// Insert base tracks at beginning (lowest layer)\noutputElements.unshift(bgEl, musicEl);\n\nconsole.log('Total elements: ' + outputElements.length);\n\n\n// ============================================\n// STEP 6: BUILD FINAL SOURCE\n// ============================================\n\nconst finalSource = {\n  output_format: 'mp4',\n  width: 720,\n  height: 1280,\n  duration: totalDuration,\n  elements: outputElements\n};\n\nconsole.log('Assembly complete. Duration: ' + totalDuration + 's, Elements: ' + outputElements.length);\n\nreturn {\n  json: {\n    ...input,\n    creatomate: { source: finalSource },\n    _total_duration: totalDuration,\n    _scene_timings: sceneTimings\n  }\n};\n\n})();"
+      },
+      "id": "a1000000-0000-0000-0000-000000000003",
+      "name": "Assemble Video (POC)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.creatomate }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000004",
+      "name": "API: Creatomate, Create Render",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Video Assembler POC\n\nPhase 1: Prove composable video architecture end-to-end.\n\n**Flow:**\n1. Manual Trigger → test data\n2. Assemble Video → fetches ALL-TRACKS + ANIMATIONS-IN templates, merges, applies recipe\n3. Submit to Creatomate for render\n\n**Test Recipe:** 3-scene car dealership ad\n- Hook: lightning-zap animation + headline\n- Solution: avatar (small-left) + 3 items with particle-blast transitions\n- CTA: avatar (default-center) + logo + contact info",
+        "height": 340,
+        "width": 400
+      },
+      "id": "a1000000-0000-0000-0000-000000000005",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        192,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// GROUP AVATAR CONTINUITY\n// Fetches video recipe + scene recipes from DB,\n// computes avatar continuity groups for HeyGen renders.\n// ============================================\n\nreturn (async () => {\n\nconst input = $json;\nconst videoRecipeSlug = input.video_recipe_slug || 'auto-multi-item';\n\n// ============================================\n// STEP 1: Fetch video recipe + scene recipes from DB\n// ============================================\n\nconst pgHost = 'shuttle.proxy.rlwy.net';\nconst pgPort = '56612';\nconst pgUser = 'postgres';\nconst pgPass = 'SlhKtARznaTeNCcIYrYBmSPWNtlupkQr';\nconst pgDb = 'railway';\n\n// Use n8n's built-in HTTP request to call a simple query via the existing Util workflow\n// OR fetch directly. For POC, we'll fetch via the n8n postgres approach.\n// Since Code nodes can't use postgres directly, we'll use HTTP to our own API.\n\n// Alternative: hardcode the recipes from DB for now, fetch live later\n// Let's fetch via HTTP to our own inventory API pattern\n\n// For now, fetch via direct pg connection using n8n's executeQuery helper\n// Actually, Code nodes don't have direct DB access. Let's use the approach of\n// including recipe data in the test data input, fetched by a prior Postgres node.\n\n// The recipes are passed in from the previous node (Set Test Data populates them)\nconst videoRecipe = input._video_recipe;\nconst sceneRecipes = input._scene_recipes; // keyed by slug\n\nif (!videoRecipe || !sceneRecipes) {\n  throw new Error('Missing _video_recipe or _scene_recipes in input. Ensure test data includes recipe definitions.');\n}\n\nconst sceneSlugs = videoRecipe.scene_slugs;\nconsole.log('Video recipe: ' + videoRecipe.name + ' (' + sceneSlugs.length + ' scenes)');\n\n// ============================================\n// STEP 2: Build scenes array from recipe\n// ============================================\n\n// In the real pipeline, scenes come from [02] Generate Script.\n// For POC, we build them from the test data + recipe definitions.\nconst scenes = sceneSlugs.map((slug, idx) => {\n  const recipe = sceneRecipes[slug];\n  if (!recipe) throw new Error('Scene recipe not found: ' + slug);\n  \n  // Use test script data if available, otherwise placeholder\n  const testScenes = input.test_scenes || [];\n  const testScene = testScenes[idx] || {};\n  \n  return {\n    scene_slug: slug,\n    scene_type: recipe.scene_type,\n    position: idx,\n    audio_text: testScene.audio_text || '(placeholder audio for ' + slug + ')',\n    headline_text: testScene.headline_text || null,\n    items: testScene.items || []\n  };\n});\n\n// ============================================\n// STEP 3: Group avatar continuity\n// ============================================\n\nfunction groupAvatarContinuity(scenes, sceneRecipes) {\n  const groups = [];\n  let currentGroup = null;\n\n  for (const scene of scenes) {\n    const recipe = sceneRecipes[scene.scene_slug];\n    const avatarDef = recipe.definition.avatar;\n    const avatarVariant = (avatarDef && avatarDef.required)\n      ? (avatarDef.default_variant || null)\n      : null;\n\n    if (avatarVariant === null) {\n      // No avatar in this scene — close current group if open\n      if (currentGroup) {\n        groups.push(currentGroup);\n        currentGroup = null;\n      }\n      continue;\n    }\n\n    if (currentGroup && currentGroup.avatar_variant === avatarVariant) {\n      // Same avatar position — extend current group\n      currentGroup.scenes.push(scene.scene_slug);\n      currentGroup.audio_text += ' ' + scene.audio_text;\n    } else {\n      // Different avatar or new group — close current, start new\n      if (currentGroup) groups.push(currentGroup);\n      currentGroup = {\n        group_id: 'group_' + groups.length,\n        avatar_variant: avatarVariant,\n        scenes: [scene.scene_slug],\n        audio_text: scene.audio_text,\n        start_scene_position: scene.position\n      };\n    }\n  }\n\n  if (currentGroup) groups.push(currentGroup);\n  return groups;\n}\n\nconst avatarGroups = groupAvatarContinuity(scenes, sceneRecipes);\n\nconsole.log('Avatar continuity groups: ' + avatarGroups.length);\navatarGroups.forEach(g => {\n  console.log('  ' + g.group_id + ': ' + g.avatar_variant + ' (scenes: ' + g.scenes.join(', ') + ')');\n});\n\n// ============================================\n// STEP 4: Return enriched data\n// ============================================\n\nreturn {\n  json: {\n    ...input,\n    scenes: scenes,\n    _avatar_groups: avatarGroups,\n    _video_recipe: videoRecipe,\n    _scene_recipes: sceneRecipes\n  }\n};\n\n})();"
+      },
+      "id": "a1000000-0000-0000-0000-000000000010",
+      "name": "Group Avatar Continuity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// RENDER AVATARS PER GROUP\n// For each avatar continuity group:\n//   1. Submit HeyGen render with group's sliced audio\n//   2. Poll for completion\n//   3. Submit Replicate RVM for alpha mask\n//   4. Poll for completion\n//   5. Store video_url + mask_url on group\n// ============================================\n\nreturn (async () => {\n\nconst input = $json;\nconst avatarGroups = input._avatar_groups || [];\n\nif (!avatarGroups.length) {\n  console.log('No avatar groups — skipping HeyGen renders');\n  return { json: input };\n}\n\n// Check if groups have audio URLs (required for HeyGen)\nconst groupsWithAudio = avatarGroups.filter(g => g.audio_url);\nif (!groupsWithAudio.length) {\n  console.log('No groups with audio_url — skipping HeyGen renders (POC mode)');\n  return { json: input };\n}\n\nconst HEYGEN_API_KEY = 'OWQxZDRjZmUxMmI4NDIzMDg2NjI3NTRmYWJlNTdmMTgtMTc1OTM0MjExNQ==';\nconst REPLICATE_API_KEY = '[REPLICATE_KEY_REDACTED]';\nconst RVM_VERSION = '73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac';\n\n// Avatar ID comes from client config\nconst avatarId = input.avatar_id;\nif (!avatarId) throw new Error('avatar_id required for HeyGen renders');\n\nfunction sleep(ms) {\n  return new Promise(resolve => setTimeout(resolve, ms));\n}\n\nasync function httpReq(opts) {\n  return await this.helpers.httpRequest({ ...opts, json: true });\n}\n\nconst updatedGroups = [];\n\nfor (const group of avatarGroups) {\n  if (!group.audio_url) {\n    console.log(group.group_id + ': No audio_url, skipping');\n    updatedGroups.push(group);\n    continue;\n  }\n\n  console.log(group.group_id + ': Starting HeyGen render (' + group.avatar_variant + ')');\n\n  // ── Step 1: Submit HeyGen render ──\n  const heygenResponse = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.heygen.com/v2/video/generate',\n    headers: {\n      'x-api-key': HEYGEN_API_KEY,\n      'accept': 'application/json',\n      'content-type': 'application/json'\n    },\n    body: {\n      title: 'Ad Pilot - ' + group.group_id,\n      video_inputs: [{\n        character: {\n          type: 'talking_photo',\n          talking_photo_id: avatarId\n        },\n        voice: {\n          type: 'audio',\n          audio_url: group.audio_url\n        }\n      }],\n      dimension: { width: 720, height: 1280 }\n    },\n    json: true\n  });\n\n  const videoId = heygenResponse.data?.video_id;\n  if (!videoId) throw new Error(group.group_id + ': HeyGen did not return video_id');\n  console.log(group.group_id + ': HeyGen video_id = ' + videoId);\n\n  // ── Step 2: Poll HeyGen for completion ──\n  let avatarVideoUrl = null;\n  const MAX_POLLS = 60; // 5 minutes max (60 * 5s)\n\n  for (let i = 0; i < MAX_POLLS; i++) {\n    await sleep(5000);\n\n    const status = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://api.heygen.com/v1/video_status.get?video_id=' + videoId,\n      headers: { 'x-api-key': HEYGEN_API_KEY, 'accept': 'application/json' },\n      json: true\n    });\n\n    const state = status.data?.status;\n    console.log(group.group_id + ': HeyGen poll ' + (i + 1) + ' - ' + state);\n\n    if (state === 'completed') {\n      avatarVideoUrl = status.data.video_url;\n      break;\n    } else if (state === 'failed') {\n      throw new Error(group.group_id + ': HeyGen render failed: ' + JSON.stringify(status.data?.error));\n    }\n  }\n\n  if (!avatarVideoUrl) throw new Error(group.group_id + ': HeyGen render timed out after ' + MAX_POLLS + ' polls');\n  console.log(group.group_id + ': HeyGen complete: ' + avatarVideoUrl);\n\n  // ── Step 3: Submit Replicate RVM for alpha mask ──\n  const rvmResponse = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.replicate.com/v1/predictions',\n    headers: {\n      'Authorization': 'Bearer ' + REPLICATE_API_KEY,\n      'Content-Type': 'application/json',\n      'Prefer': 'respond-async'\n    },\n    body: {\n      version: RVM_VERSION,\n      input: {\n        input_video: avatarVideoUrl,\n        output_type: 'alpha-mask'\n      }\n    },\n    json: true\n  });\n\n  const predictionId = rvmResponse.id;\n  if (!predictionId) throw new Error(group.group_id + ': Replicate did not return prediction id');\n  console.log(group.group_id + ': RVM prediction_id = ' + predictionId);\n\n  // ── Step 4: Poll Replicate for completion ──\n  let maskUrl = null;\n\n  for (let i = 0; i < MAX_POLLS; i++) {\n    await sleep(5000);\n\n    const rvmStatus = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://api.replicate.com/v1/predictions/' + predictionId,\n      headers: { 'Authorization': 'Bearer ' + REPLICATE_API_KEY },\n      json: true\n    });\n\n    console.log(group.group_id + ': RVM poll ' + (i + 1) + ' - ' + rvmStatus.status);\n\n    if (rvmStatus.status === 'succeeded') {\n      maskUrl = rvmStatus.output;\n      break;\n    } else if (rvmStatus.status === 'failed') {\n      throw new Error(group.group_id + ': RVM failed: ' + JSON.stringify(rvmStatus.error));\n    }\n  }\n\n  if (!maskUrl) throw new Error(group.group_id + ': RVM timed out');\n  console.log(group.group_id + ': RVM complete: ' + maskUrl);\n\n  updatedGroups.push({\n    ...group,\n    avatar_video_url: avatarVideoUrl,\n    avatar_mask_url: maskUrl\n  });\n}\n\nconsole.log('All avatar renders complete. ' + updatedGroups.length + ' groups.');\n\nreturn {\n  json: {\n    ...input,\n    _avatar_groups: updatedGroups\n  }\n};\n\n})();"
+      },
+      "id": "a1000000-0000-0000-0000-000000000012",
+      "name": "Render Avatars Per Group",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Prepare the TTS request body\nconst input = $json;\nconst scenes = input.test_scenes || [];\nconst fullScript = scenes.map(s => s.audio_text).join(' ');\n\nconsole.log('Full script: ' + fullScript.length + ' chars (' + fullScript.split(' ').length + ' words)');\nconsole.log('Voice ID: ' + input.voice_id);\n\nreturn {\n  json: {\n    ...input,\n    _full_script: fullScript,\n    _tts_body: {\n      text: fullScript,\n      model_id: 'eleven_multilingual_v2'\n    }\n  }\n};"
+      },
+      "id": "a1000000-0000-0000-0000-000000000020",
+      "name": "Prep TTS Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}/with-timestamps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._tts_body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000021",
+      "name": "API: 11Labs TTS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Parse 11Labs response, calculate scene timings, upload audio\nreturn (async () => {\n\nconst config = $('Prep TTS Request').first().json;\nconst response = $json;\n\nconst audioBase64 = response.audio_base64;\nconst alignment = response.alignment;\nif (!alignment) throw new Error('No alignment data from ElevenLabs');\n\nconst chars = alignment.characters;\nconst starts = alignment.character_start_times_seconds;\nconst ends = alignment.character_end_times_seconds;\nconst audioDuration = ends[ends.length - 1];\n\nconsole.log('Audio duration: ' + audioDuration.toFixed(2) + 's');\n\n// Calculate scene boundaries using character positions\nconst scenes = config.test_scenes || [];\nconst slugs = config._video_recipe.scene_slugs;\nlet charPos = 0;\nconst sceneTimings = [];\n\nfor (let i = 0; i < scenes.length; i++) {\n  const sceneText = scenes[i].audio_text;\n  const startCharPos = charPos;\n  const endCharPos = charPos + sceneText.length - 1;\n\n  const startTime = starts[startCharPos] || 0;\n  const endTime = ends[Math.min(endCharPos, ends.length - 1)] || audioDuration;\n\n  sceneTimings.push({\n    scene: slugs[i],\n    start: startTime,\n    end: endTime,\n    duration: endTime - startTime\n  });\n\n  console.log('Scene ' + i + ' (' + slugs[i] + '): ' + startTime.toFixed(2) + 's - ' + endTime.toFixed(2) + 's (' + (endTime - startTime).toFixed(2) + 's)');\n  charPos += sceneText.length + 1;\n}\n\n// Upload audio to temp service\nconst tempAudioResponse = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://temp-audio-service-production.up.railway.app/audio',\n  headers: { 'Content-Type': 'application/json' },\n  body: { audio_base64: audioBase64, format: 'mp3' },\n  json: true\n});\n\nconsole.log('Temp audio URL: ' + tempAudioResponse.url);\n\n// Add silence for rest pose\nconst silenceResponse = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://ffmpeg-banner-api-production.up.railway.app/add-silence',\n  headers: { 'Content-Type': 'application/json' },\n  body: { audio_url: tempAudioResponse.url, silence_seconds: 0.5 },\n  json: true\n});\n\nconst finalAudioUrl = silenceResponse.audio_url;\nconsole.log('Final audio URL: ' + finalAudioUrl);\n\nconst sceneAudios = sceneTimings.map(t => ({\n  scene: t.scene,\n  duration: t.duration,\n  audio_url: finalAudioUrl\n}));\n\nreturn {\n  json: {\n    ...config,\n    full_audio_url: finalAudioUrl,\n    audio_duration: audioDuration,\n    _scene_timings: sceneTimings,\n    scene_audios: sceneAudios\n  }\n};\n\n})();"
+      },
+      "id": "a1000000-0000-0000-0000-000000000022",
+      "name": "Parse TTS + Scene Timings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// SLICE AUDIO PER AVATAR GROUP\n// Calls ffmpeg-banner-api /slice-audio for each group.\n// Precise ffmpeg cuts, uploads to Cloudinary.\n// ============================================\n\nreturn (async () => {\n\nconst input = $json;\nconst avatarGroups = input._avatar_groups || [];\nconst sceneTimings = input._scene_timings || [];\nconst fullAudioUrl = input.full_audio_url;\n\nif (!avatarGroups.length || !fullAudioUrl || !sceneTimings.length) {\n  console.log('Skipping audio slicing (no groups, audio, or timings)');\n  return { json: input };\n}\n\nconst updatedGroups = [];\n\nfor (const group of avatarGroups) {\n  const firstTiming = sceneTimings.find(t => t.scene === group.scenes[0]);\n  const lastTiming = sceneTimings.find(t => t.scene === group.scenes[group.scenes.length - 1]);\n\n  if (!firstTiming || !lastTiming) {\n    console.log(group.group_id + ': Missing timing, skipping');\n    updatedGroups.push(group);\n    continue;\n  }\n\n  const start = firstTiming.start;\n  const end = lastTiming.end;\n\n  console.log(group.group_id + ': slicing ' + start.toFixed(3) + 's -> ' + end.toFixed(3) + 's (' + (end - start).toFixed(2) + 's)');\n\n  const result = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://ffmpeg-banner-api-production.up.railway.app/slice-audio',\n    headers: { 'Content-Type': 'application/json' },\n    body: {\n      audio_url: fullAudioUrl,\n      start: start,\n      end: end,\n      public_id: group.group_id + '-' + Date.now()\n    },\n    json: true\n  });\n\n  if (!result.success) {\n    throw new Error(group.group_id + ': slice failed — ' + (result.error || 'unknown error'));\n  }\n\n  console.log(group.group_id + ': ' + result.audio_url);\n\n  updatedGroups.push({\n    ...group,\n    audio_url: result.audio_url,\n    audio_duration: end - start\n  });\n}\n\nconsole.log('Audio slicing complete. ' + updatedGroups.length + ' groups.');\n\nreturn {\n  json: {\n    ...input,\n    _avatar_groups: updatedGroups\n  }\n};\n\n})();"
+      },
+      "id": "a1000000-0000-0000-0000-000000000030",
+      "name": "Slice Audio Per Group",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        304
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Test Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Test Data": {
+      "main": [
+        [
+          {
+            "node": "Prep TTS Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Video (POC)": {
+      "main": [
+        [
+          {
+            "node": "API: Creatomate, Create Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group Avatar Continuity": {
+      "main": [
+        [
+          {
+            "node": "Slice Audio Per Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Avatars Per Group": {
+      "main": [
+        [
+          {
+            "node": "Assemble Video (POC)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep TTS Request": {
+      "main": [
+        [
+          {
+            "node": "API: 11Labs TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: 11Labs TTS": {
+      "main": [
+        [
+          {
+            "node": "Parse TTS + Scene Timings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse TTS + Scene Timings": {
+      "main": [
+        [
+          {
+            "node": "Group Avatar Continuity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slice Audio Per Group": {
+      "main": [
+        [
+          {
+            "node": "Render Avatars Per Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "bbc85178-1ef4-4890-ad2c-cab426e64ebc",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-25T23:58:21.355Z",
+      "createdAt": "2026-03-25T23:58:21.355Z",
+      "role": "workflow:owner",
+      "workflowId": "zyjJECciMJHtRR58",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
