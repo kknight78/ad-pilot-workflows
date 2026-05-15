@@ -1,0 +1,989 @@
+{
+  "updatedAt": "2026-01-30T01:12:08.162Z",
+  "createdAt": "2026-01-26T23:34:49.829Z",
+  "id": "JbXvdRmZQ53JxbdB",
+  "name": "[07] B-Roll Source Comparison",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "broll-test",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "broll-test"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst mode = body.mode || 'random';\n\nlet prompt;\nif (mode === 'direct') {\n  prompt = `You are a creative topic generator for Capitol Smarts, an educational channel about cars and automotive topics for Illinois drivers.\n\nUser's topic idea: ${body.topic}\n\nRefine this into a polished video topic with:\n- title: A catchy, specific title that captures the topic\n- hook: An attention-grabbing opening line/question\n\nReturn ONLY valid JSON, no explanation:\n{ \"title\": \"...\", \"hook\": \"...\" }`;\n} else {\n  const guidance = mode === 'guided' ? `Theme/guidance: ${body.guidance}\\n\\n` : '';\n  prompt = `You are a creative topic generator for Capitol Smarts, an educational channel about cars and automotive topics for Illinois drivers.\n\n${guidance}Generate 3 unique, engaging video topic ideas${mode === 'guided' ? ' within this theme' : ''}. Each should be:\n- Practical and helpful for everyday drivers\n- Specific to a real situation or problem\n- Interesting enough to stop someone scrolling\n\nFor each topic, provide:\n- title: A catchy, specific title (not generic)\n- hook: An attention-grabbing opening line/question\n\nReturn ONLY valid JSON, no explanation:\n{\n  \"suggestions\": [\n    { \"title\": \"...\", \"hook\": \"...\" },\n    { \"title\": \"...\", \"hook\": \"...\" },\n    { \"title\": \"...\", \"hook\": \"...\" }\n  ]\n}`;\n}\n\nreturn [{ json: { mode, prompt, originalBody: body } }];"
+      },
+      "id": "build-prompt",
+      "name": "Build Topic Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 500,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "options": {}
+      },
+      "id": "call-claude-topic",
+      "name": "Generate Topic (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "Cias5aAJewPKMMCa",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst prevData = $('Build Topic Prompt').first().json;\nconst mode = prevData.mode;\n\nlet parsed;\ntry {\n  const content = input.content?.[0]?.text || '';\n  const jsonMatch = content.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    parsed = JSON.parse(jsonMatch[0]);\n  }\n} catch (e) {\n  return [{ json: { error: 'Failed to parse', raw: input.content?.[0]?.text } }];\n}\n\nif (mode === 'direct') {\n  // Direct mode - proceed to b-roll search\n  return [{ json: { routeTo: 'search', topic: parsed } }];\n} else {\n  // Random/guided - return suggestions immediately\n  return [{ json: { routeTo: 'suggestions', suggestions: parsed.suggestions } }];\n}"
+      },
+      "id": "parse-topic-response",
+      "name": "Parse Topic Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.routeTo }}",
+                    "rightValue": "search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "search"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.routeTo }}",
+                    "rightValue": "suggestions",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "suggestions"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "route",
+      "name": "Route",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"selection_required\",\n  \"suggestions\": {{ JSON.stringify($json.suggestions) }},\n  \"instructions\": \"Pick a topic and call with mode=direct and topic=YOUR_CHOICE\"\n}",
+        "options": {}
+      },
+      "id": "return-suggestions",
+      "name": "Return Suggestions",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 200,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(`You are helping find stock video b-roll for a short educational video about cars/automotive topics.\n\nTitle: ${$json.topic.title}\nHook: ${$json.topic.hook}\n\nGenerate exactly 3 search queries that would find good 2-3 second b-roll clips to use as an attention-grabbing intro. The b-roll should visually represent the topic and stop someone from scrolling.\n\nRequirements:\n- Queries should be 2-4 words each\n- Focus on ACTION and MOVEMENT (not static shots)\n- Think: what visual would make someone stop and watch?\n- Avoid generic terms like \"car\" alone\n\nReturn as JSON array only, no explanation:\n[\"query 1\", \"query 2\", \"query 3\"]`) }} }]\n}",
+        "options": {}
+      },
+      "id": "call-claude-terms",
+      "name": "Extract Search Terms (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        200
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "Cias5aAJewPKMMCa",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst topicData = $('Route').first().json;\n\nlet searchTerms;\ntry {\n  const content = input.content?.[0]?.text || '';\n  const jsonMatch = content.match(/\\[[\\s\\S]*\\]/);\n  if (jsonMatch) {\n    searchTerms = JSON.parse(jsonMatch[0]);\n  }\n} catch (e) {\n  return [{ json: { error: 'Failed to parse search terms', raw: input.content?.[0]?.text } }];\n}\n\nconst term = searchTerms[0];\nreturn [{ json: { term, allTerms: searchTerms, topic: topicData.topic } }];"
+      },
+      "id": "parse-terms",
+      "name": "Parse Search Terms",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.pexels.com/videos/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "[POSSIBLE_SECRET_REDACTED]"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.term }}"
+            },
+            {
+              "name": "orientation",
+              "value": "portrait"
+            },
+            {
+              "name": "size",
+              "value": "medium"
+            },
+            {
+              "name": "per_page",
+              "value": "3"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-pexels",
+      "name": "Query Pexels",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://pixabay.com/api/videos/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "53943567-20c768a9116fd85d600eb41fa"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.term }}"
+            },
+            {
+              "name": "video_type",
+              "value": "film"
+            },
+            {
+              "name": "per_page",
+              "value": "3"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-pixabay",
+      "name": "Query Pixabay",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "merge-apis",
+      "name": "Merge API Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1760,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst termData = $('Parse Search Terms').first().json;\n\nconst pexelsData = items[0]?.json || {};\nconst pixabayData = items[1]?.json || {};\n\nconst pexelsResults = (pexelsData.videos || []).map((video, idx) => {\n  const hdFile = video.video_files?.find(f => f.quality === 'hd') || video.video_files?.[0];\n  return {\n    rank: idx + 1,\n    id: String(video.id),\n    duration: video.duration,\n    thumbnail: video.image,\n    video_url: hdFile?.link || null,\n    width: video.width,\n    height: video.height,\n    preview_url: video.url\n  };\n});\n\nconst pixabayResults = (pixabayData.hits || []).map((video, idx) => {\n  const medium = video.videos?.medium || {};\n  return {\n    rank: idx + 1,\n    id: String(video.id),\n    duration: video.duration,\n    thumbnail: video.videos?.tiny?.thumbnail || null,\n    video_url: medium.url || null,\n    width: medium.width || null,\n    height: medium.height || null,\n    preview_url: video.pageURL\n  };\n});\n\nreturn [{ json: {\n  status: 'complete',\n  topic: termData.topic,\n  search_terms: termData.allTerms,\n  results: [{\n    search_term: termData.term,\n    pexels: pexelsResults,\n    pixabay: pixabayResults\n  }],\n  note: 'Testing with first search term only.',\n  generated_at: new Date().toISOString()\n}}];"
+      },
+      "id": "format-output",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "return-results",
+      "name": "Return Results",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2200,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Topic Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Topic Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Topic (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Topic (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Parse Topic Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Topic Response": {
+      "main": [
+        [
+          {
+            "node": "Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route": {
+      "main": [
+        [
+          {
+            "node": "Extract Search Terms (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Suggestions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Search Terms (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Parse Search Terms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Search Terms": {
+      "main": [
+        [
+          {
+            "node": "Query Pexels",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Query Pixabay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Pexels": {
+      "main": [
+        [
+          {
+            "node": "Merge API Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Pixabay": {
+      "main": [
+        [
+          {
+            "node": "Merge API Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge API Results": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Return Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "d426c675-d1a8-4f84-8123-6a4eed1a31b9",
+  "activeVersionId": "d426c675-d1a8-4f84-8123-6a4eed1a31b9",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:49.829Z",
+      "createdAt": "2026-01-26T23:34:49.829Z",
+      "role": "workflow:owner",
+      "workflowId": "JbXvdRmZQ53JxbdB",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:08.165Z",
+    "createdAt": "2026-01-30T01:12:08.165Z",
+    "versionId": "d426c675-d1a8-4f84-8123-6a4eed1a31b9",
+    "workflowId": "JbXvdRmZQ53JxbdB",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "broll-test",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          300
+        ],
+        "webhookId": "broll-test"
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body;\nconst mode = body.mode || 'random';\n\nlet prompt;\nif (mode === 'direct') {\n  prompt = `You are a creative topic generator for Capitol Smarts, an educational channel about cars and automotive topics for Illinois drivers.\n\nUser's topic idea: ${body.topic}\n\nRefine this into a polished video topic with:\n- title: A catchy, specific title that captures the topic\n- hook: An attention-grabbing opening line/question\n\nReturn ONLY valid JSON, no explanation:\n{ \"title\": \"...\", \"hook\": \"...\" }`;\n} else {\n  const guidance = mode === 'guided' ? `Theme/guidance: ${body.guidance}\\n\\n` : '';\n  prompt = `You are a creative topic generator for Capitol Smarts, an educational channel about cars and automotive topics for Illinois drivers.\n\n${guidance}Generate 3 unique, engaging video topic ideas${mode === 'guided' ? ' within this theme' : ''}. Each should be:\n- Practical and helpful for everyday drivers\n- Specific to a real situation or problem\n- Interesting enough to stop someone scrolling\n\nFor each topic, provide:\n- title: A catchy, specific title (not generic)\n- hook: An attention-grabbing opening line/question\n\nReturn ONLY valid JSON, no explanation:\n{\n  \"suggestions\": [\n    { \"title\": \"...\", \"hook\": \"...\" },\n    { \"title\": \"...\", \"hook\": \"...\" },\n    { \"title\": \"...\", \"hook\": \"...\" }\n  ]\n}`;\n}\n\nreturn [{ json: { mode, prompt, originalBody: body } }];"
+        },
+        "id": "build-prompt",
+        "name": "Build Topic Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              },
+              {
+                "name": "content-type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 500,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+          "options": {}
+        },
+        "id": "call-claude-topic",
+        "name": "Generate Topic (Claude)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          440,
+          300
+        ],
+        "credentials": {
+          "anthropicApi": {
+            "id": "Cias5aAJewPKMMCa",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst prevData = $('Build Topic Prompt').first().json;\nconst mode = prevData.mode;\n\nlet parsed;\ntry {\n  const content = input.content?.[0]?.text || '';\n  const jsonMatch = content.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    parsed = JSON.parse(jsonMatch[0]);\n  }\n} catch (e) {\n  return [{ json: { error: 'Failed to parse', raw: input.content?.[0]?.text } }];\n}\n\nif (mode === 'direct') {\n  // Direct mode - proceed to b-roll search\n  return [{ json: { routeTo: 'search', topic: parsed } }];\n} else {\n  // Random/guided - return suggestions immediately\n  return [{ json: { routeTo: 'suggestions', suggestions: parsed.suggestions } }];\n}"
+        },
+        "id": "parse-topic-response",
+        "name": "Parse Topic Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.routeTo }}",
+                      "rightValue": "search",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "search"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.routeTo }}",
+                      "rightValue": "suggestions",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "suggestions"
+              }
+            ]
+          },
+          "options": {
+            "fallbackOutput": "none"
+          }
+        },
+        "id": "route",
+        "name": "Route",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          880,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"status\": \"selection_required\",\n  \"suggestions\": {{ JSON.stringify($json.suggestions) }},\n  \"instructions\": \"Pick a topic and call with mode=direct and topic=YOUR_CHOICE\"\n}",
+          "options": {}
+        },
+        "id": "return-suggestions",
+        "name": "Return Suggestions",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1100,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              },
+              {
+                "name": "content-type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 200,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(`You are helping find stock video b-roll for a short educational video about cars/automotive topics.\n\nTitle: ${$json.topic.title}\nHook: ${$json.topic.hook}\n\nGenerate exactly 3 search queries that would find good 2-3 second b-roll clips to use as an attention-grabbing intro. The b-roll should visually represent the topic and stop someone from scrolling.\n\nRequirements:\n- Queries should be 2-4 words each\n- Focus on ACTION and MOVEMENT (not static shots)\n- Think: what visual would make someone stop and watch?\n- Avoid generic terms like \"car\" alone\n\nReturn as JSON array only, no explanation:\n[\"query 1\", \"query 2\", \"query 3\"]`) }} }]\n}",
+          "options": {}
+        },
+        "id": "call-claude-terms",
+        "name": "Extract Search Terms (Claude)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          200
+        ],
+        "credentials": {
+          "anthropicApi": {
+            "id": "Cias5aAJewPKMMCa",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst topicData = $('Route').first().json;\n\nlet searchTerms;\ntry {\n  const content = input.content?.[0]?.text || '';\n  const jsonMatch = content.match(/\\[[\\s\\S]*\\]/);\n  if (jsonMatch) {\n    searchTerms = JSON.parse(jsonMatch[0]);\n  }\n} catch (e) {\n  return [{ json: { error: 'Failed to parse search terms', raw: input.content?.[0]?.text } }];\n}\n\nconst term = searchTerms[0];\nreturn [{ json: { term, allTerms: searchTerms, topic: topicData.topic } }];"
+        },
+        "id": "parse-terms",
+        "name": "Parse Search Terms",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.pexels.com/videos/search",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "[POSSIBLE_SECRET_REDACTED]"
+              }
+            ]
+          },
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "query",
+                "value": "={{ $json.term }}"
+              },
+              {
+                "name": "orientation",
+                "value": "portrait"
+              },
+              {
+                "name": "size",
+                "value": "medium"
+              },
+              {
+                "name": "per_page",
+                "value": "3"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "query-pexels",
+        "name": "Query Pexels",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1540,
+          100
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "https://pixabay.com/api/videos/",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "53943567-20c768a9116fd85d600eb41fa"
+              },
+              {
+                "name": "q",
+                "value": "={{ $json.term }}"
+              },
+              {
+                "name": "video_type",
+                "value": "film"
+              },
+              {
+                "name": "per_page",
+                "value": "3"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "query-pixabay",
+        "name": "Query Pixabay",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1540,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "append"
+        },
+        "id": "merge-apis",
+        "name": "Merge API Results",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          1760,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst termData = $('Parse Search Terms').first().json;\n\nconst pexelsData = items[0]?.json || {};\nconst pixabayData = items[1]?.json || {};\n\nconst pexelsResults = (pexelsData.videos || []).map((video, idx) => {\n  const hdFile = video.video_files?.find(f => f.quality === 'hd') || video.video_files?.[0];\n  return {\n    rank: idx + 1,\n    id: String(video.id),\n    duration: video.duration,\n    thumbnail: video.image,\n    video_url: hdFile?.link || null,\n    width: video.width,\n    height: video.height,\n    preview_url: video.url\n  };\n});\n\nconst pixabayResults = (pixabayData.hits || []).map((video, idx) => {\n  const medium = video.videos?.medium || {};\n  return {\n    rank: idx + 1,\n    id: String(video.id),\n    duration: video.duration,\n    thumbnail: video.videos?.tiny?.thumbnail || null,\n    video_url: medium.url || null,\n    width: medium.width || null,\n    height: medium.height || null,\n    preview_url: video.pageURL\n  };\n});\n\nreturn [{ json: {\n  status: 'complete',\n  topic: termData.topic,\n  search_terms: termData.allTerms,\n  results: [{\n    search_term: termData.term,\n    pexels: pexelsResults,\n    pixabay: pixabayResults\n  }],\n  note: 'Testing with first search term only.',\n  generated_at: new Date().toISOString()\n}}];"
+        },
+        "id": "format-output",
+        "name": "Format Output",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1980,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {}
+        },
+        "id": "return-results",
+        "name": "Return Results",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2200,
+          200
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build Topic Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Topic Prompt": {
+        "main": [
+          [
+            {
+              "node": "Generate Topic (Claude)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Topic (Claude)": {
+        "main": [
+          [
+            {
+              "node": "Parse Topic Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Topic Response": {
+        "main": [
+          [
+            {
+              "node": "Route",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route": {
+        "main": [
+          [
+            {
+              "node": "Extract Search Terms (Claude)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Return Suggestions",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Search Terms (Claude)": {
+        "main": [
+          [
+            {
+              "node": "Parse Search Terms",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Search Terms": {
+        "main": [
+          [
+            {
+              "node": "Query Pexels",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Query Pixabay",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Pexels": {
+        "main": [
+          [
+            {
+              "node": "Merge API Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Pixabay": {
+        "main": [
+          [
+            {
+              "node": "Merge API Results",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge API Results": {
+        "main": [
+          [
+            {
+              "node": "Format Output",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Output": {
+        "main": [
+          [
+            {
+              "node": "Return Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
