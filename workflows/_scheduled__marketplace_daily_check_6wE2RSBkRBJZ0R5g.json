@@ -1,0 +1,239 @@
+{
+  "updatedAt": "2026-05-13T16:18:33.266Z",
+  "createdAt": "2026-04-09T21:52:00.617Z",
+  "id": "6wE2RSBkRBJZ0R5g",
+  "name": "[SCHEDULED] Marketplace Daily Check",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-1",
+      "name": "Daily 6am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- New vehicles: in inventory, not yet posted, HAS PHOTOS\nWITH new_vehicles AS (\n  SELECT v.stock_number, i.title, i.price, v.year, v.make, v.model, v.mileage,\n    v.exterior_color, i.hero_image_url,\n    jsonb_array_length(COALESCE(i.image_urls, '[]'::jsonb)) as photo_count\n  FROM inventory_items i\n  JOIN inventory_vehicles v ON v.item_id = i.id\n  WHERE i.status = 'active'\n    AND i.price > 0\n    AND jsonb_array_length(COALESCE(i.image_urls, '[]'::jsonb)) > 0\n    AND v.stock_number NOT IN (\n      SELECT vehicle_id FROM marketplace_listings WHERE status IN ('active', 'excluded')\n    )\n  ORDER BY i.first_seen_at DESC\n  LIMIT 5\n),\n-- Expiring listings: posted > 25 days ago\nexpiring AS (\n  SELECT ml.vehicle_id, ml.posted_at, ml.expires_at,\n    i.title, i.price, v.year, v.make, v.model\n  FROM marketplace_listings ml\n  JOIN inventory_vehicles v ON v.stock_number = ml.vehicle_id\n  JOIN inventory_items i ON i.id = v.item_id\n  WHERE ml.status = 'active'\n    AND ml.expires_at < now() + interval '5 days'\n    AND i.status = 'active'\n),\n-- Sold vehicles: listed on marketplace but no longer in active inventory\nsold AS (\n  SELECT ml.vehicle_id, ml.fb_listing_url, ml.posted_at\n  FROM marketplace_listings ml\n  WHERE ml.status = 'active'\n    AND ml.vehicle_id NOT IN (\n      SELECT v.stock_number FROM inventory_vehicles v\n      JOIN inventory_items i ON i.id = v.item_id\n      WHERE i.status = 'active'\n    )\n)\nSELECT 'new' as category, json_agg(row_to_json(n)) as vehicles FROM new_vehicles n\nUNION ALL\nSELECT 'expiring', json_agg(row_to_json(e)) FROM expiring e\nUNION ALL\nSELECT 'sold', json_agg(row_to_json(s)) FROM sold s",
+        "options": {}
+      },
+      "id": "postgres-1",
+      "name": "Check Inventory",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\n\nconst newVehicles = [];\nconst expiring = [];\nconst sold = [];\n\nfor (const item of items) {\n  const cat = item.json.category;\n  const vehicles = item.json.vehicles;\n  if (!vehicles) continue;\n  if (cat === \"new\") newVehicles.push(...vehicles);\n  if (cat === \"expiring\") expiring.push(...vehicles);\n  if (cat === \"sold\") sold.push(...vehicles);\n}\n\nconst total = newVehicles.length + expiring.length + sold.length;\nif (total === 0) {\n  return [{ json: { send_email: false, reason: \"nothing actionable\" } }];\n}\n\nconst landingBase = \"https://ad-pilot.ai/marketplace?id=\";\n\nlet html = `\n<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;\">\n  <div style=\"background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 16px 24px; border-radius: 8px 8px 0 0;\">\n    <h1 style=\"margin: 0; font-size: 18px; font-weight: 600;\">Marketplace Update</h1>\n  </div>\n  <div style=\"padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;\">\n    <p style=\"font-size: 15px; color: #333; margin: 0 0 20px 0; line-height: 1.5;\">\n      Good morning, Shad! Here are the vehicles we recommend posting to Marketplace today. Click the button next to each one to get started.\n    </p>`;\n\nif (newVehicles.length > 0) {\n  html += `<h2 style=\"color: #111; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #4f46e5;\">New Vehicles Ready to Post (${newVehicles.length})</h2>`;\n\n  for (const v of newVehicles) {\n    const price = v.price ? \"$\" + Number(v.price).toLocaleString() : \"\";\n    const mileage = v.mileage ? Number(v.mileage).toLocaleString() + \" mi\" : \"\";\n    const photos = v.photo_count || 0;\n\n    html += `\n    <table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;\">\n      <tr>\n        <td width=\"120\" style=\"vertical-align: top; padding: 0;\">`;\n\n    if (v.hero_image_url) {\n      html += `<img src=\"${v.hero_image_url}\" width=\"120\" height=\"90\" style=\"display: block; object-fit: cover;\" alt=\"${v.year} ${v.make} ${v.model}\" />`;\n    }\n\n    html += `</td>\n        <td style=\"vertical-align: top; padding: 12px 16px;\">\n          <div style=\"font-size: 15px; font-weight: 600; color: #111; margin-bottom: 4px;\">${v.year} ${v.make} ${v.model}</div>\n          <div style=\"font-size: 13px; color: #666; margin-bottom: 4px;\">\n            <span style=\"color: #4f46e5; font-weight: 700;\">${price}</span>`;\n\n    if (mileage) html += ` &middot; ${mileage}`;\n    if (photos > 0) html += ` &middot; ${photos} photos`;\n\n    html += `</div>\n          <div style=\"font-size: 13px; color: #666; margin-bottom: 8px;\">${v.exterior_color || \"\"}</div>\n          <a href=\"${landingBase}${v.stock_number}\" style=\"display: inline-block; padding: 6px 16px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600;\">Post to Marketplace</a>\n        </td>\n      </tr>\n    </table>`;\n  }\n}\n\nif (expiring.length > 0) {\n  html += `<h2 style=\"color: #111; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin: 24px 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #f59e0b;\">Expiring Soon (${expiring.length})</h2>`;\n\n  for (const v of expiring) {\n    const expDate = new Date(v.expires_at).toLocaleDateString(\"en-US\", { month: \"short\", day: \"numeric\" });\n    html += `\n    <table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"margin-bottom: 12px; border: 1px solid #fcd34d; border-radius: 8px; overflow: hidden; background: #fffbeb;\">\n      <tr>\n        <td style=\"padding: 12px 16px;\">\n          <div style=\"font-size: 14px; font-weight: 600; color: #111;\">${v.year} ${v.make} ${v.model}</div>\n          <div style=\"font-size: 13px; color: #92400e; margin: 4px 0 8px;\">Expires ${expDate}</div>\n          <a href=\"${landingBase}${v.vehicle_id}\" style=\"display: inline-block; padding: 6px 16px; background: #f59e0b; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600;\">Renew Listing</a>\n        </td>\n      </tr>\n    </table>`;\n  }\n}\n\nif (sold.length > 0) {\n  html += `<h2 style=\"color: #111; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin: 24px 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #ef4444;\">Sold — Remove from Marketplace (${sold.length})</h2>`;\n\n  for (const v of sold) {\n    html += `\n    <table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"margin-bottom: 12px; border: 1px solid #fca5a5; border-radius: 8px; overflow: hidden; background: #fef2f2;\">\n      <tr>\n        <td style=\"padding: 12px 16px;\">\n          <div style=\"font-size: 14px; font-weight: 600; color: #111;\">Vehicle ${v.vehicle_id}</div>`;\n    if (v.fb_listing_url) {\n      html += `<div style=\"margin: 4px 0;\"><a href=\"${v.fb_listing_url}\" style=\"color: #ef4444; font-size: 13px;\">View Listing &rarr;</a></div>`;\n    }\n    html += `<div style=\"font-size: 13px; color: #991b1b;\">No longer in inventory — please remove</div>\n        </td>\n      </tr>\n    </table>`;\n  }\n}\n\nhtml += `\n    <div style=\"margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #999; line-height: 1.5;\">\n      <strong style=\"color: #666;\">Tips:</strong> Post 3-5 vehicles per day for best results. Space them out through the day. The extension fills everything automatically — just review and hit Publish!\n    </div>\n    <div style=\"margin-top: 12px; text-align: center; font-size: 11px; color: #bbb;\">\n      Powered by Ad Pilot\n    </div>\n  </div>\n</div>`;\n\nconst subject = [];\nif (newVehicles.length) subject.push(newVehicles.length + \" new\");\nif (expiring.length) subject.push(expiring.length + \" expiring\");\nif (sold.length) subject.push(sold.length + \" sold\");\n\nreturn [{\n  json: {\n    send_email: true,\n    subject: \"Marketplace: \" + subject.join(\", \"),\n    html: html,\n    new_count: newVehicles.length,\n    expiring_count: expiring.length,\n    sold_count: sold.length\n  }\n}];"
+      },
+      "id": "code-1",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.send_email }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "if-1",
+      "name": "Should Send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "id": "email-1",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        200
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"from\": \"Ad Pilot <notification@ad-pilot.ai>\", \"to\": [\"shaddelaney@carmackcars.com\", \"kelly@ad-pilot.ai\"], \"subject\": \"{{ $json.subject }}\", \"html\": {{ JSON.stringify($json.html) }} }",
+        "options": {}
+      }
+    },
+    {
+      "parameters": {},
+      "id": "noop-1",
+      "name": "No Action",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        400
+      ]
+    },
+    {
+      "id": "webhook-test",
+      "name": "Manual Test",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        500
+      ],
+      "webhookId": "marketplace-daily-test",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "marketplace-daily-test",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Check Inventory": {
+      "main": [
+        [
+          {
+            "node": "Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Email": {
+      "main": [
+        [
+          {
+            "node": "Should Send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send?": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Test": {
+      "main": [
+        [
+          {
+            "node": "Check Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 6am": {
+      "main": [
+        [
+          {
+            "node": "Check Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Daily 8am": {
+      "recurrenceRules": []
+    },
+    "node:Daily 6am": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "d0c9624f-fb66-4acb-96c5-c99d44860e13",
+  "activeVersionId": null,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-04-09T21:52:00.617Z",
+      "createdAt": "2026-04-09T21:52:00.617Z",
+      "role": "workflow:owner",
+      "workflowId": "6wE2RSBkRBJZ0R5g",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
