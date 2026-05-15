@@ -1,0 +1,689 @@
+{
+  "updatedAt": "2026-04-02T21:30:49.227Z",
+  "createdAt": "2026-01-26T23:34:57.395Z",
+  "id": "9RT9fe0KOmUwxka8",
+  "name": "[Process Educational Asset]",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-educational-asset",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "process-edu-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT\n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'",
+        "options": {}
+      },
+      "id": "fetch-asset-001",
+      "name": "Fetch Asset + Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\n// Get current date info\nconst now = new Date();\nconst monthNames = ['January', 'February', 'March', 'April', 'May', 'June',\n                    'July', 'August', 'September', 'October', 'November', 'December'];\n\n// For educational, item_summary describes content type, not vehicles\nconst itemSummary = 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice that builds trust with viewers.';\n\nconsole.log('Mode:', input._mode);\nconsole.log('Theme seed:', input.theme_seed);\nconsole.log('Building educational theme pack request...');\n\nreturn [{\n  json: {\n    _mode: input._mode,\n    _assetId: input._assetId,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: input.theme_seed,\n      emoji: input.theme_emoji,\n      direction: input.theme_direction,\n      local_override_text: input.local_override_text || null,\n      location: input.location || 'Rantoul, Illinois',\n      current_date: now.toISOString().split('T')[0],\n      current_month: monthNames[now.getMonth()],\n      item_summary: itemSummary\n    }\n  }\n}];"
+      },
+      "id": "prepare-request-001",
+      "name": "Prepare Theme Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.themePackRequest }}",
+        "options": {}
+      },
+      "id": "generate-theme-001",
+      "name": "Generate Theme Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prevData = $('Prepare Theme Request').first().json;\nconst themePackResponse = $input.first().json;\n\nconsole.log('Theme pack response:', JSON.stringify(themePackResponse));\n\n// Extract theme pack from response\nlet themePack = null;\nif (themePackResponse.success && themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else if (themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else {\n  // The response might BE the theme pack\n  themePack = themePackResponse;\n}\n\nreturn [{\n  json: {\n    _mode: prevData._mode,\n    asset_id: prevData._assetId,\n    processed_items: [],\n    theme_pack: themePack\n  }\n}];"
+      },
+      "id": "prepare-save-001",
+      "name": "Prepare Save Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE assets SET\n  processed_items = '[]'::jsonb,\n  theme_pack = $${{ JSON.stringify($json.theme_pack) }}$$::jsonb,\n  processing_status = 'complete',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'\nRETURNING id, processing_status",
+        "options": {}
+      },
+      "id": "save-asset-001",
+      "name": "Save to Asset",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1780,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, asset_id: $('Prepare Save Data').first().json.asset_id, status: 'complete', items_processed: 0, theme_pack_generated: $('Prepare Save Data').first().json.theme_pack !== null } }}"
+      },
+      "id": "respond-001",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger-inline-001",
+      "name": "When Called as Sub-Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nreturn [{\n  json: {\n    _mode: 'inline',\n    _assetId: null,\n    theme_seed: input.theme_seed || (input.theme_pack ? input.theme_pack.theme_seed : '') || 'Fresh Deals',\n    theme_emoji: input.theme_emoji || (input.theme_pack ? input.theme_pack.emoji : '') || '',\n    theme_direction: input.theme_direction || (input.theme_pack ? input.theme_pack.direction : '') || '',\n    local_override_text: input.local_override_text || null,\n    location: input.location || 'Rantoul, Illinois',\n    service_area: input.service_area || 'Champaign County'\n  }\n}];"
+      },
+      "id": "format-inline-001",
+      "name": "Format Inline Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const asset = $input.first().json;\n\nreturn [{\n  json: {\n    _mode: 'webhook',\n    _assetId: asset.id,\n    theme_seed: asset.theme_seed,\n    theme_emoji: asset.theme_emoji,\n    theme_direction: asset.theme_direction,\n    local_override_text: asset.local_override_text || null,\n    location: 'Rantoul, Illinois',\n    service_area: 'Champaign County'\n  }\n}];"
+      },
+      "id": "format-webhook-001",
+      "name": "Format Webhook Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "mode-check",
+              "leftValue": "={{ $json._mode }}",
+              "rightValue": "webhook",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-mode-001",
+      "name": "Route by Mode",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Return processed data to calling workflow\nreturn [{\n  json: {\n    processed_items: $json.processed_items || [],\n    theme_pack: $json.theme_pack\n  }\n}];"
+      },
+      "id": "return-results-001",
+      "name": "Return Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Asset + Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Asset + Plan": {
+      "main": [
+        [
+          {
+            "node": "Format Webhook Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Webhook Input": {
+      "main": [
+        [
+          {
+            "node": "Prepare Theme Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Called as Sub-Workflow": {
+      "main": [
+        [
+          {
+            "node": "Format Inline Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Inline Input": {
+      "main": [
+        [
+          {
+            "node": "Prepare Theme Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Theme Request": {
+      "main": [
+        [
+          {
+            "node": "Generate Theme Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Theme Pack": {
+      "main": [
+        [
+          {
+            "node": "Prepare Save Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Save Data": {
+      "main": [
+        [
+          {
+            "node": "Route by Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Mode": {
+      "main": [
+        [
+          {
+            "node": "Save to Asset",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Asset": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "ed6500f2-78fe-421d-b8f1-4a1916d9288f",
+  "activeVersionId": "ed6500f2-78fe-421d-b8f1-4a1916d9288f",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:57.395Z",
+      "createdAt": "2026-01-26T23:34:57.395Z",
+      "role": "workflow:owner",
+      "workflowId": "9RT9fe0KOmUwxka8",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-04-02T21:30:49.231Z",
+    "createdAt": "2026-04-02T21:30:49.231Z",
+    "versionId": "ed6500f2-78fe-421d-b8f1-4a1916d9288f",
+    "workflowId": "9RT9fe0KOmUwxka8",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "process-educational-asset",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "webhook-001",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "process-edu-001"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=SELECT\n  a.*,\n  p.theme_seed,\n  p.theme_emoji,\n  p.theme_direction,\n  p.local_override_text\nFROM assets a\nJOIN weekly_plans p ON a.plan_id = p.id\nWHERE a.id = '{{ $json.body.asset_id }}'",
+          "options": {}
+        },
+        "id": "fetch-asset-001",
+        "name": "Fetch Asset + Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\n\n// Get current date info\nconst now = new Date();\nconst monthNames = ['January', 'February', 'March', 'April', 'May', 'June',\n                    'July', 'August', 'September', 'October', 'November', 'December'];\n\n// For educational, item_summary describes content type, not vehicles\nconst itemSummary = 'Educational/organic video - Capitol Smarts style. No specific vehicles. Focus on helpful car-buying or ownership advice that builds trust with viewers.';\n\nconsole.log('Mode:', input._mode);\nconsole.log('Theme seed:', input.theme_seed);\nconsole.log('Building educational theme pack request...');\n\nreturn [{\n  json: {\n    _mode: input._mode,\n    _assetId: input._assetId,\n    themePackRequest: {\n      mode: 'pack',\n      theme_seed: input.theme_seed,\n      emoji: input.theme_emoji,\n      direction: input.theme_direction,\n      local_override_text: input.local_override_text || null,\n      location: input.location || 'Rantoul, Illinois',\n      current_date: now.toISOString().split('T')[0],\n      current_month: monthNames[now.getMonth()],\n      item_summary: itemSummary\n    }\n  }\n}];"
+        },
+        "id": "prepare-request-001",
+        "name": "Prepare Theme Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/thematic-pack-generate",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.themePackRequest }}",
+          "options": {}
+        },
+        "id": "generate-theme-001",
+        "name": "Generate Theme Pack",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1120,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const prevData = $('Prepare Theme Request').first().json;\nconst themePackResponse = $input.first().json;\n\nconsole.log('Theme pack response:', JSON.stringify(themePackResponse));\n\n// Extract theme pack from response\nlet themePack = null;\nif (themePackResponse.success && themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else if (themePackResponse.theme_pack) {\n  themePack = themePackResponse.theme_pack;\n} else {\n  // The response might BE the theme pack\n  themePack = themePackResponse;\n}\n\nreturn [{\n  json: {\n    _mode: prevData._mode,\n    asset_id: prevData._assetId,\n    processed_items: [],\n    theme_pack: themePack\n  }\n}];"
+        },
+        "id": "prepare-save-001",
+        "name": "Prepare Save Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1340,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "=UPDATE assets SET\n  processed_items = '[]'::jsonb,\n  theme_pack = $${{ JSON.stringify($json.theme_pack) }}$$::jsonb,\n  processing_status = 'complete',\n  processed_at = NOW(),\n  updated_at = NOW()\nWHERE id = '{{ $json.asset_id }}'\nRETURNING id, processing_status",
+          "options": {}
+        },
+        "id": "save-asset-001",
+        "name": "Save to Asset",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1780,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { success: true, asset_id: $('Prepare Save Data').first().json.asset_id, status: 'complete', items_processed: 0, theme_pack_generated: $('Prepare Save Data').first().json.theme_pack !== null } }}"
+        },
+        "id": "respond-001",
+        "name": "Respond Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2000,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "trigger-inline-001",
+        "name": "When Called as Sub-Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          240,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\n\nreturn [{\n  json: {\n    _mode: 'inline',\n    _assetId: null,\n    theme_seed: input.theme_seed || (input.theme_pack ? input.theme_pack.theme_seed : '') || 'Fresh Deals',\n    theme_emoji: input.theme_emoji || (input.theme_pack ? input.theme_pack.emoji : '') || '',\n    theme_direction: input.theme_direction || (input.theme_pack ? input.theme_pack.direction : '') || '',\n    local_override_text: input.local_override_text || null,\n    location: input.location || 'Rantoul, Illinois',\n    service_area: input.service_area || 'Champaign County'\n  }\n}];"
+        },
+        "id": "format-inline-001",
+        "name": "Format Inline Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const asset = $input.first().json;\n\nreturn [{\n  json: {\n    _mode: 'webhook',\n    _assetId: asset.id,\n    theme_seed: asset.theme_seed,\n    theme_emoji: asset.theme_emoji,\n    theme_direction: asset.theme_direction,\n    local_override_text: asset.local_override_text || null,\n    location: 'Rantoul, Illinois',\n    service_area: 'Champaign County'\n  }\n}];"
+        },
+        "id": "format-webhook-001",
+        "name": "Format Webhook Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "mode-check",
+                "leftValue": "={{ $json._mode }}",
+                "rightValue": "webhook",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "route-mode-001",
+        "name": "Route by Mode",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.1,
+        "position": [
+          1560,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Return processed data to calling workflow\nreturn [{\n  json: {\n    processed_items: $json.processed_items || [],\n    theme_pack: $json.theme_pack\n  }\n}];"
+        },
+        "id": "return-results-001",
+        "name": "Return Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1780,
+          520
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Asset + Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Asset + Plan": {
+        "main": [
+          [
+            {
+              "node": "Format Webhook Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Webhook Input": {
+        "main": [
+          [
+            {
+              "node": "Prepare Theme Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Called as Sub-Workflow": {
+        "main": [
+          [
+            {
+              "node": "Format Inline Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Inline Input": {
+        "main": [
+          [
+            {
+              "node": "Prepare Theme Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Theme Request": {
+        "main": [
+          [
+            {
+              "node": "Generate Theme Pack",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Theme Pack": {
+        "main": [
+          [
+            {
+              "node": "Prepare Save Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Save Data": {
+        "main": [
+          [
+            {
+              "node": "Route by Mode",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route by Mode": {
+        "main": [
+          [
+            {
+              "node": "Save to Asset",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Return Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save to Asset": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
