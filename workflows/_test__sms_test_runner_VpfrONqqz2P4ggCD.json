@@ -1,0 +1,104 @@
+{
+  "updatedAt": "2026-02-16T21:39:57.080Z",
+  "createdAt": "2026-02-16T21:37:34.056Z",
+  "id": "VpfrONqqz2P4ggCD",
+  "name": "[Test] SMS Test Runner",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "sms-test-runner",
+      "parameters": {
+        "path": "sms-test",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "extract-body",
+      "name": "Extract Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: $json.body }];"
+      }
+    },
+    {
+      "id": "call-notification",
+      "name": "Call Send Notification",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "hqfMwxKgqE3DD8VZ",
+          "mode": "list"
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Body": {
+      "main": [
+        [
+          {
+            "node": "Call Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "d7e314d4-e1e2-4584-9a96-0a81599041e6",
+  "activeVersionId": null,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-16T21:37:34.056Z",
+      "createdAt": "2026-02-16T21:37:34.056Z",
+      "role": "workflow:owner",
+      "workflowId": "VpfrONqqz2P4ggCD",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
