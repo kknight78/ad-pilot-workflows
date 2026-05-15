@@ -1,0 +1,1018 @@
+{
+  "updatedAt": "2026-04-02T21:30:52.893Z",
+  "createdAt": "2026-01-28T11:18:31.304Z",
+  "id": "fuu0LSCD7n8V4Rsb",
+  "name": "[SYNC] Meta Ad Insights",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-meta-insights",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "webhookId": "sync-meta-insights"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "schedule-trigger",
+      "name": "Daily 6am CT"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        384
+      ],
+      "id": "manual-trigger",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, client_id, account_id, account_name, access_token, token_expires_at\nFROM meta_ad_accounts\nWHERE account_status = 1\n  AND access_token IS NOT NULL\n  AND (token_expires_at IS NULL OR token_expires_at > NOW())",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        192
+      ],
+      "id": "get-active-accounts",
+      "name": "Get Active Accounts",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/act_{{ $json.account_id }}/ads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,name,status,campaign_id"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        192
+      ],
+      "id": "get-ads-list",
+      "name": "Get Ads List"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse ad names to extract template type and theme\n// NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n// Example: CCC_MULTI_UncleShadTax_v1\n// Template codes map to internal type names\n\nconst TEMPLATE_CODES = {\n  'MULTI': 'multi-item',\n  'SPOT': 'spotlight',\n  'SPOTLIGHT': 'spotlight',\n  'EDU': 'educational',\n  'CAROUSEL': 'carousel',\n  'IMAGE': 'single-image',\n  'BUY': 'acquisition',\n  'AIA': 'aia',\n  'BOOST': 'boost',\n  'ORG': 'organic',\n  'CUSTOM': 'custom'\n};\n\nfunction parseAdName(name) {\n  let template_type = 'unknown';\n  let theme = null;\n  \n  if (!name) return { template_type, theme };\n  \n  // Try NEW naming convention: {CLIENT}_{TEMPLATE}_{THEME}_{VERSION}\n  // e.g., CCC_MULTI_UncleShadTax_v1\n  const newFormatMatch = name.match(/^([A-Z]+)_([A-Z]+)_([^_]+)_(v\\d+)$/i);\n  if (newFormatMatch) {\n    const [, client, templateCode, themePart, version] = newFormatMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      theme = themePart;\n      return { template_type, theme };\n    }\n  }\n  \n  // Try simpler new format without version: {CLIENT}_{TEMPLATE}_{THEME}\n  const simpleNewMatch = name.match(/^([A-Z]+)_([A-Z]+)_(.+)$/i);\n  if (simpleNewMatch) {\n    const [, client, templateCode, themePart] = simpleNewMatch;\n    const code = templateCode.toUpperCase();\n    if (TEMPLATE_CODES[code]) {\n      template_type = TEMPLATE_CODES[code];\n      // Remove version suffix if present\n      theme = themePart.replace(/_v\\d+$/i, '');\n      return { template_type, theme };\n    }\n  }\n  \n  // LEGACY fallback for old naming (kept for historical ads)\n  // Old format: \"Jan 2026 Lead Ad Multi - Tax Refund Season\"\n  const nameLower = name.toLowerCase();\n  \n  // Only match if it looks like an old Ad Pilot naming pattern\n  if (nameLower.includes('lead ad') || nameLower.includes('capitol smarts')) {\n    if (nameLower.includes('multi')) template_type = 'multi-item';\n    else if (nameLower.includes('spotlight')) template_type = 'spotlight';\n    else if (nameLower.includes('educational') || nameLower.includes('capitol smarts')) template_type = 'educational';\n    else if (nameLower.includes('carousel')) template_type = 'carousel';\n    \n    // Extract theme (text after \" - \")\n    const themeMatch = name.match(/ - (.+)$/);\n    if (themeMatch) theme = themeMatch[1].trim();\n    \n    return { template_type, theme };\n  }\n  \n  // Everything else is unknown (messy names, external ads, etc.)\n  return { template_type: 'unknown', theme: null };\n}\n\n// Get ads responses from input (account data is embedded by Check Token)\nconst adsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < adsResponses.length; i++) {\n  const adsData = adsResponses[i]?.json;\n  \n  if (!adsData?.data) continue;\n  \n  // account_id is embedded by Check Token node\n  const accountId = adsData.account_id;\n  const ads = adsData.data;\n  \n  for (const ad of ads) {\n    const { template_type, theme } = parseAdName(ad.name);\n    \n    results.push({\n      json: {\n        meta_ad_id: ad.id,\n        meta_campaign_id: ad.campaign_id,\n        account_id: accountId,\n        name: (ad.name || '').replace(/'/g, \"''\"),\n        status: ad.status,\n        template_type,\n        theme: theme ? theme.replace(/'/g, \"''\") : null\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1596,
+        192
+      ],
+      "id": "parse-ads",
+      "name": "Parse Ad Names"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1820,
+        192
+      ],
+      "id": "has-ads",
+      "name": "Has Ads?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meta_ads (meta_ad_id, meta_campaign_id, account_id, name, status, template_type, theme, updated_at)\nVALUES (\n  '{{ $json.meta_ad_id }}',\n  {{ $json.meta_campaign_id ? \"'\" + $json.meta_campaign_id + \"'\" : 'NULL' }},\n  '{{ $json.account_id }}',\n  '{{ $json.name }}',\n  '{{ $json.status }}',\n  '{{ $json.template_type }}',\n  {{ $json.theme ? \"'\" + $json.theme + \"'\" : 'NULL' }},\n  NOW()\n)\nON CONFLICT (meta_ad_id) DO UPDATE SET\n  name = EXCLUDED.name,\n  status = EXCLUDED.status,\n  template_type = EXCLUDED.template_type,\n  theme = EXCLUDED.theme,\n  updated_at = NOW()\nRETURNING meta_ad_id, account_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2044,
+        96
+      ],
+      "id": "upsert-ads",
+      "name": "Upsert Ads",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group ads by account for insights fetch\nconst items = $input.all();\nconst accounts = $('Get Active Accounts').all();\n\n// Get date params from Prepare Date Params node\nconst dateParamsData = $('Prepare Date Params').first()?.json || {};\nconst dateParams = dateParamsData._dateParams || { date_preset: 'last_7d' };\nconst isBackfill = dateParamsData._isBackfill || false;\n\n// Build token lookup from original accounts\nconst tokenMap = new Map();\nfor (const acc of accounts) {\n  tokenMap.set(acc.json.account_id, acc.json.access_token);\n}\n\nconst accountMap = new Map();\nfor (const item of items) {\n  const accountId = item.json.account_id;\n  if (!accountMap.has(accountId)) {\n    accountMap.set(accountId, {\n      account_id: accountId,\n      access_token: tokenMap.get(accountId),\n      _dateParams: dateParams,\n      _isBackfill: isBackfill\n    });\n  }\n}\n\nreturn Array.from(accountMap.values()).map(a => ({ json: a }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2268,
+        96
+      ],
+      "id": "group-by-account",
+      "name": "Group by Account"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/act_{{ $json.account_id }}/insights",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "ad"
+            },
+            {
+              "name": "fields",
+              "value": "ad_id,ad_name,spend,impressions,clicks,ctr,cpc,cpm,actions"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            },
+            {
+              "name": "={{ $json._dateParams.date_preset ? 'date_preset' : 'time_range' }}",
+              "value": "={{ $json._dateParams.date_preset || $json._dateParams.time_range }}"
+            },
+            {
+              "name": "={{ $json._dateParams.time_increment ? 'time_increment' : '' }}",
+              "value": "={{ $json._dateParams.time_increment || '' }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2492,
+        96
+      ],
+      "id": "get-insights",
+      "name": "Get Insights"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Meta actions array and transform insights for database\n\nfunction parseActions(actions) {\n  const actionMap = {};\n  (actions || []).forEach(a => {\n    actionMap[a.action_type] = parseInt(a.value);\n  });\n  \n  return {\n    leads: actionMap['lead'] || 0,\n    video_views: actionMap['video_view'] || 0,\n    link_clicks: actionMap['link_click'] || 0,\n    post_reactions: actionMap['post_reaction'] || 0,\n    post_comments: actionMap['comment'] || 0,\n    post_saves: actionMap['onsite_conversion.post_save'] || 0,\n    post_shares: actionMap['share'] || 0,\n    landing_page_views: actionMap['landing_page_view'] || 0\n  };\n}\n\n// Get account data from previous node\nconst accountsData = $('Group by Account').all();\nconst insightsResponses = $input.all();\n\nconst results = [];\n\nfor (let i = 0; i < insightsResponses.length; i++) {\n  const account = accountsData[i]?.json;\n  const insightsData = insightsResponses[i]?.json;\n  \n  if (!account || !insightsData?.data) continue;\n  \n  const insights = insightsData.data;\n  \n  for (const insight of insights) {\n    const parsed = parseActions(insight.actions);\n    const spend = parseFloat(insight.spend || 0);\n    const costPerLead = parsed.leads > 0 ? (spend / parsed.leads) : null;\n    \n    results.push({\n      json: {\n        meta_ad_id: insight.ad_id,\n        account_id: account.account_id,\n        date_start: insight.date_start,\n        date_stop: insight.date_stop,\n        spend: spend,\n        impressions: parseInt(insight.impressions || 0),\n        clicks: parseInt(insight.clicks || 0),\n        ctr: parseFloat(insight.ctr || 0),\n        cpc: parseFloat(insight.cpc || 0),\n        cpm: parseFloat(insight.cpm || 0),\n        video_views: parsed.video_views,\n        post_reactions: parsed.post_reactions,\n        post_comments: parsed.post_comments,\n        post_shares: parsed.post_shares,\n        post_saves: parsed.post_saves,\n        link_clicks: parsed.link_clicks,\n        landing_page_views: parsed.landing_page_views,\n        leads: parsed.leads,\n        cost_per_lead: costPerLead,\n        actions_raw: JSON.stringify(insight.actions || [])\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no insights' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2716,
+        96
+      ],
+      "id": "transform-insights",
+      "name": "Transform Insights"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2940,
+        96
+      ],
+      "id": "has-insights",
+      "name": "Has Insights?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meta_ad_insights (\n  meta_ad_id, account_id, date_start, date_stop,\n  spend, impressions, clicks, ctr, cpc, cpm,\n  video_views, post_reactions, post_comments, post_shares, post_saves,\n  link_clicks, landing_page_views, leads, cost_per_lead, actions_raw\n)\nVALUES (\n  '{{ $json.meta_ad_id }}',\n  '{{ $json.account_id }}',\n  '{{ $json.date_start }}',\n  '{{ $json.date_stop }}',\n  {{ $json.spend }},\n  {{ $json.impressions }},\n  {{ $json.clicks }},\n  {{ $json.ctr }},\n  {{ $json.cpc }},\n  {{ $json.cpm }},\n  {{ $json.video_views }},\n  {{ $json.post_reactions }},\n  {{ $json.post_comments }},\n  {{ $json.post_shares }},\n  {{ $json.post_saves }},\n  {{ $json.link_clicks }},\n  {{ $json.landing_page_views }},\n  {{ $json.leads }},\n  {{ $json.cost_per_lead !== null ? $json.cost_per_lead : 'NULL' }},\n  '{{ $json.actions_raw }}'::jsonb\n)\nON CONFLICT (meta_ad_id, date_start, date_stop) DO NOTHING\nRETURNING id, meta_ad_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3164,
+        0
+      ],
+      "id": "upsert-insights",
+      "name": "Upsert Insights",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3388,
+        0
+      ],
+      "id": "aggregate-results",
+      "name": "Aggregate Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build summary response\nconst allData = $input.all();\nlet insightsCount = 0;\n\nfor (const item of allData) {\n  const data = item.json.data || [];\n  insightsCount += data.filter(d => d && d.id).length;\n}\n\n// Get ad count from earlier in flow\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\n// Get placement insights count\nlet placementCount = 0;\ntry {\n  const placementData = $('Upsert Placement Insights').all();\n  placementCount = placementData.filter(d => d.json && d.json.id).length;\n} catch(e) {\n  // Placement branch may not have executed (no data case)\n}\n\n// Get backfill status from Group by Account (it has _isBackfill)\nconst groupData = $('Group by Account').first()?.json || {};\nconst isBackfill = groupData._isBackfill || false;\n\nreturn [{\n  json: {\n    success: true,\n    message: isBackfill \n      ? 'Backfill complete: synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from Meta'\n      : 'Synced ' + adsCount + ' ads, ' + insightsCount + ' insight records, and ' + placementCount + ' placement records from Meta',\n    mode: isBackfill ? 'backfill' : 'daily',\n    ads_synced: adsCount,\n    insights_synced: insightsCount,\n    placement_insights_synced: placementCount,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4956,
+        0
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5180,
+        192
+      ],
+      "id": "respond",
+      "name": "Respond"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No ads found - return empty response\nreturn [{\n  json: {\n    success: true,\n    message: 'No active Meta ad accounts found or no ads to sync',\n    ads_synced: 0,\n    insights_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4956,
+        384
+      ],
+      "id": "no-ads-response",
+      "name": "No Ads Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// No insights found - still count ads\nconst adsData = $('Parse Ad Names').all();\nconst adsCount = adsData.filter(d => !d.json.skip).length;\n\nreturn [{\n  json: {\n    success: true,\n    message: `Synced ${adsCount} ads, but no insights data available for date range`,\n    ads_synced: adsCount,\n    insights_synced: 0,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4956,
+        192
+      ],
+      "id": "no-insights-response",
+      "name": "No Insights Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare date parameters for Meta API\n// Supports backfill mode via webhook body: { \"backfill\": true, \"days\": 90 }\n// Default: last 7 days\n\nconst accounts = $input.all();\n\n// Try multiple ways to get webhook data\n// n8n throws if a referenced node didn't execute (e.g. cron trigger)\nlet webhookData = {};\ntry {\n  const webhookNode = $('Webhook Trigger').first();\n  if (webhookNode) {\n    webhookData = webhookNode.json?.body || webhookNode.json || {};\n  }\n} catch(e) {\n  // Cron trigger — no webhook data, use defaults\n}\n\n// Check if this is a backfill request\nconst isBackfill = webhookData.backfill === true;\nconst backfillDays = Math.min(webhookData.days || 90, 180); // Max 180 days\n\nlet dateParams;\nif (isBackfill) {\n  // Historical backfill with daily breakdown\n  const until = new Date();\n  const since = new Date();\n  since.setDate(since.getDate() - backfillDays);\n  \n  dateParams = {\n    time_range: JSON.stringify({\n      since: since.toISOString().split('T')[0],\n      until: until.toISOString().split('T')[0]\n    }),\n    time_increment: '1' // Daily breakdown\n  };\n} else {\n  // Normal daily sync\n  dateParams = {\n    date_preset: 'last_7d'\n  };\n}\n\n// Pass through accounts with date params attached\nreturn accounts.map(item => ({\n  json: {\n    ...item.json,\n    _dateParams: dateParams,\n    _isBackfill: isBackfill,\n    _debug_webhookData: webhookData\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        192
+      ],
+      "id": "prepare-date-params",
+      "name": "Prepare Date Params"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Re-emit one item per account for placement insights fetch\n// Reads account data from Group by Account node\nconst accounts = $('Group by Account').all();\nreturn accounts.map(a => ({ json: a.json }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3612,
+        0
+      ],
+      "id": "prep-placement-requests",
+      "name": "Prepare Placement Requests"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v21.0/act_{{ $json.account_id }}/insights",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "ad"
+            },
+            {
+              "name": "fields",
+              "value": "ad_id,ad_name,spend,impressions,clicks,ctr,cpc,cpm,actions"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            },
+            {
+              "name": "={{ $json._dateParams.date_preset ? 'date_preset' : 'time_range' }}",
+              "value": "={{ $json._dateParams.date_preset || $json._dateParams.time_range }}"
+            },
+            {
+              "name": "={{ $json._dateParams.time_increment ? 'time_increment' : '' }}",
+              "value": "={{ $json._dateParams.time_increment || '' }}"
+            },
+            {
+              "name": "breakdowns",
+              "value": "publisher_platform,platform_position"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3836,
+        0
+      ],
+      "id": "get-placement-insights",
+      "name": "Get Placement Insights"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Meta actions and map publisher_platform+platform_position to our placement codes\n// Filter out audience_network and messenger\n\nconst PLACEMENT_MAP = {\n  'facebook:feed': 'fb_feed',\n  'facebook:marketplace': 'fb_feed',\n  'facebook:search': 'fb_feed',\n  'facebook:instream_video': 'fb_video',\n  'facebook:facebook_stories': 'fb_stories',\n  'facebook:facebook_reels': 'fb_reels',\n  'facebook:facebook_reels_overlay': 'fb_reels',\n  'instagram:feed': 'ig_feed',\n  'instagram:instagram_explore_grid_home': 'ig_feed',\n  'instagram:instagram_explore': 'ig_feed',\n  'instagram:instagram_search': 'ig_feed',\n  'instagram:instagram_reels': 'ig_reels',\n  'instagram:instagram_stories': 'ig_stories'\n};\n\nfunction parseActions(actions) {\n  const actionMap = {};\n  (actions || []).forEach(a => {\n    actionMap[a.action_type] = parseInt(a.value);\n  });\n  return {\n    leads: actionMap['lead'] || 0,\n    video_views: actionMap['video_view'] || 0,\n    link_clicks: actionMap['link_click'] || 0\n  };\n}\n\nconst accountsData = $('Prepare Placement Requests').all();\nconst responses = $input.all();\nconst results = [];\n\nfor (let i = 0; i < responses.length; i++) {\n  const account = accountsData[i]?.json;\n  const responseData = responses[i]?.json;\n\n  if (!account || !responseData?.data) continue;\n\n  for (const row of responseData.data) {\n    const pub = row.publisher_platform || '';\n    const pos = row.platform_position || '';\n    \n    // Skip audience_network and messenger\n    if (pub === 'audience_network' || pub === 'messenger') continue;\n    \n    const key = pub + ':' + pos;\n    const placementCode = PLACEMENT_MAP[key] || null;\n    \n    const parsed = parseActions(row.actions);\n    const spend = parseFloat(row.spend || 0);\n    const costPerLead = parsed.leads > 0 ? (spend / parsed.leads) : null;\n\n    results.push({\n      json: {\n        meta_ad_id: row.ad_id,\n        account_id: account.account_id,\n        date_start: row.date_start,\n        date_stop: row.date_stop,\n        publisher_platform: pub,\n        platform_position: pos,\n        placement_code: placementCode,\n        spend: spend,\n        impressions: parseInt(row.impressions || 0),\n        clicks: parseInt(row.clicks || 0),\n        ctr: parseFloat(row.ctr || 0),\n        cpc: parseFloat(row.cpc || 0),\n        cpm: parseFloat(row.cpm || 0),\n        video_views: parsed.video_views,\n        link_clicks: parsed.link_clicks,\n        leads: parsed.leads,\n        cost_per_lead: costPerLead,\n        actions_raw: JSON.stringify(row.actions || [])\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{ json: { skip: true, reason: 'no placement insights' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4060,
+        0
+      ],
+      "id": "transform-placement-insights",
+      "name": "Transform Placement Insights"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-check-placement",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4284,
+        0
+      ],
+      "id": "has-placement-insights",
+      "name": "Has Placement Insights?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meta_placement_insights (\n  meta_ad_id, account_id, date_start, date_stop,\n  publisher_platform, platform_position, placement_code,\n  spend, impressions, clicks, ctr, cpc, cpm,\n  video_views, link_clicks, leads, cost_per_lead, actions_raw\n)\nVALUES (\n  '{{ $json.meta_ad_id }}',\n  '{{ $json.account_id }}',\n  '{{ $json.date_start }}',\n  '{{ $json.date_stop }}',\n  '{{ $json.publisher_platform }}',\n  '{{ $json.platform_position }}',\n  {{ $json.placement_code ? \"'\" + $json.placement_code + \"'\" : 'NULL' }},\n  {{ $json.spend }},\n  {{ $json.impressions }},\n  {{ $json.clicks }},\n  {{ $json.ctr }},\n  {{ $json.cpc }},\n  {{ $json.cpm }},\n  {{ $json.video_views }},\n  {{ $json.link_clicks }},\n  {{ $json.leads }},\n  {{ $json.cost_per_lead !== null ? $json.cost_per_lead : 'NULL' }},\n  '{{ $json.actions_raw }}'::jsonb\n)\nON CONFLICT (meta_ad_id, date_start, date_stop, publisher_platform, platform_position) DO NOTHING\nRETURNING id, meta_ad_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4508,
+        -60
+      ],
+      "id": "upsert-placement-insights",
+      "name": "Upsert Placement Insights",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// No placement insights — pass through to Format Response\nreturn [{ json: { _placementSkipped: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4508,
+        120
+      ],
+      "id": "no-placement-response",
+      "name": "No Placement Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check Meta API response for token errors\n// Error code 190 = OAuthException (expired/invalid token)\n// Error code 102 = API session expired\n\n// Get all input items (HTTP responses from Get Ads List)\nconst items = $input.all();\n\n// Get original account data from Prepare Date Params\n// (pairedItem breaks after HTTP nodes, so match by index)\nconst accountItems = $('Prepare Date Params').all();\n\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const data = items[i].json;\n  const account = accountItems[i] ? accountItems[i].json : {};\n  const error = data.error;\n\n  if (error && (error.code === 190 || error.code === 102 || error.type === 'OAuthException')) {\n    // Token error - skip this account\n    results.push({\n      json: {\n        _skip: true,\n        _tokenError: true,\n        _accountId: account.account_id || '',\n        _clientId: account.client_id || '',\n        _accountName: account.account_name || '',\n        _errorCode: error.code,\n        _errorMsg: error.message || 'Unknown token error'\n      }\n    });\n  } else if (error) {\n    // Other Meta API error - also skip and alert\n    results.push({\n      json: {\n        _skip: true,\n        _tokenError: true,\n        _accountId: account.account_id || '',\n        _clientId: account.client_id || '',\n        _accountName: account.account_name || '',\n        _errorCode: error.code || 0,\n        _errorMsg: error.message || JSON.stringify(error)\n      }\n    });\n  } else {\n    // Success - pass through with account data re-attached\n    results.push({\n      json: {\n        ...data,\n        account_id: account.account_id,\n        client_id: account.client_id,\n        account_name: account.account_name,\n        access_token: account.access_token,\n        _dateParams: account._dateParams\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        192
+      ],
+      "id": "check-token",
+      "name": "Check Token"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "token-error-check",
+              "leftValue": "={{ $json._tokenError }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1060,
+        192
+      ],
+      "id": "token-error-if",
+      "name": "Token Error?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE meta_ad_accounts SET token_expires_at = NOW() WHERE account_id = '{{ $json._accountId }}'",
+        "options": {
+          "queryReplacement": ""
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1280,
+        400
+      ],
+      "id": "mark-token-expired",
+      "name": "Mark Token Expired",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build email alert for expired Meta token\nconst accountId = $json._accountId || 'unknown';\nconst clientId = $json._clientId || 'unknown';\nconst accountName = $json._accountName || 'unknown';\nconst errorCode = $json._errorCode || 'unknown';\nconst errorMsg = $json._errorMsg || 'Unknown error';\n\nreturn [{\n  json: {\n    _emailBody: {\n      from: 'Ad Pilot <notifications@ad-pilot.ai>',\n      to: ['kelly@ad-pilot.ai'],\n      subject: '\\u26a0\\ufe0f Meta Token Expired: ' + accountName + ' (' + clientId + ')',\n      html: '<div style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto;\">' +\n        '<h2 style=\"color: #c0392b;\">\\u26a0\\ufe0f Meta Token Expired</h2>' +\n        '<p>The Meta access token for the following account has expired or is invalid. ' +\n        'The daily ad insights sync has skipped this account and will continue to skip it until the token is refreshed.</p>' +\n        '<table style=\"border-collapse: collapse; width: 100%; margin: 16px 0;\">' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Client</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + clientId + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Account Name</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + accountName + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Account ID</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + accountId + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Error Code</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + errorCode + '</td></tr>' +\n        '<tr><td style=\"padding: 8px; border: 1px solid #ddd; font-weight: bold;\">Error Message</td>' +\n        '<td style=\"padding: 8px; border: 1px solid #ddd;\">' + errorMsg + '</td></tr>' +\n        '</table>' +\n        '<h3>What to do</h3>' +\n        '<ol>' +\n        '<li>Go to the Meta Business Suite and re-authenticate the token</li>' +\n        '<li>Update the <code>access_token</code> in the <code>meta_ad_accounts</code> table</li>' +\n        '<li>Set <code>token_expires_at</code> to a future date (or NULL)</li>' +\n        '</ol>' +\n        '<hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">' +\n        '<p style=\"color: #999; font-size: 12px;\">This account has been marked as expired in the database and will be skipped until re-authenticated.</p>' +\n        '</div>'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        400
+      ],
+      "id": "build-token-alert",
+      "name": "Build Token Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1720,
+        400
+      ],
+      "id": "email-token-expired",
+      "name": "Email Kelly: Token Expired",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 6am CT": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Accounts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Date Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ads List": {
+      "main": [
+        [
+          {
+            "node": "Check Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Ad Names": {
+      "main": [
+        [
+          {
+            "node": "Has Ads?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Ads?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Ads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Ads Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Ads": {
+      "main": [
+        [
+          {
+            "node": "Group by Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group by Account": {
+      "main": [
+        [
+          {
+            "node": "Get Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Insights": {
+      "main": [
+        [
+          {
+            "node": "Transform Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Insights": {
+      "main": [
+        [
+          {
+            "node": "Has Insights?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Insights?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Insights Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Insights": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Prepare Placement Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Ads Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Insights Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Date Params": {
+      "main": [
+        [
+          {
+            "node": "Get Ads List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Placement Requests": {
+      "main": [
+        [
+          {
+            "node": "Get Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Transform Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Has Placement Insights?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Placement Insights?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Placement Insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Placement Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Placement Insights": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Placement Response": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Token": {
+      "main": [
+        [
+          {
+            "node": "Token Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Error?": {
+      "main": [
+        [
+          {
+            "node": "Mark Token Expired",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Ad Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Token Expired": {
+      "main": [
+        [
+          {
+            "node": "Build Token Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Token Alert": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly: Token Expired",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Daily 6am CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "eada0400-189e-4ac2-b7f0-2c57685c7907",
+  "activeVersionId": null,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-01-28T11:18:31.304Z",
+      "createdAt": "2026-01-28T11:18:31.304Z",
+      "role": "workflow:owner",
+      "workflowId": "fuu0LSCD7n8V4Rsb",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
