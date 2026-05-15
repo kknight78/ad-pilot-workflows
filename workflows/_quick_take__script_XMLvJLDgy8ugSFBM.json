@@ -1,0 +1,343 @@
+{
+  "updatedAt": "2026-04-05T15:44:28.437Z",
+  "createdAt": "2026-04-05T15:35:24.843Z",
+  "id": "XMLvJLDgy8ugSFBM",
+  "name": "[Quick Take] Script",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "quick-take/script",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "id": "qt-script-webhook",
+      "name": "Webhook",
+      "webhookId": "qt-script-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "const theme = $json.body.theme || 'something fun';\nreturn [{\n  json: {\n    api_body: {\n      model: 'claude-sonnet-4-20250514',\n      max_tokens: 150,\n      messages: [{\n        role: 'user',\n        content: 'Write a short script for a 10-second social media video about: ' + theme + '. Rules: About 25 words (10 seconds when spoken). Single paragraph, spoken directly to camera. Energetic and conversational tone. No stage directions, scene descriptions, or quotation marks. Just the spoken words, nothing else.'\n      }]\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ],
+      "id": "qt-script-prep",
+      "name": "Prep Claude Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.api_body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        300
+      ],
+      "id": "qt-script-claude",
+      "name": "API: Claude",
+      "credentials": {
+        "anthropicApi": {
+          "id": "Cias5aAJewPKMMCa",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst script = (response.content && response.content[0] && response.content[0].text) || '';\nconst cleaned = script.trim();\nconst wordCount = cleaned.split(/\\s+/).filter(w => w).length;\nconst durationEstimate = Math.round(wordCount / 2.5);\n\nreturn [{\n  json: {\n    success: true,\n    script: cleaned,\n    word_count: wordCount,\n    duration_estimate: durationEstimate\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        300
+      ],
+      "id": "qt-script-format",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1080,
+        300
+      ],
+      "id": "qt-script-respond",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep Claude Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Claude Request": {
+      "main": [
+        [
+          {
+            "node": "API: Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Claude": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "645aa2c4-7dcc-417c-a69f-c73280a62295",
+  "activeVersionId": "645aa2c4-7dcc-417c-a69f-c73280a62295",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-05T15:35:24.843Z",
+      "createdAt": "2026-04-05T15:35:24.843Z",
+      "role": "workflow:owner",
+      "workflowId": "XMLvJLDgy8ugSFBM",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-04-05T15:44:28.441Z",
+    "createdAt": "2026-04-05T15:44:28.441Z",
+    "versionId": "645aa2c4-7dcc-417c-a69f-c73280a62295",
+    "workflowId": "XMLvJLDgy8ugSFBM",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "quick-take/script",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          200,
+          300
+        ],
+        "id": "qt-script-webhook",
+        "name": "Webhook",
+        "webhookId": "qt-script-webhook-id"
+      },
+      {
+        "parameters": {
+          "jsCode": "const theme = $json.body.theme || 'something fun';\nreturn [{\n  json: {\n    api_body: {\n      model: 'claude-sonnet-4-20250514',\n      max_tokens: 150,\n      messages: [{\n        role: 'user',\n        content: 'Write a short script for a 10-second social media video about: ' + theme + '. Rules: About 25 words (10 seconds when spoken). Single paragraph, spoken directly to camera. Energetic and conversational tone. No stage directions, scene descriptions, or quotation marks. Just the spoken words, nothing else.'\n      }]\n    }\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          420,
+          300
+        ],
+        "id": "qt-script-prep",
+        "name": "Prep Claude Request"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.api_body) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          640,
+          300
+        ],
+        "id": "qt-script-claude",
+        "name": "API: Claude",
+        "credentials": {
+          "anthropicApi": {
+            "id": "Cias5aAJewPKMMCa",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst script = (response.content && response.content[0] && response.content[0].text) || '';\nconst cleaned = script.trim();\nconst wordCount = cleaned.split(/\\s+/).filter(w => w).length;\nconst durationEstimate = Math.round(wordCount / 2.5);\n\nreturn [{\n  json: {\n    success: true,\n    script: cleaned,\n    word_count: wordCount,\n    duration_estimate: durationEstimate\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          860,
+          300
+        ],
+        "id": "qt-script-format",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1080,
+          300
+        ],
+        "id": "qt-script-respond",
+        "name": "Respond"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prep Claude Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep Claude Request": {
+        "main": [
+          [
+            {
+              "node": "API: Claude",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Claude": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
