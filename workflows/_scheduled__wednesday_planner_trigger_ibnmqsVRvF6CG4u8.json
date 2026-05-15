@@ -1,0 +1,339 @@
+{
+  "updatedAt": "2026-02-18T01:22:23.641Z",
+  "createdAt": "2026-02-18T01:22:23.641Z",
+  "id": "ibnmqsVRvF6CG4u8",
+  "name": "[SCHEDULED] Wednesday Planner Trigger",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * 4"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "schedule-trigger",
+      "name": "Wednesday 8PM CT"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM weekly_plans WHERE status = 'idea_approved'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        300,
+        0
+      ],
+      "id": "get-approved-plans",
+      "name": "Get Idea-Approved Plans",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "condition-has-rows",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "check-has-plans",
+      "name": "Has Plans?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/planner-agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"plan_id\": \"{{ $json.id }}\" }",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        -60
+      ],
+      "id": "trigger-planner",
+      "name": "Trigger Planner Agent"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        820,
+        120
+      ],
+      "id": "no-plans",
+      "name": "No Plans Found"
+    }
+  ],
+  "connections": {
+    "Wednesday 8PM CT": {
+      "main": [
+        [
+          {
+            "node": "Get Idea-Approved Plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Idea-Approved Plans": {
+      "main": [
+        [
+          {
+            "node": "Has Plans?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Plans?": {
+      "main": [
+        [
+          {
+            "node": "Trigger Planner Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Plans Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Wednesday 8PM CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "6a6a4abd-9904-449a-b789-ddf8d138fb75",
+  "activeVersionId": "6a6a4abd-9904-449a-b789-ddf8d138fb75",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-18T01:22:23.641Z",
+      "createdAt": "2026-02-18T01:22:23.641Z",
+      "role": "workflow:owner",
+      "workflowId": "ibnmqsVRvF6CG4u8",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-18T01:22:23.660Z",
+    "createdAt": "2026-02-18T01:22:23.660Z",
+    "versionId": "6a6a4abd-9904-449a-b789-ddf8d138fb75",
+    "workflowId": "ibnmqsVRvF6CG4u8",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 2 * * 4"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ],
+        "id": "schedule-trigger",
+        "name": "Wednesday 8PM CT"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id FROM weekly_plans WHERE status = 'idea_approved'",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          300,
+          0
+        ],
+        "id": "get-approved-plans",
+        "name": "Get Idea-Approved Plans",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": ""
+            },
+            "conditions": [
+              {
+                "id": "condition-has-rows",
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          560,
+          0
+        ],
+        "id": "check-has-plans",
+        "name": "Has Plans?"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/planner-agent",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={ \"plan_id\": \"{{ $json.id }}\" }",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          820,
+          -60
+        ],
+        "id": "trigger-planner",
+        "name": "Trigger Planner Agent"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          820,
+          120
+        ],
+        "id": "no-plans",
+        "name": "No Plans Found"
+      }
+    ],
+    "connections": {
+      "Wednesday 8PM CT": {
+        "main": [
+          [
+            {
+              "node": "Get Idea-Approved Plans",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Idea-Approved Plans": {
+        "main": [
+          [
+            {
+              "node": "Has Plans?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Plans?": {
+        "main": [
+          [
+            {
+              "node": "Trigger Planner Agent",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Plans Found",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
