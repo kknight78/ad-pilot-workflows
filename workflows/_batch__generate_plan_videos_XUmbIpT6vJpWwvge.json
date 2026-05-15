@@ -1,0 +1,599 @@
+{
+  "updatedAt": "2026-02-23T13:56:48.871Z",
+  "createdAt": "2026-02-18T04:00:47.533Z",
+  "id": "XUmbIpT6vJpWwvge",
+  "name": "[BATCH] Generate Plan Videos",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "generate-videos",
+      "parameters": {
+        "path": "generate-videos",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        500
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "get-plan-assets",
+      "name": "Get Plan Assets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  a.id AS asset_id,\n  a.asset_type,\n  a.template_name,\n  (a.avatars->0->>'avatar_id') AS avatar_id,\n  a.background_id,\n  a.planned_outputs AS placements,\n  a.script_text,\n  a.phonetic_script,\n  a.music_id,\n  a.processed_items AS asset_processed_items,\n  wp.client_id,\n  wp.theme_name,\n  wp.status AS plan_status,\n  c.name AS client_name,\n  c.slug AS client_slug,\n  s.cloudinary_url AS music_url,\n  COALESCE(\n    (SELECT json_agg(json_build_object(\n      'vin', iv.vin,\n      'item_id', ii.id,\n      'title', ii.title,\n      'image_url', ii.hero_image_url,\n      'price', ii.price,\n      'year', iv.year,\n      'make', iv.make,\n      'model', iv.model,\n      'trim', iv.trim,\n      'body_style', iv.body_style,\n      'mileage', iv.mileage,\n      'drivetrain', iv.drivetrain,\n      'transmission', iv.transmission,\n      'engine', iv.engine,\n      'exterior_color', iv.exterior_color,\n      'days_on_lot', COALESCE(iv.days_on_lot, EXTRACT(DAY FROM NOW() - ii.first_seen_at)::int),\n      'sort_order', t.ord\n    ) ORDER BY t.ord)\n    FROM jsonb_array_elements(a.inventory_items) WITH ORDINALITY AS t(elem, ord)\n    JOIN inventory_items ii ON ii.id = (t.elem->>'id')::uuid\n    LEFT JOIN inventory_vehicles iv ON iv.item_id = ii.id\n    ), '[]'::json\n  ) AS vehicles\nFROM assets a\nJOIN weekly_plans wp ON a.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nLEFT JOIN songs s ON a.music_id::text = s.id::text\nWHERE a.plan_id = '{{ $json.body.plan_id }}'::uuid\n  AND a.included = true\n  AND a.template_name IN ('Multi Item', 'Single Item Spotlight', 'Educational')",
+        "options": {
+          "queryBatching": "independently"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "has-video-assets",
+      "name": "Has Video Assets?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-0",
+              "leftValue": "={{ $json.asset_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "build-job-payload",
+      "name": "Build Job Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const SUPPORTED_RATIOS = ['9:16', '4:5', '16:9'];\n\nconst TEMPLATE_MAP = {\n  'multi item': 'ad-multi-item-1',\n  'single item spotlight': 'ad-single-item-spotlight-1',\n  'educational': 'organic-educational-1'\n};\n\nconst PLATFORM_MAP = {\n  'fb_feed': 'FACEBOOK',\n  'fb_stories': 'FACEBOOK',\n  'fb_reels': 'FACEBOOK',\n  'ig_feed': 'INSTAGRAM',\n  'ig_stories': 'INSTAGRAM',\n  'ig_reels': 'INSTAGRAM',\n  'tt_feed': 'TIKTOK',\n  'yt_shorts': 'YOUTUBE',\n  'yt_feed': 'YOUTUBE',\n  'facebook': 'FACEBOOK',\n  'instagram': 'INSTAGRAM',\n  'tiktok': 'TIKTOK',\n  'youtube': 'YOUTUBE'\n};\n\nconst SUPPORTED_PLATFORMS = new Set(['TIKTOK', 'INSTAGRAM', 'FACEBOOK', 'YOUTUBE']);\n\n// Same priority order as TEMP_002 in [02] Generate Script\nconst FEATURE_PRIORITY = [\n  'engine_bay', 'moonroof', 'infotainment_360_camera',\n  'infotainment_carplay', 'front_seats', 'steering_wheel',\n  'instrument_cluster', 'cargo_area', 'second_row_seats',\n  'third_row_seats', 'special_feature', 'infotainment_other'\n];\n\nconst MAX_FEATURE_PHOTOS = 5; // hero + 5 features = 6 total\n\n// Strip /thumb/ suffix for full-res URLs (same as getFullResUrl in TEMP_002)\nfunction getFullResUrl(url) {\n  if (!url) return url;\n  return url.replace(/\\/thumb\\/?$/, '/');\n}\n\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Build per-ratio platform mapping\n  const ratioPlat = {};\n  let ratios = [];\n\n  if (d.placements) {\n    const p = typeof d.placements === 'string' ? JSON.parse(d.placements) : d.placements;\n    if (Array.isArray(p)) {\n      for (const output of p) {\n        const ratio = output.aspect_ratio;\n        if (!ratio || !SUPPORTED_RATIOS.includes(ratio)) continue;\n        if (!ratioPlat[ratio]) ratioPlat[ratio] = new Set();\n        if (Array.isArray(output.platforms)) {\n          for (const plat of output.platforms) {\n            const mapped = PLATFORM_MAP[plat.toLowerCase()];\n            if (mapped && SUPPORTED_PLATFORMS.has(mapped)) {\n              ratioPlat[ratio].add(mapped);\n            }\n          }\n        }\n      }\n      ratios = Object.keys(ratioPlat);\n    }\n  }\n\n  if (ratios.length === 0) {\n    ratios = ['9:16'];\n    ratioPlat['9:16'] = new Set(['INSTAGRAM', 'FACEBOOK']);\n  }\n\n  const ratio_platforms = {};\n  for (const [r, s] of Object.entries(ratioPlat)) {\n    ratio_platforms[r] = [...s];\n  }\n  const allPlatforms = [...new Set(Object.values(ratio_platforms).flat())];\n\n  const tn = (d.template_name || '').toLowerCase();\n  const template_id = TEMPLATE_MAP[tn] || 'ad-multi-item-1';\n  const isOrganic = template_id.startsWith('organic-');\n\n  // Parse vehicles from enriched query (inventory_items order)\n  let vehicles = [];\n  if (d.vehicles) {\n    vehicles = typeof d.vehicles === 'string' ? JSON.parse(d.vehicles) : d.vehicles;\n  }\n\n  // Use processed_items from the asset if available (has selected_photos, equipment, etc.)\n  let assetProcessed = [];\n  if (d.asset_processed_items) {\n    assetProcessed = typeof d.asset_processed_items === 'string'\n      ? JSON.parse(d.asset_processed_items)\n      : d.asset_processed_items;\n  }\n\n  let processed_items;\n  let selected_photos = [];\n\n  if (Array.isArray(assetProcessed) && assetProcessed.length > 0) {\n    // Use the prep phase processed_items (has selected_photos, equipment, etc.)\n    processed_items = assetProcessed;\n\n    // CRITICAL: Reorder vehicles to match processed_items order (= script order)\n    // The script was generated based on processed_items order, so the visual\n    // (vehicles array → photo slots) must match.\n    if (vehicles.length > 0 && processed_items.length > 0) {\n      const vehicleByVin = {};\n      for (const v of vehicles) {\n        if (v.vin) vehicleByVin[v.vin] = v;\n      }\n      const reordered = [];\n      for (const pi of processed_items) {\n        const vin = pi.vin;\n        if (vin && vehicleByVin[vin]) {\n          reordered.push(vehicleByVin[vin]);\n          delete vehicleByVin[vin]; // prevent duplicates\n        }\n      }\n      // Append any vehicles not in processed_items (shouldn't happen, but safety)\n      for (const v of Object.values(vehicleByVin)) {\n        reordered.push(v);\n      }\n      if (reordered.length > 0) {\n        vehicles = reordered;\n      }\n    }\n\n    // Extract selected_photos from first processed item (spotlight)\n    const firstItem = assetProcessed[0];\n    if (firstItem?.selected_photos) {\n      const sp = firstItem.selected_photos;\n      const vf = firstItem.verified_features || {};\n\n      // Hero is always first\n      const hero = sp.hero_exterior || null;\n      if (hero) {\n        selected_photos.push({\n          photo_url: getFullResUrl(hero.photo_url),\n          photo_index: hero.photo_index\n        });\n      }\n\n      // Features: use priorityOrder, gate on verified_features having script_features,\n      // limit to MAX_FEATURE_PHOTOS\n      let featureCount = 0;\n      for (const category of FEATURE_PRIORITY) {\n        if (featureCount >= MAX_FEATURE_PHOTOS) break;\n        if (sp[category] && vf[category]?.script_features) {\n          selected_photos.push({\n            photo_url: getFullResUrl(sp[category].photo_url),\n            photo_index: sp[category].photo_index\n          });\n          featureCount++;\n        }\n      }\n    }\n  } else {\n    // Build basic processed_items from vehicles\n    processed_items = vehicles.map((v, idx) => ({\n      item_id: v.item_id || null,\n      vin: v.vin,\n      year: v.year,\n      make: v.make,\n      model: v.model,\n      trim: v.trim || '',\n      body_style: v.body_style || '',\n      price: v.price,\n      mileage: v.mileage || 0,\n      days_on_lot: v.days_on_lot || 0,\n      photo_url: v.vin\n        ? 'https://res.cloudinary.com/dtpqxuwby/image/upload/' + v.vin + '.png'\n        : v.image_url || null,\n      original_photo_url: v.image_url || null,\n      bg_removed: !!v.vin,\n      sort_order: v.sort_order ?? idx,\n      equipment_highlights: [],\n      mileage_category: 'average'\n    }));\n  }\n\n  const vins = vehicles.map(v => v.vin).filter(Boolean);\n\n  results.push({\n    json: {\n      client_id: d.client_id,\n      client: d.client_slug,\n      client_name: d.client_name,\n      asset_id: d.asset_id,\n      template_id: template_id,\n      avatar_id: d.avatar_id || null,\n      background_id: d.background_id || null,\n      ratios: ratios,\n      platforms: allPlatforms,\n      ratio_platforms: ratio_platforms,\n      email: 'system@ad-pilot.ai',\n      source: 'weekly_cycle',\n      skip_to_render: true,\n      is_organic: isOrganic,\n      phonetic_script: d.phonetic_script || null,\n      script_text: d.script_text || null,\n      vehicles: vehicles,\n      vins: vins,\n      processed_items: processed_items,\n      _hasProcessedItems: processed_items.length > 0,\n      selected_photos: selected_photos,\n      music_id: d.music_id || null,\n      media: {\n        music_url: d.music_url || null\n      }\n    }\n  });\n}\n\nreturn results;"
+      }
+    },
+    {
+      "id": "trigger-job-gateway",
+      "name": "Trigger Job Gateway",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/ad-pilot/start",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "aggregate-results",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      }
+    },
+    {
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst allData = items[0]?.json?.data || [];\nconst jobs = allData.map(d => ({ asset_id: d.asset_id, job_id: d.job_id, status: d.status }));\n\nreturn [{\n  json: {\n    success: true,\n    message: `Triggered video generation for ${jobs.length} assets`,\n    jobs: jobs,\n    triggered_at: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1700,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    },
+    {
+      "id": "no-assets-response",
+      "name": "No Assets Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        500
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "responseBody": "={{ { success: false, message: 'No video assets found for this plan' } }}"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through Postgres results, strip debug\nconst items = $input.all();\nreturn items.map(item => ({ json: item.json }));"
+      },
+      "id": "normalize-results-001",
+      "name": "Normalize Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Plan Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Plan Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Plan Assets": {
+      "main": [
+        [
+          {
+            "node": "Normalize Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Job Payload": {
+      "main": [
+        [
+          {
+            "node": "Trigger Job Gateway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Job Gateway": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Results": {
+      "main": [
+        [
+          {
+            "node": "Build Job Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "854eda01-8408-4cae-8888-ed83ceef96b2",
+  "activeVersionId": "854eda01-8408-4cae-8888-ed83ceef96b2",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-18T04:00:47.533Z",
+      "createdAt": "2026-02-18T04:00:47.533Z",
+      "role": "workflow:owner",
+      "workflowId": "XUmbIpT6vJpWwvge",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-23T13:56:48.876Z",
+    "createdAt": "2026-02-23T13:56:48.876Z",
+    "versionId": "854eda01-8408-4cae-8888-ed83ceef96b2",
+    "workflowId": "XUmbIpT6vJpWwvge",
+    "nodes": [
+      {
+        "id": "webhook-trigger",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          250,
+          300
+        ],
+        "webhookId": "generate-videos",
+        "parameters": {
+          "path": "generate-videos",
+          "httpMethod": "POST",
+          "responseMode": "responseNode"
+        }
+      },
+      {
+        "id": "manual-trigger",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          250,
+          500
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "get-plan-assets",
+        "name": "Get Plan Assets",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  a.id AS asset_id,\n  a.asset_type,\n  a.template_name,\n  (a.avatars->0->>'avatar_id') AS avatar_id,\n  a.background_id,\n  a.planned_outputs AS placements,\n  a.script_text,\n  a.phonetic_script,\n  a.music_id,\n  a.processed_items AS asset_processed_items,\n  wp.client_id,\n  wp.theme_name,\n  wp.status AS plan_status,\n  c.name AS client_name,\n  c.slug AS client_slug,\n  s.cloudinary_url AS music_url,\n  COALESCE(\n    (SELECT json_agg(json_build_object(\n      'vin', iv.vin,\n      'item_id', ii.id,\n      'title', ii.title,\n      'image_url', ii.hero_image_url,\n      'price', ii.price,\n      'year', iv.year,\n      'make', iv.make,\n      'model', iv.model,\n      'trim', iv.trim,\n      'body_style', iv.body_style,\n      'mileage', iv.mileage,\n      'drivetrain', iv.drivetrain,\n      'transmission', iv.transmission,\n      'engine', iv.engine,\n      'exterior_color', iv.exterior_color,\n      'days_on_lot', COALESCE(iv.days_on_lot, EXTRACT(DAY FROM NOW() - ii.first_seen_at)::int),\n      'sort_order', t.ord\n    ) ORDER BY t.ord)\n    FROM jsonb_array_elements(a.inventory_items) WITH ORDINALITY AS t(elem, ord)\n    JOIN inventory_items ii ON ii.id = (t.elem->>'id')::uuid\n    LEFT JOIN inventory_vehicles iv ON iv.item_id = ii.id\n    ), '[]'::json\n  ) AS vehicles\nFROM assets a\nJOIN weekly_plans wp ON a.plan_id = wp.id\nJOIN clients c ON wp.client_id = c.id\nLEFT JOIN songs s ON a.music_id::text = s.id::text\nWHERE a.plan_id = '{{ $json.body.plan_id }}'::uuid\n  AND a.included = true\n  AND a.template_name IN ('Multi Item', 'Single Item Spotlight', 'Educational')",
+          "options": {
+            "queryBatching": "independently"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "has-video-assets",
+        "name": "Has Video Assets?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "condition-0",
+                "leftValue": "={{ $json.asset_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "isNotEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "build-job-payload",
+        "name": "Build Job Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const SUPPORTED_RATIOS = ['9:16', '4:5', '16:9'];\n\nconst TEMPLATE_MAP = {\n  'multi item': 'ad-multi-item-1',\n  'single item spotlight': 'ad-single-item-spotlight-1',\n  'educational': 'organic-educational-1'\n};\n\nconst PLATFORM_MAP = {\n  'fb_feed': 'FACEBOOK',\n  'fb_stories': 'FACEBOOK',\n  'fb_reels': 'FACEBOOK',\n  'ig_feed': 'INSTAGRAM',\n  'ig_stories': 'INSTAGRAM',\n  'ig_reels': 'INSTAGRAM',\n  'tt_feed': 'TIKTOK',\n  'yt_shorts': 'YOUTUBE',\n  'yt_feed': 'YOUTUBE',\n  'facebook': 'FACEBOOK',\n  'instagram': 'INSTAGRAM',\n  'tiktok': 'TIKTOK',\n  'youtube': 'YOUTUBE'\n};\n\nconst SUPPORTED_PLATFORMS = new Set(['TIKTOK', 'INSTAGRAM', 'FACEBOOK', 'YOUTUBE']);\n\n// Same priority order as TEMP_002 in [02] Generate Script\nconst FEATURE_PRIORITY = [\n  'engine_bay', 'moonroof', 'infotainment_360_camera',\n  'infotainment_carplay', 'front_seats', 'steering_wheel',\n  'instrument_cluster', 'cargo_area', 'second_row_seats',\n  'third_row_seats', 'special_feature', 'infotainment_other'\n];\n\nconst MAX_FEATURE_PHOTOS = 5; // hero + 5 features = 6 total\n\n// Strip /thumb/ suffix for full-res URLs (same as getFullResUrl in TEMP_002)\nfunction getFullResUrl(url) {\n  if (!url) return url;\n  return url.replace(/\\/thumb\\/?$/, '/');\n}\n\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Build per-ratio platform mapping\n  const ratioPlat = {};\n  let ratios = [];\n\n  if (d.placements) {\n    const p = typeof d.placements === 'string' ? JSON.parse(d.placements) : d.placements;\n    if (Array.isArray(p)) {\n      for (const output of p) {\n        const ratio = output.aspect_ratio;\n        if (!ratio || !SUPPORTED_RATIOS.includes(ratio)) continue;\n        if (!ratioPlat[ratio]) ratioPlat[ratio] = new Set();\n        if (Array.isArray(output.platforms)) {\n          for (const plat of output.platforms) {\n            const mapped = PLATFORM_MAP[plat.toLowerCase()];\n            if (mapped && SUPPORTED_PLATFORMS.has(mapped)) {\n              ratioPlat[ratio].add(mapped);\n            }\n          }\n        }\n      }\n      ratios = Object.keys(ratioPlat);\n    }\n  }\n\n  if (ratios.length === 0) {\n    ratios = ['9:16'];\n    ratioPlat['9:16'] = new Set(['INSTAGRAM', 'FACEBOOK']);\n  }\n\n  const ratio_platforms = {};\n  for (const [r, s] of Object.entries(ratioPlat)) {\n    ratio_platforms[r] = [...s];\n  }\n  const allPlatforms = [...new Set(Object.values(ratio_platforms).flat())];\n\n  const tn = (d.template_name || '').toLowerCase();\n  const template_id = TEMPLATE_MAP[tn] || 'ad-multi-item-1';\n  const isOrganic = template_id.startsWith('organic-');\n\n  // Parse vehicles from enriched query (inventory_items order)\n  let vehicles = [];\n  if (d.vehicles) {\n    vehicles = typeof d.vehicles === 'string' ? JSON.parse(d.vehicles) : d.vehicles;\n  }\n\n  // Use processed_items from the asset if available (has selected_photos, equipment, etc.)\n  let assetProcessed = [];\n  if (d.asset_processed_items) {\n    assetProcessed = typeof d.asset_processed_items === 'string'\n      ? JSON.parse(d.asset_processed_items)\n      : d.asset_processed_items;\n  }\n\n  let processed_items;\n  let selected_photos = [];\n\n  if (Array.isArray(assetProcessed) && assetProcessed.length > 0) {\n    // Use the prep phase processed_items (has selected_photos, equipment, etc.)\n    processed_items = assetProcessed;\n\n    // CRITICAL: Reorder vehicles to match processed_items order (= script order)\n    // The script was generated based on processed_items order, so the visual\n    // (vehicles array → photo slots) must match.\n    if (vehicles.length > 0 && processed_items.length > 0) {\n      const vehicleByVin = {};\n      for (const v of vehicles) {\n        if (v.vin) vehicleByVin[v.vin] = v;\n      }\n      const reordered = [];\n      for (const pi of processed_items) {\n        const vin = pi.vin;\n        if (vin && vehicleByVin[vin]) {\n          reordered.push(vehicleByVin[vin]);\n          delete vehicleByVin[vin]; // prevent duplicates\n        }\n      }\n      // Append any vehicles not in processed_items (shouldn't happen, but safety)\n      for (const v of Object.values(vehicleByVin)) {\n        reordered.push(v);\n      }\n      if (reordered.length > 0) {\n        vehicles = reordered;\n      }\n    }\n\n    // Extract selected_photos from first processed item (spotlight)\n    const firstItem = assetProcessed[0];\n    if (firstItem?.selected_photos) {\n      const sp = firstItem.selected_photos;\n      const vf = firstItem.verified_features || {};\n\n      // Hero is always first\n      const hero = sp.hero_exterior || null;\n      if (hero) {\n        selected_photos.push({\n          photo_url: getFullResUrl(hero.photo_url),\n          photo_index: hero.photo_index\n        });\n      }\n\n      // Features: use priorityOrder, gate on verified_features having script_features,\n      // limit to MAX_FEATURE_PHOTOS\n      let featureCount = 0;\n      for (const category of FEATURE_PRIORITY) {\n        if (featureCount >= MAX_FEATURE_PHOTOS) break;\n        if (sp[category] && vf[category]?.script_features) {\n          selected_photos.push({\n            photo_url: getFullResUrl(sp[category].photo_url),\n            photo_index: sp[category].photo_index\n          });\n          featureCount++;\n        }\n      }\n    }\n  } else {\n    // Build basic processed_items from vehicles\n    processed_items = vehicles.map((v, idx) => ({\n      item_id: v.item_id || null,\n      vin: v.vin,\n      year: v.year,\n      make: v.make,\n      model: v.model,\n      trim: v.trim || '',\n      body_style: v.body_style || '',\n      price: v.price,\n      mileage: v.mileage || 0,\n      days_on_lot: v.days_on_lot || 0,\n      photo_url: v.vin\n        ? 'https://res.cloudinary.com/dtpqxuwby/image/upload/' + v.vin + '.png'\n        : v.image_url || null,\n      original_photo_url: v.image_url || null,\n      bg_removed: !!v.vin,\n      sort_order: v.sort_order ?? idx,\n      equipment_highlights: [],\n      mileage_category: 'average'\n    }));\n  }\n\n  const vins = vehicles.map(v => v.vin).filter(Boolean);\n\n  results.push({\n    json: {\n      client_id: d.client_id,\n      client: d.client_slug,\n      client_name: d.client_name,\n      asset_id: d.asset_id,\n      template_id: template_id,\n      avatar_id: d.avatar_id || null,\n      background_id: d.background_id || null,\n      ratios: ratios,\n      platforms: allPlatforms,\n      ratio_platforms: ratio_platforms,\n      email: 'system@ad-pilot.ai',\n      source: 'weekly_cycle',\n      skip_to_render: true,\n      is_organic: isOrganic,\n      phonetic_script: d.phonetic_script || null,\n      script_text: d.script_text || null,\n      vehicles: vehicles,\n      vins: vins,\n      processed_items: processed_items,\n      _hasProcessedItems: processed_items.length > 0,\n      selected_photos: selected_photos,\n      music_id: d.music_id || null,\n      media: {\n        music_url: d.music_url || null\n      }\n    }\n  });\n}\n\nreturn results;"
+        }
+      },
+      {
+        "id": "trigger-job-gateway",
+        "name": "Trigger Job Gateway",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/ad-pilot/start",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "aggregate-results",
+        "name": "Aggregate Results",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "options": {}
+        }
+      },
+      {
+        "id": "format-response",
+        "name": "Format Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst allData = items[0]?.json?.data || [];\nconst jobs = allData.map(d => ({ asset_id: d.asset_id, job_id: d.job_id, status: d.status }));\n\nreturn [{\n  json: {\n    success: true,\n    message: `Triggered video generation for ${jobs.length} assets`,\n    jobs: jobs,\n    triggered_at: new Date().toISOString()\n  }\n}];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1700,
+          300
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}"
+        }
+      },
+      {
+        "id": "no-assets-response",
+        "name": "No Assets Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          900,
+          500
+        ],
+        "parameters": {
+          "respondWith": "allIncomingItems",
+          "responseBody": "={{ { success: false, message: 'No video assets found for this plan' } }}"
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pass through Postgres results, strip debug\nconst items = $input.all();\nreturn items.map(item => ({ json: item.json }));"
+        },
+        "id": "normalize-results-001",
+        "name": "Normalize Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Plan Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Plan Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Plan Assets": {
+        "main": [
+          [
+            {
+              "node": "Normalize Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Job Payload": {
+        "main": [
+          [
+            {
+              "node": "Trigger Job Gateway",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Trigger Job Gateway": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Results": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize Results": {
+        "main": [
+          [
+            {
+              "node": "Build Job Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
