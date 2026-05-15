@@ -1,0 +1,1937 @@
+{
+  "updatedAt": "2026-05-15T12:52:15.028Z",
+  "createdAt": "2026-05-13T19:12:44.821Z",
+  "id": "zaz1gsffA48GcvuN",
+  "name": "[04b] Generate Video (HF)",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const config = $json;\nconst vehicles = config.vehicles || [];\nconst cachedVehicles = [];\nconst needsProcessing = [];\n\n// TEMP_003 skips this, no vehicles required\nfor (const vehicle of vehicles) {\n  const vin = vehicle.vin;\n  \n  if (!vin) {\n    console.log('Vehicle missing VIN, using original');\n    cachedVehicles.push(vehicle);\n    continue;\n  }\n  \n  // Check if bg-removed image exists\n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`✓ VIN ${vin}: Found in cache`);\n      vehicle.photo_url = bgRemovedUrl;\n      cachedVehicles.push(vehicle);\n      continue;\n    }\n  } catch (error) {\n    // Not in cache\n  }\n  needsProcessing.push(vehicle);\n}\n\n// Return single item with arrays\nreturn [{\n  json: {\n    ...config,\n    vehicles: vehicles, // ← Now has updated URLs for cached vehicles\n    vehiclesToProcess: needsProcessing,\n    cachedVehicles: cachedVehicles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        -128
+      ],
+      "id": "5ee1ed6d-b685-44f9-8e1f-400d0827b3ef",
+      "name": "Process All Vehicles"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        160
+      ],
+      "id": "558fb222-cacc-4087-a229-4aa997b6777a",
+      "name": "Wait for Render",
+      "webhookId": "d49effb0-de50-4354-ac9b-59098b0af43f"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Gen core errored out."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        -64
+      ],
+      "id": "923bb706-0c19-45b1-a658-170d42b39318",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items coming into aggregate\nconst allItems = $input.all();\n\n// Get base config from Process All Vehicles\nconst baseConfig = $('Process All Vehicles').first().json;\nconst cachedVehicles = baseConfig.cachedVehicles || [];\nconst originalVehicles = baseConfig.vehicles || [];\n\nconsole.log(`Aggregate: Processing ${allItems.length} items`);\n\n// Process items from removebg/cloudinary flow\nconst processedVehicles = allItems\n  .filter(item => item.json.public_id && item.json.secure_url)\n  .map(item => {\n    const vin = item.json.public_id;\n    \n    // Find the original vehicle data to merge with\n    const originalVehicle = originalVehicles.find(v => v.vin === vin);\n    \n    if (!originalVehicle) {\n      console.warn(`⚠️ No original vehicle found for VIN ${vin}`);\n      return null;\n    }\n    return {\n      ...originalVehicle,  // ← Keep all original vehicle data\n      photo_url: item.json.secure_url  // ← Add Cloudinary URL\n    };\n  })\n  .filter(Boolean); // Remove any nulls\n\n// Create lookup maps by VIN\nconst processedByVin = {};\nprocessedVehicles.forEach(v => {\n  processedByVin[v.vin] = v;\n});\n\nconst cachedByVin = {};\ncachedVehicles.forEach(v => {\n  cachedByVin[v.vin] = v;\n});\n\n// Rebuild vehicles array in ORIGINAL order\nconst finalVehicles = originalVehicles.map(originalVehicle => {\n  const vin = originalVehicle.vin;\n  \n  // Use processed or cached version if available, otherwise original\n  return processedByVin[vin] || cachedByVin[vin] || originalVehicle;\n});\n\nconsole.log(`✓ Total: ${finalVehicles.length} vehicles in correct order`);\n\n// Clean config\nconst { vehiclesToProcess, cachedVehicles: _, ...cleanConfig } = baseConfig;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    vehicles: finalVehicles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        96
+      ],
+      "id": "6be976a7-570a-494c-b41c-72e758ede38f",
+      "name": "Aggregate Vehicles"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        96
+      ],
+      "id": "5df931bc-a974-4b08-88f6-d6006b054fc2",
+      "name": "Aggregate Configs"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Single error - format it for the email\nconst error = $input.first().json;\nconst nodeName = error.node?.name || 'Unknown node';\n\n// Handle different error formats from different APIs\nlet errorMsg = 'Unknown error';\n\n// Cloudinary error format: { \"error\": { \"message\": \"...\" } }\nif (error.error?.message) {\n  errorMsg = error.error.message;\n}\n// Creatomate error format: { \"status\": \"failed\", \"error_message\": \"...\" }\nif (error.error_message) {\n  errorMsg = error.error_message;\n}\n  \n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nelse if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  // Include code if present, otherwise just title\n  errorMsg = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n}\n// Creatomate error format: { \"error_message\": \"...\" }\nelse if (error.error_message) {\n  errorMsg = error.error_message;\n}\n// Generic message fallback\nelse if (error.message) {\n  errorMsg = error.message;\n}\n\nreturn [{\n  json: {\n    nodeName: nodeName,\n    errorMessage: errorMsg,\n    timestamp: new Date().toISOString(),\n    rawError: JSON.stringify(error, null, 2) // Include full error for debugging\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        -64
+      ],
+      "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
+      "name": "Format Node Error"
+    },
+    {
+      "parameters": {
+        "content": "# #3 Generate Video",
+        "height": 720,
+        "width": 2080,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -560,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "cfb457e3-4e30-4045-916a-2c45b78a2cbf",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        -128
+      ],
+      "id": "febf4365-88f4-4424-a9d1-ab1dafbe1e95",
+      "name": "When Executed by Orchestrate Video Creation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "78c8847d-ded2-428b-b6d2-8b59e006a8aa",
+              "leftValue": "={{ $json.vehiclesToProcess.length}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        -128
+      ],
+      "id": "d3c49706-9898-4e26-9cb1-65ebf9239b23",
+      "name": "If: Has Vehicles"
+    },
+    {
+      "parameters": {
+        "jsCode": "const vehiclesToProcess = $json.vehiclesToProcess || [];\n\nreturn vehiclesToProcess.map(vehicle => ({\n  json: vehicle\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -144
+      ],
+      "id": "cabf3be1-d71f-4d05-a6fb-bd60c6480d77",
+      "name": "Send Only Vehicles to Process"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "upload_preset",
+              "value": "n8n_unsigned"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.vin }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        736,
+        -160
+      ],
+      "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
+      "name": "API: Cloudinary, Upload",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cc7c4fae-f404-4b50-b3e0-a86a35ad1403",
+              "leftValue": "={{ $json.api_creatomate_create_video }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        96
+      ],
+      "id": "e31917be-d832-4f23-9f3a-8dfd718a570c",
+      "name": "If: Test, Skip Video Creation"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: $json.api_creatomate_create_video\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        32
+      ],
+      "id": "aa6dce6f-6e60-452b-a4aa-4a90ebd7214d",
+      "name": "Skip Video Creation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        128
+      ],
+      "id": "cdc69818-5724-4f8c-ae10-d81bdabc5677",
+      "name": "If: Succeeded?"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// hf-render-service /render/{job_id} response shape:\n//   { status: \"completed\", result: { mp4_url, render_ms, ... } }\nconst apiResponse = $json;\nconst config       = $('Aggregate Configs').first().json;\nconst swapBuilt    = $('Build Swap Config').first().json;\nconst result       = apiResponse && apiResponse.result;\nconst videoUrl     = result && result.mp4_url;\nconst videoDuration = swapBuilt._swap_config && swapBuilt._swap_config.videoDuration;\n\nif (!videoUrl) {\n  throw new Error('hf-render-service did not return mp4_url (status=' + (apiResponse?.status || 'unknown') + ')');\n}\n\nreturn [{\n  json: {\n    ...config,\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    // Surface _banner_config so [08] Add Platform Banners can read it\n    // (computed in Build Swap Config). Null when skipPlatformBanner.\n    _banner_config: swapBuilt._banner_config || null,\n    ...(config.test_mode && { api_hf_render: apiResponse })\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        112
+      ],
+      "id": "94a3f672-71bd-4b34-a989-262f4bef3c0e",
+      "name": "Parse Video Creation Response"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Get the VIN from context (passed through service)\nconst vin = $json.context?.vin || $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file and original context data\nreturn {\n  json: {\n    ...$json.context,\n    vin: vin\n  },\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -160
+      ],
+      "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
+      "name": "Parse Remove.bg"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Build swapConfig from upstream config for hf-render-service.\n// Drops all Creatomate-template handling — composer + adapter on the\n// render service own the brief construction; this node only assembles\n// the per-render parameters they consume.\n\nconst config = $json;\nconst clientId = (config.client || 'ccc').toLowerCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\n\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'the manager';\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  tiktok:    `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  youtube:   `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  instagram: `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  facebook:  `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  none:      `Ask ${avatarName} for a great deal!`\n};\n// Caller-supplied platformText wins (the design agent may produce\n// off-template copy like \"BOGO TODAY ONLY!\"). Otherwise the platform\n// template fills the slot.\nconst platformText = config.platformText || platformTexts[basePlatform] || platformTexts.none;\n\nconst sectionTimings = config._section_timings || [];\nconst hookSection    = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection     = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\nconst hookEnd  = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration\n  || ctaSection?.end\n  || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\n\nfunction formatPrice(price) {\n  if (price == null || price === '') return '';\n  const n = Number(price);\n  return Number.isFinite(n) ? `$${n.toLocaleString('en-US')}` : String(price);\n}\n\nconst bgRendered = config.background_rendered_urls || {};\nconst bgImageSource = bgRendered[ratio] || bgRendered['9:16'] || null;\n\nconst swapConfig = {\n  hookEnd:       hookEnd,\n  ctaStart:      ctaStart,\n  videoDuration: videoDuration,\n  skipPlatformBanner,\n  platformText,\n  bgMusicSource: config.media?.music_url || null,\n  bgImageSource,\n  bgLightness:   config.bg_lightness || 'mixed',\n  avatar1Source:     config.avatar_video_url || null,\n  avatar1MaskSource: config.avatar_video_alpha_url || null,\n  videoThumbnailText: config.video_thumbnail_text || null,\n};\n\n// Per-vehicle fields. Spotlight uses 1 hero + features; multi-item\n// uses up to 5 sequential vehicles. The adapter at the render service\n// will branch on template_id and consume the appropriate fields.\nif (isSpotlight) {\n  swapConfig.item1Source  = heroVehicle.photo_url || null;\n  swapConfig.item1Title   = heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}`\n    : '';\n  swapConfig.item1Price   = formatPrice(heroVehicle.price);\n  swapConfig.item1Mileage = heroVehicle.mileage\n    ? `${Number(heroVehicle.mileage).toLocaleString('en-US')} mi`\n    : '';\n  // Features 1..4 from feature_photos + segment timings.\n  for (let n = 1; n <= 4; n += 1) {\n    const photo = (heroVehicle.feature_photos || [])[n - 1];\n    const segTiming = sectionTimings.find(t => t.name === `segment_${n}`);\n    swapConfig[`item1Feature${n}Source`]   = photo?.photo_url || null;\n    swapConfig[`item1Feature${n}Time`]     = segTiming?.start ?? null;\n    swapConfig[`item1Feature${n}Duration`] = segTiming?.duration ?? null;\n  }\n} else {\n  for (let i = 1; i <= 5; i += 1) {\n    const v = vehicles[i - 1];\n    const segTiming = sectionTimings.find(t => t.name === `segment_${i}`);\n    if (v) {\n      swapConfig[`item${i}Source`]   = v.photo_url || null;\n      swapConfig[`item${i}Title`]    = v.year && v.make && v.model\n        ? `${v.year} ${v.make} ${v.model}`\n        : '';\n      swapConfig[`item${i}Price`]    = formatPrice(v.price);\n      swapConfig[`item${i}Mileage`]  = v.mileage\n        ? `${Number(v.mileage).toLocaleString('en-US')} mi`\n        : '';\n      swapConfig[`item${i}Time`]     = segTiming?.start ?? null;\n      swapConfig[`item${i}Duration`] = segTiming?.duration ?? null;\n      swapConfig[`item${i}Visible`]  = true;\n    } else {\n      swapConfig[`item${i}Visible`] = false;\n    }\n  }\n}\n\n// Stable per-execution id for Cloudinary public_id (alphamerge + duck\n// reuse the same id so re-runs overwrite the same asset). Falls back\n// to job_id-ratio if no execution_id is available.\nconst stableId = config.job_id ? `job-${config.job_id}-${ratio.replace(':','x')}` : `hf-render-${Date.now()}`;\n\n// Platform banner config — surfaced for the post-render\n// [08] Add Platform Banners step. Position lands the text band\n// inside the in-render platform-banner-bg pattern's reserved\n// 0-8vh ribbon. ffmpeg-banner-api uses 0-1 floats (y_percent,\n// font_size_percent), so we translate from the 0-100 percentages\n// our pattern uses.\nconst BANNER_TOP_PCT_F    = 0;     // band starts at top edge\nconst BANNER_HEIGHT_PCT_F = 8;     // band height (% of frame height)\nconst callerBannerConfig = config.bannerConfig || {};\nconst bannerConfig = skipPlatformBanner ? null : {\n  text:               callerBannerConfig.text               || platformText,\n  font:               callerBannerConfig.font               || (config.brand && config.brand.fontDisplay) || 'Anton',\n  text_color:         callerBannerConfig.text_color         || (config.brand && config.brand.accentColor) || '#fe5817',\n  bg_color:           callerBannerConfig.bg_color           || (config.brand && config.brand.darkBgColor) || '#022e6d',\n  // ffmpeg-banner-api contract: y_percent positions the TOP of the\n  // text bounding box; nudging ~30% of band height centers cleanly\n  // inside the reserved band. font_size_percent sized at ~50% of band\n  // height keeps the type legible without crowding the edges.\n  y_percent:          callerBannerConfig.y_percent          != null ? callerBannerConfig.y_percent          : (BANNER_TOP_PCT_F + BANNER_HEIGHT_PCT_F * 0.30) / 100,\n  font_size_percent:  callerBannerConfig.font_size_percent  != null ? callerBannerConfig.font_size_percent  : (BANNER_HEIGHT_PCT_F * 0.50) / 100,\n  show_background:    false, // the in-render platform-banner-bg already paints the bg\n};\n\n// Surface the bg_color into swapConfig so the in-render\n// platform-banner-bg pattern paints the same color the ffmpeg text\n// pass expects to sit on top of.\nif (bannerConfig) {\n  swapConfig.platformText = bannerConfig.text;\n  swapConfig.bannerBgColor = bannerConfig.bg_color;\n}\n\nreturn [{\n  json: {\n    ...config,\n    _swap_config: Object.fromEntries(Object.entries(swapConfig).filter(([_, v]) => v !== undefined)),\n    _stable_id:   stableId,\n    _banner_config: bannerConfig,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        96
+      ],
+      "id": "unified-build-template-json",
+      "name": "Build Swap Config"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3f2511ab-5b89-4844-973a-9b615994e7b4",
+              "leftValue": "={{$json.status}}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1072,
+        240
+      ],
+      "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
+      "name": "If: Failed?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[04] Generate Video\",\n    error: input.errorMessage || \"Unknown error\",\n    details: input.rawError || JSON.stringify(input, null, 2),\n    job_id: null,\n    to_email: \"errors@ad-pilot.ai\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        -64
+      ],
+      "id": "prep-error-email",
+      "name": "Prep: Error Email"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rFyNQNW3IQ1zLHEF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rFyNQNW3IQ1zLHEF",
+          "cachedResultName": "[Service] Email Error Notification"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1296,
+        -64
+      ],
+      "id": "call-email-error",
+      "name": "Call: Email Error"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn {\n  json: {\n    image_url: input.photo_url || input.image_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vin: input.vin,\n      // Pass through other fields needed by Parse Remove.bg\n      ...input\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -144
+      ],
+      "id": "prep-remove-bg",
+      "name": "Prep: Remove BG"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RmW2on3d2zlhjj33",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/RmW2on3d2zlhjj33",
+          "cachedResultName": "[Service] Remove Background"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        -144
+      ],
+      "id": "call-remove-bg",
+      "name": "Call: Remove Background",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffmpeg-banner-api-production.up.railway.app/alphamerge-to-webm",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  rgb_url: $json.avatar_video_url,\n  alpha_url: $json.avatar_video_alpha_url,\n  public_id: $json._stable_id + '-rgba',\n  folder: 'ad-pilot-presenters'\n}) }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        304
+      ],
+      "id": "api--alphamerge",
+      "name": "API: Alphamerge",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffmpeg-banner-api-production.up.railway.app/duck-audio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  vo_url: $('Aggregate Configs').first().json.audio_url,\n  music_url: ($('Aggregate Configs').first().json.media || {}).music_url,\n  total_duration_s: $('Aggregate Configs').first().json.avatar_video_duration,\n  public_id: $('Build Swap Config').first().json._stable_id + '-mixed',\n  folder: 'ad-pilot-audio-mixed'\n}) }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        304
+      ],
+      "id": "api--duck-audio",
+      "name": "API: Duck Audio",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hf-render-service-production.up.railway.app/render",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  swapConfig: $('Build Swap Config').first().json._swap_config,\n  config: $('Aggregate Configs').first().json,\n  overrides: {\n    brief_id: $('Build Swap Config').first().json._stable_id,\n    rgba_url: $('API: Alphamerge').first().json.rgba_url,\n    mixed_audio_url: $json.audio_url\n  },\n  public_id_hint: $('Build Swap Config').first().json._stable_id\n}) }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        304
+      ],
+      "id": "api--hf-render--submit",
+      "name": "API: HF Render, Submit",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://hf-render-service-production.up.railway.app' + $('API: HF Render, Submit').first().json.poll_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        928,
+        304
+      ],
+      "id": "api--hf-render--status",
+      "name": "API: HF Render, Status",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "running",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        304
+      ],
+      "id": "if-still-running",
+      "name": "If: Still Running?"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst cfg = $json;\nconst swap = cfg._swap_config || {};\nconst errors = [];\n\nfunction req(label, value) {\n  const empty = value == null\n    || value === ''\n    || (typeof value === 'number' && !Number.isFinite(value))\n    || (Array.isArray(value) && value.length === 0);\n  if (empty) errors.push(label);\n}\n\n// Top-level config required for compositing.\nreq('avatar_video_url (HeyGen RGB)',        cfg.avatar_video_url);\nreq('avatar_video_alpha_url (Replicate matte)', cfg.avatar_video_alpha_url);\nreq('audio_url (TTS VO)',                   cfg.audio_url);\nreq('media.music_url (bg music)',           cfg.media && cfg.media.music_url);\nreq('avatar_video_duration',                cfg.avatar_video_duration);\nreq('_section_timings (hook + cta)',        cfg._section_timings);\n\n// Per-ratio themed bg url.\nconst ratio = cfg.ratio || '9:16';\nconst bgs = cfg.background_rendered_urls || {};\nreq(`background_rendered_urls[${ratio}]`, bgs[ratio]);\n\n// swapConfig sanity — these come out of Build Swap Config and surface\n// upstream gaps that the per-vehicle data fed.\nreq('swapConfig.bgImageSource',  swap.bgImageSource);\nreq('swapConfig.videoDuration',  swap.videoDuration);\nreq('swapConfig.hookEnd',        swap.hookEnd);\nreq('swapConfig.ctaStart',       swap.ctaStart);\n\n// Per-visible-vehicle data. Spotlight uses 1 hero + features; multi-\n// item uses up to 5. We check every visible item slot the swap built.\nconst isSpotlight = (cfg.template_id || '').toLowerCase().includes('spotlight');\nconst maxItems = isSpotlight ? 1 : 5;\nfor (let i = 1; i <= maxItems; i += 1) {\n  if (swap[`item${i}Visible`] === false) continue;\n  if (!swap[`item${i}Source`] && !isSpotlight) continue;\n  req(`vehicle ${i} title`,    swap[`item${i}Title`]);\n  req(`vehicle ${i} price`,    swap[`item${i}Price`]);\n  req(`vehicle ${i} mileage`,  swap[`item${i}Mileage`]);\n  req(`vehicle ${i} photo_url`, swap[`item${i}Source`]);\n}\n\nif (errors.length) {\n  // n8n's Code node surface only shows the first line of a thrown\n  // Error's message; pack the missing-field list onto one line so the\n  // brief mentions every gap, not just \"data missing\".\n  throw new Error('[04b] Required data missing — render blocked: ' + errors.join('; '));\n}\nreturn [{ json: cfg }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        304
+      ],
+      "id": "validate-required-data",
+      "name": "Validate Required Data"
+    }
+  ],
+  "connections": {
+    "Process All Vehicles": {
+      "main": [
+        [
+          {
+            "node": "If: Has Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Render": {
+      "main": [
+        [
+          {
+            "node": "API: HF Render, Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Vehicles": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Configs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Configs": {
+      "main": [
+        [
+          {
+            "node": "Build Swap Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Node Error": {
+      "main": [
+        [
+          {
+            "node": "Prep: Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Orchestrate Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Process All Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Has Vehicles": {
+      "main": [
+        [
+          {
+            "node": "Send Only Vehicles to Process",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Configs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Only Vehicles to Process": {
+      "main": [
+        [
+          {
+            "node": "Prep: Remove BG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Cloudinary, Upload": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Vehicles",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Test, Skip Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Skip Video Creation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validate Required Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Video Creation": {
+      "main": [
+        [
+          {
+            "node": "Parse Video Creation Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Parse Video Creation Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If: Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Video Creation Response": {
+      "main": [
+        []
+      ]
+    },
+    "Parse Remove.bg": {
+      "main": [
+        [
+          {
+            "node": "API: Cloudinary, Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Failed?": {
+      "main": [
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Error Email": {
+      "main": [
+        [
+          {
+            "node": "Call: Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Email Error": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep: Remove BG": {
+      "main": [
+        [
+          {
+            "node": "Call: Remove Background",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Remove Background": {
+      "main": [
+        [
+          {
+            "node": "Parse Remove.bg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Swap Config": {
+      "main": [
+        [
+          {
+            "node": "If: Test, Skip Video Creation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Required Data": {
+      "main": [
+        [
+          {
+            "node": "API: Alphamerge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Alphamerge": {
+      "main": [
+        [
+          {
+            "node": "API: Duck Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Duck Audio": {
+      "main": [
+        [
+          {
+            "node": "API: HF Render, Submit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HF Render, Submit": {
+      "main": [
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HF Render, Status": {
+      "main": [
+        [
+          {
+            "node": "If: Still Running?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Node Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Still Running?": {
+      "main": [
+        [
+          {
+            "node": "Wait for Render",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If: Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "136e2340-c214-4213-bb3b-cae73ccf949f",
+  "activeVersionId": "136e2340-c214-4213-bb3b-cae73ccf949f",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-13T19:12:44.821Z",
+      "createdAt": "2026-05-13T19:12:44.821Z",
+      "role": "workflow:owner",
+      "workflowId": "zaz1gsffA48GcvuN",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-05-15T12:52:15.036Z",
+    "createdAt": "2026-05-15T12:52:15.036Z",
+    "versionId": "136e2340-c214-4213-bb3b-cae73ccf949f",
+    "workflowId": "zaz1gsffA48GcvuN",
+    "nodes": [
+      {
+        "parameters": {
+          "jsCode": "const config = $json;\nconst vehicles = config.vehicles || [];\nconst cachedVehicles = [];\nconst needsProcessing = [];\n\n// TEMP_003 skips this, no vehicles required\nfor (const vehicle of vehicles) {\n  const vin = vehicle.vin;\n  \n  if (!vin) {\n    console.log('Vehicle missing VIN, using original');\n    cachedVehicles.push(vehicle);\n    continue;\n  }\n  \n  // Check if bg-removed image exists\n  const bgRemovedUrl = `https://res.cloudinary.com/dtpqxuwby/image/upload/${vin}.png`;\n  \n  try {\n    const response = await this.helpers.httpRequest({\n      method: 'HEAD',\n      url: bgRemovedUrl,\n      returnFullResponse: true,\n      ignoreHttpStatusErrors: true,\n      timeout: 5000\n    });\n    \n    if (response.statusCode === 200) {\n      console.log(`✓ VIN ${vin}: Found in cache`);\n      vehicle.photo_url = bgRemovedUrl;\n      cachedVehicles.push(vehicle);\n      continue;\n    }\n  } catch (error) {\n    // Not in cache\n  }\n  needsProcessing.push(vehicle);\n}\n\n// Return single item with arrays\nreturn [{\n  json: {\n    ...config,\n    vehicles: vehicles, // ← Now has updated URLs for cached vehicles\n    vehiclesToProcess: needsProcessing,\n    cachedVehicles: cachedVehicles\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -224,
+          -128
+        ],
+        "id": "5ee1ed6d-b685-44f9-8e1f-400d0827b3ef",
+        "name": "Process All Vehicles"
+      },
+      {
+        "parameters": {
+          "amount": 15
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          576,
+          160
+        ],
+        "id": "558fb222-cacc-4087-a229-4aa997b6777a",
+        "name": "Wait for Render",
+        "webhookId": "d49effb0-de50-4354-ac9b-59098b0af43f"
+      },
+      {
+        "parameters": {
+          "errorMessage": "Gen core errored out."
+        },
+        "type": "n8n-nodes-base.stopAndError",
+        "typeVersion": 1,
+        "position": [
+          1424,
+          -64
+        ],
+        "id": "923bb706-0c19-45b1-a658-170d42b39318",
+        "name": "Stop and Error"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get all items coming into aggregate\nconst allItems = $input.all();\n\n// Get base config from Process All Vehicles\nconst baseConfig = $('Process All Vehicles').first().json;\nconst cachedVehicles = baseConfig.cachedVehicles || [];\nconst originalVehicles = baseConfig.vehicles || [];\n\nconsole.log(`Aggregate: Processing ${allItems.length} items`);\n\n// Process items from removebg/cloudinary flow\nconst processedVehicles = allItems\n  .filter(item => item.json.public_id && item.json.secure_url)\n  .map(item => {\n    const vin = item.json.public_id;\n    \n    // Find the original vehicle data to merge with\n    const originalVehicle = originalVehicles.find(v => v.vin === vin);\n    \n    if (!originalVehicle) {\n      console.warn(`⚠️ No original vehicle found for VIN ${vin}`);\n      return null;\n    }\n    return {\n      ...originalVehicle,  // ← Keep all original vehicle data\n      photo_url: item.json.secure_url  // ← Add Cloudinary URL\n    };\n  })\n  .filter(Boolean); // Remove any nulls\n\n// Create lookup maps by VIN\nconst processedByVin = {};\nprocessedVehicles.forEach(v => {\n  processedByVin[v.vin] = v;\n});\n\nconst cachedByVin = {};\ncachedVehicles.forEach(v => {\n  cachedByVin[v.vin] = v;\n});\n\n// Rebuild vehicles array in ORIGINAL order\nconst finalVehicles = originalVehicles.map(originalVehicle => {\n  const vin = originalVehicle.vin;\n  \n  // Use processed or cached version if available, otherwise original\n  return processedByVin[vin] || cachedByVin[vin] || originalVehicle;\n});\n\nconsole.log(`✓ Total: ${finalVehicles.length} vehicles in correct order`);\n\n// Clean config\nconst { vehiclesToProcess, cachedVehicles: _, ...cleanConfig } = baseConfig;\n\nreturn [{\n  json: {\n    ...cleanConfig,\n    vehicles: finalVehicles\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -240,
+          96
+        ],
+        "id": "6be976a7-570a-494c-b41c-72e758ede38f",
+        "name": "Aggregate Vehicles"
+      },
+      {
+        "parameters": {
+          "jsCode": "return $input.all();"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -80,
+          96
+        ],
+        "id": "5df931bc-a974-4b08-88f6-d6006b054fc2",
+        "name": "Aggregate Configs"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Single error - format it for the email\nconst error = $input.first().json;\nconst nodeName = error.node?.name || 'Unknown node';\n\n// Handle different error formats from different APIs\nlet errorMsg = 'Unknown error';\n\n// Cloudinary error format: { \"error\": { \"message\": \"...\" } }\nif (error.error?.message) {\n  errorMsg = error.error.message;\n}\n// Creatomate error format: { \"status\": \"failed\", \"error_message\": \"...\" }\nif (error.error_message) {\n  errorMsg = error.error_message;\n}\n  \n// Remove.bg error format: { \"errors\": [{ \"code\": \"...\", \"title\": \"...\" }] }\nelse if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {\n  const firstError = error.errors[0];\n  // Include code if present, otherwise just title\n  errorMsg = firstError.code \n    ? `${firstError.code}: ${firstError.title}` \n    : firstError.title;\n}\n// Creatomate error format: { \"error_message\": \"...\" }\nelse if (error.error_message) {\n  errorMsg = error.error_message;\n}\n// Generic message fallback\nelse if (error.message) {\n  errorMsg = error.message;\n}\n\nreturn [{\n  json: {\n    nodeName: nodeName,\n    errorMessage: errorMsg,\n    timestamp: new Date().toISOString(),\n    rawError: JSON.stringify(error, null, 2) // Include full error for debugging\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          992,
+          -64
+        ],
+        "id": "784d6524-d4b7-4640-b0f1-2467d38dcf9a",
+        "name": "Format Node Error"
+      },
+      {
+        "parameters": {
+          "content": "# #3 Generate Video",
+          "height": 720,
+          "width": 2080,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -560,
+          -272
+        ],
+        "typeVersion": 1,
+        "id": "cfb457e3-4e30-4045-916a-2c45b78a2cbf",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -416,
+          -128
+        ],
+        "id": "febf4365-88f4-4424-a9d1-ab1dafbe1e95",
+        "name": "When Executed by Orchestrate Video Creation"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "78c8847d-ded2-428b-b6d2-8b59e006a8aa",
+                "leftValue": "={{ $json.vehiclesToProcess.length}}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -80,
+          -128
+        ],
+        "id": "d3c49706-9898-4e26-9cb1-65ebf9239b23",
+        "name": "If: Has Vehicles"
+      },
+      {
+        "parameters": {
+          "jsCode": "const vehiclesToProcess = $json.vehiclesToProcess || [];\n\nreturn vehiclesToProcess.map(vehicle => ({\n  json: vehicle\n}));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          80,
+          -144
+        ],
+        "id": "cabf3be1-d71f-4d05-a6fb-bd60c6480d77",
+        "name": "Send Only Vehicles to Process"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.cloudinary.com/v1_1/dtpqxuwby/image/upload",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "parameterType": "formBinaryData",
+                "name": "file",
+                "inputDataFieldName": "data"
+              },
+              {
+                "name": "upload_preset",
+                "value": "n8n_unsigned"
+              },
+              {
+                "name": "public_id",
+                "value": "={{ $json.vin }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          736,
+          -160
+        ],
+        "id": "969b1d09-908b-449f-b35d-0404ea08d0dd",
+        "name": "API: Cloudinary, Upload",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "cc7c4fae-f404-4b50-b3e0-a86a35ad1403",
+                "leftValue": "={{ $json.api_creatomate_create_video }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          240,
+          96
+        ],
+        "id": "e31917be-d832-4f23-9f3a-8dfd718a570c",
+        "name": "If: Test, Skip Video Creation"
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: $json.api_creatomate_create_video\n}]"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          576,
+          32
+        ],
+        "id": "aa6dce6f-6e60-452b-a4aa-4a90ebd7214d",
+        "name": "Skip Video Creation"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "completed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          928,
+          128
+        ],
+        "id": "cdc69818-5724-4f8c-ae10-d81bdabc5677",
+        "name": "If: Succeeded?"
+      },
+      {
+        "parameters": {
+          "jsCode": "\n// hf-render-service /render/{job_id} response shape:\n//   { status: \"completed\", result: { mp4_url, render_ms, ... } }\nconst apiResponse = $json;\nconst config       = $('Aggregate Configs').first().json;\nconst swapBuilt    = $('Build Swap Config').first().json;\nconst result       = apiResponse && apiResponse.result;\nconst videoUrl     = result && result.mp4_url;\nconst videoDuration = swapBuilt._swap_config && swapBuilt._swap_config.videoDuration;\n\nif (!videoUrl) {\n  throw new Error('hf-render-service did not return mp4_url (status=' + (apiResponse?.status || 'unknown') + ')');\n}\n\nreturn [{\n  json: {\n    ...config,\n    final_video_url: videoUrl,\n    video_duration: videoDuration,\n    // Surface _banner_config so [08] Add Platform Banners can read it\n    // (computed in Build Swap Config). Null when skipPlatformBanner.\n    _banner_config: swapBuilt._banner_config || null,\n    ...(config.test_mode && { api_hf_render: apiResponse })\n  }\n}];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1312,
+          112
+        ],
+        "id": "94a3f672-71bd-4b34-a989-262f4bef3c0e",
+        "name": "Parse Video Creation Response"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Get the VIN from context (passed through service)\nconst vin = $json.context?.vin || $json.vin;\n\n// Get the binary item properly\nconst binaryData = $input.item.binary?.data;\n\nif (!binaryData) {\n  throw new Error('No binary data found');\n}\n\n// Return with renamed file and original context data\nreturn {\n  json: {\n    ...$json.context,\n    vin: vin\n  },\n  binary: {\n    data: {\n      ...binaryData,\n      fileName: `${vin}.png`\n    }\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          576,
+          -160
+        ],
+        "id": "dcdd5c0b-9198-468f-a2f2-d28e3341212e",
+        "name": "Parse Remove.bg"
+      },
+      {
+        "parameters": {
+          "jsCode": "\n// Build swapConfig from upstream config for hf-render-service.\n// Drops all Creatomate-template handling — composer + adapter on the\n// render service own the brief construction; this node only assembles\n// the per-render parameters they consume.\n\nconst config = $json;\nconst clientId = (config.client || 'ccc').toLowerCase();\nconst templateId = config.template_id || 'ad-multi-item-1';\nconst ratio = config.ratio || '9:16';\nconst isSpotlight = templateId.toLowerCase().includes('spotlight');\n\nconst skipPlatformBanner = config.skipPlatformBanner || false;\nconst avatarName = config.avatar_name || 'the manager';\nconst platformInput = (config.platform || 'none').toLowerCase();\nconst basePlatform = platformInput.split('-')[0];\nconst platformTexts = {\n  tiktok:    `Ask for ${avatarName} and mention you saw this on TIKTOK!`,\n  youtube:   `Ask for ${avatarName} and mention you saw this on YOUTUBE!`,\n  instagram: `Ask for ${avatarName} and mention you saw this on INSTAGRAM!`,\n  facebook:  `Ask for ${avatarName} and mention you saw this on FACEBOOK!`,\n  none:      `Ask ${avatarName} for a great deal!`\n};\n// Caller-supplied platformText wins (the design agent may produce\n// off-template copy like \"BOGO TODAY ONLY!\"). Otherwise the platform\n// template fills the slot.\nconst platformText = config.platformText || platformTexts[basePlatform] || platformTexts.none;\n\nconst sectionTimings = config._section_timings || [];\nconst hookSection    = sectionTimings.find(t => t.name === 'hook');\nconst ctaSection     = sectionTimings.find(t => t.name === 'cta');\nconst segment1Section = sectionTimings.find(t => t.name === 'segment_1');\n\nconst hookEnd  = isSpotlight && segment1Section ? segment1Section.end : (hookSection?.end || 0);\nconst ctaStart = ctaSection?.start || 0;\nconst videoDuration = config.avatar_video_duration\n  || ctaSection?.end\n  || (sectionTimings.length > 0 ? sectionTimings[sectionTimings.length - 1].end : 30);\n\nconst vehicles = config.vehicles || [];\nconst heroVehicle = vehicles[0] || {};\n\nfunction formatPrice(price) {\n  if (price == null || price === '') return '';\n  const n = Number(price);\n  return Number.isFinite(n) ? `$${n.toLocaleString('en-US')}` : String(price);\n}\n\nconst bgRendered = config.background_rendered_urls || {};\nconst bgImageSource = bgRendered[ratio] || bgRendered['9:16'] || null;\n\nconst swapConfig = {\n  hookEnd:       hookEnd,\n  ctaStart:      ctaStart,\n  videoDuration: videoDuration,\n  skipPlatformBanner,\n  platformText,\n  bgMusicSource: config.media?.music_url || null,\n  bgImageSource,\n  bgLightness:   config.bg_lightness || 'mixed',\n  avatar1Source:     config.avatar_video_url || null,\n  avatar1MaskSource: config.avatar_video_alpha_url || null,\n  videoThumbnailText: config.video_thumbnail_text || null,\n};\n\n// Per-vehicle fields. Spotlight uses 1 hero + features; multi-item\n// uses up to 5 sequential vehicles. The adapter at the render service\n// will branch on template_id and consume the appropriate fields.\nif (isSpotlight) {\n  swapConfig.item1Source  = heroVehicle.photo_url || null;\n  swapConfig.item1Title   = heroVehicle.year && heroVehicle.make && heroVehicle.model\n    ? `${heroVehicle.year} ${heroVehicle.make} ${heroVehicle.model}`\n    : '';\n  swapConfig.item1Price   = formatPrice(heroVehicle.price);\n  swapConfig.item1Mileage = heroVehicle.mileage\n    ? `${Number(heroVehicle.mileage).toLocaleString('en-US')} mi`\n    : '';\n  // Features 1..4 from feature_photos + segment timings.\n  for (let n = 1; n <= 4; n += 1) {\n    const photo = (heroVehicle.feature_photos || [])[n - 1];\n    const segTiming = sectionTimings.find(t => t.name === `segment_${n}`);\n    swapConfig[`item1Feature${n}Source`]   = photo?.photo_url || null;\n    swapConfig[`item1Feature${n}Time`]     = segTiming?.start ?? null;\n    swapConfig[`item1Feature${n}Duration`] = segTiming?.duration ?? null;\n  }\n} else {\n  for (let i = 1; i <= 5; i += 1) {\n    const v = vehicles[i - 1];\n    const segTiming = sectionTimings.find(t => t.name === `segment_${i}`);\n    if (v) {\n      swapConfig[`item${i}Source`]   = v.photo_url || null;\n      swapConfig[`item${i}Title`]    = v.year && v.make && v.model\n        ? `${v.year} ${v.make} ${v.model}`\n        : '';\n      swapConfig[`item${i}Price`]    = formatPrice(v.price);\n      swapConfig[`item${i}Mileage`]  = v.mileage\n        ? `${Number(v.mileage).toLocaleString('en-US')} mi`\n        : '';\n      swapConfig[`item${i}Time`]     = segTiming?.start ?? null;\n      swapConfig[`item${i}Duration`] = segTiming?.duration ?? null;\n      swapConfig[`item${i}Visible`]  = true;\n    } else {\n      swapConfig[`item${i}Visible`] = false;\n    }\n  }\n}\n\n// Stable per-execution id for Cloudinary public_id (alphamerge + duck\n// reuse the same id so re-runs overwrite the same asset). Falls back\n// to job_id-ratio if no execution_id is available.\nconst stableId = config.job_id ? `job-${config.job_id}-${ratio.replace(':','x')}` : `hf-render-${Date.now()}`;\n\n// Platform banner config — surfaced for the post-render\n// [08] Add Platform Banners step. Position lands the text band\n// inside the in-render platform-banner-bg pattern's reserved\n// 0-8vh ribbon. ffmpeg-banner-api uses 0-1 floats (y_percent,\n// font_size_percent), so we translate from the 0-100 percentages\n// our pattern uses.\nconst BANNER_TOP_PCT_F    = 0;     // band starts at top edge\nconst BANNER_HEIGHT_PCT_F = 8;     // band height (% of frame height)\nconst callerBannerConfig = config.bannerConfig || {};\nconst bannerConfig = skipPlatformBanner ? null : {\n  text:               callerBannerConfig.text               || platformText,\n  font:               callerBannerConfig.font               || (config.brand && config.brand.fontDisplay) || 'Anton',\n  text_color:         callerBannerConfig.text_color         || (config.brand && config.brand.accentColor) || '#fe5817',\n  bg_color:           callerBannerConfig.bg_color           || (config.brand && config.brand.darkBgColor) || '#022e6d',\n  // ffmpeg-banner-api contract: y_percent positions the TOP of the\n  // text bounding box; nudging ~30% of band height centers cleanly\n  // inside the reserved band. font_size_percent sized at ~50% of band\n  // height keeps the type legible without crowding the edges.\n  y_percent:          callerBannerConfig.y_percent          != null ? callerBannerConfig.y_percent          : (BANNER_TOP_PCT_F + BANNER_HEIGHT_PCT_F * 0.30) / 100,\n  font_size_percent:  callerBannerConfig.font_size_percent  != null ? callerBannerConfig.font_size_percent  : (BANNER_HEIGHT_PCT_F * 0.50) / 100,\n  show_background:    false, // the in-render platform-banner-bg already paints the bg\n};\n\n// Surface the bg_color into swapConfig so the in-render\n// platform-banner-bg pattern paints the same color the ffmpeg text\n// pass expects to sit on top of.\nif (bannerConfig) {\n  swapConfig.platformText = bannerConfig.text;\n  swapConfig.bannerBgColor = bannerConfig.bg_color;\n}\n\nreturn [{\n  json: {\n    ...config,\n    _swap_config: Object.fromEntries(Object.entries(swapConfig).filter(([_, v]) => v !== undefined)),\n    _stable_id:   stableId,\n    _banner_config: bannerConfig,\n  }\n}];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          80,
+          96
+        ],
+        "id": "unified-build-template-json",
+        "name": "Build Swap Config"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "3f2511ab-5b89-4844-973a-9b615994e7b4",
+                "leftValue": "={{$json.status}}",
+                "rightValue": "failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1072,
+          240
+        ],
+        "id": "236a86f6-9fb4-4fb5-aabd-3c81607721dd",
+        "name": "If: Failed?"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Map existing error format to service format\nconst input = $json;\n\nreturn [{\n  json: {\n    workflow_name: \"[04] Generate Video\",\n    error: input.errorMessage || \"Unknown error\",\n    details: input.rawError || JSON.stringify(input, null, 2),\n    job_id: null,\n    to_email: \"errors@ad-pilot.ai\"\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1152,
+          -64
+        ],
+        "id": "prep-error-email",
+        "name": "Prep: Error Email"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rFyNQNW3IQ1zLHEF",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/rFyNQNW3IQ1zLHEF",
+            "cachedResultName": "[Service] Email Error Notification"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          1296,
+          -64
+        ],
+        "id": "call-email-error",
+        "name": "Call: Email Error"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Prepare input for Remove Background service\nconst input = $json;\n\nreturn {\n  json: {\n    image_url: input.photo_url || input.image_url,\n    size: \"auto\",\n    format: \"png\",\n    crop: true,\n    crop_margin: \"10%\",\n    context: {\n      vin: input.vin,\n      // Pass through other fields needed by Parse Remove.bg\n      ...input\n    }\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          -144
+        ],
+        "id": "prep-remove-bg",
+        "name": "Prep: Remove BG"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "RmW2on3d2zlhjj33",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/RmW2on3d2zlhjj33",
+            "cachedResultName": "[Service] Remove Background"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          400,
+          -144
+        ],
+        "id": "call-remove-bg",
+        "name": "Call: Remove Background",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ffmpeg-banner-api-production.up.railway.app/alphamerge-to-webm",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({\n  rgb_url: $json.avatar_video_url,\n  alpha_url: $json.avatar_video_alpha_url,\n  public_id: $json._stable_id + '-rgba',\n  folder: 'ad-pilot-presenters'\n}) }}",
+          "options": {
+            "timeout": 600000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          240,
+          304
+        ],
+        "id": "api--alphamerge",
+        "name": "API: Alphamerge",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ffmpeg-banner-api-production.up.railway.app/duck-audio",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({\n  vo_url: $('Aggregate Configs').first().json.audio_url,\n  music_url: ($('Aggregate Configs').first().json.media || {}).music_url,\n  total_duration_s: $('Aggregate Configs').first().json.avatar_video_duration,\n  public_id: $('Build Swap Config').first().json._stable_id + '-mixed',\n  folder: 'ad-pilot-audio-mixed'\n}) }}",
+          "options": {
+            "timeout": 600000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          432,
+          304
+        ],
+        "id": "api--duck-audio",
+        "name": "API: Duck Audio",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://hf-render-service-production.up.railway.app/render",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({\n  swapConfig: $('Build Swap Config').first().json._swap_config,\n  config: $('Aggregate Configs').first().json,\n  overrides: {\n    brief_id: $('Build Swap Config').first().json._stable_id,\n    rgba_url: $('API: Alphamerge').first().json.rgba_url,\n    mixed_audio_url: $json.audio_url\n  },\n  public_id_hint: $('Build Swap Config').first().json._stable_id\n}) }}",
+          "options": {
+            "timeout": 600000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          624,
+          304
+        ],
+        "id": "api--hf-render--submit",
+        "name": "API: HF Render, Submit",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "={{ 'https://hf-render-service-production.up.railway.app' + $('API: HF Render, Submit').first().json.poll_url }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": false,
+          "options": {
+            "timeout": 600000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          928,
+          304
+        ],
+        "id": "api--hf-render--status",
+        "name": "API: HF Render, Status",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "running",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1120,
+          304
+        ],
+        "id": "if-still-running",
+        "name": "If: Still Running?"
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst cfg = $json;\nconst swap = cfg._swap_config || {};\nconst errors = [];\n\nfunction req(label, value) {\n  const empty = value == null\n    || value === ''\n    || (typeof value === 'number' && !Number.isFinite(value))\n    || (Array.isArray(value) && value.length === 0);\n  if (empty) errors.push(label);\n}\n\n// Top-level config required for compositing.\nreq('avatar_video_url (HeyGen RGB)',        cfg.avatar_video_url);\nreq('avatar_video_alpha_url (Replicate matte)', cfg.avatar_video_alpha_url);\nreq('audio_url (TTS VO)',                   cfg.audio_url);\nreq('media.music_url (bg music)',           cfg.media && cfg.media.music_url);\nreq('avatar_video_duration',                cfg.avatar_video_duration);\nreq('_section_timings (hook + cta)',        cfg._section_timings);\n\n// Per-ratio themed bg url.\nconst ratio = cfg.ratio || '9:16';\nconst bgs = cfg.background_rendered_urls || {};\nreq(`background_rendered_urls[${ratio}]`, bgs[ratio]);\n\n// swapConfig sanity — these come out of Build Swap Config and surface\n// upstream gaps that the per-vehicle data fed.\nreq('swapConfig.bgImageSource',  swap.bgImageSource);\nreq('swapConfig.videoDuration',  swap.videoDuration);\nreq('swapConfig.hookEnd',        swap.hookEnd);\nreq('swapConfig.ctaStart',       swap.ctaStart);\n\n// Per-visible-vehicle data. Spotlight uses 1 hero + features; multi-\n// item uses up to 5. We check every visible item slot the swap built.\nconst isSpotlight = (cfg.template_id || '').toLowerCase().includes('spotlight');\nconst maxItems = isSpotlight ? 1 : 5;\nfor (let i = 1; i <= maxItems; i += 1) {\n  if (swap[`item${i}Visible`] === false) continue;\n  if (!swap[`item${i}Source`] && !isSpotlight) continue;\n  req(`vehicle ${i} title`,    swap[`item${i}Title`]);\n  req(`vehicle ${i} price`,    swap[`item${i}Price`]);\n  req(`vehicle ${i} mileage`,  swap[`item${i}Mileage`]);\n  req(`vehicle ${i} photo_url`, swap[`item${i}Source`]);\n}\n\nif (errors.length) {\n  // n8n's Code node surface only shows the first line of a thrown\n  // Error's message; pack the missing-field list onto one line so the\n  // brief mentions every gap, not just \"data missing\".\n  throw new Error('[04b] Required data missing — render blocked: ' + errors.join('; '));\n}\nreturn [{ json: cfg }];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          144,
+          304
+        ],
+        "id": "validate-required-data",
+        "name": "Validate Required Data"
+      }
+    ],
+    "connections": {
+      "Process All Vehicles": {
+        "main": [
+          [
+            {
+              "node": "If: Has Vehicles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for Render": {
+        "main": [
+          [
+            {
+              "node": "API: HF Render, Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Vehicles": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Configs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Configs": {
+        "main": [
+          [
+            {
+              "node": "Build Swap Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Node Error": {
+        "main": [
+          [
+            {
+              "node": "Prep: Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Executed by Orchestrate Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Process All Vehicles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Has Vehicles": {
+        "main": [
+          [
+            {
+              "node": "Send Only Vehicles to Process",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Aggregate Configs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Only Vehicles to Process": {
+        "main": [
+          [
+            {
+              "node": "Prep: Remove BG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Cloudinary, Upload": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Vehicles",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Test, Skip Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Skip Video Creation",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Validate Required Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip Video Creation": {
+        "main": [
+          [
+            {
+              "node": "Parse Video Creation Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Succeeded?": {
+        "main": [
+          [
+            {
+              "node": "Parse Video Creation Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If: Failed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Video Creation Response": {
+        "main": [
+          []
+        ]
+      },
+      "Parse Remove.bg": {
+        "main": [
+          [
+            {
+              "node": "API: Cloudinary, Upload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Failed?": {
+        "main": [
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait for Render",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Error Email": {
+        "main": [
+          [
+            {
+              "node": "Call: Email Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Email Error": {
+        "main": [
+          [
+            {
+              "node": "Stop and Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep: Remove BG": {
+        "main": [
+          [
+            {
+              "node": "Call: Remove Background",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Remove Background": {
+        "main": [
+          [
+            {
+              "node": "Parse Remove.bg",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Swap Config": {
+        "main": [
+          [
+            {
+              "node": "If: Test, Skip Video Creation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Required Data": {
+        "main": [
+          [
+            {
+              "node": "API: Alphamerge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Alphamerge": {
+        "main": [
+          [
+            {
+              "node": "API: Duck Audio",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Duck Audio": {
+        "main": [
+          [
+            {
+              "node": "API: HF Render, Submit",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HF Render, Submit": {
+        "main": [
+          [
+            {
+              "node": "Wait for Render",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HF Render, Status": {
+        "main": [
+          [
+            {
+              "node": "If: Still Running?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Format Node Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If: Still Running?": {
+        "main": [
+          [
+            {
+              "node": "Wait for Render",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If: Succeeded?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
