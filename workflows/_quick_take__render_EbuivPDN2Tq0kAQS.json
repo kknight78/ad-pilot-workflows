@@ -1,0 +1,2225 @@
+{
+  "updatedAt": "2026-04-05T18:44:40.394Z",
+  "createdAt": "2026-04-05T15:35:25.657Z",
+  "id": "EbuivPDN2Tq0kAQS",
+  "name": "[Quick Take] Render",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "quick-take/render",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "id": "qt-render-webhook",
+      "name": "Webhook",
+      "webhookId": "qt-render-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json.body;\nconst jobId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); });\n\nreturn [{\n  json: {\n    job_id: jobId,\n    avatar_id: input.avatar_id,\n    script: input.script,\n    background_id: input.background_id,\n    music_url: input.music_url || null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ],
+      "id": "qt-render-init",
+      "name": "Init Job"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO quick_take_jobs (job_id, status) VALUES ('{{ $json.job_id }}', 'processing') RETURNING job_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        600,
+        300
+      ],
+      "id": "qt-render-save-job",
+      "name": "Save Job to DB",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { job_id: $('Init Job').first().json.job_id } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        300
+      ],
+      "id": "qt-render-respond",
+      "name": "Respond with Job ID"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT a.preview_video_url, a.preview_video_alpha_url, a.motion_avatar_id, p.voice_id, p.voice_settings, p.display_name\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $('Init Job').first().json.avatar_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1000,
+        300
+      ],
+      "id": "qt-render-lookup-avatar",
+      "name": "Lookup Avatar",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT cloudinary_url FROM client_backgrounds WHERE id = '{{ $('Init Job').first().json.background_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1200,
+        300
+      ],
+      "id": "qt-render-lookup-bg",
+      "name": "Lookup Background",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const avatar = $('Lookup Avatar').first().json;\nconst initData = $('Init Job').first().json;\n\nconst voiceSettings = typeof avatar.voice_settings === 'string'\n  ? JSON.parse(avatar.voice_settings)\n  : (avatar.voice_settings || {});\n\nreturn [{\n  json: {\n    voice_id: avatar.voice_id,\n    tts_body: {\n      text: initData.script,\n      model_id: 'eleven_multilingual_v2',\n      voice_settings: {\n        stability: voiceSettings.stability || 0.5,\n        similarity_boost: voiceSettings.similarity_boost || 0.75\n      }\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        300
+      ],
+      "id": "qt-render-prep-tts",
+      "name": "Prep TTS Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}/with-timestamps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.tts_body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        300
+      ],
+      "id": "qt-render-tts",
+      "name": "API: 11Labs TTS",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "blZCAuhK8dQkGHax",
+          "name": "Eleven Labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ttsResponse = $input.first().json;\nconst audioBase64 = ttsResponse.audio_base64;\n\nif (!audioBase64) {\n  throw new Error('No audio_base64 in ElevenLabs response');\n}\n\nconsole.log('Got TTS audio, uploading to temp service...');\n\nconst response = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://temp-audio-service-production.up.railway.app/audio',\n  headers: { 'Content-Type': 'application/json' },\n  body: { audio_base64: audioBase64, format: 'mp3' },\n  json: true\n});\n\nconsole.log('Temp audio URL: ' + response.url);\n\nreturn [{ json: { tts_audio_url: response.url } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        300
+      ],
+      "id": "qt-render-upload-audio",
+      "name": "Upload Audio"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ audio_url: $json.tts_audio_url, silence_seconds: 1.5 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        300
+      ],
+      "id": "qt-render-add-silence",
+      "name": "Add Silence"
+    },
+    {
+      "parameters": {
+        "jsCode": "const silenceResult = $input.first().json;\nconst audioUrl = silenceResult.audio_url || silenceResult.url;\nconst avatar = $('Lookup Avatar').first().json;\n\nconsole.log('Audio with silence: ' + audioUrl);\nconsole.log('Motion avatar ID: ' + avatar.motion_avatar_id);\n\nreturn [{\n  json: {\n    heygen_body: {\n      title: 'Quick Take',\n      video_inputs: [{\n        character: {\n          type: 'talking_photo',\n          talking_photo_id: avatar.motion_avatar_id\n        },\n        voice: {\n          type: 'audio',\n          audio_url: audioUrl\n        }\n      }],\n      dimension: { width: 720, height: 1280 }\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        300
+      ],
+      "id": "qt-render-prep-heygen",
+      "name": "Prep HeyGen Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "[BASE64_KEY_REDACTED]"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.heygen_body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        300
+      ],
+      "id": "qt-render-heygen-submit",
+      "name": "API: HeyGen Generate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst videoId = response.data && response.data.video_id;\n\nif (!videoId) {\n  throw new Error('No video_id from HeyGen: ' + JSON.stringify(response));\n}\n\nconsole.log('HeyGen video ID: ' + videoId);\n\nreturn [{ json: { heygen_video_id: videoId } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        300
+      ],
+      "id": "qt-render-parse-heygen",
+      "name": "Parse HeyGen ID"
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2800,
+        300
+      ],
+      "id": "qt-render-wait-heygen",
+      "name": "Wait for HeyGen"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $('Parse HeyGen ID').first().json.heygen_video_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "[BASE64_KEY_REDACTED]"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3000,
+        300
+      ],
+      "id": "qt-render-heygen-check",
+      "name": "API: HeyGen Status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "heygen-done",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3200,
+        300
+      ],
+      "id": "qt-render-heygen-done",
+      "name": "HeyGen Done?"
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3200,
+        500
+      ],
+      "id": "qt-render-heygen-retry",
+      "name": "HeyGen Retry"
+    },
+    {
+      "parameters": {
+        "jsCode": "const status = $('API: HeyGen Status').first().json;\nconst videoUrl = status.data.video_url;\nconst duration = status.data.duration;\n\nconsole.log('HeyGen video ready: ' + videoUrl);\nconsole.log('Duration: ' + duration + 's');\n\nreturn [{ json: { heygen_video_url: videoUrl, heygen_duration: duration } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3400,
+        200
+      ],
+      "id": "qt-render-parse-heygen-result",
+      "name": "Parse HeyGen Result"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "respond-async"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ version: '73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac', input: { input_video: $json.heygen_video_url, output_type: 'alpha-mask' } }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3600,
+        200
+      ],
+      "id": "qt-render-rvm-submit",
+      "name": "API: Replicate RVM",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "mK813XYHxuc8hVc9",
+          "name": "Replicate"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst pollUrl = response.urls && response.urls.get;\n\nif (!pollUrl) {\n  throw new Error('No poll URL from Replicate: ' + JSON.stringify(response));\n}\n\nconsole.log('RVM poll URL: ' + pollUrl);\n\nreturn [{ json: { rvm_poll_url: pollUrl } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        200
+      ],
+      "id": "qt-render-parse-rvm",
+      "name": "Parse RVM Response"
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4000,
+        200
+      ],
+      "id": "qt-render-wait-rvm",
+      "name": "Wait for RVM"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Parse RVM Response').first().json.rvm_poll_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4200,
+        200
+      ],
+      "id": "qt-render-rvm-check",
+      "name": "API: RVM Status",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "mK813XYHxuc8hVc9",
+          "name": "Replicate"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "rvm-done",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4400,
+        200
+      ],
+      "id": "qt-render-rvm-done",
+      "name": "RVM Done?"
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4400,
+        400
+      ],
+      "id": "qt-render-rvm-retry",
+      "name": "RVM Retry"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rvmResult = $('API: RVM Status').first().json;\nconst alphaUrl = rvmResult.output;\n\nif (!alphaUrl) {\n  throw new Error('No alpha video URL from RVM: ' + JSON.stringify(rvmResult));\n}\n\nconsole.log('Alpha mask video: ' + alphaUrl);\n\nreturn [{ json: { alpha_video_url: alphaUrl } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4600,
+        100
+      ],
+      "id": "qt-render-parse-rvm-result",
+      "name": "Parse RVM Result"
+    },
+    {
+      "parameters": {
+        "jsCode": "const initData = $('Init Job').first().json;\nconst bg = $('Lookup Background').first().json;\nconst heygenUrl = $('Parse HeyGen Result').first().json.heygen_video_url;\nconst heygenDuration = $('Parse HeyGen Result').first().json.heygen_duration;\nconst alphaUrl = $('Parse RVM Result').first().json.alpha_video_url;\nconst musicUrl = initData.music_url;\n\nconsole.log('Setting video duration to HeyGen duration: ' + heygenDuration + 's');\n\nconst elements = [\n  {\n    type: 'image',\n    source: bg.cloudinary_url,\n    width: '100%',\n    height: '100%',\n    fit: 'cover',\n    track: 1\n  },\n  {\n    type: 'composition',\n    track: 5,\n    x: '50%',\n    y: '55%',\n    width: '85%',\n    height: '85%',\n    elements: [\n      {\n        type: 'video',\n        name: 'avatar-1',\n        source: heygenUrl,\n        width: '100%',\n        height: '100%',\n        fit: 'contain',\n        volume: '100%'\n      },\n      {\n        type: 'video',\n        name: 'avatar-1-mask',\n        source: alphaUrl,\n        width: '100%',\n        height: '100%',\n        fit: 'contain',\n        mask_mode: 'luma'\n      }\n    ]\n  }\n];\n\nif (musicUrl) {\n  elements.push({\n    type: 'audio',\n    source: musicUrl,\n    track: 2,\n    volume: '10%'\n  });\n}\n\nconst source = {\n  output_format: 'mp4',\n  width: 720,\n  height: 1280,\n  duration: heygenDuration,\n  elements: elements\n};\n\nconsole.log('Creatomate source built, duration: ' + heygenDuration + 's');\n\nreturn [{ json: { source: source } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        100
+      ],
+      "id": "qt-render-build-source",
+      "name": "Build Creatomate Source"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ source: $json.source }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5000,
+        100
+      ],
+      "id": "qt-render-creatomate-submit",
+      "name": "API: Creatomate Submit"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst renders = Array.isArray(response) ? response : [response];\nconst renderId = renders[0] && renders[0].id;\n\nif (!renderId) {\n  throw new Error('No render ID from Creatomate: ' + JSON.stringify(response));\n}\n\nconsole.log('Creatomate render ID: ' + renderId);\n\nreturn [{ json: { render_id: renderId } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5200,
+        100
+      ],
+      "id": "qt-render-parse-submit",
+      "name": "Parse Render ID"
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5400,
+        100
+      ],
+      "id": "qt-render-wait-creatomate",
+      "name": "Wait for Creatomate"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.creatomate.com/v1/renders/{{ $('Parse Render ID').first().json.render_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5600,
+        100
+      ],
+      "id": "qt-render-creatomate-check",
+      "name": "API: Creatomate Check"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cm-done",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5800,
+        100
+      ],
+      "id": "qt-render-creatomate-done",
+      "name": "Creatomate Done?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cm-fail",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5800,
+        300
+      ],
+      "id": "qt-render-creatomate-failed",
+      "name": "Creatomate Failed?"
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5800,
+        500
+      ],
+      "id": "qt-render-creatomate-retry",
+      "name": "Creatomate Retry"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE quick_take_jobs SET status = 'complete', video_url = '{{ $('API: Creatomate Check').first().json.url }}', updated_at = NOW() WHERE job_id = '{{ $('Init Job').first().json.job_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        6000,
+        0
+      ],
+      "id": "qt-render-save-success",
+      "name": "Save Success",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE quick_take_jobs SET status = 'failed', error_message = 'Creatomate render failed', updated_at = NOW() WHERE job_id = '{{ $('Init Job').first().json.job_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        6000,
+        300
+      ],
+      "id": "qt-render-save-error",
+      "name": "Save Error",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Init Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Job": {
+      "main": [
+        [
+          {
+            "node": "Save Job to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Job to DB": {
+      "main": [
+        [
+          {
+            "node": "Respond with Job ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond with Job ID": {
+      "main": [
+        [
+          {
+            "node": "Lookup Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Avatar": {
+      "main": [
+        [
+          {
+            "node": "Lookup Background",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Background": {
+      "main": [
+        [
+          {
+            "node": "Prep TTS Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep TTS Request": {
+      "main": [
+        [
+          {
+            "node": "API: 11Labs TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: 11Labs TTS": {
+      "main": [
+        [
+          {
+            "node": "Upload Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Audio": {
+      "main": [
+        [
+          {
+            "node": "Add Silence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Silence": {
+      "main": [
+        [
+          {
+            "node": "Prep HeyGen Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep HeyGen Request": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen Generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HeyGen Generate": {
+      "main": [
+        [
+          {
+            "node": "Parse HeyGen ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse HeyGen ID": {
+      "main": [
+        [
+          {
+            "node": "Wait for HeyGen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for HeyGen": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: HeyGen Status": {
+      "main": [
+        [
+          {
+            "node": "HeyGen Done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HeyGen Done?": {
+      "main": [
+        [
+          {
+            "node": "Parse HeyGen Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HeyGen Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HeyGen Retry": {
+      "main": [
+        [
+          {
+            "node": "API: HeyGen Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse HeyGen Result": {
+      "main": [
+        [
+          {
+            "node": "API: Replicate RVM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Replicate RVM": {
+      "main": [
+        [
+          {
+            "node": "Parse RVM Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RVM Response": {
+      "main": [
+        [
+          {
+            "node": "Wait for RVM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for RVM": {
+      "main": [
+        [
+          {
+            "node": "API: RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: RVM Status": {
+      "main": [
+        [
+          {
+            "node": "RVM Done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RVM Done?": {
+      "main": [
+        [
+          {
+            "node": "Parse RVM Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RVM Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RVM Retry": {
+      "main": [
+        [
+          {
+            "node": "API: RVM Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RVM Result": {
+      "main": [
+        [
+          {
+            "node": "Build Creatomate Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Creatomate Source": {
+      "main": [
+        [
+          {
+            "node": "API: Creatomate Submit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Creatomate Submit": {
+      "main": [
+        [
+          {
+            "node": "Parse Render ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Render ID": {
+      "main": [
+        [
+          {
+            "node": "Wait for Creatomate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Creatomate": {
+      "main": [
+        [
+          {
+            "node": "API: Creatomate Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Creatomate Check": {
+      "main": [
+        [
+          {
+            "node": "Creatomate Done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creatomate Done?": {
+      "main": [
+        [
+          {
+            "node": "Save Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Creatomate Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creatomate Failed?": {
+      "main": [
+        [
+          {
+            "node": "Save Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Creatomate Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creatomate Retry": {
+      "main": [
+        [
+          {
+            "node": "API: Creatomate Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "fa16b9ef-1e8c-4113-a4c1-ae383afb2f0a",
+  "activeVersionId": "fa16b9ef-1e8c-4113-a4c1-ae383afb2f0a",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-05T15:35:25.657Z",
+      "createdAt": "2026-04-05T15:35:25.657Z",
+      "role": "workflow:owner",
+      "workflowId": "EbuivPDN2Tq0kAQS",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-04-05T18:44:40.400Z",
+    "createdAt": "2026-04-05T18:44:40.400Z",
+    "versionId": "fa16b9ef-1e8c-4113-a4c1-ae383afb2f0a",
+    "workflowId": "EbuivPDN2Tq0kAQS",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "quick-take/render",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          200,
+          300
+        ],
+        "id": "qt-render-webhook",
+        "name": "Webhook",
+        "webhookId": "qt-render-webhook-id"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $json.body;\nconst jobId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); });\n\nreturn [{\n  json: {\n    job_id: jobId,\n    avatar_id: input.avatar_id,\n    script: input.script,\n    background_id: input.background_id,\n    music_url: input.music_url || null\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          300
+        ],
+        "id": "qt-render-init",
+        "name": "Init Job"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO quick_take_jobs (job_id, status) VALUES ('{{ $json.job_id }}', 'processing') RETURNING job_id;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          600,
+          300
+        ],
+        "id": "qt-render-save-job",
+        "name": "Save Job to DB",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { job_id: $('Init Job').first().json.job_id } }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          800,
+          300
+        ],
+        "id": "qt-render-respond",
+        "name": "Respond with Job ID"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT a.preview_video_url, a.preview_video_alpha_url, a.motion_avatar_id, p.voice_id, p.voice_settings, p.display_name\nFROM avatars a\nJOIN persons p ON a.person_id = p.id\nWHERE a.id = '{{ $('Init Job').first().json.avatar_id }}';",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1000,
+          300
+        ],
+        "id": "qt-render-lookup-avatar",
+        "name": "Lookup Avatar",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT cloudinary_url FROM client_backgrounds WHERE id = '{{ $('Init Job').first().json.background_id }}';",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1200,
+          300
+        ],
+        "id": "qt-render-lookup-bg",
+        "name": "Lookup Background",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const avatar = $('Lookup Avatar').first().json;\nconst initData = $('Init Job').first().json;\n\nconst voiceSettings = typeof avatar.voice_settings === 'string'\n  ? JSON.parse(avatar.voice_settings)\n  : (avatar.voice_settings || {});\n\nreturn [{\n  json: {\n    voice_id: avatar.voice_id,\n    tts_body: {\n      text: initData.script,\n      model_id: 'eleven_multilingual_v2',\n      voice_settings: {\n        stability: voiceSettings.stability || 0.5,\n        similarity_boost: voiceSettings.similarity_boost || 0.75\n      }\n    }\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1400,
+          300
+        ],
+        "id": "qt-render-prep-tts",
+        "name": "Prep TTS Request"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $json.voice_id }}/with-timestamps",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.tts_body) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1600,
+          300
+        ],
+        "id": "qt-render-tts",
+        "name": "API: 11Labs TTS",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "blZCAuhK8dQkGHax",
+            "name": "Eleven Labs"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const ttsResponse = $input.first().json;\nconst audioBase64 = ttsResponse.audio_base64;\n\nif (!audioBase64) {\n  throw new Error('No audio_base64 in ElevenLabs response');\n}\n\nconsole.log('Got TTS audio, uploading to temp service...');\n\nconst response = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://temp-audio-service-production.up.railway.app/audio',\n  headers: { 'Content-Type': 'application/json' },\n  body: { audio_base64: audioBase64, format: 'mp3' },\n  json: true\n});\n\nconsole.log('Temp audio URL: ' + response.url);\n\nreturn [{ json: { tts_audio_url: response.url } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1800,
+          300
+        ],
+        "id": "qt-render-upload-audio",
+        "name": "Upload Audio"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ffmpeg-banner-api-production.up.railway.app/add-silence",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ audio_url: $json.tts_audio_url, silence_seconds: 1.5 }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2000,
+          300
+        ],
+        "id": "qt-render-add-silence",
+        "name": "Add Silence"
+      },
+      {
+        "parameters": {
+          "jsCode": "const silenceResult = $input.first().json;\nconst audioUrl = silenceResult.audio_url || silenceResult.url;\nconst avatar = $('Lookup Avatar').first().json;\n\nconsole.log('Audio with silence: ' + audioUrl);\nconsole.log('Motion avatar ID: ' + avatar.motion_avatar_id);\n\nreturn [{\n  json: {\n    heygen_body: {\n      title: 'Quick Take',\n      video_inputs: [{\n        character: {\n          type: 'talking_photo',\n          talking_photo_id: avatar.motion_avatar_id\n        },\n        voice: {\n          type: 'audio',\n          audio_url: audioUrl\n        }\n      }],\n      dimension: { width: 720, height: 1280 }\n    }\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2200,
+          300
+        ],
+        "id": "qt-render-prep-heygen",
+        "name": "Prep HeyGen Request"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.heygen.com/v2/video/generate",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "[BASE64_KEY_REDACTED]"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.heygen_body) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2400,
+          300
+        ],
+        "id": "qt-render-heygen-submit",
+        "name": "API: HeyGen Generate"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst videoId = response.data && response.data.video_id;\n\nif (!videoId) {\n  throw new Error('No video_id from HeyGen: ' + JSON.stringify(response));\n}\n\nconsole.log('HeyGen video ID: ' + videoId);\n\nreturn [{ json: { heygen_video_id: videoId } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2600,
+          300
+        ],
+        "id": "qt-render-parse-heygen",
+        "name": "Parse HeyGen ID"
+      },
+      {
+        "parameters": {
+          "amount": 15,
+          "unit": "seconds"
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2800,
+          300
+        ],
+        "id": "qt-render-wait-heygen",
+        "name": "Wait for HeyGen"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $('Parse HeyGen ID').first().json.heygen_video_id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "[BASE64_KEY_REDACTED]"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3000,
+          300
+        ],
+        "id": "qt-render-heygen-check",
+        "name": "API: HeyGen Status"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "heygen-done",
+                "leftValue": "={{ $json.data.status }}",
+                "rightValue": "completed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3200,
+          300
+        ],
+        "id": "qt-render-heygen-done",
+        "name": "HeyGen Done?"
+      },
+      {
+        "parameters": {
+          "amount": 10,
+          "unit": "seconds"
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          3200,
+          500
+        ],
+        "id": "qt-render-heygen-retry",
+        "name": "HeyGen Retry"
+      },
+      {
+        "parameters": {
+          "jsCode": "const status = $('API: HeyGen Status').first().json;\nconst videoUrl = status.data.video_url;\nconst duration = status.data.duration;\n\nconsole.log('HeyGen video ready: ' + videoUrl);\nconsole.log('Duration: ' + duration + 's');\n\nreturn [{ json: { heygen_video_url: videoUrl, heygen_duration: duration } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3400,
+          200
+        ],
+        "id": "qt-render-parse-heygen-result",
+        "name": "Parse HeyGen Result"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.replicate.com/v1/predictions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "respond-async"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ version: '73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac', input: { input_video: $json.heygen_video_url, output_type: 'alpha-mask' } }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3600,
+          200
+        ],
+        "id": "qt-render-rvm-submit",
+        "name": "API: Replicate RVM",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "mK813XYHxuc8hVc9",
+            "name": "Replicate"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst pollUrl = response.urls && response.urls.get;\n\nif (!pollUrl) {\n  throw new Error('No poll URL from Replicate: ' + JSON.stringify(response));\n}\n\nconsole.log('RVM poll URL: ' + pollUrl);\n\nreturn [{ json: { rvm_poll_url: pollUrl } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3800,
+          200
+        ],
+        "id": "qt-render-parse-rvm",
+        "name": "Parse RVM Response"
+      },
+      {
+        "parameters": {
+          "amount": 15,
+          "unit": "seconds"
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          4000,
+          200
+        ],
+        "id": "qt-render-wait-rvm",
+        "name": "Wait for RVM"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $('Parse RVM Response').first().json.rvm_poll_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4200,
+          200
+        ],
+        "id": "qt-render-rvm-check",
+        "name": "API: RVM Status",
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "mK813XYHxuc8hVc9",
+            "name": "Replicate"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "rvm-done",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          4400,
+          200
+        ],
+        "id": "qt-render-rvm-done",
+        "name": "RVM Done?"
+      },
+      {
+        "parameters": {
+          "amount": 10,
+          "unit": "seconds"
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          4400,
+          400
+        ],
+        "id": "qt-render-rvm-retry",
+        "name": "RVM Retry"
+      },
+      {
+        "parameters": {
+          "jsCode": "const rvmResult = $('API: RVM Status').first().json;\nconst alphaUrl = rvmResult.output;\n\nif (!alphaUrl) {\n  throw new Error('No alpha video URL from RVM: ' + JSON.stringify(rvmResult));\n}\n\nconsole.log('Alpha mask video: ' + alphaUrl);\n\nreturn [{ json: { alpha_video_url: alphaUrl } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4600,
+          100
+        ],
+        "id": "qt-render-parse-rvm-result",
+        "name": "Parse RVM Result"
+      },
+      {
+        "parameters": {
+          "jsCode": "const initData = $('Init Job').first().json;\nconst bg = $('Lookup Background').first().json;\nconst heygenUrl = $('Parse HeyGen Result').first().json.heygen_video_url;\nconst heygenDuration = $('Parse HeyGen Result').first().json.heygen_duration;\nconst alphaUrl = $('Parse RVM Result').first().json.alpha_video_url;\nconst musicUrl = initData.music_url;\n\nconsole.log('Setting video duration to HeyGen duration: ' + heygenDuration + 's');\n\nconst elements = [\n  {\n    type: 'image',\n    source: bg.cloudinary_url,\n    width: '100%',\n    height: '100%',\n    fit: 'cover',\n    track: 1\n  },\n  {\n    type: 'composition',\n    track: 5,\n    x: '50%',\n    y: '55%',\n    width: '85%',\n    height: '85%',\n    elements: [\n      {\n        type: 'video',\n        name: 'avatar-1',\n        source: heygenUrl,\n        width: '100%',\n        height: '100%',\n        fit: 'contain',\n        volume: '100%'\n      },\n      {\n        type: 'video',\n        name: 'avatar-1-mask',\n        source: alphaUrl,\n        width: '100%',\n        height: '100%',\n        fit: 'contain',\n        mask_mode: 'luma'\n      }\n    ]\n  }\n];\n\nif (musicUrl) {\n  elements.push({\n    type: 'audio',\n    source: musicUrl,\n    track: 2,\n    volume: '10%'\n  });\n}\n\nconst source = {\n  output_format: 'mp4',\n  width: 720,\n  height: 1280,\n  duration: heygenDuration,\n  elements: elements\n};\n\nconsole.log('Creatomate source built, duration: ' + heygenDuration + 's');\n\nreturn [{ json: { source: source } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4800,
+          100
+        ],
+        "id": "qt-render-build-source",
+        "name": "Build Creatomate Source"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.creatomate.com/v1/renders",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ source: $json.source }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          5000,
+          100
+        ],
+        "id": "qt-render-creatomate-submit",
+        "name": "API: Creatomate Submit"
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst renders = Array.isArray(response) ? response : [response];\nconst renderId = renders[0] && renders[0].id;\n\nif (!renderId) {\n  throw new Error('No render ID from Creatomate: ' + JSON.stringify(response));\n}\n\nconsole.log('Creatomate render ID: ' + renderId);\n\nreturn [{ json: { render_id: renderId } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5200,
+          100
+        ],
+        "id": "qt-render-parse-submit",
+        "name": "Parse Render ID"
+      },
+      {
+        "parameters": {
+          "amount": 15,
+          "unit": "seconds"
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          5400,
+          100
+        ],
+        "id": "qt-render-wait-creatomate",
+        "name": "Wait for Creatomate"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.creatomate.com/v1/renders/{{ $('Parse Render ID').first().json.render_id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          5600,
+          100
+        ],
+        "id": "qt-render-creatomate-check",
+        "name": "API: Creatomate Check"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "cm-done",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "succeeded",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          5800,
+          100
+        ],
+        "id": "qt-render-creatomate-done",
+        "name": "Creatomate Done?"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "cm-fail",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "failed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          5800,
+          300
+        ],
+        "id": "qt-render-creatomate-failed",
+        "name": "Creatomate Failed?"
+      },
+      {
+        "parameters": {
+          "amount": 10,
+          "unit": "seconds"
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          5800,
+          500
+        ],
+        "id": "qt-render-creatomate-retry",
+        "name": "Creatomate Retry"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE quick_take_jobs SET status = 'complete', video_url = '{{ $('API: Creatomate Check').first().json.url }}', updated_at = NOW() WHERE job_id = '{{ $('Init Job').first().json.job_id }}';",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          6000,
+          0
+        ],
+        "id": "qt-render-save-success",
+        "name": "Save Success",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE quick_take_jobs SET status = 'failed', error_message = 'Creatomate render failed', updated_at = NOW() WHERE job_id = '{{ $('Init Job').first().json.job_id }}';",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          6000,
+          300
+        ],
+        "id": "qt-render-save-error",
+        "name": "Save Error",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Init Job",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Init Job": {
+        "main": [
+          [
+            {
+              "node": "Save Job to DB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Job to DB": {
+        "main": [
+          [
+            {
+              "node": "Respond with Job ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Respond with Job ID": {
+        "main": [
+          [
+            {
+              "node": "Lookup Avatar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Avatar": {
+        "main": [
+          [
+            {
+              "node": "Lookup Background",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lookup Background": {
+        "main": [
+          [
+            {
+              "node": "Prep TTS Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep TTS Request": {
+        "main": [
+          [
+            {
+              "node": "API: 11Labs TTS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: 11Labs TTS": {
+        "main": [
+          [
+            {
+              "node": "Upload Audio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload Audio": {
+        "main": [
+          [
+            {
+              "node": "Add Silence",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add Silence": {
+        "main": [
+          [
+            {
+              "node": "Prep HeyGen Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep HeyGen Request": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen Generate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HeyGen Generate": {
+        "main": [
+          [
+            {
+              "node": "Parse HeyGen ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse HeyGen ID": {
+        "main": [
+          [
+            {
+              "node": "Wait for HeyGen",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for HeyGen": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: HeyGen Status": {
+        "main": [
+          [
+            {
+              "node": "HeyGen Done?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HeyGen Done?": {
+        "main": [
+          [
+            {
+              "node": "Parse HeyGen Result",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "HeyGen Retry",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HeyGen Retry": {
+        "main": [
+          [
+            {
+              "node": "API: HeyGen Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse HeyGen Result": {
+        "main": [
+          [
+            {
+              "node": "API: Replicate RVM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Replicate RVM": {
+        "main": [
+          [
+            {
+              "node": "Parse RVM Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse RVM Response": {
+        "main": [
+          [
+            {
+              "node": "Wait for RVM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for RVM": {
+        "main": [
+          [
+            {
+              "node": "API: RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: RVM Status": {
+        "main": [
+          [
+            {
+              "node": "RVM Done?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "RVM Done?": {
+        "main": [
+          [
+            {
+              "node": "Parse RVM Result",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "RVM Retry",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "RVM Retry": {
+        "main": [
+          [
+            {
+              "node": "API: RVM Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse RVM Result": {
+        "main": [
+          [
+            {
+              "node": "Build Creatomate Source",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Creatomate Source": {
+        "main": [
+          [
+            {
+              "node": "API: Creatomate Submit",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Creatomate Submit": {
+        "main": [
+          [
+            {
+              "node": "Parse Render ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Render ID": {
+        "main": [
+          [
+            {
+              "node": "Wait for Creatomate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for Creatomate": {
+        "main": [
+          [
+            {
+              "node": "API: Creatomate Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "API: Creatomate Check": {
+        "main": [
+          [
+            {
+              "node": "Creatomate Done?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Creatomate Done?": {
+        "main": [
+          [
+            {
+              "node": "Save Success",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Creatomate Failed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Creatomate Failed?": {
+        "main": [
+          [
+            {
+              "node": "Save Error",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Creatomate Retry",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Creatomate Retry": {
+        "main": [
+          [
+            {
+              "node": "API: Creatomate Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
