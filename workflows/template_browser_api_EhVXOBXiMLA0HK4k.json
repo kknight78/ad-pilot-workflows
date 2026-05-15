@@ -1,0 +1,145 @@
+{
+  "updatedAt": "2026-01-26T23:34:55.607Z",
+  "createdAt": "2026-01-26T23:34:55.607Z",
+  "id": "EhVXOBXiMLA0HK4k",
+  "name": "Template Browser API",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "templates",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        256,
+        304
+      ],
+      "webhookId": "templates-browser"
+    },
+    {
+      "parameters": {
+        "url": "https://api.creatomate.com/v1/templates",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 754b059fc6f045ea9f16cbbdacd691bec27dec04525ad3a8a0d7cdf74136980793efce4b8aafee5312b097973d74b0a4"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-request",
+      "name": "Fetch Templates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { templates: $input.all().map(item => item.json) } }];"
+      },
+      "id": "code",
+      "name": "Collect All",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.templates }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        304
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Templates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Templates": {
+      "main": [
+        [
+          {
+            "node": "Collect All",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect All": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "b83a4e3b-5ac4-4590-953a-bebdfa20900a",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:55.607Z",
+      "createdAt": "2026-01-26T23:34:55.607Z",
+      "role": "workflow:owner",
+      "workflowId": "EhVXOBXiMLA0HK4k",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
