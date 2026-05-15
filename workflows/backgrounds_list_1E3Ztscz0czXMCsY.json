@@ -1,0 +1,279 @@
+{
+  "updatedAt": "2026-01-30T01:12:16.929Z",
+  "createdAt": "2026-01-26T23:34:53.598Z",
+  "id": "1E3Ztscz0czXMCsY",
+  "name": "Backgrounds List",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "backgrounds",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          },
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        208
+      ],
+      "id": "webhook-backgrounds",
+      "name": "Webhook",
+      "webhookId": "backgrounds-list"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, client_id, label, category, cloudinary_url, is_default, active, sort_order, crop_data, text_overlay FROM client_backgrounds WHERE active = true ORDER BY category, is_default DESC, sort_order, created_at DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        208,
+        208
+      ],
+      "id": "query-backgrounds",
+      "name": "Query Backgrounds",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const backgrounds = $input.all().map(item => ({\n  id: item.json.id,\n  client_id: item.json.client_id,\n  label: item.json.label,\n  name: item.json.label,\n  category: item.json.category,\n  cloudinary_url: item.json.cloudinary_url,\n  is_default: item.json.is_default,\n  crop_data: item.json.crop_data,\n  text_overlay: item.json.text_overlay\n}));\n\nreturn [{ json: { success: true, backgrounds } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        208
+      ],
+      "id": "format-response",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        208
+      ],
+      "id": "respond",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Query Backgrounds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Backgrounds": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "a595953f-25c9-44c0-b731-d19c8973b6b4",
+  "activeVersionId": "a595953f-25c9-44c0-b731-d19c8973b6b4",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:53.598Z",
+      "createdAt": "2026-01-26T23:34:53.598Z",
+      "role": "workflow:owner",
+      "workflowId": "1E3Ztscz0czXMCsY",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-30T01:12:16.932Z",
+    "createdAt": "2026-01-30T01:12:16.932Z",
+    "versionId": "a595953f-25c9-44c0-b731-d19c8973b6b4",
+    "workflowId": "1E3Ztscz0czXMCsY",
+    "nodes": [
+      {
+        "parameters": {
+          "path": "backgrounds",
+          "responseMode": "responseNode",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            },
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          208
+        ],
+        "id": "webhook-backgrounds",
+        "name": "Webhook",
+        "webhookId": "backgrounds-list"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id, client_id, label, category, cloudinary_url, is_default, active, sort_order, crop_data, text_overlay FROM client_backgrounds WHERE active = true ORDER BY category, is_default DESC, sort_order, created_at DESC",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          208,
+          208
+        ],
+        "id": "query-backgrounds",
+        "name": "Query Backgrounds",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const backgrounds = $input.all().map(item => ({\n  id: item.json.id,\n  client_id: item.json.client_id,\n  label: item.json.label,\n  name: item.json.label,\n  category: item.json.category,\n  cloudinary_url: item.json.cloudinary_url,\n  is_default: item.json.is_default,\n  crop_data: item.json.crop_data,\n  text_overlay: item.json.text_overlay\n}));\n\nreturn [{ json: { success: true, backgrounds } }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          208
+        ],
+        "id": "format-response",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          608,
+          208
+        ],
+        "id": "respond",
+        "name": "Respond"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Query Backgrounds",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Backgrounds": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
