@@ -1,0 +1,404 @@
+{
+  "updatedAt": "2026-05-13T16:18:32.333Z",
+  "createdAt": "2026-02-16T22:37:28.083Z",
+  "id": "Y1z0AmoXvVsZeIsS",
+  "name": "[REMINDER] Idea Ping",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "trigger-cron",
+      "name": "Wednesday 10am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 3"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "id": "find-unanswered",
+      "name": "Find Unanswered Pings",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  ipr.id AS ping_id,\n  ipr.plan_id,\n  ipr.auth_token,\n  wp.theme_name,\n  wp.theme_emoji,\n  wp.client_id,\n  p.display_name,\n  p.phone\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON wp.id = ipr.plan_id\nJOIN client_persons cp ON cp.client_id = wp.client_id AND cp.can_approve_plans = true\nJOIN persons p ON p.id = cp.person_id\nWHERE ipr.responded_at IS NULL\n  AND ipr.token_expires_at > NOW()\n  AND wp.status = 'draft'\n  AND p.phone IS NOT NULL",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "check-results",
+      "name": "Has Unanswered?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        550,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-count",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "send-reminder-sms",
+      "name": "Send Reminder SMS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Build SMS payloads for each unanswered ping\nconst items = $('Find Unanswered Pings').all();\n\nreturn items.map(item => {\n  const d = item.json;\n  const reviewUrl = 'https://app.ad-pilot.ai/review/' + d.plan_id + '?token=' + d.auth_token;\n  const emoji = d.theme_emoji || '';\n  const themeName = d.theme_name || 'This Week';\n  \n  return {\n    json: {\n      phone: d.phone,\n      body: 'Friendly reminder! Your weekly Ad Pilot plan is waiting. Theme: ' + emoji + ' ' + themeName + '. Tap to review: ' + reviewUrl,\n      plan_id: d.plan_id\n    }\n  };\n});"
+      }
+    },
+    {
+      "id": "call-sms-api",
+      "name": "POST Send SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ccc.ad-pilot.ai/api/review/{{ $json.plan_id }}/send-sms",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ plan_id: $json.plan_id }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 10000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Wednesday 10am CT": {
+      "main": [
+        [
+          {
+            "node": "Find Unanswered Pings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Unanswered Pings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Unanswered Pings": {
+      "main": [
+        [
+          {
+            "node": "Has Unanswered?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Unanswered?": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Send Reminder SMS": {
+      "main": [
+        [
+          {
+            "node": "POST Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Wednesday 10am CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "8bef2180-9f12-4494-971f-26b6fd1a3c1e",
+  "activeVersionId": "8bef2180-9f12-4494-971f-26b6fd1a3c1e",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-16T22:37:28.083Z",
+      "createdAt": "2026-02-16T22:37:28.083Z",
+      "role": "workflow:owner",
+      "workflowId": "Y1z0AmoXvVsZeIsS",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-05-13T16:18:32.334Z",
+    "createdAt": "2026-05-13T16:18:32.334Z",
+    "versionId": "8bef2180-9f12-4494-971f-26b6fd1a3c1e",
+    "workflowId": "Y1z0AmoXvVsZeIsS",
+    "nodes": [
+      {
+        "id": "trigger-cron",
+        "name": "Wednesday 10am CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 * * 3"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "trigger-manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          100
+        ]
+      },
+      {
+        "id": "find-unanswered",
+        "name": "Find Unanswered Pings",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  ipr.id AS ping_id,\n  ipr.plan_id,\n  ipr.auth_token,\n  wp.theme_name,\n  wp.theme_emoji,\n  wp.client_id,\n  p.display_name,\n  p.phone\nFROM idea_ping_responses ipr\nJOIN weekly_plans wp ON wp.id = ipr.plan_id\nJOIN client_persons cp ON cp.client_id = wp.client_id AND cp.can_approve_plans = true\nJOIN persons p ON p.id = cp.person_id\nWHERE ipr.responded_at IS NULL\n  AND ipr.token_expires_at > NOW()\n  AND wp.status = 'draft'\n  AND p.phone IS NOT NULL",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "check-results",
+        "name": "Has Unanswered?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          550,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "check-count",
+                "leftValue": "={{ $input.all().length }}",
+                "rightValue": "0",
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "send-reminder-sms",
+        "name": "Send Reminder SMS",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// Build SMS payloads for each unanswered ping\nconst items = $('Find Unanswered Pings').all();\n\nreturn items.map(item => {\n  const d = item.json;\n  const reviewUrl = 'https://app.ad-pilot.ai/review/' + d.plan_id + '?token=' + d.auth_token;\n  const emoji = d.theme_emoji || '';\n  const themeName = d.theme_name || 'This Week';\n  \n  return {\n    json: {\n      phone: d.phone,\n      body: 'Friendly reminder! Your weekly Ad Pilot plan is waiting. Theme: ' + emoji + ' ' + themeName + '. Tap to review: ' + reviewUrl,\n      plan_id: d.plan_id\n    }\n  };\n});"
+        }
+      },
+      {
+        "id": "call-sms-api",
+        "name": "POST Send SMS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1050,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://ccc.ad-pilot.ai/api/review/{{ $json.plan_id }}/send-sms",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ plan_id: $json.plan_id }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            },
+            "timeout": 10000
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Wednesday 10am CT": {
+        "main": [
+          [
+            {
+              "node": "Find Unanswered Pings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Find Unanswered Pings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find Unanswered Pings": {
+        "main": [
+          [
+            {
+              "node": "Has Unanswered?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Unanswered?": {
+        "main": [
+          [
+            {
+              "node": "Send Reminder SMS",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Send Reminder SMS": {
+        "main": [
+          [
+            {
+              "node": "POST Send SMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
