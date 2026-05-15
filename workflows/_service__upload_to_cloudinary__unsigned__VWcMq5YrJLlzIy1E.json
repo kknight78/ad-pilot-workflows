@@ -1,0 +1,257 @@
+{
+  "updatedAt": "2026-01-26T23:34:48.361Z",
+  "createdAt": "2026-01-26T23:34:48.361Z",
+  "id": "VWcMq5YrJLlzIy1E",
+  "name": "[Service] Upload to Cloudinary (Unsigned)",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger",
+      "name": "When Called by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\nif (!input.file_url) {\n  throw new Error('file_url is required');\n}\nif (!input.upload_preset) {\n  throw new Error('upload_preset is required');\n}\n\nconst resourceType = input.resource_type || 'video';\n\nreturn [{\n  json: {\n    file_url: input.file_url,\n    upload_preset: input.upload_preset,\n    resource_type: resourceType,\n    public_id: input.public_id || null,\n    _context: input._context || {}\n  }\n}];"
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.cloudinary.com/v1_1/dtpqxuwby/{{ $json.resource_type }}/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json.file_url }}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "={{ $json.upload_preset }}"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.public_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "upload-cloudinary",
+      "name": "Upload to Cloudinary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nconst context = $('Validate Input').first().json._context || {};\n\nif (result.error) {\n  throw new Error(`Cloudinary error: ${result.error.message}`);\n}\n\nreturn [{\n  json: {\n    secure_url: result.secure_url,\n    public_id: result.public_id,\n    resource_type: result.resource_type,\n    format: result.format,\n    bytes: result.bytes,\n    width: result.width,\n    height: result.height,\n    duration: result.duration,\n    _context: context\n  }\n}];"
+      },
+      "id": "format-result",
+      "name": "Format Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When Called by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Format Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "c7ed38d5-95ea-45b6-a2e4-1bb25ad491fa",
+  "activeVersionId": "c7ed38d5-95ea-45b6-a2e4-1bb25ad491fa",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T23:34:48.361Z",
+      "createdAt": "2026-01-26T23:34:48.361Z",
+      "role": "workflow:owner",
+      "workflowId": "VWcMq5YrJLlzIy1E",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-26T23:34:48.375Z",
+    "createdAt": "2026-01-26T23:34:48.375Z",
+    "versionId": "c7ed38d5-95ea-45b6-a2e4-1bb25ad491fa",
+    "workflowId": "VWcMq5YrJLlzIy1E",
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "trigger",
+        "name": "When Called by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $json;\n\nif (!input.file_url) {\n  throw new Error('file_url is required');\n}\nif (!input.upload_preset) {\n  throw new Error('upload_preset is required');\n}\n\nconst resourceType = input.resource_type || 'video';\n\nreturn [{\n  json: {\n    file_url: input.file_url,\n    upload_preset: input.upload_preset,\n    resource_type: resourceType,\n    public_id: input.public_id || null,\n    _context: input._context || {}\n  }\n}];"
+        },
+        "id": "validate-input",
+        "name": "Validate Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.cloudinary.com/v1_1/dtpqxuwby/{{ $json.resource_type }}/upload",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "file",
+                "value": "={{ $json.file_url }}"
+              },
+              {
+                "name": "upload_preset",
+                "value": "={{ $json.upload_preset }}"
+              },
+              {
+                "name": "public_id",
+                "value": "={{ $json.public_id }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "upload-cloudinary",
+        "name": "Upload to Cloudinary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          448,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const result = $json;\nconst context = $('Validate Input').first().json._context || {};\n\nif (result.error) {\n  throw new Error(`Cloudinary error: ${result.error.message}`);\n}\n\nreturn [{\n  json: {\n    secure_url: result.secure_url,\n    public_id: result.public_id,\n    resource_type: result.resource_type,\n    format: result.format,\n    bytes: result.bytes,\n    width: result.width,\n    height: result.height,\n    duration: result.duration,\n    _context: context\n  }\n}];"
+        },
+        "id": "format-result",
+        "name": "Format Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          0
+        ]
+      }
+    ],
+    "connections": {
+      "When Called by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Validate Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Input": {
+        "main": [
+          [
+            {
+              "node": "Upload to Cloudinary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Cloudinary": {
+        "main": [
+          [
+            {
+              "node": "Format Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
