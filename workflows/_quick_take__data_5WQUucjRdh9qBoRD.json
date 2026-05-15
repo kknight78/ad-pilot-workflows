@@ -1,0 +1,267 @@
+{
+  "updatedAt": "2026-04-05T17:11:20.237Z",
+  "createdAt": "2026-04-05T15:35:24.350Z",
+  "id": "5WQUucjRdh9qBoRD",
+  "name": "[Quick Take] Data",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "quick-take/data",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "id": "qt-data-webhook",
+      "name": "Webhook",
+      "webhookId": "qt-data-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH avatars_cte AS (\n  SELECT a.id as avatar_id, p.id as person_id, p.display_name, p.full_name,\n         a.style_name, a.motion_preset, a.preview_video_url, a.preview_video_alpha_url,\n         CASE WHEN p.voice_id IS NOT NULL AND p.voice_id != '' THEN true ELSE false END as has_voice\n  FROM avatars a\n  JOIN persons p ON a.person_id = p.id\n  WHERE a.is_active = true\n    AND (a.is_deleted IS NULL OR a.is_deleted = false)\n    AND a.approval_status = 'approved'\n    AND a.preview_video_alpha_url IS NOT NULL\n    AND a.preview_video_alpha_url != ''\n  ORDER BY p.display_name, a.style_name\n),\nbg_cte AS (\n  SELECT id, label, category, cloudinary_url\n  FROM client_backgrounds\n  WHERE active = true\n  ORDER BY category, sort_order, created_at DESC\n),\nmusic_cte AS (\n  SELECT id as song_id, name, artist, audio_preview_url, cloudinary_url\n  FROM songs\n  WHERE cloudinary_url IS NOT NULL\n  ORDER BY name\n)\nSELECT json_build_object(\n  'avatars', COALESCE((SELECT json_agg(row_to_json(a)) FROM avatars_cte a), '[]'::json),\n  'backgrounds', COALESCE((SELECT json_agg(row_to_json(b)) FROM bg_cte b), '[]'::json),\n  'tracks', COALESCE((SELECT json_agg(row_to_json(m)) FROM music_cte m), '[]'::json)\n) as data;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        420,
+        300
+      ],
+      "id": "qt-data-query",
+      "name": "Query All Data",
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;\n\nreturn [{\n  json: {\n    success: true,\n    avatars: data.avatars || [],\n    backgrounds: data.backgrounds || [],\n    tracks: data.tracks || []\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        300
+      ],
+      "id": "qt-data-format",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        300
+      ],
+      "id": "qt-data-respond",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Query All Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query All Data": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "4cff6a86-c2b2-4b99-a649-2120a602a6fd",
+  "activeVersionId": "4cff6a86-c2b2-4b99-a649-2120a602a6fd",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-05T15:35:24.350Z",
+      "createdAt": "2026-04-05T15:35:24.350Z",
+      "role": "workflow:owner",
+      "workflowId": "5WQUucjRdh9qBoRD",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-04-05T17:11:20.243Z",
+    "createdAt": "2026-04-05T17:11:20.243Z",
+    "versionId": "4cff6a86-c2b2-4b99-a649-2120a602a6fd",
+    "workflowId": "5WQUucjRdh9qBoRD",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "quick-take/data",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          200,
+          300
+        ],
+        "id": "qt-data-webhook",
+        "name": "Webhook",
+        "webhookId": "qt-data-webhook-id"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH avatars_cte AS (\n  SELECT a.id as avatar_id, p.id as person_id, p.display_name, p.full_name,\n         a.style_name, a.motion_preset, a.preview_video_url, a.preview_video_alpha_url,\n         CASE WHEN p.voice_id IS NOT NULL AND p.voice_id != '' THEN true ELSE false END as has_voice\n  FROM avatars a\n  JOIN persons p ON a.person_id = p.id\n  WHERE a.is_active = true\n    AND (a.is_deleted IS NULL OR a.is_deleted = false)\n    AND a.approval_status = 'approved'\n    AND a.preview_video_alpha_url IS NOT NULL\n    AND a.preview_video_alpha_url != ''\n  ORDER BY p.display_name, a.style_name\n),\nbg_cte AS (\n  SELECT id, label, category, cloudinary_url\n  FROM client_backgrounds\n  WHERE active = true\n  ORDER BY category, sort_order, created_at DESC\n),\nmusic_cte AS (\n  SELECT id as song_id, name, artist, audio_preview_url, cloudinary_url\n  FROM songs\n  WHERE cloudinary_url IS NOT NULL\n  ORDER BY name\n)\nSELECT json_build_object(\n  'avatars', COALESCE((SELECT json_agg(row_to_json(a)) FROM avatars_cte a), '[]'::json),\n  'backgrounds', COALESCE((SELECT json_agg(row_to_json(b)) FROM bg_cte b), '[]'::json),\n  'tracks', COALESCE((SELECT json_agg(row_to_json(m)) FROM music_cte m), '[]'::json)\n) as data;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          420,
+          300
+        ],
+        "id": "qt-data-query",
+        "name": "Query All Data",
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const row = $input.first().json;\nconst data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;\n\nreturn [{\n  json: {\n    success: true,\n    avatars: data.avatars || [],\n    backgrounds: data.backgrounds || [],\n    tracks: data.tracks || []\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          640,
+          300
+        ],
+        "id": "qt-data-format",
+        "name": "Format Response"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          860,
+          300
+        ],
+        "id": "qt-data-respond",
+        "name": "Respond"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Query All Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query All Data": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
