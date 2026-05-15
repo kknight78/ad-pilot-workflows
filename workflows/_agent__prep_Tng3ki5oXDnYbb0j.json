@@ -1,0 +1,689 @@
+{
+  "updatedAt": "2026-05-13T16:20:52.246Z",
+  "createdAt": "2026-02-17T04:14:48.194Z",
+  "id": "Tng3ki5oXDnYbb0j",
+  "name": "[AGENT] Prep",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "path": "prep",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "prep"
+    },
+    {
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "id": "set-test-plan",
+      "name": "Set Test Plan ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "plan_id",
+              "name": "body.plan_id",
+              "type": "string",
+              "value": "PASTE_PLAN_ID_HERE"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fetch-assets",
+      "name": "Fetch Plan + Assets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT wp.id AS plan_id, wp.status, wp.theme_name, wp.theme_seed,\n  a.id AS asset_id, a.asset_type, a.template_type, a.placements, a.theme_name AS asset_theme,\n  a.items, a.script_text,\n  c.name AS client_name, c.id AS client_id, c.slug AS client_slug\nFROM weekly_plans wp\nJOIN assets a ON a.plan_id = wp.id\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.id = '{{ $json.body.plan_id }}'::uuid",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "update-approved",
+      "name": "Update Status Approved",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        750,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE weekly_plans\nSET status = 'approved', updated_at = NOW()\nWHERE id = '{{ $('Webhook').first().json.body.plan_id }}'::uuid\n  AND status IN ('confirmed', 'draft')",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "orchestrate",
+      "name": "Orchestrate Content Generation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// [AGENT] Prep — Orchestrate Content Generation\n// Calls existing webhooks: process assets -> generate scripts -> generate platform copy\ntry {\n  const items = $('Fetch Plan + Assets').all();\n  const webhookInput = $('Webhook').first().json.body;\n  const planId = webhookInput.plan_id;\n  const baseUrl = 'https://ad-pilot-n8n-development.up.railway.app/webhook';\n  const assets = items.map(item => item.json);\n\n  if (assets.length === 0) {\n    return [{ json: { success: true, plan_id: planId, client_name: 'Unknown', errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true } }];\n  }\n\n  const clientName = assets[0].client_name || '';\n  const clientId = assets[0].client_id;\n  const themeName = assets[0].theme_name || '';\n  const planStatus = assets[0].status;\n\n  if (planStatus === 'scripts_ready' || planStatus === 'prep_failed') {\n    return [{ json: { success: true, plan_id: planId, client_name: clientName, errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true, reason: 'Already ' + planStatus } }];\n  }\n\n  const videoAssets = assets.filter(a => a.asset_type === 'video');\n  const imageAssets = assets.filter(a => a.asset_type === 'image');\n  const carouselAssets = assets.filter(a => a.asset_type === 'carousel');\n  const allAssets = [...videoAssets, ...imageAssets, ...carouselAssets];\n  const errors = [];\n  const results = { processed: 0, scripts: 0, copy: 0 };\n  const scriptTexts = {};\n  const scriptResults = {};\n\n  // Step 1: Process Video Assets\n  for (const asset of videoAssets) {\n    try {\n      let endpoint;\n      switch (asset.template_type) {\n        case 'multi_item': endpoint = '/process-multi-item-asset'; break;\n        case 'spotlight': endpoint = '/process-spotlight-asset'; break;\n        case 'educational': endpoint = '/process-educational-asset'; break;\n        default: errors.push('Unknown template_type ' + asset.template_type + ' for ' + asset.asset_id); continue;\n      }\n      const resp = await fetch(baseUrl + endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      if (!resp.ok) { errors.push('Process ' + asset.template_type + ' failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.processed++; }\n    } catch (err) { errors.push('Process error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 2: Generate Scripts for Video Assets\n  for (const asset of videoAssets) {\n    try {\n      const resp = await fetch(baseUrl + '/generate-script-from-asset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      const text = await resp.text();\n      if (!text || !text.trim()) { errors.push('Script empty for ' + asset.asset_id); continue; }\n      let data;\n      try { data = JSON.parse(text); } catch (e) { errors.push('Script non-JSON for ' + asset.asset_id); continue; }\n      const result = Array.isArray(data) ? data[0] : data;\n      scriptResults[asset.asset_id] = result;\n      const script = result.script || {};\n      const fullScript = script.full_script || [script.hook, ...(script.segments || []).map(s => s.narration || s.text || s), script.cta].filter(Boolean).join(' ');\n      if (fullScript) { scriptTexts[asset.asset_id] = fullScript; results.scripts++; }\n    } catch (err) { errors.push('Script error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 3: Generate Platform Copy for All Assets\n  for (const asset of allAssets) {\n    try {\n      const isVideo = asset.asset_type === 'video';\n      const sr = scriptResults[asset.asset_id] || {};\n      let platforms;\n      try { platforms = typeof asset.placements === 'string' ? JSON.parse(asset.placements) : (asset.placements || []); } catch (e) { platforms = ['meta_feed']; }\n      if (!isVideo) { platforms = platforms.filter(p => /meta|facebook|instagram/i.test(p)); if (!platforms.length) platforms = ['meta_feed']; }\n      const payload = {\n        client_id: clientId, platforms,\n        content_type: asset.template_type === 'educational' ? 'organic' : 'ad',\n        format: isVideo ? 'video' : asset.asset_type,\n        template_type: sr.template_code || asset.template_type || '',\n        theme: themeName, vehicles: sr.vehicles || [],\n        script: isVideo ? (scriptTexts[asset.asset_id] || asset.script_text || '') : '',\n        plan_asset_id: asset.asset_id, store_copy: true,\n      };\n      const resp = await fetch(baseUrl + '/generate-platform-copy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });\n      if (!resp.ok) { errors.push('Copy failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.copy++; }\n    } catch (err) { errors.push('Copy error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Build SQL for saving scripts\n  let scriptUpdateSql = 'SELECT 1';\n  const entries = Object.entries(scriptTexts);\n  if (entries.length > 0) {\n    scriptUpdateSql = entries.map(([id, txt]) => \"UPDATE assets SET script_text = $adpilot$\" + txt + \"$adpilot$, updated_at = NOW() WHERE id = '\" + id + \"'::uuid\").join(';\\n') + ';';\n  }\n\n  const success = errors.length === 0 || results.copy > 0;\n  return [{ json: { success, plan_id: planId, client_name: clientName, results, errors, total_assets: allAssets.length, video_count: videoAssets.length, scriptUpdateSql } }];\n} catch (fatalError) {\n  const planId = $('Webhook').first().json.body.plan_id || 'unknown';\n  return [{ json: { success: false, plan_id: planId, client_name: 'Unknown', errors: ['Fatal: ' + fatalError.message], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1' } }];\n}"
+      }
+    },
+    {
+      "id": "save-scripts",
+      "name": "Save Scripts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1250,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.scriptUpdateSql }}",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "finalize",
+      "name": "Finalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const data = $('Orchestrate Content Generation').first().json;\nconst success = data.success;\nconst planId = data.plan_id;\nconst clientName = data.client_name || 'Unknown';\nconst skipped = data.skipped || false;\nconst status = success ? 'scripts_ready' : 'prep_failed';\nconst statusSql = skipped ? 'SELECT 1' : \"UPDATE weekly_plans SET status = '\" + status + \"', updated_at = NOW() WHERE id = '\" + planId + \"'::uuid\";\nlet subject, html;\nif (skipped) {\n  subject = '[Prep] Skipped for ' + clientName;\n  html = '<p>Prep skipped for ' + clientName + '.</p>' + (data.reason ? '<p>Reason: ' + data.reason + '</p>' : '');\n} else if (success) {\n  subject = '[Prep Complete] Scripts & copy ready for ' + clientName;\n  html = '<h2>Scripts & Copy Ready</h2><p><strong>Client:</strong> ' + clientName + '</p><ul><li>Processed: ' + data.results.processed + ' video assets</li><li>Scripts: ' + data.results.scripts + ' generated</li><li>Copy: ' + data.results.copy + ' generated</li></ul><p>Status: <strong>' + status + '</strong></p>';\n} else {\n  subject = '[Prep Failed] Content generation failed for ' + clientName;\n  html = '<h2>Prep Pipeline Failed</h2><p><strong>Client:</strong> ' + clientName + '</p><ul>' + (data.errors || []).map(e => '<li>' + e + '</li>').join('') + '</ul><p>Status: <strong>' + status + '</strong></p>';\n}\nreturn [{ json: {\n  ...data, final_status: status, statusSql,\n  _emailBody: { from: 'Ad Pilot <notifications@ad-pilot.ai>', to: ['kelly@ad-pilot.ai'], subject, html },\n  _response: { success, plan_id: planId, status, results: data.results, errors: data.errors || [] },\n}}];"
+      }
+    },
+    {
+      "id": "update-final-status",
+      "name": "Update Final Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.statusSql }}",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "ZUwzqy3kvUJpXrDM",
+          "name": "Postgres (Dev)"
+        }
+      }
+    },
+    {
+      "id": "send-email",
+      "name": "Email Kelly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oConQlSBx8Yjco2M",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2250,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json._response) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Plan + Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Test Plan ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Test Plan ID": {
+      "main": [
+        [
+          {
+            "node": "Fetch Plan + Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Plan + Assets": {
+      "main": [
+        [
+          {
+            "node": "Update Status Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Approved": {
+      "main": [
+        [
+          {
+            "node": "Orchestrate Content Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrate Content Generation": {
+      "main": [
+        [
+          {
+            "node": "Save Scripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Scripts": {
+      "main": [
+        [
+          {
+            "node": "Finalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize": {
+      "main": [
+        [
+          {
+            "node": "Update Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Final Status": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Kelly": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "21363d9b-41a6-4657-80d7-3c52a25d213d",
+  "activeVersionId": "21363d9b-41a6-4657-80d7-3c52a25d213d",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-17T04:14:48.194Z",
+      "createdAt": "2026-02-17T04:14:48.194Z",
+      "role": "workflow:owner",
+      "workflowId": "Tng3ki5oXDnYbb0j",
+      "projectId": "jfzY6AcGvieAQa3s"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-05-13T16:20:52.250Z",
+    "createdAt": "2026-05-13T16:20:52.250Z",
+    "versionId": "21363d9b-41a6-4657-80d7-3c52a25d213d",
+    "workflowId": "Tng3ki5oXDnYbb0j",
+    "nodes": [
+      {
+        "id": "webhook",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "path": "prep",
+          "httpMethod": "POST",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "webhookId": "prep"
+      },
+      {
+        "id": "manual-trigger",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          100
+        ]
+      },
+      {
+        "id": "set-test-plan",
+        "name": "Set Test Plan ID",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          250,
+          100
+        ],
+        "parameters": {
+          "mode": "manual",
+          "duplicateItem": false,
+          "assignments": {
+            "assignments": [
+              {
+                "id": "plan_id",
+                "name": "body.plan_id",
+                "type": "string",
+                "value": "PASTE_PLAN_ID_HERE"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "fetch-assets",
+        "name": "Fetch Plan + Assets",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT wp.id AS plan_id, wp.status, wp.theme_name, wp.theme_seed,\n  a.id AS asset_id, a.asset_type, a.template_type, a.placements, a.theme_name AS asset_theme,\n  a.items, a.script_text,\n  c.name AS client_name, c.id AS client_id, c.slug AS client_slug\nFROM weekly_plans wp\nJOIN assets a ON a.plan_id = wp.id\nJOIN clients c ON c.id = wp.client_id\nWHERE wp.id = '{{ $json.body.plan_id }}'::uuid",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "update-approved",
+        "name": "Update Status Approved",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          750,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE weekly_plans\nSET status = 'approved', updated_at = NOW()\nWHERE id = '{{ $('Webhook').first().json.body.plan_id }}'::uuid\n  AND status IN ('confirmed', 'draft')",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "orchestrate",
+        "name": "Orchestrate Content Generation",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// [AGENT] Prep — Orchestrate Content Generation\n// Calls existing webhooks: process assets -> generate scripts -> generate platform copy\ntry {\n  const items = $('Fetch Plan + Assets').all();\n  const webhookInput = $('Webhook').first().json.body;\n  const planId = webhookInput.plan_id;\n  const baseUrl = 'https://ad-pilot-n8n-development.up.railway.app/webhook';\n  const assets = items.map(item => item.json);\n\n  if (assets.length === 0) {\n    return [{ json: { success: true, plan_id: planId, client_name: 'Unknown', errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true } }];\n  }\n\n  const clientName = assets[0].client_name || '';\n  const clientId = assets[0].client_id;\n  const themeName = assets[0].theme_name || '';\n  const planStatus = assets[0].status;\n\n  if (planStatus === 'scripts_ready' || planStatus === 'prep_failed') {\n    return [{ json: { success: true, plan_id: planId, client_name: clientName, errors: [], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1', skipped: true, reason: 'Already ' + planStatus } }];\n  }\n\n  const videoAssets = assets.filter(a => a.asset_type === 'video');\n  const imageAssets = assets.filter(a => a.asset_type === 'image');\n  const carouselAssets = assets.filter(a => a.asset_type === 'carousel');\n  const allAssets = [...videoAssets, ...imageAssets, ...carouselAssets];\n  const errors = [];\n  const results = { processed: 0, scripts: 0, copy: 0 };\n  const scriptTexts = {};\n  const scriptResults = {};\n\n  // Step 1: Process Video Assets\n  for (const asset of videoAssets) {\n    try {\n      let endpoint;\n      switch (asset.template_type) {\n        case 'multi_item': endpoint = '/process-multi-item-asset'; break;\n        case 'spotlight': endpoint = '/process-spotlight-asset'; break;\n        case 'educational': endpoint = '/process-educational-asset'; break;\n        default: errors.push('Unknown template_type ' + asset.template_type + ' for ' + asset.asset_id); continue;\n      }\n      const resp = await fetch(baseUrl + endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      if (!resp.ok) { errors.push('Process ' + asset.template_type + ' failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.processed++; }\n    } catch (err) { errors.push('Process error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 2: Generate Scripts for Video Assets\n  for (const asset of videoAssets) {\n    try {\n      const resp = await fetch(baseUrl + '/generate-script-from-asset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asset_id: asset.asset_id }) });\n      const text = await resp.text();\n      if (!text || !text.trim()) { errors.push('Script empty for ' + asset.asset_id); continue; }\n      let data;\n      try { data = JSON.parse(text); } catch (e) { errors.push('Script non-JSON for ' + asset.asset_id); continue; }\n      const result = Array.isArray(data) ? data[0] : data;\n      scriptResults[asset.asset_id] = result;\n      const script = result.script || {};\n      const fullScript = script.full_script || [script.hook, ...(script.segments || []).map(s => s.narration || s.text || s), script.cta].filter(Boolean).join(' ');\n      if (fullScript) { scriptTexts[asset.asset_id] = fullScript; results.scripts++; }\n    } catch (err) { errors.push('Script error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Step 3: Generate Platform Copy for All Assets\n  for (const asset of allAssets) {\n    try {\n      const isVideo = asset.asset_type === 'video';\n      const sr = scriptResults[asset.asset_id] || {};\n      let platforms;\n      try { platforms = typeof asset.placements === 'string' ? JSON.parse(asset.placements) : (asset.placements || []); } catch (e) { platforms = ['meta_feed']; }\n      if (!isVideo) { platforms = platforms.filter(p => /meta|facebook|instagram/i.test(p)); if (!platforms.length) platforms = ['meta_feed']; }\n      const payload = {\n        client_id: clientId, platforms,\n        content_type: asset.template_type === 'educational' ? 'organic' : 'ad',\n        format: isVideo ? 'video' : asset.asset_type,\n        template_type: sr.template_code || asset.template_type || '',\n        theme: themeName, vehicles: sr.vehicles || [],\n        script: isVideo ? (scriptTexts[asset.asset_id] || asset.script_text || '') : '',\n        plan_asset_id: asset.asset_id, store_copy: true,\n      };\n      const resp = await fetch(baseUrl + '/generate-platform-copy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });\n      if (!resp.ok) { errors.push('Copy failed for ' + asset.asset_id + ': HTTP ' + resp.status); }\n      else { results.copy++; }\n    } catch (err) { errors.push('Copy error ' + asset.asset_id + ': ' + err.message); }\n  }\n\n  // Build SQL for saving scripts\n  let scriptUpdateSql = 'SELECT 1';\n  const entries = Object.entries(scriptTexts);\n  if (entries.length > 0) {\n    scriptUpdateSql = entries.map(([id, txt]) => \"UPDATE assets SET script_text = $adpilot$\" + txt + \"$adpilot$, updated_at = NOW() WHERE id = '\" + id + \"'::uuid\").join(';\\n') + ';';\n  }\n\n  const success = errors.length === 0 || results.copy > 0;\n  return [{ json: { success, plan_id: planId, client_name: clientName, results, errors, total_assets: allAssets.length, video_count: videoAssets.length, scriptUpdateSql } }];\n} catch (fatalError) {\n  const planId = $('Webhook').first().json.body.plan_id || 'unknown';\n  return [{ json: { success: false, plan_id: planId, client_name: 'Unknown', errors: ['Fatal: ' + fatalError.message], results: { processed: 0, scripts: 0, copy: 0 }, scriptUpdateSql: 'SELECT 1' } }];\n}"
+        }
+      },
+      {
+        "id": "save-scripts",
+        "name": "Save Scripts",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1250,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "{{ $json.scriptUpdateSql }}",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "finalize",
+        "name": "Finalize",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const data = $('Orchestrate Content Generation').first().json;\nconst success = data.success;\nconst planId = data.plan_id;\nconst clientName = data.client_name || 'Unknown';\nconst skipped = data.skipped || false;\nconst status = success ? 'scripts_ready' : 'prep_failed';\nconst statusSql = skipped ? 'SELECT 1' : \"UPDATE weekly_plans SET status = '\" + status + \"', updated_at = NOW() WHERE id = '\" + planId + \"'::uuid\";\nlet subject, html;\nif (skipped) {\n  subject = '[Prep] Skipped for ' + clientName;\n  html = '<p>Prep skipped for ' + clientName + '.</p>' + (data.reason ? '<p>Reason: ' + data.reason + '</p>' : '');\n} else if (success) {\n  subject = '[Prep Complete] Scripts & copy ready for ' + clientName;\n  html = '<h2>Scripts & Copy Ready</h2><p><strong>Client:</strong> ' + clientName + '</p><ul><li>Processed: ' + data.results.processed + ' video assets</li><li>Scripts: ' + data.results.scripts + ' generated</li><li>Copy: ' + data.results.copy + ' generated</li></ul><p>Status: <strong>' + status + '</strong></p>';\n} else {\n  subject = '[Prep Failed] Content generation failed for ' + clientName;\n  html = '<h2>Prep Pipeline Failed</h2><p><strong>Client:</strong> ' + clientName + '</p><ul>' + (data.errors || []).map(e => '<li>' + e + '</li>').join('') + '</ul><p>Status: <strong>' + status + '</strong></p>';\n}\nreturn [{ json: {\n  ...data, final_status: status, statusSql,\n  _emailBody: { from: 'Ad Pilot <notifications@ad-pilot.ai>', to: ['kelly@ad-pilot.ai'], subject, html },\n  _response: { success, plan_id: planId, status, results: data.results, errors: data.errors || [] },\n}}];"
+        }
+      },
+      {
+        "id": "update-final-status",
+        "name": "Update Final Status",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1750,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "{{ $json.statusSql }}",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ZUwzqy3kvUJpXrDM",
+            "name": "Postgres (Dev)"
+          }
+        }
+      },
+      {
+        "id": "send-email",
+        "name": "Email Kelly",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2000,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "oConQlSBx8Yjco2M",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2250,
+          300
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json._response) }}"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Fetch Plan + Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Set Test Plan ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Test Plan ID": {
+        "main": [
+          [
+            {
+              "node": "Fetch Plan + Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Plan + Assets": {
+        "main": [
+          [
+            {
+              "node": "Update Status Approved",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Status Approved": {
+        "main": [
+          [
+            {
+              "node": "Orchestrate Content Generation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Orchestrate Content Generation": {
+        "main": [
+          [
+            {
+              "node": "Save Scripts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Scripts": {
+        "main": [
+          [
+            {
+              "node": "Finalize",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Finalize": {
+        "main": [
+          [
+            {
+              "node": "Update Final Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Final Status": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Kelly": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
