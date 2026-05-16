@@ -1,0 +1,1593 @@
+{
+  "updatedAt": "2026-05-15T19:55:49.928Z",
+  "createdAt": "2026-05-15T19:55:49.928Z",
+  "id": "shf6Ycq4xIsudyld",
+  "name": "[AGENT] Idea",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Monday 7am CT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "idea-agent",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        784
+      ],
+      "webhookId": "idea-agent"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT c.id AS client_id, c.slug, c.name AS client_name, c.industry\nFROM clients c\nWHERE c.is_active = true\n  AND c.slug IS NOT NULL AND c.industry IS NOT NULL",
+        "options": {}
+      },
+      "id": "get-active-clients",
+      "name": "Get Active Clients",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        304,
+        544
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet targetClientId = null;\ntry {\n  const webhook = $('Webhook Trigger').first()?.json || {};\n  targetClientId = webhook.body?.client_id || webhook.client_id || null;\n} catch (e) {}\n\nconst now = new Date();\nconst day = now.getDay();\nconst diff = now.getDate() - day + (day === 0 ? -6 : 1);\nconst monday = new Date(now);\nmonday.setDate(diff);\nmonday.setHours(0, 0, 0, 0);\nconst sunday = new Date(monday);\nsunday.setDate(sunday.getDate() + 6);\n\nlet filtered = items;\nif (targetClientId) {\n  filtered = items.filter(i => String(i.json.client_id) === String(targetClientId));\n}\n\nreturn filtered.map(item => ({\n  json: {\n    ...item.json,\n    week_start: monday.toISOString().split('T')[0],\n    week_end: sunday.toISOString().split('T')[0]\n  }\n}));"
+      },
+      "id": "filter-client",
+      "name": "Filter Client",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH\nbrain AS (\n  SELECT bi.insights\n  FROM brain_insights bi\n  JOIN clients c ON c.slug = bi.client_id\n  WHERE c.id = '{{ $json.client_id }}'\n  ORDER BY bi.week_start DESC LIMIT 1\n),\nrecent_plans AS (\n  SELECT theme_name, theme_emoji, theme_direction, week_start\n  FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n  ORDER BY week_start DESC LIMIT 6\n),\nexisting_plan AS (\n  SELECT id FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n    AND week_start = '{{ $json.week_start }}'::date\n  LIMIT 1\n),\ninventory_summary AS (\n  SELECT\n    COUNT(*) AS total_count,\n    COUNT(*) FILTER (WHERE first_seen_at <= NOW() - INTERVAL '45 days') AS aged_count,\n    COUNT(*) FILTER (WHERE first_seen_at >= NOW() - INTERVAL '7 days') AS new_arrivals,\n    MIN(price) AS min_price,\n    MAX(price) AS max_price,\n    ROUND(AVG(price)::numeric, 0) AS avg_price\n  FROM inventory_items\n  WHERE client_id = '{{ $json.client_id }}' AND status = 'active'\n),\napprovers AS (\n  SELECT p.id AS person_id, p.email, p.first_name, p.notification_preference\n  FROM client_persons cp\n  JOIN persons p ON cp.person_id = p.id\n  WHERE cp.client_id = '{{ $json.client_id }}'\n    AND cp.can_approve_plans = true\n    AND cp.is_active = true\n)\nSELECT\n  (SELECT json_agg(row_to_json(brain)) FROM brain) AS brain,\n  (SELECT json_agg(row_to_json(recent_plans)) FROM recent_plans) AS recent_plans,\n  (SELECT row_to_json(inventory_summary) FROM inventory_summary) AS inventory_summary,\n  (SELECT json_agg(row_to_json(approvers)) FROM approvers) AS approvers,\n  (SELECT id FROM existing_plan) AS existing_plan_id",
+        "options": {}
+      },
+      "id": "run-idea-queries",
+      "name": "Run Idea Queries",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        752,
+        544
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const params = $('Filter Client').first().json;\nconst q = $input.first().json;\n\nconst brain = q.brain;\nif (!brain || brain.length === 0) {\n  return [{ json: {\n    _skip: true,\n    _skipReason: 'no_brain',\n    client_id: params.client_id,\n    client_name: params.client_name,\n    message: 'No Brain insights found for ' + params.client_name\n  }}];\n}\n\nif (q.existing_plan_id) {\n  return [{ json: {\n    _skip: true,\n    _skipReason: 'plan_exists',\n    client_id: params.client_id,\n    client_name: params.client_name,\n    message: 'Plan already exists for ' + params.client_name + ' this week (id: ' + q.existing_plan_id + ')'\n  }}];\n}\n\nreturn [{ json: {\n  _skip: false,\n  ...params,\n  _data: q\n}}];"
+      },
+      "id": "check-brain",
+      "name": "Check Brain & No Existing Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "should-generate-condition",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "should-generate",
+      "name": "Should Generate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const params = $input.first().json;\nconst data = params._data;\nconst brain = data.brain[0]?.insights || data.brain[0];\n\nconst recentThemes = (data.recent_plans || [])\n  .map(p => p.theme_emoji + ' ' + p.theme_name + ' (' + p.week_start + ')')\n  .join('\\n- ') || 'None yet';\n\nconst inv = data.inventory_summary || {};\nconst invSummary = 'Total: ' + (inv.total_count || 0) +\n  ', Aged (45+ days): ' + (inv.aged_count || 0) +\n  ', New arrivals (7 days): ' + (inv.new_arrivals || 0) +\n  ', Price range: $' + (inv.min_price || 0) + ' - $' + (inv.max_price || 0) +\n  ', Avg: $' + (inv.avg_price || 0);\n\nconst months = ['January','February','March','April','May','June','July','August','September','October','November','December'];\nconst now = new Date();\nconst season = months[now.getMonth()] + ' ' + now.getFullYear();\n\nconst userPrompt = `## This Week\\nWeek of: ${params.week_start} to ${params.week_end}\\nClient: ${params.client_name} (${params.slug})\\nIndustry: ${params.industry}\\nSeason: ${season}\\n\\n## Brain Insights (performance summary)\\n${JSON.stringify(brain, null, 2)}\\n\\n## Recent Themes (avoid repetition)\\n- ${recentThemes}\\n\\n## Inventory Summary\\n${invSummary}\\n\\nGenerate a creative theme idea for this week's ad campaign.`;\n\nreturn [{ json: {\n  ...params,\n  _userPrompt: userPrompt\n}}];"
+      },
+      "id": "assemble-idea-prompt",
+      "name": "Assemble Idea Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst systemPrompt = `You are the Idea Agent — Ad Pilot's creative ideation agent for local business advertising.\n\nYour job is to generate a compelling weekly theme idea. You do NOT build the full plan — you only create the theme concept that will be sent to the client for approval before the full plan is built.\n\n## Your output must be valid JSON matching this exact schema:\n\n{\n  \"theme\": {\n    \"name\": \"string — catchy 2-4 word theme name\",\n    \"emoji\": \"string — single emoji that represents the theme\",\n    \"theme_seed\": \"string — thematic seed phrase (e.g., 'Spring Into Savings', 'Weekend Road Trip')\",\n    \"direction\": \"string — 1-2 sentence creative direction for the week\"\n  },\n  \"inventory_target\": \"string — one of: 'Aged Inventory', 'Recent Arrivals', 'Budget Friendly', 'Featured Products', 'Premium Picks'\",\n  \"idea_ping_summary\": \"string — 2-3 sentence summary written FOR THE CLIENT. Explain the theme, why it was chosen, and what the ads will focus on. Keep it conversational, exciting, and jargon-free.\"\n}\n\n## Rules:\n1. Pick a FRESH theme — avoid repeating recent themes listed in the context.\n2. Use Brain insights to inform your theme choice (leverage what's working).\n3. Consider seasonal relevance and current events.\n4. Feature aged inventory (45+ days) when there's a significant count.\n5. The idea_ping_summary should feel like a friendly text from a creative director — not a corporate memo.\n6. Return ONLY the JSON object, no markdown fences, no explanation.`;\n\nreturn [{ json: {\n  ...data,\n  _claudeBody: {\n    model: 'claude-sonnet-4-20250514',\n    max_tokens: 1024,\n    temperature: 0.7,\n    system: systemPrompt,\n    messages: [\n      { role: 'user', content: data._userPrompt }\n    ]\n  }\n}}];"
+      },
+      "id": "prepare-claude-request",
+      "name": "Prepare Claude Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._claudeBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "retry": {
+            "maxTries": 3,
+            "retryInterval": 5000,
+            "retryIntervalMax": 30000
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "call-claude",
+      "name": "Call Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1840,
+        448
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "lw8bFQVznfoHFIjD",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const promptData = $('Prepare Claude Request').first().json;\nconst response = $input.first().json;\n\nlet idea = null;\nlet parseError = '';\n\ntry {\n  let text = '';\n  if (response.content && response.content[0]) {\n    text = response.content[0].text || '';\n  } else if (response.error) {\n    throw new Error('API error: ' + JSON.stringify(response.error));\n  }\n\n  text = text.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n  idea = JSON.parse(text);\n\n  if (!idea.theme || !idea.theme.name) throw new Error('Missing theme.name');\n  if (!idea.theme.emoji) throw new Error('Missing theme.emoji');\n  if (!idea.theme.direction) throw new Error('Missing theme.direction');\n  if (!idea.theme.theme_seed) throw new Error('Missing theme.theme_seed');\n  if (!idea.inventory_target) throw new Error('Missing inventory_target');\n  if (!idea.idea_ping_summary) throw new Error('Missing idea_ping_summary');\n} catch (err) {\n  parseError = err.message;\n}\n\nconst isValid = idea !== null && parseError === '';\n\nreturn [{ json: {\n  client_id: promptData.client_id,\n  client_name: promptData.client_name,\n  slug: promptData.slug,\n  industry: promptData.industry,\n  week_start: promptData.week_start,\n  week_end: promptData.week_end,\n  _approvers: promptData._data?.approvers || [],\n  _isValid: isValid,\n  _idea: idea,\n  _parseError: parseError\n}}];"
+      },
+      "id": "validate-idea-json",
+      "name": "Validate Idea JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2064,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "idea-valid-condition",
+              "leftValue": "={{ $json._isValid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "idea-valid",
+      "name": "Idea Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2288,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO weekly_plans (\n  id, client_id, week_start, week_end, status,\n  theme_name, theme_emoji, theme_direction,\n  theme_seed,\n  inventory_target,\n  idea_ping_summary,\n  created_at, updated_at\n) VALUES (\n  gen_random_uuid(),\n  '{{ $json.client_id }}'::uuid,\n  '{{ $json.week_start }}'::date,\n  '{{ $json.week_end }}'::date,\n  'idea_sent',\n  '{{ $json._idea.theme.name.replace(/'/g, \"''\") }}',\n  '{{ $json._idea.theme.emoji }}',\n  '{{ $json._idea.theme.direction.replace(/'/g, \"''\") }}',\n  '{{ ($json._idea.theme.theme_seed || \"\").replace(/'/g, \"''\") }}',\n  '{{ ($json._idea.inventory_target || \"\").replace(/'/g, \"''\") }}',\n  '{{ ($json._idea.idea_ping_summary || \"\").replace(/'/g, \"''\") }}',\n  NOW(), NOW()\n)\nON CONFLICT (client_id, week_start) DO UPDATE SET\n  status = 'idea_sent',\n  theme_name = EXCLUDED.theme_name,\n  theme_emoji = EXCLUDED.theme_emoji,\n  theme_direction = EXCLUDED.theme_direction,\n  theme_seed = EXCLUDED.theme_seed,\n  inventory_target = EXCLUDED.inventory_target,\n  idea_ping_summary = EXCLUDED.idea_ping_summary,\n  updated_at = NOW()\nRETURNING id, client_id, week_start",
+        "options": {}
+      },
+      "id": "write-plan",
+      "name": "Write Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2512,
+        352
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const planData = $('Validate Idea JSON').first().json;\nconst planRow = $input.first().json;\n\nconst hex = '0123456789abcdef';\nlet token = '';\nfor (let i = 0; i < 64; i++) {\n  token += hex[Math.floor(Math.random() * 16)];\n}\n\nconst approvers = planData._approvers || [];\n\nreturn [{ json: {\n  plan_id: planRow.id,\n  client_id: planData.client_id,\n  client_name: planData.client_name,\n  week_start: planData.week_start,\n  auth_token: token,\n  approvers: approvers,\n  theme: planData._idea.theme,\n  idea_ping_summary: planData._idea.idea_ping_summary,\n  client_slug: planData.slug\n}}];"
+      },
+      "id": "create-idea-ping",
+      "name": "Create Idea Ping",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO idea_ping_responses (\n  plan_id, client_id, auth_token, token_expires_at, created_at\n) VALUES (\n  '{{ $json.plan_id }}'::uuid,\n  '{{ $json.client_id }}',\n  '{{ $json.auth_token }}',\n  NOW() + INTERVAL '72 hours',\n  NOW()\n)\nRETURNING id",
+        "options": {}
+      },
+      "id": "insert-ping-row",
+      "name": "Insert Ping Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2944,
+        352
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "3XsWrPuEddwVYbGS",
+          "name": "Railway Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\nconst approvers = pingData.approvers || [];\nconst slug = pingData.client_slug || 'app';\nconst reviewUrl = 'https://app.ad-pilot.ai/review/' + pingData.plan_id + '?token=' + pingData.auth_token;\n\nconst recipients = approvers.length > 0\n  ? approvers\n  : [{ email: 'kelly@ad-pilot.ai', first_name: 'Kelly', notification_preference: 'email' }];\n\nreturn recipients.map(approver => ({\n  json: {\n    person_id: approver.person_id || null,\n    email: approver.email,\n    notification_type: 'email',\n    subject: theme.emoji + ' This Week\\'s Idea: ' + theme.name + ' — ' + pingData.client_name,\n    message: 'Hey ' + (approver.first_name || 'there') + '! ' + pingData.idea_ping_summary + '\\n\\nTap below to approve or suggest a different direction:',\n    link: reviewUrl\n  }\n}));"
+      },
+      "id": "send-idea-ping-email",
+      "name": "Send Idea Ping Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3168,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "kd7uDJETbUifZeNK",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "call-send-notification",
+      "name": "Call: Send Notification",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3392,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\n\nconst htmlBody = '<h2>' + theme.emoji + ' ' + theme.name + '</h2>' +\n  '<p><strong>Client:</strong> ' + pingData.client_name + '</p>' +\n  '<p><strong>Week:</strong> ' + pingData.week_start + '</p>' +\n  '<p><strong>Direction:</strong> ' + theme.direction + '</p>' +\n  '<p><strong>Summary:</strong> ' + pingData.idea_ping_summary + '</p>' +\n  '<hr>' +\n  '<p>Idea ping sent to approvers. Awaiting response before building full plan.</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Agent] ' + theme.emoji + ' Idea generated for ' + pingData.client_name + ' (week of ' + pingData.week_start + ')',\n    html: htmlBody\n  }\n}}];"
+      },
+      "id": "prepare-admin-email",
+      "name": "Prepare Admin Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "email-kelly-admin",
+      "name": "Email Kelly (Admin)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3824,
+        352
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ccc.ad-pilot.ai/api/review/{{ $('Create Idea Ping').first().json.plan_id }}/send-sms",
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ plan_id: $('Create Idea Ping').first().json.plan_id }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "send-idea-ping-sms",
+      "name": "Send Idea Ping SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4048,
+        352
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst htmlBody = '<h2>[Idea Agent] Parse Error</h2>' +\n  '<p><strong>Client:</strong> ' + (data.client_name || 'Unknown') + '</p>' +\n  '<p><strong>Week:</strong> ' + (data.week_start || 'N/A') + '</p>' +\n  '<p><strong>Error:</strong> ' + (data._parseError || 'Unknown error') + '</p>' +\n  '<hr><p>The Idea Agent failed to generate a valid idea for this client. Please check the workflow execution for details.</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Agent] ERROR - Failed to generate idea for ' + (data.client_name || 'Unknown') + ' (week of ' + (data.week_start || 'N/A') + ')',\n    html: htmlBody\n  }\n}}];"
+      },
+      "id": "prepare-error-email",
+      "name": "Prepare Error Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2512,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "error-email",
+      "name": "Error Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2720,
+        608
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst htmlBody = '<h2>[Idea Agent] Skipped</h2>' +\n  '<p><strong>Client:</strong> ' + (data.client_name || 'Unknown') + '</p>' +\n  '<p><strong>Reason:</strong> ' + (data._skipReason || 'unknown') + '</p>' +\n  '<p>' + (data.message || '') + '</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Agent] Skipped - ' + (data.client_name || 'Unknown') + ' (' + (data._skipReason || 'unknown') + ')',\n    html: htmlBody\n  }\n}}];"
+      },
+      "id": "prepare-skip-email",
+      "name": "Prepare Skip Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "send-skip-email",
+      "name": "Send Skip Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1632,
+        704
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "vdxOfyrKMfWKSmAH",
+          "name": "Resend"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monday 7am CT": {
+      "main": [
+        [
+          {
+            "node": "Get Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Clients": {
+      "main": [
+        [
+          {
+            "node": "Filter Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Client": {
+      "main": [
+        [
+          {
+            "node": "Run Idea Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Idea Queries": {
+      "main": [
+        [
+          {
+            "node": "Check Brain & No Existing Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Brain & No Existing Plan": {
+      "main": [
+        [
+          {
+            "node": "Should Generate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Generate?": {
+      "main": [
+        [
+          {
+            "node": "Assemble Idea Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Skip Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Idea Prompt": {
+      "main": [
+        [
+          {
+            "node": "Prepare Claude Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Claude Request": {
+      "main": [
+        [
+          {
+            "node": "Call Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude": {
+      "main": [
+        [
+          {
+            "node": "Validate Idea JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Idea JSON": {
+      "main": [
+        [
+          {
+            "node": "Idea Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idea Valid?": {
+      "main": [
+        [
+          {
+            "node": "Write Plan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Plan": {
+      "main": [
+        [
+          {
+            "node": "Create Idea Ping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Idea Ping": {
+      "main": [
+        [
+          {
+            "node": "Insert Ping Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Ping Row": {
+      "main": [
+        [
+          {
+            "node": "Send Idea Ping Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Idea Ping Email": {
+      "main": [
+        [
+          {
+            "node": "Call: Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Send Notification": {
+      "main": [
+        [
+          {
+            "node": "Prepare Admin Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Admin Email": {
+      "main": [
+        [
+          {
+            "node": "Email Kelly (Admin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Kelly (Admin)": {
+      "main": [
+        [
+          {
+            "node": "Send Idea Ping SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Error Email": {
+      "main": [
+        [
+          {
+            "node": "Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Skip Email": {
+      "main": [
+        [
+          {
+            "node": "Send Skip Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Monday 7am CT": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "aa08f14d-0f04-49d3-8ef6-0cee07e62238",
+  "activeVersionId": "aa08f14d-0f04-49d3-8ef6-0cee07e62238",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-05-15T19:55:49.928Z",
+      "createdAt": "2026-05-15T19:55:49.928Z",
+      "role": "workflow:owner",
+      "workflowId": "shf6Ycq4xIsudyld",
+      "projectId": "VF66NQc9R74tCdyG"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-05-15T19:55:49.928Z",
+    "createdAt": "2026-05-15T19:55:49.928Z",
+    "versionId": "aa08f14d-0f04-49d3-8ef6-0cee07e62238",
+    "workflowId": "shf6Ycq4xIsudyld",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "manual-trigger",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "weeks",
+                "triggerAtDay": [
+                  1
+                ],
+                "triggerAtHour": 7
+              }
+            ]
+          }
+        },
+        "id": "schedule-trigger",
+        "name": "Monday 7am CT",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "idea-agent",
+          "options": {}
+        },
+        "id": "webhook-trigger",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          784
+        ],
+        "webhookId": "idea-agent"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT c.id AS client_id, c.slug, c.name AS client_name, c.industry\nFROM clients c\nWHERE c.is_active = true\n  AND c.slug IS NOT NULL AND c.industry IS NOT NULL",
+          "options": {}
+        },
+        "id": "get-active-clients",
+        "name": "Get Active Clients",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          304,
+          544
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all();\nlet targetClientId = null;\ntry {\n  const webhook = $('Webhook Trigger').first()?.json || {};\n  targetClientId = webhook.body?.client_id || webhook.client_id || null;\n} catch (e) {}\n\nconst now = new Date();\nconst day = now.getDay();\nconst diff = now.getDate() - day + (day === 0 ? -6 : 1);\nconst monday = new Date(now);\nmonday.setDate(diff);\nmonday.setHours(0, 0, 0, 0);\nconst sunday = new Date(monday);\nsunday.setDate(sunday.getDate() + 6);\n\nlet filtered = items;\nif (targetClientId) {\n  filtered = items.filter(i => String(i.json.client_id) === String(targetClientId));\n}\n\nreturn filtered.map(item => ({\n  json: {\n    ...item.json,\n    week_start: monday.toISOString().split('T')[0],\n    week_end: sunday.toISOString().split('T')[0]\n  }\n}));"
+        },
+        "id": "filter-client",
+        "name": "Filter Client",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          528,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH\nbrain AS (\n  SELECT bi.insights\n  FROM brain_insights bi\n  JOIN clients c ON c.slug = bi.client_id\n  WHERE c.id = '{{ $json.client_id }}'\n  ORDER BY bi.week_start DESC LIMIT 1\n),\nrecent_plans AS (\n  SELECT theme_name, theme_emoji, theme_direction, week_start\n  FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n  ORDER BY week_start DESC LIMIT 6\n),\nexisting_plan AS (\n  SELECT id FROM weekly_plans\n  WHERE client_id = '{{ $json.client_id }}'\n    AND week_start = '{{ $json.week_start }}'::date\n  LIMIT 1\n),\ninventory_summary AS (\n  SELECT\n    COUNT(*) AS total_count,\n    COUNT(*) FILTER (WHERE first_seen_at <= NOW() - INTERVAL '45 days') AS aged_count,\n    COUNT(*) FILTER (WHERE first_seen_at >= NOW() - INTERVAL '7 days') AS new_arrivals,\n    MIN(price) AS min_price,\n    MAX(price) AS max_price,\n    ROUND(AVG(price)::numeric, 0) AS avg_price\n  FROM inventory_items\n  WHERE client_id = '{{ $json.client_id }}' AND status = 'active'\n),\napprovers AS (\n  SELECT p.id AS person_id, p.email, p.first_name, p.notification_preference\n  FROM client_persons cp\n  JOIN persons p ON cp.person_id = p.id\n  WHERE cp.client_id = '{{ $json.client_id }}'\n    AND cp.can_approve_plans = true\n    AND cp.is_active = true\n)\nSELECT\n  (SELECT json_agg(row_to_json(brain)) FROM brain) AS brain,\n  (SELECT json_agg(row_to_json(recent_plans)) FROM recent_plans) AS recent_plans,\n  (SELECT row_to_json(inventory_summary) FROM inventory_summary) AS inventory_summary,\n  (SELECT json_agg(row_to_json(approvers)) FROM approvers) AS approvers,\n  (SELECT id FROM existing_plan) AS existing_plan_id",
+          "options": {}
+        },
+        "id": "run-idea-queries",
+        "name": "Run Idea Queries",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          752,
+          544
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const params = $('Filter Client').first().json;\nconst q = $input.first().json;\n\nconst brain = q.brain;\nif (!brain || brain.length === 0) {\n  return [{ json: {\n    _skip: true,\n    _skipReason: 'no_brain',\n    client_id: params.client_id,\n    client_name: params.client_name,\n    message: 'No Brain insights found for ' + params.client_name\n  }}];\n}\n\nif (q.existing_plan_id) {\n  return [{ json: {\n    _skip: true,\n    _skipReason: 'plan_exists',\n    client_id: params.client_id,\n    client_name: params.client_name,\n    message: 'Plan already exists for ' + params.client_name + ' this week (id: ' + q.existing_plan_id + ')'\n  }}];\n}\n\nreturn [{ json: {\n  _skip: false,\n  ...params,\n  _data: q\n}}];"
+        },
+        "id": "check-brain",
+        "name": "Check Brain & No Existing Plan",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "should-generate-condition",
+                "leftValue": "={{ $json._skip }}",
+                "rightValue": false,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "should-generate",
+        "name": "Should Generate?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1184,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const params = $input.first().json;\nconst data = params._data;\nconst brain = data.brain[0]?.insights || data.brain[0];\n\nconst recentThemes = (data.recent_plans || [])\n  .map(p => p.theme_emoji + ' ' + p.theme_name + ' (' + p.week_start + ')')\n  .join('\\n- ') || 'None yet';\n\nconst inv = data.inventory_summary || {};\nconst invSummary = 'Total: ' + (inv.total_count || 0) +\n  ', Aged (45+ days): ' + (inv.aged_count || 0) +\n  ', New arrivals (7 days): ' + (inv.new_arrivals || 0) +\n  ', Price range: $' + (inv.min_price || 0) + ' - $' + (inv.max_price || 0) +\n  ', Avg: $' + (inv.avg_price || 0);\n\nconst months = ['January','February','March','April','May','June','July','August','September','October','November','December'];\nconst now = new Date();\nconst season = months[now.getMonth()] + ' ' + now.getFullYear();\n\nconst userPrompt = `## This Week\\nWeek of: ${params.week_start} to ${params.week_end}\\nClient: ${params.client_name} (${params.slug})\\nIndustry: ${params.industry}\\nSeason: ${season}\\n\\n## Brain Insights (performance summary)\\n${JSON.stringify(brain, null, 2)}\\n\\n## Recent Themes (avoid repetition)\\n- ${recentThemes}\\n\\n## Inventory Summary\\n${invSummary}\\n\\nGenerate a creative theme idea for this week's ad campaign.`;\n\nreturn [{ json: {\n  ...params,\n  _userPrompt: userPrompt\n}}];"
+        },
+        "id": "assemble-idea-prompt",
+        "name": "Assemble Idea Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1408,
+          448
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $input.first().json;\n\nconst systemPrompt = `You are the Idea Agent — Ad Pilot's creative ideation agent for local business advertising.\n\nYour job is to generate a compelling weekly theme idea. You do NOT build the full plan — you only create the theme concept that will be sent to the client for approval before the full plan is built.\n\n## Your output must be valid JSON matching this exact schema:\n\n{\n  \"theme\": {\n    \"name\": \"string — catchy 2-4 word theme name\",\n    \"emoji\": \"string — single emoji that represents the theme\",\n    \"theme_seed\": \"string — thematic seed phrase (e.g., 'Spring Into Savings', 'Weekend Road Trip')\",\n    \"direction\": \"string — 1-2 sentence creative direction for the week\"\n  },\n  \"inventory_target\": \"string — one of: 'Aged Inventory', 'Recent Arrivals', 'Budget Friendly', 'Featured Products', 'Premium Picks'\",\n  \"idea_ping_summary\": \"string — 2-3 sentence summary written FOR THE CLIENT. Explain the theme, why it was chosen, and what the ads will focus on. Keep it conversational, exciting, and jargon-free.\"\n}\n\n## Rules:\n1. Pick a FRESH theme — avoid repeating recent themes listed in the context.\n2. Use Brain insights to inform your theme choice (leverage what's working).\n3. Consider seasonal relevance and current events.\n4. Feature aged inventory (45+ days) when there's a significant count.\n5. The idea_ping_summary should feel like a friendly text from a creative director — not a corporate memo.\n6. Return ONLY the JSON object, no markdown fences, no explanation.`;\n\nreturn [{ json: {\n  ...data,\n  _claudeBody: {\n    model: 'claude-sonnet-4-20250514',\n    max_tokens: 1024,\n    temperature: 0.7,\n    system: systemPrompt,\n    messages: [\n      { role: 'user', content: data._userPrompt }\n    ]\n  }\n}}];"
+        },
+        "id": "prepare-claude-request",
+        "name": "Prepare Claude Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1632,
+          448
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._claudeBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            },
+            "retry": {
+              "maxTries": 3,
+              "retryInterval": 5000,
+              "retryIntervalMax": 30000
+            },
+            "timeout": 60000
+          }
+        },
+        "id": "call-claude",
+        "name": "Call Claude",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1840,
+          448
+        ],
+        "credentials": {
+          "anthropicApi": {
+            "id": "lw8bFQVznfoHFIjD",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const promptData = $('Prepare Claude Request').first().json;\nconst response = $input.first().json;\n\nlet idea = null;\nlet parseError = '';\n\ntry {\n  let text = '';\n  if (response.content && response.content[0]) {\n    text = response.content[0].text || '';\n  } else if (response.error) {\n    throw new Error('API error: ' + JSON.stringify(response.error));\n  }\n\n  text = text.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n  idea = JSON.parse(text);\n\n  if (!idea.theme || !idea.theme.name) throw new Error('Missing theme.name');\n  if (!idea.theme.emoji) throw new Error('Missing theme.emoji');\n  if (!idea.theme.direction) throw new Error('Missing theme.direction');\n  if (!idea.theme.theme_seed) throw new Error('Missing theme.theme_seed');\n  if (!idea.inventory_target) throw new Error('Missing inventory_target');\n  if (!idea.idea_ping_summary) throw new Error('Missing idea_ping_summary');\n} catch (err) {\n  parseError = err.message;\n}\n\nconst isValid = idea !== null && parseError === '';\n\nreturn [{ json: {\n  client_id: promptData.client_id,\n  client_name: promptData.client_name,\n  slug: promptData.slug,\n  industry: promptData.industry,\n  week_start: promptData.week_start,\n  week_end: promptData.week_end,\n  _approvers: promptData._data?.approvers || [],\n  _isValid: isValid,\n  _idea: idea,\n  _parseError: parseError\n}}];"
+        },
+        "id": "validate-idea-json",
+        "name": "Validate Idea JSON",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2064,
+          448
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "idea-valid-condition",
+                "leftValue": "={{ $json._isValid }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "idea-valid",
+        "name": "Idea Valid?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2288,
+          448
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO weekly_plans (\n  id, client_id, week_start, week_end, status,\n  theme_name, theme_emoji, theme_direction,\n  theme_seed,\n  inventory_target,\n  idea_ping_summary,\n  created_at, updated_at\n) VALUES (\n  gen_random_uuid(),\n  '{{ $json.client_id }}'::uuid,\n  '{{ $json.week_start }}'::date,\n  '{{ $json.week_end }}'::date,\n  'idea_sent',\n  '{{ $json._idea.theme.name.replace(/'/g, \"''\") }}',\n  '{{ $json._idea.theme.emoji }}',\n  '{{ $json._idea.theme.direction.replace(/'/g, \"''\") }}',\n  '{{ ($json._idea.theme.theme_seed || \"\").replace(/'/g, \"''\") }}',\n  '{{ ($json._idea.inventory_target || \"\").replace(/'/g, \"''\") }}',\n  '{{ ($json._idea.idea_ping_summary || \"\").replace(/'/g, \"''\") }}',\n  NOW(), NOW()\n)\nON CONFLICT (client_id, week_start) DO UPDATE SET\n  status = 'idea_sent',\n  theme_name = EXCLUDED.theme_name,\n  theme_emoji = EXCLUDED.theme_emoji,\n  theme_direction = EXCLUDED.theme_direction,\n  theme_seed = EXCLUDED.theme_seed,\n  inventory_target = EXCLUDED.inventory_target,\n  idea_ping_summary = EXCLUDED.idea_ping_summary,\n  updated_at = NOW()\nRETURNING id, client_id, week_start",
+          "options": {}
+        },
+        "id": "write-plan",
+        "name": "Write Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2512,
+          352
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const planData = $('Validate Idea JSON').first().json;\nconst planRow = $input.first().json;\n\nconst hex = '0123456789abcdef';\nlet token = '';\nfor (let i = 0; i < 64; i++) {\n  token += hex[Math.floor(Math.random() * 16)];\n}\n\nconst approvers = planData._approvers || [];\n\nreturn [{ json: {\n  plan_id: planRow.id,\n  client_id: planData.client_id,\n  client_name: planData.client_name,\n  week_start: planData.week_start,\n  auth_token: token,\n  approvers: approvers,\n  theme: planData._idea.theme,\n  idea_ping_summary: planData._idea.idea_ping_summary,\n  client_slug: planData.slug\n}}];"
+        },
+        "id": "create-idea-ping",
+        "name": "Create Idea Ping",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2720,
+          352
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO idea_ping_responses (\n  plan_id, client_id, auth_token, token_expires_at, created_at\n) VALUES (\n  '{{ $json.plan_id }}'::uuid,\n  '{{ $json.client_id }}',\n  '{{ $json.auth_token }}',\n  NOW() + INTERVAL '72 hours',\n  NOW()\n)\nRETURNING id",
+          "options": {}
+        },
+        "id": "insert-ping-row",
+        "name": "Insert Ping Row",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2944,
+          352
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "3XsWrPuEddwVYbGS",
+            "name": "Railway Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\nconst approvers = pingData.approvers || [];\nconst slug = pingData.client_slug || 'app';\nconst reviewUrl = 'https://app.ad-pilot.ai/review/' + pingData.plan_id + '?token=' + pingData.auth_token;\n\nconst recipients = approvers.length > 0\n  ? approvers\n  : [{ email: 'kelly@ad-pilot.ai', first_name: 'Kelly', notification_preference: 'email' }];\n\nreturn recipients.map(approver => ({\n  json: {\n    person_id: approver.person_id || null,\n    email: approver.email,\n    notification_type: 'email',\n    subject: theme.emoji + ' This Week\\'s Idea: ' + theme.name + ' — ' + pingData.client_name,\n    message: 'Hey ' + (approver.first_name || 'there') + '! ' + pingData.idea_ping_summary + '\\n\\nTap below to approve or suggest a different direction:',\n    link: reviewUrl\n  }\n}));"
+        },
+        "id": "send-idea-ping-email",
+        "name": "Send Idea Ping Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3168,
+          352
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "kd7uDJETbUifZeNK",
+            "mode": "list"
+          },
+          "options": {}
+        },
+        "id": "call-send-notification",
+        "name": "Call: Send Notification",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          3392,
+          352
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const pingData = $('Create Idea Ping').first().json;\nconst theme = pingData.theme;\n\nconst htmlBody = '<h2>' + theme.emoji + ' ' + theme.name + '</h2>' +\n  '<p><strong>Client:</strong> ' + pingData.client_name + '</p>' +\n  '<p><strong>Week:</strong> ' + pingData.week_start + '</p>' +\n  '<p><strong>Direction:</strong> ' + theme.direction + '</p>' +\n  '<p><strong>Summary:</strong> ' + pingData.idea_ping_summary + '</p>' +\n  '<hr>' +\n  '<p>Idea ping sent to approvers. Awaiting response before building full plan.</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Agent] ' + theme.emoji + ' Idea generated for ' + pingData.client_name + ' (week of ' + pingData.week_start + ')',\n    html: htmlBody\n  }\n}}];"
+        },
+        "id": "prepare-admin-email",
+        "name": "Prepare Admin Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3600,
+          352
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "email-kelly-admin",
+        "name": "Email Kelly (Admin)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3824,
+          352
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://ccc.ad-pilot.ai/api/review/{{ $('Create Idea Ping').first().json.plan_id }}/send-sms",
+          "sendBody": true,
+          "specifyBody": "string",
+          "body": "={{ JSON.stringify({ plan_id: $('Create Idea Ping').first().json.plan_id }) }}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "id": "send-idea-ping-sms",
+        "name": "Send Idea Ping SMS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4048,
+          352
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $input.first().json;\n\nconst htmlBody = '<h2>[Idea Agent] Parse Error</h2>' +\n  '<p><strong>Client:</strong> ' + (data.client_name || 'Unknown') + '</p>' +\n  '<p><strong>Week:</strong> ' + (data.week_start || 'N/A') + '</p>' +\n  '<p><strong>Error:</strong> ' + (data._parseError || 'Unknown error') + '</p>' +\n  '<hr><p>The Idea Agent failed to generate a valid idea for this client. Please check the workflow execution for details.</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Agent] ERROR - Failed to generate idea for ' + (data.client_name || 'Unknown') + ' (week of ' + (data.week_start || 'N/A') + ')',\n    html: htmlBody\n  }\n}}];"
+        },
+        "id": "prepare-error-email",
+        "name": "Prepare Error Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2512,
+          608
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "error-email",
+        "name": "Error Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2720,
+          608
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $input.first().json;\n\nconst htmlBody = '<h2>[Idea Agent] Skipped</h2>' +\n  '<p><strong>Client:</strong> ' + (data.client_name || 'Unknown') + '</p>' +\n  '<p><strong>Reason:</strong> ' + (data._skipReason || 'unknown') + '</p>' +\n  '<p>' + (data.message || '') + '</p>';\n\nreturn [{ json: {\n  _emailBody: {\n    from: 'Ad Pilot <notifications@ad-pilot.ai>',\n    to: ['kelly@ad-pilot.ai'],\n    subject: '[Idea Agent] Skipped - ' + (data.client_name || 'Unknown') + ' (' + (data._skipReason || 'unknown') + ')',\n    html: htmlBody\n  }\n}}];"
+        },
+        "id": "prepare-skip-email",
+        "name": "Prepare Skip Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1408,
+          704
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._emailBody) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "id": "send-skip-email",
+        "name": "Send Skip Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1632,
+          704
+        ],
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "vdxOfyrKMfWKSmAH",
+            "name": "Resend"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Monday 7am CT": {
+        "main": [
+          [
+            {
+              "node": "Get Active Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Clients",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Active Clients": {
+        "main": [
+          [
+            {
+              "node": "Filter Client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter Client": {
+        "main": [
+          [
+            {
+              "node": "Run Idea Queries",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run Idea Queries": {
+        "main": [
+          [
+            {
+              "node": "Check Brain & No Existing Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Brain & No Existing Plan": {
+        "main": [
+          [
+            {
+              "node": "Should Generate?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Should Generate?": {
+        "main": [
+          [
+            {
+              "node": "Assemble Idea Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Prepare Skip Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Assemble Idea Prompt": {
+        "main": [
+          [
+            {
+              "node": "Prepare Claude Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Claude Request": {
+        "main": [
+          [
+            {
+              "node": "Call Claude",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Claude": {
+        "main": [
+          [
+            {
+              "node": "Validate Idea JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Idea JSON": {
+        "main": [
+          [
+            {
+              "node": "Idea Valid?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Idea Valid?": {
+        "main": [
+          [
+            {
+              "node": "Write Plan",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Prepare Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write Plan": {
+        "main": [
+          [
+            {
+              "node": "Create Idea Ping",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Idea Ping": {
+        "main": [
+          [
+            {
+              "node": "Insert Ping Row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Ping Row": {
+        "main": [
+          [
+            {
+              "node": "Send Idea Ping Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Idea Ping Email": {
+        "main": [
+          [
+            {
+              "node": "Call: Send Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Send Notification": {
+        "main": [
+          [
+            {
+              "node": "Prepare Admin Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Admin Email": {
+        "main": [
+          [
+            {
+              "node": "Email Kelly (Admin)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Kelly (Admin)": {
+        "main": [
+          [
+            {
+              "node": "Send Idea Ping SMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Error Email": {
+        "main": [
+          [
+            {
+              "node": "Error Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Skip Email": {
+        "main": [
+          [
+            {
+              "node": "Send Skip Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Kelly Knight",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
