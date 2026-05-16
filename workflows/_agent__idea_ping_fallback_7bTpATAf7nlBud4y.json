@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T20:28:06.297Z",
+  "updatedAt": "2026-05-15T20:03:57.144Z",
   "createdAt": "2026-02-12T17:45:39.373Z",
   "id": "7bTpATAf7nlBud4y",
   "name": "[AGENT] Idea Ping Fallback",
@@ -168,7 +168,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/planner-agent",
+        "url": "https://ad-pilot-n8n-development.up.railway.app/webhook/planner",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ plan_id: $json.plan_id }) }}",
@@ -275,7 +275,7 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "f67d8ded-4777-4559-8e9f-f409e570c12e",
+  "versionId": "bfb639be-e17a-4aca-9fc3-d7555fc351cf",
   "activeVersionId": null,
   "triggerCount": 1,
   "shared": [
