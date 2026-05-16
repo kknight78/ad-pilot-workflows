@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-05T15:44:28.437Z",
+  "updatedAt": "2026-05-15T14:08:02.497Z",
   "createdAt": "2026-04-05T15:35:24.843Z",
   "id": "XMLvJLDgy8ugSFBM",
   "name": "[Quick Take] Script",
@@ -27,7 +27,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const theme = $json.body.theme || 'something fun';\nreturn [{\n  json: {\n    api_body: {\n      model: 'claude-sonnet-4-20250514',\n      max_tokens: 150,\n      messages: [{\n        role: 'user',\n        content: 'Write a short script for a 10-second social media video about: ' + theme + '. Rules: About 25 words (10 seconds when spoken). Single paragraph, spoken directly to camera. Energetic and conversational tone. No stage directions, scene descriptions, or quotation marks. Just the spoken words, nothing else.'\n      }]\n    }\n  }\n}];"
+        "jsCode": "const theme = $json.body.theme || 'something fun';\nreturn [{\n  json: {\n    api_body: {\n      model: 'claude-sonnet-4-6',\n      max_tokens: 150,\n      messages: [{\n        role: 'user',\n        content: 'Write a short script for a 10-second social media video about: ' + theme + '. Rules: About 25 words (10 seconds when spoken). Single paragraph, spoken directly to camera. Energetic and conversational tone. No stage directions, scene descriptions, or quotation marks. Just the spoken words, nothing else.'\n      }]\n    }\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -165,8 +165,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "645aa2c4-7dcc-417c-a69f-c73280a62295",
-  "activeVersionId": "645aa2c4-7dcc-417c-a69f-c73280a62295",
+  "versionId": "96ace7db-09e3-44c2-b899-e0cb5300cd6d",
+  "activeVersionId": "96ace7db-09e3-44c2-b899-e0cb5300cd6d",
   "triggerCount": 1,
   "shared": [
     {
@@ -178,9 +178,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-05T15:44:28.441Z",
-    "createdAt": "2026-04-05T15:44:28.441Z",
-    "versionId": "645aa2c4-7dcc-417c-a69f-c73280a62295",
+    "updatedAt": "2026-05-15T14:08:02.503Z",
+    "createdAt": "2026-05-15T14:08:02.503Z",
+    "versionId": "96ace7db-09e3-44c2-b899-e0cb5300cd6d",
     "workflowId": "XMLvJLDgy8ugSFBM",
     "nodes": [
       {
@@ -204,7 +204,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const theme = $json.body.theme || 'something fun';\nreturn [{\n  json: {\n    api_body: {\n      model: 'claude-sonnet-4-20250514',\n      max_tokens: 150,\n      messages: [{\n        role: 'user',\n        content: 'Write a short script for a 10-second social media video about: ' + theme + '. Rules: About 25 words (10 seconds when spoken). Single paragraph, spoken directly to camera. Energetic and conversational tone. No stage directions, scene descriptions, or quotation marks. Just the spoken words, nothing else.'\n      }]\n    }\n  }\n}];"
+          "jsCode": "const theme = $json.body.theme || 'something fun';\nreturn [{\n  json: {\n    api_body: {\n      model: 'claude-sonnet-4-6',\n      max_tokens: 150,\n      messages: [{\n        role: 'user',\n        content: 'Write a short script for a 10-second social media video about: ' + theme + '. Rules: About 25 words (10 seconds when spoken). Single paragraph, spoken directly to camera. Energetic and conversational tone. No stage directions, scene descriptions, or quotation marks. Just the spoken words, nothing else.'\n      }]\n    }\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
