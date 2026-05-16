@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:05.422Z",
+  "updatedAt": "2026-05-15T14:08:00.585Z",
   "createdAt": "2026-02-09T12:57:06.012Z",
   "id": "uZJD1if4DPu2zYR6",
   "name": "[Process Spotlight Asset]",
@@ -178,7 +178,7 @@
         "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.categorizer_vision_content) }}\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.categorizer_vision_content) }}\n    }\n  ]\n}",
         "options": {
           "response": {
             "response": {
@@ -291,7 +291,7 @@
         "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.feature_identifier_content) }}\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.feature_identifier_content) }}\n    }\n  ]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -1020,8 +1020,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "2877182f-c18f-4ed9-86da-b2e5daf867ef",
-  "activeVersionId": "2877182f-c18f-4ed9-86da-b2e5daf867ef",
+  "versionId": "73da13c0-d8e9-43e9-afae-33f62b17af55",
+  "activeVersionId": "73da13c0-d8e9-43e9-afae-33f62b17af55",
   "triggerCount": 1,
   "shared": [
     {
@@ -1033,9 +1033,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:31:05.429Z",
-    "createdAt": "2026-04-02T21:31:05.429Z",
-    "versionId": "2877182f-c18f-4ed9-86da-b2e5daf867ef",
+    "updatedAt": "2026-05-15T14:08:00.592Z",
+    "createdAt": "2026-05-15T14:08:00.592Z",
+    "versionId": "73da13c0-d8e9-43e9-afae-33f62b17af55",
     "workflowId": "uZJD1if4DPu2zYR6",
     "nodes": [
       {
@@ -1210,7 +1210,7 @@
           "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.categorizer_vision_content) }}\n    }\n  ]\n}",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.categorizer_vision_content) }}\n    }\n  ]\n}",
           "options": {
             "response": {
               "response": {
@@ -1323,7 +1323,7 @@
           "jsonHeaders": "{\n  \"anthropic-version\": \"2023-06-01\",\n  \"content-type\": \"application/json\"\n}",
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.feature_identifier_content) }}\n    }\n  ]\n}",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.feature_identifier_content) }}\n    }\n  ]\n}",
           "options": {}
         },
         "type": "n8n-nodes-base.httpRequest",
