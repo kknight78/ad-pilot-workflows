@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T19:11:26.329Z",
+  "updatedAt": "2026-05-15T14:07:58.927Z",
   "createdAt": "2026-01-29T15:03:42.069Z",
   "id": "3ds9Y97qpRjTI63Y",
   "name": "[GENERATE] Platform Copy",
@@ -177,7 +177,7 @@
           "parameters": [
             {
               "name": "model",
-              "value": "claude-sonnet-4-20250514"
+              "value": "claude-sonnet-4-6"
             },
             {
               "name": "max_tokens",
@@ -503,8 +503,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "a53b7609-6362-47c6-bffa-815e2bfff338",
-  "activeVersionId": "a53b7609-6362-47c6-bffa-815e2bfff338",
+  "versionId": "a0e69c03-6521-472b-aea3-e8136198e558",
+  "activeVersionId": "a0e69c03-6521-472b-aea3-e8136198e558",
   "triggerCount": 1,
   "shared": [
     {
@@ -516,9 +516,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-02-21T19:11:26.331Z",
-    "createdAt": "2026-02-21T19:11:26.331Z",
-    "versionId": "a53b7609-6362-47c6-bffa-815e2bfff338",
+    "updatedAt": "2026-05-15T14:07:58.932Z",
+    "createdAt": "2026-05-15T14:07:58.932Z",
+    "versionId": "a0e69c03-6521-472b-aea3-e8136198e558",
     "workflowId": "3ds9Y97qpRjTI63Y",
     "nodes": [
       {
@@ -692,7 +692,7 @@
             "parameters": [
               {
                 "name": "model",
-                "value": "claude-sonnet-4-20250514"
+                "value": "claude-sonnet-4-6"
               },
               {
                 "name": "max_tokens",
