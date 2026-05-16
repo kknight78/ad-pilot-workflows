@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-13T16:20:09.774Z",
+  "updatedAt": "2026-05-15T21:22:43.798Z",
   "createdAt": "2026-01-26T23:34:57.749Z",
   "id": "qS07qAp5GGbSp8oy",
   "name": "Thematic Target Pack Generator",
@@ -21,7 +21,7 @@
       "typeVersion": 1.1,
       "position": [
         208,
-        304
+        144
       ],
       "webhookId": "thematic-pack-generate"
     },
@@ -122,8 +122,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
       "position": [
-        384,
-        304
+        432,
+        144
       ]
     },
     {
@@ -132,7 +132,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "loose"
+            "typeValidation": "loose",
+            "version": 1
           },
           "conditions": [
             {
@@ -154,8 +155,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        768,
-        304
+        1104,
+        144
       ]
     },
     {
@@ -177,8 +178,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
       "position": [
-        976,
-        208
+        1328,
+        48
       ]
     },
     {
@@ -200,8 +201,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
       "position": [
-        976,
-        400
+        1328,
+        240
       ]
     },
     {
@@ -228,10 +229,7 @@
           ]
         },
         "options": {
-          "timeout": 30000,
-          "retry": true,
-          "retryAttempts": 3,
-          "retryDelay": 2000
+          "timeout": 30000
         }
       },
       "id": "gemini-seed-001",
@@ -239,8 +237,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1168,
-        208
+        1552,
+        48
       ],
       "credentials": {
         "googlePalmApi": {
@@ -273,10 +271,7 @@
           ]
         },
         "options": {
-          "timeout": 45000,
-          "retry": true,
-          "retryAttempts": 3,
-          "retryDelay": 2000
+          "timeout": 45000
         }
       },
       "id": "gemini-pack-001",
@@ -284,8 +279,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1168,
-        400
+        1552,
+        240
       ],
       "credentials": {
         "googlePalmApi": {
@@ -303,8 +298,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1376,
-        208
+        1776,
+        48
       ]
     },
     {
@@ -316,8 +311,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1376,
-        400
+        1776,
+        240
       ]
     },
     {
@@ -352,8 +347,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1568,
-        208
+        2224,
+        48
       ]
     },
     {
@@ -388,14 +383,14 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1568,
-        400
+        2224,
+        240
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT theme_seed FROM (SELECT theme_seed, MAX(created_at) as latest FROM generated_themes WHERE client_id = '{{ $json.client_id }}' AND created_at > NOW() - INTERVAL '30 days' GROUP BY theme_seed ORDER BY latest DESC LIMIT 20) sub",
+        "query": "SELECT theme_seed FROM (SELECT theme_seed, MAX(created_at) as latest FROM generated_themes WHERE client_id = '{{ $json.client_id }}' AND created_at > NOW() - INTERVAL '30 days' GROUP BY theme_seed ORDER BY latest DESC LIMIT 20) sub",
         "options": {}
       },
       "id": "get-recent-themes-001",
@@ -403,8 +398,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        480,
-        304
+        656,
+        144
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -424,14 +419,14 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        560,
-        304
+        880,
+        144
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=INSERT INTO generated_themes (client_id, theme_seed, template_type, source) VALUES ('{{ $('Parse Request').first().json.client_id }}', '{{ $json.theme_seed.replace(/'/g, \"''\") }}', 'seed', 'thematic-pack-generator')",
+        "query": "INSERT INTO generated_themes (client_id, theme_seed, template_type, source) VALUES ('{{ $('Parse Request').first().json.client_id }}', '{{ $json.theme_seed.replace(/'/g, \"''\") }}', 'seed', 'thematic-pack-generator')",
         "options": {}
       },
       "id": "log-seed-theme-001",
@@ -439,7 +434,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1376,
+        2000,
         48
       ],
       "credentials": {
@@ -452,7 +447,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=INSERT INTO generated_themes (client_id, theme_seed, template_type, source) VALUES ('{{ $('Parse Request').first().json.client_id }}', '{{ $json.theme_name.replace(/'/g, \"''\") }}', 'pack', 'thematic-pack-generator')",
+        "query": "INSERT INTO generated_themes (client_id, theme_seed, template_type, source) VALUES ('{{ $('Parse Request').first().json.client_id }}', '{{ $json.theme_name.replace(/'/g, \"''\") }}', 'pack', 'thematic-pack-generator')",
         "options": {}
       },
       "id": "log-pack-theme-001",
@@ -460,8 +455,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1376,
-        544
+        2000,
+        240
       ],
       "credentials": {
         "postgres": {
@@ -626,12 +621,13 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "binaryMode": "separate"
   },
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "0dacd63d-3609-41b4-8193-6ed69c909145",
+  "versionId": "1c14b3fd-949c-4e4c-92c8-4bef8035015f",
   "activeVersionId": "0dacd63d-3609-41b4-8193-6ed69c909145",
   "triggerCount": 1,
   "shared": [
