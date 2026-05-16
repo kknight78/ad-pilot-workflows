@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-30T01:12:08.162Z",
+  "updatedAt": "2026-05-15T14:07:55.283Z",
   "createdAt": "2026-01-26T23:34:49.829Z",
   "id": "JbXvdRmZQ53JxbdB",
   "name": "[07] B-Roll Source Comparison",
@@ -59,7 +59,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 500,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 500,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
         "options": {}
       },
       "id": "call-claude-topic",
@@ -189,7 +189,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 200,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(`You are helping find stock video b-roll for a short educational video about cars/automotive topics.\n\nTitle: ${$json.topic.title}\nHook: ${$json.topic.hook}\n\nGenerate exactly 3 search queries that would find good 2-3 second b-roll clips to use as an attention-grabbing intro. The b-roll should visually represent the topic and stop someone from scrolling.\n\nRequirements:\n- Queries should be 2-4 words each\n- Focus on ACTION and MOVEMENT (not static shots)\n- Think: what visual would make someone stop and watch?\n- Avoid generic terms like \"car\" alone\n\nReturn as JSON array only, no explanation:\n[\"query 1\", \"query 2\", \"query 3\"]`) }} }]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 200,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(`You are helping find stock video b-roll for a short educational video about cars/automotive topics.\n\nTitle: ${$json.topic.title}\nHook: ${$json.topic.hook}\n\nGenerate exactly 3 search queries that would find good 2-3 second b-roll clips to use as an attention-grabbing intro. The b-roll should visually represent the topic and stop someone from scrolling.\n\nRequirements:\n- Queries should be 2-4 words each\n- Focus on ACTION and MOVEMENT (not static shots)\n- Think: what visual would make someone stop and watch?\n- Avoid generic terms like \"car\" alone\n\nReturn as JSON array only, no explanation:\n[\"query 1\", \"query 2\", \"query 3\"]`) }} }]\n}",
         "options": {}
       },
       "id": "call-claude-terms",
@@ -488,8 +488,8 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "d426c675-d1a8-4f84-8123-6a4eed1a31b9",
-  "activeVersionId": "d426c675-d1a8-4f84-8123-6a4eed1a31b9",
+  "versionId": "0f55e122-1199-4895-83c9-c7e2ac22505f",
+  "activeVersionId": "0f55e122-1199-4895-83c9-c7e2ac22505f",
   "triggerCount": 1,
   "shared": [
     {
@@ -501,9 +501,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-30T01:12:08.165Z",
-    "createdAt": "2026-01-30T01:12:08.165Z",
-    "versionId": "d426c675-d1a8-4f84-8123-6a4eed1a31b9",
+    "updatedAt": "2026-05-15T14:07:55.295Z",
+    "createdAt": "2026-05-15T14:07:55.295Z",
+    "versionId": "0f55e122-1199-4895-83c9-c7e2ac22505f",
     "workflowId": "JbXvdRmZQ53JxbdB",
     "nodes": [
       {
@@ -559,7 +559,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 500,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 500,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.prompt) }} }]\n}",
           "options": {}
         },
         "id": "call-claude-topic",
@@ -689,7 +689,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 200,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(`You are helping find stock video b-roll for a short educational video about cars/automotive topics.\n\nTitle: ${$json.topic.title}\nHook: ${$json.topic.hook}\n\nGenerate exactly 3 search queries that would find good 2-3 second b-roll clips to use as an attention-grabbing intro. The b-roll should visually represent the topic and stop someone from scrolling.\n\nRequirements:\n- Queries should be 2-4 words each\n- Focus on ACTION and MOVEMENT (not static shots)\n- Think: what visual would make someone stop and watch?\n- Avoid generic terms like \"car\" alone\n\nReturn as JSON array only, no explanation:\n[\"query 1\", \"query 2\", \"query 3\"]`) }} }]\n}",
+          "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 200,\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify(`You are helping find stock video b-roll for a short educational video about cars/automotive topics.\n\nTitle: ${$json.topic.title}\nHook: ${$json.topic.hook}\n\nGenerate exactly 3 search queries that would find good 2-3 second b-roll clips to use as an attention-grabbing intro. The b-roll should visually represent the topic and stop someone from scrolling.\n\nRequirements:\n- Queries should be 2-4 words each\n- Focus on ACTION and MOVEMENT (not static shots)\n- Think: what visual would make someone stop and watch?\n- Avoid generic terms like \"car\" alone\n\nReturn as JSON array only, no explanation:\n[\"query 1\", \"query 2\", \"query 3\"]`) }} }]\n}",
           "options": {}
         },
         "id": "call-claude-terms",
