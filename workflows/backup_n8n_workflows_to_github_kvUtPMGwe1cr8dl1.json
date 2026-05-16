@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T21:31:49.366Z",
+  "updatedAt": "2026-05-15T14:02:09.128Z",
   "createdAt": "2025-12-13T13:57:20.492Z",
   "id": "kvUtPMGwe1cr8dl1",
   "name": "Backup n8n Workflows to GitHub",
@@ -96,7 +96,7 @@
         -656,
         96
       ],
-      "retryOnFail": false,
+      "retryOnFail": true,
       "waitBetweenTries": 2000,
       "credentials": {
         "httpHeaderAuth": {
@@ -109,7 +109,8 @@
         }
       },
       "continueOnFail": true,
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "maxTries": 3
     },
     {
       "parameters": {
@@ -184,7 +185,11 @@
           "id": "cuZkd1EB5raWuKGR",
           "name": "GitHub account"
         }
-      }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
     },
     {
       "parameters": {
@@ -388,6 +393,55 @@
       ],
       "id": "068778e4-cca2-4540-b1a2-b250eac5f73f",
       "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ 'Backup (recovered): ' + $json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.workflow.contentBase64 }}\",\n  \"branch\": \"main\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "id": "create-missing-file-1",
+      "name": "Create Missing File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        256,
+        144
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Qug4YyBVvyqrbbOe",
+          "name": "Github"
+        },
+        "githubApi": {
+          "id": "cuZkd1EB5raWuKGR",
+          "name": "GitHub account"
+        }
+      },
+      "continueOnFail": false,
+      "maxTries": 3
     }
   ],
   "connections": {
@@ -479,6 +533,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Create Missing File",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -561,6 +622,17 @@
           }
         ]
       ]
+    },
+    "Create Missing File": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -575,8 +647,8 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "10f4839b-c264-4bd7-a61a-a8b5f7c04295",
-  "activeVersionId": "10f4839b-c264-4bd7-a61a-a8b5f7c04295",
+  "versionId": "1b6a6c1e-d837-46d6-b1f8-54ca98a417ba",
+  "activeVersionId": "1b6a6c1e-d837-46d6-b1f8-54ca98a417ba",
   "triggerCount": 1,
   "shared": [
     {
@@ -588,9 +660,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-04-02T21:31:49.407Z",
-    "createdAt": "2026-04-02T21:31:49.407Z",
-    "versionId": "10f4839b-c264-4bd7-a61a-a8b5f7c04295",
+    "updatedAt": "2026-05-15T14:02:09.172Z",
+    "createdAt": "2026-05-15T14:02:09.172Z",
+    "versionId": "1b6a6c1e-d837-46d6-b1f8-54ca98a417ba",
     "workflowId": "kvUtPMGwe1cr8dl1",
     "nodes": [
       {
@@ -683,7 +755,7 @@
           -656,
           96
         ],
-        "retryOnFail": false,
+        "retryOnFail": true,
         "waitBetweenTries": 2000,
         "credentials": {
           "httpHeaderAuth": {
@@ -696,7 +768,8 @@
           }
         },
         "continueOnFail": true,
-        "onError": "continueErrorOutput"
+        "onError": "continueErrorOutput",
+        "maxTries": 3
       },
       {
         "parameters": {
@@ -771,7 +844,11 @@
             "id": "cuZkd1EB5raWuKGR",
             "name": "GitHub account"
           }
-        }
+        },
+        "onError": "continueErrorOutput",
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000
       },
       {
         "parameters": {
@@ -975,6 +1052,55 @@
         ],
         "id": "068778e4-cca2-4540-b1a2-b250eac5f73f",
         "name": "No Operation, do nothing1"
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "=https://api.github.com/repos/kknight78/ad-pilot-workflows/contents/workflows/{{ $json.filename }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github.v3+json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"message\": \"{{ 'Backup (recovered): ' + $json.workflow.name + ' - ' + $now.toISO() }}\",\n  \"content\": \"{{ $json.workflow.contentBase64 }}\",\n  \"branch\": \"main\"\n}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1
+              }
+            }
+          }
+        },
+        "id": "create-missing-file-1",
+        "name": "Create Missing File",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          256,
+          144
+        ],
+        "retryOnFail": true,
+        "waitBetweenTries": 2000,
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Qug4YyBVvyqrbbOe",
+            "name": "Github"
+          },
+          "githubApi": {
+            "id": "cuZkd1EB5raWuKGR",
+            "name": "GitHub account"
+          }
+        },
+        "continueOnFail": false,
+        "maxTries": 3
       }
     ],
     "connections": {
@@ -1066,6 +1192,13 @@
               "type": "main",
               "index": 0
             }
+          ],
+          [
+            {
+              "node": "Create Missing File",
+              "type": "main",
+              "index": 0
+            }
           ]
         ]
       },
@@ -1140,6 +1273,17 @@
               "index": 0
             }
           ],
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Missing File": {
+        "main": [
           [
             {
               "node": "Aggregate Results",
